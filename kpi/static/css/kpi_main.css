@@ -1,3 +1,108 @@
 /* KPI 화면 스타일 [민지]
    모든 선택자는 .kpi-page 아래로 제한합니다. body·button·table 전체 스타일은 바꾸지 않습니다.
    색·글꼴은 platform_core/static/css/base.css 변수(var(--gold) 등)만 씁니다. (README 6·7장) */
+
+.kpi-page .kpi-pagehead-side { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- 상단 KPI 줄 ---------- */
+.kpi-page .kpi-scorecards .value { white-space: nowrap; }
+.kpi-page .kpi-sub { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-sub .kpi-up { color: var(--green); }
+.kpi-page .kpi-sub .kpi-down { color: var(--badge-red-ink); }
+
+/* ---------- 격자 ---------- */
+.kpi-page .kpi-row + .kpi-row { margin-top: 20px; }
+.kpi-page .kpi-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- 차트 ---------- */
+.kpi-page .kpi-chart { position: relative; min-width: 0; }
+.kpi-page .kpi-chart-bar { height: 240px; margin-bottom: 16px; }
+.kpi-page .kpi-chart-donut { width: 210px; height: 210px; flex: none; }
+.kpi-page .kpi-chart-small { width: 170px; height: 170px; }
+.kpi-page .kpi-chart-keywords { flex: 1; height: 170px; }
+
+.kpi-page .kpi-donut-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.kpi-page .kpi-donut-center span { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-donut-center strong { font-family: var(--font-serif); font-size: 26px; font-weight: 400; }
+
+/* ---------- 예산 ---------- */
+.kpi-page .kpi-budget { display: flex; align-items: center; gap: 28px; }
+.kpi-page .kpi-budget-list { display: grid; flex: 1; gap: 10px; margin: 0; font-size: var(--fs-min); }
+.kpi-page .kpi-budget-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.kpi-page .kpi-budget-list dt { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.kpi-page .kpi-budget-list dd { margin: 0; font-family: var(--font-serif); font-size: var(--fs-body); }
+.kpi-page .kpi-swatch { width: 9px; height: 9px; flex: none; }
+.kpi-page .kpi-burn { margin-top: 20px; }
+.kpi-page .kpi-burn-label { display: flex; justify-content: space-between; font-size: var(--fs-min); color: var(--muted); }
+.kpi-page .kpi-burn-label b { color: var(--ink); font-weight: 600; }
+.kpi-page .kpi-burn .progress { margin-top: 8px; }
+
+/* ---------- 표 ---------- */
+.kpi-page .kpi-table td:not(:first-child),
+.kpi-page .kpi-table th:not(:first-child) { text-align: right; }
+.kpi-page .kpi-review-wrap { max-height: 300px; margin-top: 16px; overflow-y: auto; }
+.kpi-page .kpi-review-wrap .kpi-table td,
+.kpi-page .kpi-review-wrap .kpi-table th { text-align: left; }
+.kpi-page .kpi-review-wrap .kpi-table td:nth-child(2) { min-width: 240px; white-space: normal; }
+.kpi-page .kpi-review-wrap .kpi-table td small { font-family: var(--font-vi); }
+
+/* ---------- 안내 ---------- */
+.kpi-page .kpi-note { margin: 12px 0 0; color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-error { margin: 0 0 12px; padding: 10px 14px; background: var(--badge-red-bg); color: var(--badge-red-ink); font-size: var(--fs-min); }
+.kpi-page .kpi-error[hidden] { display: none; }
+.kpi-page .kpi-ai-summary {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--gold);
+  background: var(--paper);
+  font-size: var(--fs-body);
+}
+
+/* ---------- VOC ---------- */
+.kpi-page .kpi-voc { display: flex; align-items: center; gap: 20px; }
+
+/* ---------- GA4 ---------- */
+.kpi-page .kpi-toggle { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-min); white-space: nowrap; }
+.kpi-page [data-kpi="ga4-panel"][hidden],
+.kpi-page [data-kpi="creator-panel"][hidden] { display: none; }
+.kpi-page .kpi-ga4-metrics { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); }
+.kpi-page .kpi-ga4-metrics > div { display: grid; gap: 4px; padding: 18px 20px; }
+.kpi-page .kpi-ga4-metrics > div + div { border-left: 1px solid var(--line); }
+.kpi-page .kpi-ga4-metrics strong { font-family: var(--font-serif); font-size: var(--fs-kpi); font-weight: 400; }
+.kpi-page .kpi-metric-label,
+.kpi-page .kpi-sub-text { color: var(--muted); font-size: var(--fs-min); }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1100px) {
+  .kpi-page .kpi-scorecards { grid-template-columns: repeat(2, 1fr); }
+  .kpi-page .kpi-scorecards .kpi:nth-child(2) { border-right: 0; }
+  .kpi-page .kpi-scorecards .kpi:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 650px) {
+  .kpi-page .kpi-scorecards { grid-template-columns: 1fr; }
+  .kpi-page .kpi-scorecards .kpi { border-right: 0; border-bottom: 1px solid var(--line); }
+  .kpi-page .kpi-budget,
+  .kpi-page .kpi-voc { flex-direction: column; align-items: stretch; }
+  .kpi-page .kpi-chart-donut { margin: auto; }
+  .kpi-page .kpi-ga4-metrics { grid-template-columns: 1fr; }
+  .kpi-page .kpi-ga4-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* ---------- 인쇄 ---------- */
+@media print {
+  .kpi-page .panel { break-inside: avoid; }
+  .kpi-page [data-kpi-action] { display: none; }
+}
