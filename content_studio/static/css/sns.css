@@ -1,3 +1,90 @@
 /* 콘텐츠 스튜디오 화면 전체 스타일 [유진]
    선택자는 .studio-page / .studio-chat / .studio-tabs 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
 .studio-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+
+/* ---------- 안내 줄 ---------- */
+.studio-page .studio-notice { margin: 0 0 16px; padding: 10px 14px; background: var(--note-bg); color: var(--note-ink); font-size: var(--fs-min); }
+
+/* ---------- 첫 화면 ---------- */
+.studio-page .studio-home { padding: 23px; background: var(--white); border: 1px solid var(--line); }
+.studio-page .studio-count { margin-left: 4px; color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
+.studio-page .studio-hint { color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-recs-head { margin-top: 30px; }
+
+/* 내 작업: 가로로 넘겨 보는 큰 카드 */
+.studio-page .studio-rail {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  cursor: grab;
+}
+.studio-page .studio-rail.is-dragging { cursor: grabbing; user-select: none; }
+.studio-page .studio-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-align: left;
+  cursor: inherit;
+}
+.studio-page .studio-card:hover { border-color: var(--line-strong); }
+.studio-page .studio-card:has([data-ratio="16:9"]) { flex-basis: 400px; }
+.studio-page .studio-card-body { padding: 10px 12px 12px; }
+.studio-page .studio-card-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.studio-page .studio-card-meta { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-min); }
+
+/* 미리보기 자리표시 (실제 디자인 축소 미리보기는 희주 sns_editor.js 연결 후 교체) */
+.studio-page .studio-thumb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 14px;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  color: var(--on-dark);
+}
+.studio-page .studio-thumb[data-ratio="1:1"] { aspect-ratio: 1 / 1; }
+.studio-page .studio-thumb[data-ratio="9:16"] { aspect-ratio: 9 / 16; }
+.studio-page .studio-thumb[data-ratio="16:9"] { aspect-ratio: 16 / 9; }
+.studio-page .studio-thumb strong { font-family: var(--font-brand); font-size: 17px; font-weight: 500; line-height: 1.3; word-break: keep-all; }
+.studio-page .studio-thumb small { font-size: var(--fs-min); opacity: .85; }
+.studio-page .studio-thumb .badge { position: absolute; top: 10px; left: 10px; }
+.studio-page .studio-thumb.tone-hero { background: linear-gradient(160deg, var(--hero-from), var(--hero-to)); }
+.studio-page .studio-thumb.tone-gold { background: var(--gold); }
+.studio-page .studio-thumb.tone-green { background: var(--green); }
+.studio-page .studio-thumb.tone-red { background: var(--flag-bg); color: var(--flag-ink); }
+
+/* 영상: 장면 요약 (재생할 영상이 없을 때) */
+.studio-page .studio-scenes { margin: 0; padding: 0; list-style: none; font-size: var(--fs-min); }
+.studio-page .studio-scenes li { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.studio-page .studio-scenes b { margin-right: 4px; font-family: var(--font-serif); font-weight: 400; }
+
+/* 추천 카드 (최대 6개) */
+.studio-page .studio-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.studio-page .studio-rec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-align: left;
+}
+.studio-page .studio-rec:hover { border-color: var(--line-strong); }
+.studio-page .studio-rec .studio-thumb { flex: 0 0 64px; padding: 8px; }
+.studio-page .studio-rec .studio-thumb strong { font-size: var(--fs-min); }
+.studio-page .studio-rec-text { min-width: 0; }
+.studio-page .studio-rec-text p { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-rec-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
+.studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
