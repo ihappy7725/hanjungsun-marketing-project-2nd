@@ -1,5 +1,6 @@
 {% extends "platform_core/base.html" %}
 {# 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
+{% set tab_labels = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"} %}
 
 {% block title %}콘텐츠 스튜디오{% endblock %}
 
@@ -14,7 +15,10 @@
     <div>
       <p class="eyebrow">CONTENT STUDIO</p>
       <h1>콘텐츠 스튜디오</h1>
-      <p>포스터·카드뉴스·영상을 만들고 대화로 다듬습니다.</p>
+    </div>
+    <div class="actions">
+      <span class="demo">DEMO · 예시 데이터</span>
+      <button type="button" class="btn dark" data-role="new">+ 새로 만들기</button>
     </div>
   </header>
 
@@ -24,7 +28,22 @@
     <a class="btn{% if tab == 'video' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='video') }}">영상</a>
   </nav>
 
-  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 유진(영상·공통) · 희주(포스터·카드뉴스) · 상세 설계는 content_studio/README.md</p>
+  <p class="studio-notice" data-role="notice" role="status" hidden></p>
+
+  {# 첫 화면: 내 작업 가로 목록 + 추천 (README 2장). 카드는 sns.js가 그립니다. #}
+  <section class="studio-home">
+    <div class="panelhead">
+      <h2>내 {{ tab_labels[tab] }} <span class="studio-count" data-role="gallery-count"></span></h2>
+    </div>
+    <div class="studio-rail" data-role="gallery"></div>
+    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. 아래 추천을 누르거나 [새로 만들기]로 시작하세요.</p>
+
+    <div class="panelhead studio-recs-head">
+      <h2>지금 만들면 좋은 {{ tab_labels[tab] }}</h2>
+      <span class="studio-hint">기념일 D-day · 제철 · 신메뉴 기준</span>
+    </div>
+    <div class="studio-recs" data-role="recs"></div>
+  </section>
 </div>
 {% endblock %}
 
