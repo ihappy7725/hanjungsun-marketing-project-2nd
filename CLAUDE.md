@@ -1,4 +1,5 @@
 @AGENTS.md
+@AI_RULES.md
 
 ## Claude Code 전용
 
