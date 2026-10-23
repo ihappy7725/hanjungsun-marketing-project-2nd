@@ -28,6 +28,7 @@
         "README.md",
         "docs/*",
         "AGENTS.md",
+        "AI_RULES.md",
         "CLAUDE.md",
         ".github/*",
         "content_studio/README.md",
