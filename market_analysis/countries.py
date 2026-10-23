@@ -3,7 +3,7 @@
 DEFAULT_COUNTRY = "VN"
 
 COUNTRIES = {
-    "VN": {"name": "베트남", "city": "다낭", "language": "vi", "timezone": "Asia/Ho_Chi_Minh"},
+    "VN": {"name": "베트남", "city": "다낭", "language": "vi", "timezone": "Asia/Ho_Chi_Minh", "currency": "VND"},
 }
 
 # 한국어 검색어 → 현지어 검색어 (Google Trends 비교 검색어는 5개 이하)
