@@ -1,0 +1,24 @@
+{% extends "platform_core/base.html" %}
+
+{% block title %}인플루언서 마케팅{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('influencer_marketing.static', filename='css/influencer_main.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="influencer-page">
+  <header class="pagehead">
+    <div>
+      <p class="eyebrow">CREATOR COLLABORATION</p>
+      <h1>인플루언서 마케팅</h1>
+      <p>협업 후보를 분류하고 제안 자료와 일정을 관리합니다.</p>
+    </div>
+  </header>
+  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 진혁 · 상세 설계는 influencer_marketing/README.md</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('influencer_marketing.static', filename='js/influencer_main.js') }}"></script>
+{% endblock %}

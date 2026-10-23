@@ -1,0 +1,24 @@
+{% extends "platform_core/base.html" %}
+
+{% block title %}HOME{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('home.static', filename='css/home_main.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+  <header class="pagehead">
+    <div>
+      <p class="eyebrow">PLAN THE NEXT STEP</p>
+      <h1>HOME</h1>
+      <p>오늘 할 일, 캠페인 준비 현황, 협업 진행 현황, 현지 일정과 뉴스를 확인합니다.</p>
+    </div>
+  </header>
+  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 주연 · 상세 설계는 home/README.md</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('home.static', filename='js/home_main.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{
+  "_설명": "파일별 수정 권한 (README 5장). 경로는 저장소 기준, * 는 하위 폴더까지 포함. 담당이 바뀌면 PM1이 이 파일을 고칩니다.",
+  "anyone": [
+    ".claude/whoami.local",
+    ".claude/settings.local.json",
+    "CLAUDE.local.md"
+  ],
+  "members": {
+    "juyeon": {
+      "name": "주연",
+      "paths": ["home/*"]
+    },
+    "sangjun": {
+      "name": "상준(PM1)",
+      "paths": [
+        "app.py",
+        "requirements.txt",
+        ".gitignore",
+        ".env.example",
+        "platform_core/*",
+        ".claude/*",
+        "market_analysis/*"
+      ]
+    },
+    "yujin": {
+      "name": "유진(PM2)",
+      "paths": [
+        "README.md",
+        "docs/*",
+        "AGENTS.md",
+        "CLAUDE.md",
+        ".github/*",
+        "content_studio/README.md",
+        "content_studio/__init__.py",
+        "content_studio/products.py",
+        "content_studio/routes_sns.py",
+        "content_studio/models_sns.py",
+        "content_studio/videos.py",
+        "content_studio/higgsfield.py",
+        "content_studio/templates/*",
+        "content_studio/static/css/sns.css",
+        "content_studio/static/js/sns.js",
+        "content_studio/static/js/sns_video.js",
+        "content_studio/static/images/*"
+      ]
+    },
+    "heeju": {
+      "name": "희주",
+      "paths": [
+        "content_studio/designs.py",
+        "content_studio/routes_media.py",
+        "content_studio/prompts/*",
+        "content_studio/static/css/sns_image.css",
+        "content_studio/static/js/sns_editor.js",
+        "content_studio/static/js/sns_fonts.js",
+        "content_studio/static/js/sns_image.js"
+      ]
+    },
+    "minji": {
+      "name": "민지",
+      "paths": ["kpi/*"]
+    },
+    "jinhyuk": {
+      "name": "진혁",
+      "paths": ["influencer_marketing/*"]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · 韓貞仙 Vietnam</title>
+  <link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/fonts.css') }}">
+  <link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/base.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('home.index') }}">韓貞仙<small>HANJUNGSUN</small></a>
+
+    <div class="workspace">
+      <span class="eyebrow">WORKSPACE</span>
+      <strong><span class="flag" aria-hidden="true">★</span>Vietnam Market</strong>
+    </div>
+
+    <nav class="nav">
+      {% for m in nav_menus %}
+      <a class="{% if request.blueprint == m.blueprint %}active{% endif %}"
+         href="{{ url_for(m.blueprint ~ '.index') }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ m.icon }}"/></svg>
+        {{ m.label }}
+        <span class="num">{{ m.no }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="side-note">
+        <strong>A little Korea, in Vietnam.</strong>
+        한정선의 정성을 베트남의 일상으로
+      </div>
+      <p class="clock">KST <span data-clock="Asia/Seoul">--:--</span> · VN <span data-clock="Asia/Ho_Chi_Minh">--:--</span></p>
+      <div class="user">
+        <span class="avatar">韓</span>
+        <span><b>Team Hanjungsun</b>Global Marketing</span>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <span>Workspace / <b>{% for m in nav_menus if m.blueprint == request.blueprint %}{{ m.label }}{% endfor %}</b></span>
+      <div class="top-right">
+        <span>Danang, Vietnam</span>
+        <span class="demo">DEMO · 예시 데이터</span>
+      </div>
+    </header>
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+<script src="{{ url_for('platform_core.static', filename='js/base.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

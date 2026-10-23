@@ -1,0 +1,37 @@
+{% extends "platform_core/base.html" %}
+{# 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
+
+{% block title %}콘텐츠 스튜디오{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('content_studio.static', filename='css/sns.css') }}">
+<link rel="stylesheet" href="{{ url_for('content_studio.static', filename='css/sns_image.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="studio-page" data-tab="{{ tab }}">
+  <header class="pagehead">
+    <div>
+      <p class="eyebrow">CONTENT STUDIO</p>
+      <h1>콘텐츠 스튜디오</h1>
+      <p>포스터·카드뉴스·영상을 만들고 대화로 다듬습니다.</p>
+    </div>
+  </header>
+
+  <nav class="studio-tabs">
+    <a class="btn{% if tab == 'poster' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='poster') }}">포스터</a>
+    <a class="btn{% if tab == 'cardnews' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='cardnews') }}">카드뉴스</a>
+    <a class="btn{% if tab == 'video' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='video') }}">영상</a>
+  </nav>
+
+  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 유진(영상·공통) · 희주(포스터·카드뉴스) · 상세 설계는 content_studio/README.md</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_video.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_editor.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_fonts.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_image.js') }}"></script>
+{% endblock %}

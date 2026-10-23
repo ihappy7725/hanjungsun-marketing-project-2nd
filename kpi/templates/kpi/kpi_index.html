@@ -1,0 +1,24 @@
+{% extends "platform_core/base.html" %}
+
+{% block title %}KPI{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('kpi.static', filename='css/kpi_main.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="kpi-page">
+  <header class="pagehead">
+    <div>
+      <p class="eyebrow">PERFORMANCE & BUDGET</p>
+      <h1>KPI</h1>
+      <p>광고비·매출·예산과 고객 반응을 확인합니다.</p>
+    </div>
+  </header>
+  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 민지 · 상세 설계는 kpi/README.md</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('kpi.static', filename='js/kpi_main.js') }}"></script>
+{% endblock %}

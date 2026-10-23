@@ -1,0 +1,33 @@
+# [PM1 상준만 수정]
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Flask 로컬 데이터 — DB·업로드 사진·생성 결과물
+instance/
+
+# 비밀값 (이름 예시는 .env.example)
+.env
+
+# AI 도구 개인 설정 (각자 로컬)
+.claude/whoami.local
+.claude/settings.local.json
+CLAUDE.local.md
+
+# 대용량 디자인 이미지는 팀 공유 드라이브에 둡니다 (README 5장)
+docs/design/*.png
+docs/design/*.jpg
+docs/design/*.jpeg
+docs/design/*.webp
+docs/design/*.psd
+docs/design/*.ai
+
+# OS·편집기
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

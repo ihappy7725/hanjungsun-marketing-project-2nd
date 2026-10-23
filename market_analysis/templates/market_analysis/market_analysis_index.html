@@ -1,0 +1,24 @@
+{% extends "platform_core/base.html" %}
+
+{% block title %}현지 시장 분석{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('market_analysis.static', filename='css/market_analysis_main.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="market-analysis-page">
+  <header class="pagehead">
+    <div>
+      <p class="eyebrow">LOCAL MARKET INSIGHT</p>
+      <h1>현지 시장 분석</h1>
+      <p>트렌드·경쟁사·국가 문화를 살펴보고 AI 인사이트로 전략을 정합니다.</p>
+    </div>
+  </header>
+  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 상준 · 상세 설계는 market_analysis/README.md</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('market_analysis.static', filename='js/market_analysis_main.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{
+  "_설명": "현지 시장 분석(상준)이 조사한 내용만 채웁니다. 콘텐츠 스튜디오는 market_analysis/public.py의 get_content_guidelines()·check_ad_copy()로만 읽습니다. 각 항목 형식은 public.py 함수 설명 참고.",
+  "schema_version": 1,
+  "country": "VN",
+  "region_scope": "",
+  "status": "draft",
+  "reviewed_at": "",
+  "reviewed_by": "",
+  "disclaimer": "광고 표현·문화 참고 안내입니다. 법적 판단이 아닙니다.",
+  "avoid_expressions": [],
+  "visual_cautions": [],
+  "recommended": {
+    "colors": [],
+    "avoid_colors": [],
+    "numbers": { "lucky": [], "avoid": [], "note": "" },
+    "motifs": [],
+    "messages": [],
+    "occasions": []
+  },
+  "required_notices": [],
+  "prompt_rules": [],
+  "sources": []
+}

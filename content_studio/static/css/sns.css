@@ -1,0 +1,3 @@
+/* 콘텐츠 스튜디오 화면 전체 스타일 [유진]
+   선택자는 .studio-page / .studio-chat / .studio-tabs 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
+.studio-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
