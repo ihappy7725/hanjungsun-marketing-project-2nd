@@ -1,0 +1,41 @@
+{
+  "_설명": "국가 기본 정보 원본. World Bank Indicators API(키 없음)에서 받은 값만 적습니다. 분기 1회 갱신합니다. (README 7장)",
+  "country": "VN",
+  "region_scope": "베트남 전국",
+  "checked_at": "2026-10-23",
+  "indicators": [
+    {
+      "id": "population",
+      "label": "인구",
+      "value": 101598527,
+      "unit": "명",
+      "year": "2025",
+      "source_indicator": "SP.POP.TOTL",
+      "source_url": "https://api.worldbank.org/v2/country/VNM/indicator/SP.POP.TOTL?format=json&mrnev=1"
+    },
+    {
+      "id": "gdp_per_capita",
+      "label": "1인당 GDP",
+      "value": 5065.99,
+      "unit": "USD (current US$)",
+      "year": "2025",
+      "source_indicator": "NY.GDP.PCAP.CD",
+      "source_url": "https://api.worldbank.org/v2/country/VNM/indicator/NY.GDP.PCAP.CD?format=json&mrnev=1"
+    },
+    {
+      "id": "urban_population",
+      "label": "도시화율",
+      "value": 38.83,
+      "unit": "%",
+      "year": "2025",
+      "source_indicator": "SP.URB.TOTL.IN.ZS",
+      "source_url": "https://api.worldbank.org/v2/country/VNM/indicator/SP.URB.TOTL.IN.ZS?format=json&mrnev=1"
+    }
+  ],
+  "source": {
+    "title": "World Bank Open Data — World Development Indicators",
+    "publisher": "World Bank",
+    "url": "https://data.worldbank.org/country/viet-nam",
+    "last_updated": "2026-10-08"
+  }
+}

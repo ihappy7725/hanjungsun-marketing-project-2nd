@@ -7,15 +7,39 @@
 {% endblock %}
 
 {% block content %}
-<div class="market-analysis-page">
+<div class="market-analysis-page" data-tab="{{ tab }}">
   <header class="pagehead">
     <div>
       <p class="eyebrow">LOCAL MARKET INSIGHT</p>
       <h1>현지 시장 분석</h1>
       <p>트렌드·경쟁사·국가 문화를 살펴보고 AI 인사이트로 전략을 정합니다.</p>
     </div>
+    <p class="ma-policy">실제 데이터 파일만 표시합니다 · 파일이 없으면 <span class="badge">수집 전</span></p>
   </header>
-  <p class="empty-note">구조만 잡아 둔 화면입니다. 담당: 상준 · 상세 설계는 market_analysis/README.md</p>
+
+  <section class="ma-countrybar" aria-label="국가 선택">
+    <div class="ma-chips" data-ma="country-chips"></div>
+    <dl class="ma-countryinfo" data-ma="country-info"></dl>
+  </section>
+
+  <nav class="ma-tabs" role="tablist" aria-label="현지 시장 분석 탭">
+    <button type="button" role="tab" data-tab="trend">트렌드 분석</button>
+    <button type="button" role="tab" data-tab="competitor">경쟁사 분석</button>
+    <button type="button" role="tab" data-tab="culture">국가 · 문화</button>
+    <button type="button" role="tab" data-tab="insight">AI 인사이트</button>
+  </nav>
+
+  <section class="view" data-view="trend" role="tabpanel" hidden></section>
+  <section class="view" data-view="competitor" role="tabpanel" hidden></section>
+  <section class="view" data-view="culture" role="tabpanel" hidden></section>
+  <section class="view" data-view="insight" role="tabpanel" hidden></section>
+
+  <dialog class="ma-dialog" data-ma="detail">
+    <button type="button" class="close" data-ma="detail-close" aria-label="닫기">×</button>
+    <div data-ma="detail-body"></div>
+  </dialog>
+
+  <script type="application/json" data-ma="dashboard">{{ dashboard | tojson }}</script>
 </div>
 {% endblock %}
 
