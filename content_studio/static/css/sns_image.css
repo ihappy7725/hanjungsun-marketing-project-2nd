@@ -187,3 +187,68 @@
   justify-content: center;
   line-height: 1;
 }
+
+/* 광고 표현 검수 결과 · 카드뉴스 프롬프트 팝업 [희주] */
+.studio-editor .studio-editor-review {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+}
+
+.studio-editor .studio-editor-review[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.studio-editor .studio-editor-findings li {
+  padding: 8px 12px;
+  border-left: 4px solid var(--line);
+}
+
+.studio-editor .studio-editor-findings p {
+  margin: 2px 0;
+}
+
+.studio-editor .studio-editor-findings a {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.studio-editor .studio-editor-findings .is-block,
+.studio-editor .studio-editor-review .is-error {
+  border-left-color: var(--badge-red-ink);
+  color: var(--badge-red-ink);
+}
+
+.studio-editor .studio-editor-findings .is-warn,
+.studio-editor .studio-editor-review .is-warn {
+  border-left-color: var(--gold);
+}
+
+.studio-editor .studio-editor-prompt {
+  width: min(720px, 92vw);
+}
+
+.studio-editor .studio-editor-prompt .studio-editor-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+
+.studio-editor .studio-editor-prompt textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.studio-editor .studio-editor-prompt textarea[hidden],
+.studio-editor .studio-editor-prompt button[hidden] {
+  display: none;
+}

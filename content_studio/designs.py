@@ -701,3 +701,90 @@ def revise_design(doc, text, page=None):
     if not changes:
         return copy.deepcopy(doc), []
     return new_doc, list(dict.fromkeys(changes))
+
+
+# ---------- 광고 표현 검수용 글 모으기 ----------
+def design_texts(doc):
+    """모든 장의 글 요소를 순서대로 모읍니다. 빈 글은 뺍니다."""
+    texts = []
+    for page in (doc or {}).get("pages") or []:
+        for item in page.get("elements") or []:
+            text = str(item.get("text") or "").strip() if item.get("type") == "text" else ""
+            if text:
+                texts.append(text)
+    return texts
+
+
+# ---------- 카드뉴스 프롬프트 만들기 (복사해서 ChatGPT·Canva에 붙여 넣는 용도) ----------
+# 결과 글 언어는 README 9장 미정 항목이라 만들 때 고릅니다.
+LANGUAGES = {
+    "vi": "베트남어로 쓴다.",
+    "ko": "한국어로 쓴다.",
+    "vi_ko": "베트남어로 쓰고, 바로 아래 줄에 한국어 번역을 붙인다.",
+}
+CARD_STRUCTURE = {
+    "clean": "표지(제목·부제·제품 사진) → 안쪽 장마다 제목 1줄 + 설명 1~2문장",
+    "photo": "표지(큰 제품 사진 위 제목·부제) → 안쪽 장마다 위쪽 사진 + 제목 1줄 + 설명 1~2문장",
+    "checklist": "표지(제목·부제) → 안쪽 장마다 제목 1줄 + 짧은 체크 항목 3개",
+    "quote": "표지(감성 제목·부제) → 안쪽 장마다 짧은 감성 문장 1개 + 작은 제목",
+}
+
+
+def _guideline_rules():
+    """현지 시장 분석 탭의 생성 프롬프트 규칙(prompt_rules). 읽지 못하면 []"""
+    try:
+        from market_analysis.public import get_content_guidelines
+        return [str(rule) for rule in get_content_guidelines("VN").get("prompt_rules") or [] if str(rule).strip()]
+    except Exception:  # noqa: BLE001  다른 탭 오류로 프롬프트 만들기가 멈추지 않게 합니다.
+        return []
+
+
+def _draft_lines(doc):
+    lines = []
+    for index, page in enumerate(doc.get("pages") or []):
+        content = _page_content(page)
+        parts = [content.get("title", "")]
+        if index == 0:
+            parts.append(content.get("subtitle", ""))
+        elif doc.get("template") == "checklist" and content.get("checks"):
+            parts.append(" / ".join(content["checks"]))
+        elif doc.get("template") == "quote":
+            parts.append(content.get("quote") or content.get("body", ""))
+        else:
+            parts.append(content.get("body", ""))
+        label = "1장(표지)" if index == 0 else f"{index + 1}장"
+        lines.append(f"- {label}: " + " | ".join(part for part in parts if part))
+    return lines
+
+
+def build_cardnews_prompt(request, doc=None, language="vi"):
+    """마케터가 원하는 바로 카드뉴스 생성 프롬프트를 만듭니다. (프롬프트, 기본 지침을 받았는지)
+
+    순서는 README 4-3: 기본 지침(현지 시장 분석 prompt_rules) → 템플릿·장 구성 → 지금 초안(참고) → 요청 → 출력 형식.
+    기본 지침이 비어 있으면 지어내지 않고 "준비 중"이라고 적습니다.
+    """
+    language = language if language in LANGUAGES else "vi"
+    doc = doc if isinstance(doc, dict) and doc.get("kind") == "cardnews" and doc.get("pages") else None
+    template = doc.get("template") if doc and doc.get("template") in TEMPLATES else DEFAULT_TEMPLATE
+    ratio = doc.get("ratio") if doc and doc.get("ratio") in CARDNEWS_RATIOS else DEFAULT_RATIO
+    pages = len(doc["pages"]) if doc else DEFAULT_PAGES
+    rules = _guideline_rules()
+
+    lines = [f"너는 베트남 시장에 진출한 한국 찹쌀떡 브랜드 {BRAND}(한정선)의 인스타그램 카드뉴스 카피라이터야.", "",
+             "[기본 지침 - 항상 지킬 것]"]
+    if rules:
+        lines += [f"- {rule}" for rule in rules]
+    else:
+        lines.append("- (현지 시장 분석 탭의 기본 지침이 아직 준비 중입니다. 금기 표현·색·차별 표현은 사람이 직접 확인해 주세요.)")
+    lines += ["- 아래 요청이 기본 지침과 부딪히면 기본 지침을 따른다.", "",
+              "[형식]",
+              f"- 인스타그램 카드뉴스 {pages}장, 비율 {ratio}, 템플릿 {TEMPLATES[template]}",
+              f"- 구성: {CARD_STRUCTURE[template]}"]
+    if doc:
+        lines += ["", "[지금 초안 문구 - 참고용, 바꿔도 됨]", *_draft_lines(doc)]
+    lines += ["", "[요청]", str(request).strip(), "",
+              "[출력 형식]",
+              "- 장마다 \"N장 / 제목 / 본문\" 순서로 쓴다." + (" (본문 자리에 체크 항목 3개)" if template == "checklist" else ""),
+              "- 제목은 한 줄, 본문은 1~2문장으로 짧게 쓴다.",
+              f"- {LANGUAGES[language]}"]
+    return "\n".join(lines), bool(rules)
