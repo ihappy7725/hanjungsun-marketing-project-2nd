@@ -147,4 +147,6 @@ def upload_photo():
 def uploaded_photo(name):
     if not UPLOAD_NAME_RE.match(name):
         return _error("사진을 찾을 수 없습니다.", 404)
-    return send_from_directory(_upload_dir(), name)
+    # Windows는 webp 종류를 몰라 직접 지정합니다.
+    mimetype = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[name.rsplit(".", 1)[1]]
+    return send_from_directory(_upload_dir(), name, mimetype=mimetype)
