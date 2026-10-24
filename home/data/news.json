@@ -72,6 +72,42 @@
         }
       ],
       "verification_notes": "시청 보도자료와 별도 작성자의 신문 보도를 대조했습니다. 개최 기간 10/28~10/30은 시청 보도자료에서 확인했고, 식음료 포함 4개 분야는 9월 신문 보도에서만 확인되며 당시 표현은 추진 예정이었습니다. 시청 보도자료에는 분야 목록이 없어 두 자료의 확인 범위가 다릅니다. 장소·참여 자격·신청 방법·마감일은 어느 자료에서도 확인하지 못했습니다. 한정선의 참여 가능 여부와 상담 성과는 확인 범위 밖이며, 참여를 권유하거나 보장하는 자료가 아닙니다."
+    },
+    {
+      "news_id": "vn_nutrition_labeling_tt30_2026",
+      "country": "VN",
+      "title": "베트남, 포장식품 영양성분 표시 의무 규정 시행",
+      "official_title": "Thông tư số 30/2026/TT-BYT — Hướng dẫn nội dung, cách ghi thành phần dinh dưỡng, giá trị dinh dưỡng trên nhãn thực phẩm",
+      "published_at": "2026-07-09",
+      "verified_at": "2026-10-24",
+      "region": "베트남 전국",
+      "tags": ["포장 표시", "식품 규제", "라벨"],
+      "summary": "베트남 보건부가 2026년 7월 9일 공포하고 7월 10일 시행한 규정입니다. 베트남에서 생산·수입·유통되는 포장식품은 에너지(kcal), 단백질(g), 탄수화물(g), 지방(g), 나트륨(mg) 5개 항목을 라벨에 표시해야 합니다. 설탕을 넣은 식품은 총당류를, 튀김 조리 식품은 포화지방을 추가로 표시합니다. 표시 기준은 100g 또는 100ml, 1회 제공량, 1포장당 중 하나입니다. 기존 29/2023/TT-BYT는 폐지되었고, 2026년 1월 1일 이전에 생산·유통된 제품은 유통기한까지 기존 라벨로 유통할 수 있습니다. 소비자에게 직접 판매하지 않는 원료, 단일 원료 식품, 생수, 소금, 식초, 향료·첨가물, 건강기능식품, 주류, 소규모 영세 생산 식품 등은 적용 대상에서 제외됩니다.",
+      "suggestion": "선물세트 포장 시안에 해당 표시 항목이 들어가 있는지 확인해봅니다. 제품이 적용 대상인지, 가당 식품이나 튀김 조리 식품에 해당해 추가 항목이 필요한지는 원료 구성과 제조 방식에 따라 달라지므로 OEM 공장과 현지 인증·법무 담당에 확인이 필요합니다. 한정선 제품의 적용 여부와 해당 범주는 이 자료로 확인되지 않았습니다.",
+      "source": "베트남 정부 법령 포털 · 보건부",
+      "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/30-byt.signed.pdf",
+      "is_demo": false,
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "sources": [
+        {
+          "publisher": "베트남 보건부 · 정부 법령 포털",
+          "title": "Thông tư số 30/2026/TT-BYT (서명 원문)",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/30-byt.signed.pdf",
+          "published_at": "2026-07-09",
+          "role": "primary",
+          "supports": "제5조의 의무 표시 5개 항목과 가당 식품의 총당류·튀김 식품의 포화지방 추가 표시, 제6조의 표시 단위, 제7조의 2026-07-10 시행 및 29/2023/TT-BYT 폐지, 제8조 경과 규정, 제1조의 적용 제외 목록. 원문 PDF를 내려받아 조문을 직접 확인"
+        },
+        {
+          "publisher": "VietNamNet · Võ Thu",
+          "title": "Vì sao WHO khuyến nghị dán cảnh báo dinh dưỡng ở mặt trước bao bì?",
+          "url": "https://vietnamnet.vn/vi-sao-who-khuyen-nghi-dan-canh-bao-dinh-duong-o-mat-truoc-bao-bi-2563662.html",
+          "published_at": "2026-10-11",
+          "role": "independent_corrob",
+          "supports": "별도 작성자의 기사에서 Thông tư 30/2026의 의무 표시 5개 항목과 일부 품목군의 총당류·포화지방 추가 표시를 대조 확인"
+        }
+      ],
+      "verification_notes": "정부 법령 포털에서 서명된 원문 PDF를 내려받아 제1·5·6·7·8조를 직접 추출해 확인했습니다. 포털 문서 정보에서 공포일 2026-07-09, 시행일 2026-07-10, 서명자 Đỗ Xuân Tuyên을 확인했습니다. 독립 교차는 VietNamNet 기사로 확인했으나 이 기사에는 시행일이 적혀 있지 않아 시행일은 법령 원문으로만 확인했습니다. 적용 제외 목록이 있어 제품별 적용 여부는 개별 판단이 필요하며, 한정선 제품의 해당 범주와 적용 여부는 확인 범위 밖입니다. 이 자료는 규정 내용을 정리한 것이며 법률 자문이 아닙니다."
     }
   ]
 }
