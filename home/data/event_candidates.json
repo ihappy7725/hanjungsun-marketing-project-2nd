@@ -11,7 +11,10 @@
   },
   "research_scope": {
     "country": "VN",
-    "holiday_and_event_regions": ["베트남 전국", "다낭"],
+    "holiday_and_event_regions": [
+      "베트남 전국",
+      "다낭"
+    ],
     "fruit_regions": "베트남 전 지역",
     "fruit_note": "생산지·품종·수확/출하 시기를 구분한다. 제철 정보만으로 OEM 공장의 실제 조달 가능성이나 냉동 원료 공급 기간을 확정하지 않는다."
   },
@@ -72,6 +75,72 @@
       "source_urls": [
         "https://khuyennongvn.gov.vn/portals/0/tailieu/2019/11/hangweb/ruot_tap_chi_khuyen_nong_so_062019_gui_0110.pdf"
       ]
+    },
+    {
+      "candidate_id": "vn_culture_day_2026",
+      "verification_status": "verified",
+      "registration_status": "pending_approval",
+      "event": {
+        "event_id": "vn_culture_day_2026",
+        "country": "VN",
+        "name": "베트남 문화의 날",
+        "official_name": "Ngày Văn hóa Việt Nam",
+        "type": "holiday",
+        "year": 2026,
+        "start_date": "2026-11-24",
+        "end_date": "2026-11-24",
+        "date_precision": "day",
+        "original_period": "매년 11월 24일. 2026년은 11월 24일 화요일 1일",
+        "region": "베트남 전국 · 다낭 포함",
+        "applies_to": "국회 결의가 정한 전국 근로자 유급휴일. 2026년 공공부문은 11월 24일 하루 휴무이며 대체 근무일 교환은 적용하지 않음",
+        "description": "2026년 신설되어 2026년 7월 1일 시행된 유급휴일입니다. 2026년에는 화요일 하루만 쉬며, 23일 월요일을 28일 토요일과 바꾸어 4일 연휴로 만드는 방안은 채택되지 않았습니다. 민간 사업장의 운영 방식은 사업장별로 확인해야 합니다.",
+        "schedule_nature": "국회 결의로 정한 연례 유급휴일",
+        "event_status": "scheduled",
+        "verification_status": "verified",
+        "registration_status": "pending_approval",
+        "verified_at": "2026-10-24",
+        "is_demo": false,
+        "sources": [
+          {
+            "publisher": "베트남 국회 · 정부 법령 포털",
+            "title": "Nghị quyết số 28/2026/QH16 về phát triển văn hóa Việt Nam",
+            "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/nq28phattrienvanhoa.pdf",
+            "published_at": "2026-04-24",
+            "role": "primary",
+            "supports": "제2조 제1항에서 매년 11월 24일을 Ngày Văn hóa Việt Nam으로 정하고 근로자가 휴무하며 급여를 전액 받는다고 규정. 제13조에서 2026-07-01 시행 명시"
+          },
+          {
+            "publisher": "베트남 정부사무처(VPCP)",
+            "title": "10065/VPCP-KGVX — 2026년·2027년 일부 명절·공휴일 휴무 방안",
+            "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf",
+            "published_at": "2026-10-02",
+            "role": "primary",
+            "supports": "제2항에서 내무부 Tờ trình 10137/TTr-BNV(2026-09-14)의 2026년 문화의 날 1일 휴무안 승인. 4일 연휴 교환안은 승인 대상에 없음. 날짜 자체는 이 문서가 아니라 국회 결의로 확정됨"
+          },
+          {
+            "publisher": "Tuổi Trẻ · Thành Chung, Ngọc An",
+            "title": "Ngày 24-11 hằng năm là Ngày Văn hóa Việt Nam, được nghỉ lễ",
+            "url": "https://tuoitre.vn/ngay-24-11-hang-nam-la-ngay-van-hoa-viet-nam-duoc-nghi-le-20260424093114328.htm",
+            "published_at": "2026-04-24",
+            "role": "independent_corrob",
+            "supports": "별도 취재진의 국회 표결 현장 보도(489명 중 477명 찬성, 자체 사진)에서 11월 24일 유급휴일 지정과 2026-07-01 시행일을 대조 확인"
+          }
+        ],
+        "verification_notes": "국회 결의 원문 PDF에서 제2조 제1항과 제13조 시행일을 직접 확인했습니다. 2026년 휴무 일수는 정부사무처 서명 공문 10065/VPCP-KGVX 제2항에서 1일 승인으로 확인했으며, 같은 공문 제1항은 2027년 설 7일안 승인으로 기존 등록 일정과 같은 문서입니다. 정부 결의와 정부 공문은 독립 출처 2개로 세지 않고, 독립 교차는 별도 취재진의 Tuổi Trẻ 보도로 확인했습니다. Tuổi Trẻ는 자체 편집국을 가진 일간지이나 베트남 언론 일반과 같이 국가 계열 매체입니다. 민간 사업장의 실제 휴무 운영과 다낭 현지 영업 여부는 확인 범위 밖입니다."
+      },
+      "review": {
+        "reviewed_at": "2026-10-24",
+        "reviewed_by": "주연",
+        "originals_opened": true,
+        "dates_match": true,
+        "scope_match": true,
+        "independent_sources": true,
+        "latest_notice_checked": true,
+        "conflicts_resolved": true,
+        "comparison_notes": "국회 결의 원문(2026-04-24)과 Tuổi Trẻ 보도(2026-04-24)가 11월 24일·유급휴무·2026-07-01 시행일에서 일치합니다. 2026년 휴무 일수는 정부 공문(2026-10-02)에서 1일로 확정되어, 8~9월에 보도된 4일 연휴안과의 차이가 해소되었습니다. 적용 범위는 전국이며 다낭 한정 자료가 아닙니다.",
+        "independence_notes": "정부 결의 PDF와 정부사무처 공문은 모두 정부 1차 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Tuổi Trẻ의 별도 기자(Thành Chung, Ngọc An) 작성 기사로, 정부 포털 보도자료 재게시가 아니라 표결 수치와 자체 사진을 포함한 현장 취재입니다.",
+        "latest_notice_result": "2026-10-24 검색 결과 최신 공지는 2026-10-02 정부사무처 공문 10065/VPCP-KGVX이며 1일 휴무로 확정되었습니다. 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
+      }
     }
   ]
 }

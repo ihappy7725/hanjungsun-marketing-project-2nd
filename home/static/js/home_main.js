@@ -272,7 +272,7 @@ function initialize() {
     $('#collaboration-list').innerHTML = rows.map(c => {
       const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
       return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div>${c.is_demo ? badge('DEMO · 예시 데이터') : ''}<p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
-    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없습니다. 원본 탭에서 전체 협업을 확인할 수 있습니다.'));
+    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.'));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));

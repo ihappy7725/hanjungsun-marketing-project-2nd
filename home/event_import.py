@@ -26,6 +26,8 @@ REVIEW_CHECKS = (
     "latest_notice_checked", "conflicts_resolved",
 )
 REVIEW_NOTES = ("reviewed_by", "comparison_notes", "independence_notes", "latest_notice_result")
+# 베트남 정부 원문이 실제로 올라오는 공식 도메인입니다. 법령 포털은 gov.vn이 아니라 chinhphu.vn입니다.
+GOVERNMENT_DOMAINS = ("gov.vn", "chinhphu.vn", "quochoi.vn")
 
 
 class ReviewError(Exception):
@@ -68,6 +70,12 @@ def _no_secrets(value):
             raise ReviewError("인증값이나 API 호출 주소를 자료에 넣을 수 없습니다.")
 
 
+def _government_host(url):
+    """1차 출처가 정부 공식 도메인인지 확인합니다. 이름만 비슷한 외부 도메인은 인정하지 않습니다."""
+    host = (urlsplit(url).hostname or "").casefold()
+    return any(host == domain or host.endswith("." + domain) for domain in GOVERNMENT_DOMAINS)
+
+
 def reviewed_event(candidate):
     """사람이 작성한 검증 기록을 검사하고 등록 미리보기용 복사본을 반환합니다."""
     _no_secrets(candidate)
@@ -91,7 +99,7 @@ def reviewed_event(candidate):
     _validate_event_document({"schema_version": 1, "events": [result]})
     if result["type"] in {"holiday", "anniversary"}:
         primary = [s for s in result["sources"] if s.get("role") == "primary"]
-        if not any((urlsplit(s["url"]).hostname or "").endswith(".gov.vn") for s in primary):
+        if not any(_government_host(s["url"]) for s in primary):
             raise ReviewError("공휴일·기념일은 베트남 정부 원문 출처가 필요합니다.")
     return result
 
@@ -180,9 +188,12 @@ def register(candidate_id, confirm=None):
         _print({"saved": "calendar_event", "event_id": event["event_id"]})
 
 
-def classify(types):
+def classify(types, name=""):
     """제공업체의 유형은 임시 분류입니다. 최종 유형·휴무 여부를 확정하지 않습니다."""
     if not isinstance(types, list) or not all(isinstance(t, str) for t in types):
+        return "review_required"
+    # 연휴 보상 근무일은 제공업체가 observance로 주지만 쉬는 날이 아니므로 사람이 확인합니다.
+    if not isinstance(name, str) or "working day" in name.casefold():
         return "review_required"
     labels = {t.casefold().strip() for t in types}
     # 근무일·지역 휴일·종교일 등은 별도 확인이 필요하므로 자동 공휴일 처리하지 않습니다.
@@ -242,7 +253,7 @@ def collect(year, request_api=False):
         if valid.year != year or valid.isoformat() != value:
             raise ReviewError("요청 연도와 API 날짜가 일치하지 않습니다.")
         preview.append({"provider_name": name.replace(key, "[REDACTED]"), "provider_date": value,
-                        "provisional_classification": classify(types),
+                        "provisional_classification": classify(types, name),
                         "verification_status": "unverified", "calendar_eligible": False})
     _print({"country": "VN", "year": year, "count": len(preview), "items": preview,
             "notice": "API 1회 호출 결과의 임시 분류. 파일 저장·원문 검증·캘린더 등록은 하지 않았습니다."})
