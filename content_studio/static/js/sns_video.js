@@ -15,6 +15,9 @@ const STYLE_LABELS = {
   vlog: "브이로그·리뷰",
   energetic: "역동적 숏폼",
   retro: "레트로",
+  fantasy: "판타지 변신",
+  miniature: "미니어처 월드",
+  asmr: "ASMR 클로즈업",
 };
 
 // "3-6s" → 6

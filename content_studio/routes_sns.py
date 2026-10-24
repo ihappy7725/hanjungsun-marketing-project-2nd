@@ -18,7 +18,7 @@ from .products import PRODUCTS, get_product
 from .videos import make_draft, normalize_scenes, refresh_prompts, revise_draft
 
 TABS = ("poster", "cardnews", "video")
-REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·레트로로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
+REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
 DEFAULT_RATIO = {"video": "9:16", "poster": "4:5", "cardnews": "4:5"}
 DESIGN_KINDS = ("poster", "cardnews")  # 만들기·고치기 규칙은 희주 designs.py
 
