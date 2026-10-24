@@ -51,7 +51,8 @@ DEFAULT_SETTINGS = {
     "guideKo": "- 영상 시작과 진행 중에 광고·협찬임을 분명히 표시 (예: \"Quảng cáo\" 표기, #QuangCao)\n- 제품을 직접 먹어 본 뒤 실제 경험만 이야기하기\n- 질병 예방·치료 등 건강 효능 표현 금지\n- 게시 전 초안 공유 후 확인받기",
     "guideVi": "- Ghi rõ đây là nội dung quảng cáo/hợp tác ở đầu và trong suốt video (ví dụ: nhãn \"Quảng cáo\", #QuangCao)\n- Chỉ chia sẻ trải nghiệm thật sau khi đã dùng thử sản phẩm\n- Không nêu công dụng phòng hay chữa bệnh của thực phẩm\n- Gửi bản nháp để chúng mình xem trước khi đăng",
     "guideEn": "- Clearly label the content as an ad/sponsored at the start and throughout (e.g. \"Quảng cáo\", #QuangCao)\n- Share only your genuine experience after trying the product\n- No claims that the food prevents or treats any illness\n- Please send a draft for review before posting",
-    "vndPerUsd": 26300, "krwPerUsd": 1400,
+    "vndPerUsd": 26300, "krwPerUsd": 1400,  # 예시값. 환율은 자동으로 가져오지 않고 사용자가 직접 입력합니다
+    "rateSavedAt": "",  # 사용자가 환율을 직접 저장한 날 (비어 있으면 아직 예시값)
 }
 
 # ---------------------------------------------------------------- 시연 데이터 (실제 인물 아님)
@@ -541,6 +542,20 @@ def api_save_reply(influencer_id):
     return jsonify(store.save_influencer(inf))
 
 
+@bp.delete("/api/influencers/<influencer_id>/reply")
+def api_delete_reply(influencer_id):
+    """잘못 입력한 회신 삭제. 상태는 '제안 발송'으로 되돌리고(발송 기록이 없으면 '후보'), 확정 촬영일·게시일은 그대로 둡니다."""
+    inf = store.get_influencer(influencer_id)
+    if not inf:
+        return _error("인플루언서를 찾을 수 없어요", 404)
+    if not inf.get("resp"):
+        return _error("지울 회신이 없어요")
+    inf["resp"] = None
+    if inf.get("status") in ("replied", "negotiating", "declined"):
+        inf["status"] = "sent" if inf.get("sentAt") else "candidate"
+    return jsonify(store.save_influencer(inf))
+
+
 @bp.post("/api/parse-reply")
 def api_parse_reply():
     text = str((request.get_json(silent=True) or {}).get("text") or "").strip()
@@ -584,12 +599,54 @@ def api_save_settings():
         if k in d:
             merged[k] = d[k]
     try:
+        before = settings()
         for k in ("vndPerUsd", "krwPerUsd"):
             merged[k] = _num(merged[k]) or DEFAULT_SETTINGS[k]
+        if any(k in d for k in ("vndPerUsd", "krwPerUsd")) and (merged["vndPerUsd"], merged["krwPerUsd"]) != (before["vndPerUsd"], before["krwPerUsd"]) or d.get("rateConfirm"):
+            merged["rateSavedAt"] = today_str()
+        merged["rateSavedAt"] = str(merged.get("rateSavedAt") or "")[:10]
         merged["deadline"] = _date(merged.get("deadline"))
     except InputError as e:
         return _error(str(e))
     return jsonify(store.save_setting("campaign", merged))
+
+
+CAMPAIGN_PRESET_KEY = "campaign_presets"
+
+
+@bp.get("/api/campaign-presets")
+def api_campaign_presets():
+    """저장해 둔 캠페인 정보 목록 (이름순)."""
+    return jsonify(sorted(store.get_setting(CAMPAIGN_PRESET_KEY, []) or [], key=lambda x: x.get("name", "")))
+
+
+@bp.post("/api/campaign-presets")
+def api_save_campaign_preset():
+    """현재 캠페인 정보를 이름 붙여 저장. 같은 이름이 있으면 overwrite=true일 때만 덮어씁니다."""
+    d = request.get_json(silent=True) or {}
+    name = str(d.get("name") or "").strip()[:40]
+    if not name:
+        return _error("저장할 이름을 입력하세요")
+    data = d.get("data") if isinstance(d.get("data"), dict) else {}
+    allowed = {k: v for k, v in data.items() if k in DEFAULT_SETTINGS and k not in ("vndPerUsd", "krwPerUsd", "rateSavedAt")}
+    presets = store.get_setting(CAMPAIGN_PRESET_KEY, []) or []
+    hit = next((p for p in presets if p.get("name") == name), None)
+    if hit and not d.get("overwrite"):
+        return jsonify({"exists": True, "name": name}), 409
+    if len(presets) >= 30 and not hit:
+        return _error("저장된 캠페인이 30개예요. 쓰지 않는 것을 지운 뒤 저장하세요")
+    item = {"name": name, "data": {k: (str(v)[:2000] if v is not None else "") for k, v in allowed.items()}, "saved_at": today_str()}
+    presets = [p for p in presets if p.get("name") != name] + [item]
+    store.save_setting(CAMPAIGN_PRESET_KEY, presets)
+    return jsonify(sorted(presets, key=lambda x: x.get("name", "")))
+
+
+@bp.delete("/api/campaign-presets")
+def api_delete_campaign_preset():
+    name = str((request.get_json(silent=True) or {}).get("name") or "")
+    presets = [p for p in (store.get_setting(CAMPAIGN_PRESET_KEY, []) or []) if p.get("name") != name]
+    store.save_setting(CAMPAIGN_PRESET_KEY, presets)
+    return jsonify(sorted(presets, key=lambda x: x.get("name", "")))
 
 
 @bp.post("/api/demo/seed")
@@ -860,6 +917,73 @@ def api_discovery_check():
                     "url": disc.profile_url(platform, k.split(":", 1)[1])})
 
 
+@bp.post("/api/discovery/enrich")
+def api_discovery_enrich():
+    """[지표 채우기] YouTube 후보의 최근 영상으로 조회수 중앙값·참여율을 채웁니다 (채널당 약 3유닛, 최대 25개).
+    다른 플랫폼은 Phyllo(키·권한이 있을 때)로 시도하고, 실패한 행은 그대로 둡니다. 값을 만들지 않습니다."""
+    d = request.get_json(silent=True) or {}
+    rows = [r for r in (d.get("rows") or []) if isinstance(r, dict)][:25]
+    out, failed = [], []
+    for r in rows:
+        r = dict(r)
+        ref = str(r.get("url") or r.get("handle") or "")
+        try:
+            if r.get("platform") == "yt":
+                ch = ext.youtube_channel(ref)
+                if ch.get("subscribers") is not None:
+                    r["followers"] = ch["subscribers"]
+                r["median_views"] = ch.get("median_views")
+                r["er"] = ch.get("er")
+                r["views_basis"] = "median"
+                r["enriched"] = f"최근 영상 {ch.get('videos_used', 0)}개 기준 (참여율은 공식 API 값으로 계산)"
+            elif r.get("platform") in ("tt", "ig"):
+                pr = ext.phyllo_profile(r["platform"], ref)
+                for k_src, k_dst in (("followers", "followers"), ("median_views", "median_views"), ("avg_views", "avg_views"), ("engagement_rate", "er")):
+                    if pr.get(k_src) is not None:
+                        r[k_dst] = pr[k_src]
+                r["source_type"] = "saas"
+                r["provider"] = "Phyllo"
+                r["confidence"] = disc.confidence_of("saas")
+                r["source_label"] = disc.SOURCE_TYPES["saas"]["label"]
+                r["enriched"] = "Phyllo 공개 프로필 분석"
+            else:
+                raise ext.ApiError("이 플랫폼은 자동으로 채울 수 없어요")
+            r["collected_on"] = today_str()
+        except ext.ApiError as e:
+            failed.append({"name": r.get("name") or r.get("handle"), "error": str(e)})
+        out.append(r)
+    f = d.get("filters") or {}
+    if f:
+        for r in out:
+            r.pop("unverified", None)
+        kept = disc.apply_filters(out, {**f, "country_code": "vn" if (f.get("country") or "").lower() in ("vietnam", "vn") else ""})
+    else:
+        kept = out
+    return jsonify({"rows": _mark_duplicates(kept), "removed": len(out) - len(kept), "failed": failed})
+
+
+@bp.post("/api/discovery/fill")
+def api_discovery_fill():
+    """[주소로 지표 채우기] 후보 직접 입력 칸용. YouTube는 공식 API, TikTok·Instagram은 Phyllo(권한이 있을 때)."""
+    d = request.get_json(silent=True) or {}
+    platform, ref = str(d.get("platform") or ""), str(d.get("ref") or "").strip()
+    if not ref:
+        return _error("계정 주소 또는 @핸들을 먼저 넣어 주세요")
+    try:
+        if platform == "yt":
+            ch = ext.youtube_channel(ref)
+            return jsonify({"name": ch["title"], "url": ch["url"], "followers": ch["subscribers"], "median_views": ch["median_views"],
+                            "avg_views": None, "er": ch.get("er"), "source": "manual|YouTube API", "provider": "YouTube API",
+                            "source_type": "official_api", "note": ch.get("note", "")})
+        if platform in ("tt", "ig"):
+            pr = ext.phyllo_profile(platform, ref)
+            return jsonify({"name": "", "url": "", "followers": pr["followers"], "median_views": pr["median_views"], "avg_views": pr["avg_views"],
+                            "er": pr["engagement_rate"], "provider": "Phyllo", "source_type": "saas", "note": pr.get("note", "")})
+        return _error("Facebook은 자동으로 채울 수 없어요. 직접 입력해 주세요")
+    except ext.ApiError as e:
+        return _error(str(e) + " — 직접 입력해 주세요")
+
+
 def _record_from_input(r):
     platform = r.get("platform") if r.get("platform") in PLATFORM_NAME else None
     if not platform:
@@ -930,6 +1054,7 @@ def api_snapshots(influencer_id):
 
 DISC_HEAD = ["플랫폼", "계정 주소 또는 핸들", "이름", "팔로워", "조회수 중앙값", "평균 조회수", "참여율(%)", "베트남 시청자 비중(%)",
              "콘텐츠 언어", "활동 국가", "출처", "수집일", "분야", "메모"]
+MAX_UPLOAD_READ = 5 * 1024 * 1024 + 1  # 5MB 초과 여부만 알면 되므로 그 이상은 읽지 않음
 DISC_SOURCE = {"직접 확인": "manual", "TikTok One 화면 확인": "manual", "인플루언서 제출": "submitted", "에이전시 자료": "submitted"}
 
 
@@ -942,38 +1067,85 @@ def export_discovery_template():
 
 @bp.post("/api/discovery/import-csv")
 def api_discovery_import_csv():
-    """발굴 후보 CSV를 읽어 미리보기로 돌려줍니다 (아직 저장하지 않음). 저장은 /api/discovery/register."""
+    """발굴 후보 파일(CSV·TSV)을 정제해 미리보기로 돌려줍니다 (아직 저장하지 않음). 저장은 /api/discovery/register.
+
+    우리 양식뿐 아니라 SaaS 내보내기·에이전시 자료처럼 열 이름·숫자 표기·인코딩이 다른 파일도 정제합니다.
+    선택 입력(form): source = '' | 'saas' | 'submitted' | 'manual', provider = 제공처 이름, platform = 기본 플랫폼, demo = '1'
+    응답: rows, errors (기존 필드) + report (정제 결과 요약, 추가 필드)
+    """
     f = request.files.get("file")
     if not f:
         return _error("CSV 파일을 골라 주세요")
-    reader = csv.DictReader(io.StringIO(f.read().decode("utf-8-sig", errors="replace")))
-    heads = [h.strip() for h in (reader.fieldnames or [])]
-    if "플랫폼" not in heads or "계정 주소 또는 핸들" not in heads:
-        return _error("첫 줄에 '플랫폼'과 '계정 주소 또는 핸들' 열이 필요해요. 발굴 후보 CSV 양식을 쓰세요")
-    pname = {v.lower(): k for k, v in PLATFORM_NAME.items()}
-    rows, errors = [], []
-    for n, raw in enumerate(reader, start=2):
-        row = {(k or "").strip(): (v or "").strip().removeprefix("'") for k, v in raw.items()}
-        if not row.get("계정 주소 또는 핸들") or row.get("메모", "").startswith("이 줄은 예시"):
-            continue
-        num = lambda s: re.sub(r"[^\d.]", "", s or "")  # noqa: E731
-        src = row.get("출처", "")
-        raw_rec = {"platform": pname.get(row.get("플랫폼", "").lower(), ""), "url": row["계정 주소 또는 핸들"], "name": row.get("이름", ""),
-                   "followers": num(row.get("팔로워")), "median_views": num(row.get("조회수 중앙값")), "avg_views": num(row.get("평균 조회수")),
-                   "er": num(row.get("참여율(%)")), "vn_audience": num(row.get("베트남 시청자 비중(%)")), "language": row.get("콘텐츠 언어", ""),
-                   "country": row.get("활동 국가", ""), "source_type": DISC_SOURCE.get(src, "manual"),
-                   "provider": "TikTok One (화면 확인)" if "TikTok One" in src else src, "collected_on": row.get("수집일", ""),
-                   "category": row.get("분야", ""), "notes": row.get("메모", "")}
+    form = request.form
+    st = form.get("source", "")
+    st = st if st in ("saas", "submitted", "manual") else ""
+    platform = form.get("platform", "") if form.get("platform", "") in PLATFORM_NAME else ""
+    try:
+        records, errors, report = disc.cleanse_file(f.read(MAX_UPLOAD_READ), source_type=st, provider=str(form.get("provider", ""))[:60],
+                                                    default_platform=platform, is_demo=form.get("demo") == "1", today=today_str())
+    except ValueError as e:
+        return _error(str(e))
+    rows = []
+    for raw_rec in records:
+        line, issues = raw_rec.pop("_line"), raw_rec.pop("_issues")
         try:
             rec = _record_from_input(raw_rec)
-            rec["confidence"] = disc.confidence_of(rec["source_type"])
-            rec["source_label"] = disc.SOURCE_TYPES[rec["source_type"]]["label"]
-            rec["views_basis"] = "median" if rec["median_views"] is not None else ("average" if rec["avg_views"] is not None else "")
-            rec["unverified"] = []
-            rows.append(rec)
         except InputError as e:
-            errors.append({"line": n, "error": str(e)})
-    return jsonify({"rows": _mark_duplicates(rows), "errors": errors})
+            errors.append({"line": line, "error": str(e)})
+            continue
+        rec["confidence"] = disc.confidence_of(rec["source_type"])
+        rec["source_label"] = disc.SOURCE_TYPES[rec["source_type"]]["label"]
+        rec["views_basis"] = "median" if rec["median_views"] is not None else ("average" if rec["avg_views"] is not None else "")
+        rec["unverified"] = []
+        rec["cleansing"] = issues
+        rec["line"] = line
+        rows.append(rec)
+    report["rows_ok"] = len(rows)
+    report["row_errors"] = len(errors)
+    return jsonify({"rows": _mark_duplicates(rows), "errors": errors, "report": report})
+
+
+# ---------------------------------------------------------------- 인기 순위 (공식 API만 사용, 크롤링 없음)
+RANKING_SETTING_KEY = "ranking_last"
+
+
+@bp.get("/api/discovery/ranking")
+def api_discovery_ranking_get():
+    """순위 종류 목록과 마지막으로 가져온 순위(있으면)."""
+    return jsonify({"kinds": disc.ranking_kinds(), "sizes": list(disc.RANKING_SIZES), "last": store.get_setting(RANKING_SETTING_KEY)})
+
+
+@bp.post("/api/discovery/ranking")
+def api_discovery_ranking():
+    """공식 API로 인기 순위를 가져와 기준 시각과 함께 저장합니다. 등록은 /api/discovery/register."""
+    d = request.get_json(silent=True) or {}
+    try:
+        rows, meta = disc.build_ranking(str(d.get("kind") or ""), d.get("size") or 50,
+                                        d.get("platform") if d.get("platform") in PLATFORM_NAME else "tt", str(d.get("keyword") or "")[:80],
+                                        food_only=d.get("food_only", True) is not False)
+    except ext.ApiError as e:
+        return _error(str(e))
+    except (TypeError, ValueError):
+        return _error("순위 개수는 30·50·100 중에서 고르세요")
+    except Exception as e:
+        return _error(f"처리 중 문제가 생겼어요: {type(e).__name__}", 500)
+    data = {"rows": _mark_duplicates(rows), "meta": meta}
+    store.save_setting(RANKING_SETTING_KEY, data)
+    return jsonify(data)
+
+
+@bp.get("/export/ranking.csv")
+def export_ranking():
+    last = store.get_setting(RANKING_SETTING_KEY) or {}
+    meta, rows = last.get("meta") or {}, last.get("rows") or []
+    at = meta.get("collected_at") or {}
+    head = ["순위", "플랫폼", "이름", "계정", "주소", "팔로워·구독자", "영상 제목", "영상 조회수", "영상 주소", "출처", "신뢰도",
+            "등록 여부", "순위 종류", "집계 기준", "기준 시각(한국)", "기준 시각(베트남)", "기준 시각(UTC)"]
+    out = [[r.get("rank"), PLATFORM_NAME.get(r.get("platform"), ""), r.get("name"), r.get("handle"), r.get("url"), r.get("followers"),
+            r.get("video_title", ""), r.get("video_views", ""), r.get("video_url", ""), r.get("provider"), r.get("source_label"),
+            "등록됨" if r.get("duplicate") else "신규", meta.get("label", ""), meta.get("basis", ""), at.get("kst", ""), at.get("ict", ""),
+            at.get("utc", "")] for r in rows]
+    return _csv_response(f"influencer_ranking_{_stamp()}.csv", head, out)
 
 
 @bp.post("/api/integrations/modash/test")
