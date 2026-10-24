@@ -179,8 +179,14 @@ function initialize() {
     }).join('<br>');
     return `${esc(e.source_name || '출처 정보 미제공')}${safeUrl(e.source_url) ? ` <a href="${esc(safeUrl(e.source_url))}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : ''}`;
   }
+  function monthly(e) { return e?.date_precision === 'month'; }
+  function eventPeriod(e) {
+    // 월 단위 자료는 달까지만 보여 주어 확인되지 않은 일 단위 기간으로 읽히지 않게 합니다.
+    const from = monthly(e) ? String(e.start).slice(0, 7) : e.start, to = monthly(e) ? String(e.end).slice(0, 7) : e.end;
+    return `${esc(from)}${to !== from ? ` ~ ${esc(to)}` : ''}`;
+  }
   function eventSummary(e) {
-    return `<p class="home-signal-meta">${esc(e.start)}${e.end !== e.start ? ` ~ ${esc(e.end)}` : ''}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
+    return `<p class="home-signal-meta">${eventPeriod(e)}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
   }
   function showLocalEvent(eventId) {
     const e = localEvents().find(item => item.event_id === eventId);
