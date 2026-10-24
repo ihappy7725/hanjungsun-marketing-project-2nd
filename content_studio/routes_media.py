@@ -1,4 +1,4 @@
-"""사진 업로드, 배경 제거(rembg), 숏폼 콘티, 광고 표현 검수. [희주]
+"""사진 업로드, 배경 제거(rembg), 숏폼 콘티, 광고 표현 검수, 카드뉴스 프롬프트 만들기. [희주]
 
 API는 /content_studio/media/api/... 아래에 둡니다. 예: @bp.route("/media/api/remove-bg", methods=["POST"])
 업로드·결과 파일은 instance/uploads/content_studio/, instance/exports/content_studio/ 에 저장합니다.
@@ -11,7 +11,9 @@ from flask import current_app, jsonify, request, send_from_directory
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from . import bp
+from .designs import build_cardnews_prompt, design_texts
 
+REVIEW_DISCLAIMER = "광고 표현·문화 참고 안내입니다. 법적 판단이 아닙니다."
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 EXTENSIONS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 MAX_SIDE = 4096
@@ -150,3 +152,45 @@ def uploaded_photo(name):
     # Windows는 webp 종류를 몰라 직접 지정합니다.
     mimetype = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[name.rsplit(".", 1)[1]]
     return send_from_directory(_upload_dir(), name, mimetype=mimetype)
+
+
+# ---------- 광고 표현 검수 (README 6장) ----------
+# 기준은 현지 시장 분석 탭(market_analysis/public.py)의 check_ad_copy를 그대로 씁니다.
+@bp.route("/media/api/review", methods=["POST"])
+def review_copy():
+    body = request.get_json(silent=True) or {}
+    texts = design_texts(body["design"]) if isinstance(body.get("design"), dict) else []
+    if isinstance(body.get("text"), str) and body["text"].strip():
+        texts.append(body["text"].strip())
+    if not texts:
+        return _error("검수할 글이 없습니다.")
+
+    try:
+        from market_analysis.public import check_ad_copy, get_content_guidelines
+        guidelines = get_content_guidelines("VN") or {}
+        findings = []
+        for text in texts:  # 어느 문구에서 걸렸는지 보여주려고 글마다 따로 검사합니다.
+            for finding in check_ad_copy(text, "VN"):
+                findings.append({**finding, "text": text})
+    except Exception:  # noqa: BLE001  다른 탭 오류로 내 화면이 멈추지 않게 합니다.
+        current_app.logger.exception("광고 표현 검수 실패")
+        return _error("광고 표현 검수를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.", 500)
+
+    return jsonify({
+        "ok": True,
+        "ready": bool(guidelines.get("avoid_expressions")),  # 기준이 비어 있으면 "문제 없음"이 아닙니다.
+        "disclaimer": guidelines.get("disclaimer") or REVIEW_DISCLAIMER,
+        "checked": len(texts),
+        "findings": findings,
+    })
+
+
+# ---------- 카드뉴스 프롬프트 만들기 ----------
+@bp.route("/media/api/cardnews-prompt", methods=["POST"])
+def cardnews_prompt():
+    body = request.get_json(silent=True) or {}
+    wish = (body.get("request") or "").strip() if isinstance(body.get("request"), str) else ""
+    if not wish:
+        return _error("원하는 내용을 입력해 주세요.")
+    prompt, rules_ready = build_cardnews_prompt(wish, body.get("design"), body.get("language"))
+    return jsonify({"ok": True, "prompt": prompt, "rules_ready": rules_ready})

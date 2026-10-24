@@ -11,6 +11,8 @@ const LINE = 1.2;     // 줄 간격 (글자 크기의 배수)
 const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
 const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
+const REVIEW_API = "/content_studio/media/api/review";
+const PROMPT_API = "/content_studio/media/api/cardnews-prompt";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -111,10 +113,12 @@ export function renderDesign(root, doc, { onSave } = {}) {
   const bar = el("div", "studio-editor-bar");
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
+  const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
+  review.hidden = true;
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  wrap.append(pagesBar, bar, view);
+  wrap.append(pagesBar, bar, view, review);
   root.replaceChildren(wrap);
 
   const find = (id) => page.elements.find((item) => item.id === id);
@@ -487,7 +491,9 @@ export function renderDesign(root, doc, { onSave } = {}) {
     }
 
     const multi = draft.pages.length > 1;
-    tools.push(el("span", "studio-editor-spacer"), status,
+    tools.push(el("span", "studio-editor-spacer"), status, button("검수", runReview));
+    if (draft.kind === "cardnews") tools.push(button("프롬프트 만들기", openPrompt));
+    tools.push(
       button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
       button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
     if (multi) tools.push(button("모든 장 PNG", downloadAll));
@@ -502,6 +508,111 @@ export function renderDesign(root, doc, { onSave } = {}) {
     } catch (error) {
       status.textContent = `내려받지 못했습니다. (${error.message})`;
     }
+  }
+
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({ ok: false }));
+    if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
+    return data;
+  }
+
+  // ---------- 광고 표현 검수 (README 6장) ----------
+  // 모든 장의 글을 현지 시장 분석 탭 기준으로 검사합니다. 참고 안내이며 법적 판단이 아닙니다.
+  async function runReview() {
+    review.hidden = false;
+    review.replaceChildren(el("p", "", "검수하는 중…"));
+    try {
+      renderReview(await postJson(REVIEW_API, { design: draft }));
+    } catch (error) {
+      review.replaceChildren(el("p", "is-error", error.message), button("닫기", () => { review.hidden = true; }));
+    }
+  }
+
+  function renderReview(data) {
+    const nodes = [el("h3", "", "광고 표현 검수")];
+    if (!data.ready) {
+      nodes.push(el("p", "is-warn",
+        "검수 기준이 아직 준비되지 않았습니다. (현지 시장 분석 탭에서 준비 중) 걸린 표현이 없어도 '문제 없음'이 아닙니다."));
+    } else if (!data.findings.length) {
+      nodes.push(el("p", "", `걸린 표현이 없습니다. (글 ${data.checked}개 확인)`));
+    } else {
+      const list = el("ul", "studio-editor-findings");
+      for (const finding of data.findings) {
+        const block = finding.severity === "block";
+        const li = el("li", block ? "is-block" : "is-warn");
+        const head = el("p");
+        head.append(el("b", "", block ? "사용 금지" : "주의"), ` ${finding.matched.map((m) => m.keyword).join(", ")}`);
+        li.append(head, el("p", "studio-hint", `문구: ${finding.text}`));
+        if (finding.reason) li.append(el("p", "", `이유: ${finding.reason}`));
+        if (finding.suggestion) li.append(el("p", "", `바꿔 쓰기: ${finding.suggestion}`));
+        if (!finding.verified) li.append(el("p", "studio-hint", "원문 조항 미확인"));
+        for (const source of finding.sources || []) {
+          if (!/^https?:\/\//.test(source.url || "")) continue;
+          const link = el("a", "", source.title || source.url);
+          link.href = source.url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          li.append(link);
+        }
+        list.append(li);
+      }
+      nodes.push(list);
+    }
+    nodes.push(el("p", "studio-hint", data.disclaimer), button("닫기", () => { review.hidden = true; }));
+    review.replaceChildren(...nodes);
+  }
+
+  // ---------- 카드뉴스 프롬프트 만들기 ----------
+  // 원하는 바 + 기본 지침 + 템플릿 + 지금 초안으로 프롬프트를 만들고, 복사해서 ChatGPT·Canva에 붙여 넣어 씁니다.
+  function openPrompt() {
+    const dialog = el("dialog", "studio-editor-prompt");
+    const close = button("×", () => dialog.close(), "close");
+    close.setAttribute("aria-label", "닫기");
+    const wish = el("textarea");
+    wish.rows = 4;
+    wish.placeholder = "예: 베트남 여성의 날 선물로 망고스틴 찹쌀떡 소개, 20~30대 여성, 따뜻하고 귀여운 느낌";
+    const language = selectBox("", [["vi", "베트남어"], ["ko", "한국어"], ["vi_ko", "베트남어 + 한국어 번역"]], "vi", () => {});
+    const msg = el("p", "studio-hint");
+    const result = el("textarea", "studio-editor-prompt-result");
+    result.rows = 14;
+    result.readOnly = true;
+    result.hidden = true;
+    const copy = button("복사", async () => {
+      try {
+        await navigator.clipboard.writeText(result.value);
+        msg.textContent = "복사했어요. ChatGPT·Canva에 붙여 넣어 쓰세요.";
+      } catch {
+        result.select();
+        msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
+      }
+    });
+    copy.hidden = true;
+    const make = button("프롬프트 만들기", async () => {
+      if (!wish.value.trim()) { msg.textContent = "원하는 내용을 입력해 주세요."; return; }
+      make.disabled = true;
+      msg.textContent = "만드는 중…";
+      try {
+        const data = await postJson(PROMPT_API, { request: wish.value, design: draft, language: language.value });
+        result.value = data.prompt;
+        result.hidden = copy.hidden = false;
+        msg.textContent = data.rules_ready ? "" : "현지 시장 분석 탭의 기본 지침이 아직 없어 '준비 중'으로 들어갔어요.";
+      } catch (error) {
+        msg.textContent = error.message;
+      } finally {
+        make.disabled = false;
+      }
+    }, "btn dark");
+
+    dialog.append(close, el("h2", "", "카드뉴스 프롬프트 만들기"),
+      el("p", "studio-hint", "원하는 바를 적으면 기본 지침·템플릿·지금 초안을 합쳐 프롬프트를 만들어요."),
+      field("원하는 내용", wish), field("결과 언어", language), make, msg, result, copy);
+    dialog.addEventListener("close", () => dialog.remove());
+    wrap.append(dialog);
+    dialog.showModal();
+    wish.focus();
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
