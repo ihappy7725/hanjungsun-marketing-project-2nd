@@ -124,6 +124,22 @@ DEMO_SURVEY = [
 
 FX_STALE_DAYS = 7  # 환율 기준일이 이보다 오래되면 화면에 주의 표시
 
+# 집행 시뮬레이션용 인플루언서 후보 — 인플루언서 탭 get_quote_summary()가 비었거나 실패할 때만 씁니다. (시연)
+# 필드는 influencer_marketing/public.py get_quote_summary 반환 형식과 같습니다.
+DEMO_INFLUENCER_QUOTES = [
+    {"quote_id": "demo_q_01", "influencer": "@danang.foodie", "platform": "TikTok", "content_format": "숏폼 1편",
+     "price_type": "quote", "amount": 18_000_000, "currency": "VND", "amount_vnd": 18_000_000, "is_demo": True},
+    {"quote_id": "demo_q_02", "influencer": "@banhngot.review", "platform": "Instagram", "content_format": "릴스 1편 + 스토리 2",
+     "price_type": "quote", "amount": 14_000_000, "currency": "VND", "amount_vnd": 14_000_000, "is_demo": True},
+    {"quote_id": "demo_q_03", "influencer": "@hanquoc.daily", "platform": "TikTok", "content_format": "숏폼 1편",
+     "price_type": "public", "amount": 9_500_000, "currency": "VND", "amount_vnd": 9_500_000, "is_demo": True},
+    {"quote_id": "demo_q_04", "influencer": "@mevabe.dn", "platform": "Instagram", "content_format": "피드 1편",
+     "price_type": "contract", "amount": 7_000_000, "currency": "VND", "amount_vnd": 7_000_000, "is_demo": True},
+    {"quote_id": "demo_q_05", "influencer": "@quatang.tet", "platform": "YouTube", "content_format": "쇼츠 1편",
+     "price_type": "public", "amount": 12_000_000, "currency": "VND", "amount_vnd": 12_000_000, "is_demo": True},
+]
+PRICE_TYPE_LABEL = {"public": "공개 참고가", "quote": "견적", "contract": "계약가"}
+
 ROAS_BEP_PERCENT = 300  # 손익분기 기준선 (README 9장)
 
 # ---------------------------------------------------------------------------
@@ -258,19 +274,68 @@ def _fetch_exchange_rate():
 # ---------------------------------------------------------------------------
 
 
-def _read_influencer_quotes():
+def _get_influencer_quotes():
+    """get_quote_summary() 원본 목록. 실패하면 (None, 오류 안내)."""
     try:
         from influencer_marketing.public import get_quote_summary
 
-        quotes = get_quote_summary(include_demo=True) or []
+        return list(get_quote_summary(include_demo=True) or []), None
     except Exception as exc:  # 주인 탭 오류로 내 화면이 멈추지 않게 (README 10장)
-        return {"ok": False, "error": f"인플루언서 단가를 불러오지 못했습니다 ({exc.__class__.__name__})"}
+        return None, f"인플루언서 단가를 불러오지 못했습니다 ({exc.__class__.__name__})"
+
+
+def _read_influencer_quotes():
+    quotes, error = _get_influencer_quotes()
+    if error:
+        return {"ok": False, "error": error}
     counts = {"public": 0, "quote": 0, "contract": 0}
     for q in quotes:
         price_type = (q or {}).get("price_type")
         if price_type in counts:
             counts[price_type] += 1
     return {"ok": True, "total": len(quotes), "counts": counts}
+
+
+def _quote_amount_vnd(q):
+    """VND 금액. amount_vnd가 없으면 통화가 VND일 때만 amount를 씁니다(USD 환산 기준은 README 8장 미정)."""
+    if q.get("amount_vnd") not in (None, ""):
+        return float(q["amount_vnd"])
+    if (q.get("currency") or "").upper() == "VND" and q.get("amount") not in (None, ""):
+        return float(q["amount"])
+    return None
+
+
+def _simulator_influencers():
+    """시뮬레이션 인플루언서 후보와 데이터 상태. 탭 데이터가 없거나 실패하면 시연 후보."""
+    quotes, error = _get_influencer_quotes()
+    status, note = "live", "인플루언서 탭 단가(get_quote_summary)"
+    if error or not quotes:
+        quotes = DEMO_INFLUENCER_QUOTES
+        status = "demo"
+        note = f"{error} 시연 후보를 씁니다." if error else "인플루언서 탭 단가가 아직 없어 시연 후보를 씁니다."
+    options, skipped = [], 0
+    for q in quotes:
+        q = q or {}
+        try:
+            amount_vnd = _quote_amount_vnd(q)
+        except (TypeError, ValueError):
+            amount_vnd = None
+        if not amount_vnd:
+            skipped += 1
+            continue
+        options.append({
+            "id": str(q.get("quote_id") or q.get("collaboration_id") or len(options)),
+            "influencer": q.get("influencer") or "이름 없음",
+            "platform": q.get("platform") or "",
+            "content_format": q.get("content_format") or "",
+            "price_type": q.get("price_type") or "",
+            "price_type_label": PRICE_TYPE_LABEL.get(q.get("price_type"), "단가"),
+            "amount_vnd": round(amount_vnd),
+            "is_demo": bool(q.get("is_demo")) or status == "demo",
+        })
+    if skipped:
+        note += f" (VND 금액이 없는 {skipped}건 제외)"
+    return {"status": status, "note": note, "options": options}
 
 
 # ---------------------------------------------------------------------------
@@ -333,15 +398,33 @@ def _read_ga4_demo_csv(path=GA4_DEMO_CSV):
     if "sessions" not in index:
         raise ValueError("GA4_CSV_NO_SESSIONS")
 
-    data_rows = rows[1:]
-    total_rows = [r for r in data_rows if r and any(t in r[0] for t in ("총계", "합계", "Total", "Grand total"))]
+    data_rows = [r for r in rows[1:] if r]
+    is_total = lambda r: any(t in r[0] for t in ("총계", "합계", "Total", "Grand total"))  # noqa: E731
+    total_rows = [r for r in data_rows if is_total(r)]
     use_rows = total_rows[:1] or data_rows
     totals = {}
     for field, i in index.items():
         values = [_ga4_number(r[i]) for r in use_rows if len(r) > i]
         values = [v for v in values if v is not None]
         totals[field] = round(sum(values)) if values else None
-    return {"period": period, **totals}
+
+    # 채널별 줄 (확대 화면의 채널별 참여율 표·차트용)
+    channels = []
+    for r in data_rows:
+        if is_total(r) or len(r) <= index["sessions"]:
+            continue
+        sessions = _ga4_number(r[index["sessions"]])
+        engaged = _ga4_number(r[index["engaged_sessions"]]) if "engaged_sessions" in index and len(r) > index["engaged_sessions"] else None
+        if sessions is None:
+            continue
+        channels.append({
+            "channel": r[0].strip(),
+            "sessions": round(sessions),
+            "engaged_sessions": round(engaged) if engaged is not None else None,
+            "engagement_rate_percent": _pct(engaged, sessions) if engaged is not None else None,
+        })
+    channels.sort(key=lambda c: c["sessions"], reverse=True)
+    return {"period": period, **totals, "channels": channels}
 
 
 def _build_ga4():
@@ -355,6 +438,7 @@ def _build_ga4():
         "scope": "가상 한정선 사이트",
         "note": "kpi/data/ga4_demo.csv가 없어 시연 값을 씁니다.",
         "purchase_rate_percent": None,
+        "channels": [],
     }
     try:
         demo = _read_ga4_demo_csv()
@@ -372,6 +456,7 @@ def _build_ga4():
             scope="글로벌 데모 (한정선 데이터 아님)",
             note="GA4 데이터 형식 검증용 공개 데모 데이터입니다.",
             purchase_rate_percent=_pct(demo["purchases"], demo["sessions"]) if demo.get("purchases") is not None else None,
+            channels=demo.get("channels") or [],
         )
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
@@ -609,6 +694,23 @@ def index():
 @bp.get("/api/summary")
 def api_summary():
     return jsonify(_build_summary())
+
+
+@bp.get("/api/simulator")
+def api_simulator():
+    """예산 집행 시뮬레이션 재료. 계산은 화면에서 하고 저장하지 않습니다(공식 예산 숫자는 바뀌지 않음)."""
+    summary = _build_summary()
+    b = summary["budget"]
+    return jsonify({
+        "base_rate": DEMO_BUDGET["base_exchange_rate"],
+        "budget": {k: b[k] for k in ("total_krw", "remaining_krw", "remaining_percent")},
+        "channels": [
+            {"channel": c["channel"], "label": c["label"], "roas_percent": c["roas_percent"]}
+            for c in summary["channels"]
+        ],
+        "ad_channels": [c["channel"] for c in DEMO_CHANNELS if c["channel"] != "Influencer"],
+        "influencers": _simulator_influencers(),
+    })
 
 
 @bp.get("/api/voc")

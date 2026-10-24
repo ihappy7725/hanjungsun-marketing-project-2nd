@@ -7,6 +7,7 @@ const API = {
   summary: "/kpi/api/summary",
   voc: "/kpi/api/voc",
   analyze: "/kpi/api/voc/analyze",
+  simulator: "/kpi/api/simulator",
 };
 const charts = {};
 
@@ -61,8 +62,16 @@ function setStatus(name, text, status, title = "") {
   node.title = title;
 }
 
+// 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬합니다.
 function fillRows(name, rows) {
-  $(name).replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c) => (c instanceof Node ? el("td", {}, [c]) : el("td", { text: c }))))));
+  const body = $(name);
+  const heads = body.closest("table")?.querySelectorAll("thead th") || [];
+  const textCols = new Set([...heads].flatMap((th, i) => (th.classList.contains("is-text") ? [i] : [])));
+  body.replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c, i) => {
+    const td = c instanceof Node ? el("td", {}, [c]) : el("td", { text: c });
+    if (textCols.has(i)) td.classList.add("is-text");
+    return td;
+  }))));
 }
 
 // ---------- 차트 ----------
@@ -167,6 +176,13 @@ function renderBudget(data) {
         : `인플루언서 탭 단가 ${link.total}건 연동(견적 ${link.counts.quote} · 계약 ${link.counts.contract}). 예산 반영 기준은 확정 전이라 협찬비는 시연 값입니다.`,
   );
   setText("budget-meta", `출처: 시연 값 · 기간: ${data.campaign_month} · 범위: 베트남 전체 캠페인 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
+
+  // 확대 시: 채널별 집행액과 총 예산 대비 비중
+  const rate = data.fx.base_rate;
+  fillRows("spend-rows", data.channels.map((c) => {
+    const krw = Math.round((c.ad_spend_vnd * rate) / 100);
+    return [c.label, num(c.ad_spend_vnd), krwMan(krw), pct((krw / b.total_krw) * 100), pct(c.roas_percent)];
+  }));
 }
 
 // ---------- ROAS ----------
@@ -237,17 +253,110 @@ function renderGa4(data) {
     g.purchase_rate_percent != null ? `대체 지표(데모): 구매 전환율 ${pct(g.purchase_rate_percent)} — 데모 스토어 값, 쇼피 이동 클릭률을 대신 참고` : "",
   );
   setText("ga4-note", g.note);
-  setStatus("ga4-badge", g.status === "public_demo" ? "공개 데모" : "시연", g.status, g.note);
   const period = g.period && (g.period.start || g.period.end) ? `${g.period.start || "?"} ~ ${g.period.end || "?"}` : "—";
-  setText("ga4-meta", `출처: ${g.source} · 기간: ${period} · 범위: ${g.scope} · 표본: 세션 ${num(g.sessions)}`);
-  fillRows("creator-rows", data.creators.map((c, i) => [String(i + 1), c.creator, c.platform, num(c.clicks), num(c.conversions), pct(c.cvr_percent)]));
+  ga4View.status = g.status;
+  ga4View.note = g.note;
+  ga4View.meta = `출처: ${g.source} · 기간: ${period} · 범위: ${g.scope} · 표본: 세션 ${num(g.sessions)}`;
+  renderGa4Channels(g);
+  renderCreators(data.creators);
+  setGa4Visible($("ga4-panel").hidden === false);
 }
+
+// 확대 시: 유입 채널별 세션·참여율 (GA4 데모 CSV의 채널별 줄)
+function renderGa4Channels(g) {
+  const hasChannels = g.channels && g.channels.length > 0;
+  $("ga4-channel-section").hidden = !hasChannels;
+  $("ga4-channel-empty").hidden = hasChannels;
+  if (!hasChannels) return;
+  setStatus("ga4-channel-badge", g.status === "public_demo" ? "공개 데모" : "시연", g.status);
+  const p = palette();
+  const avg = g.engagement_rate_percent;
+  const rows = g.channels.filter((c) => c.engagement_rate_percent != null);
+  drawChart("ga4-channels", {
+    data: {
+      labels: rows.map((c) => c.channel),
+      datasets: [
+        {
+          type: "bar",
+          label: "채널 참여율(%)",
+          data: rows.map((c) => c.engagement_rate_percent),
+          backgroundColor: rows.map((c) => (avg != null && c.engagement_rate_percent >= avg ? p.green : p.gold)),
+          maxBarThickness: 28,
+        },
+        ...(avg != null
+          ? [{ type: "line", label: `전체 ${pct(avg)}`, data: rows.map(() => avg), borderColor: p.red, borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 }]
+          : []),
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { callback: (v) => `${v}%` }, grid: { color: p.line } },
+        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 30 } },
+      },
+      plugins: { legend: { position: "top", align: "end", labels: { boxWidth: 8 } } },
+    },
+  });
+  fillRows("ga4-channel-rows", g.channels.map((c) => [
+    c.channel,
+    num(c.sessions),
+    pct((c.sessions / g.sessions) * 100),
+    c.engaged_sessions == null ? "—" : num(c.engaged_sessions),
+    pct(c.engagement_rate_percent),
+  ]));
+}
+
+// 크리에이터 전환표 + 확대 시 클릭·전환 막대
+function renderCreators(creators) {
+  const p = palette();
+  fillRows("creator-rows", creators.map((c, i) => [String(i + 1), c.creator, c.platform, num(c.clicks), num(c.conversions), pct(c.cvr_percent)]));
+  const clicks = creators.reduce((s, c) => s + c.clicks, 0);
+  const conversions = creators.reduce((s, c) => s + c.conversions, 0);
+  $("creator-total").replaceChildren(
+    el("td", { text: "합계", className: "is-text" }),
+    el("td", { className: "is-text" }),
+    el("td", { className: "is-text" }),
+    el("td", { text: num(clicks) }),
+    el("td", { text: num(conversions) }),
+    el("td", { text: pct(clicks ? (conversions / clicks) * 100 : null) }),
+  );
+  drawChart("creators", {
+    type: "bar",
+    data: {
+      labels: creators.map((c) => c.creator),
+      datasets: [
+        { label: "링크 클릭", data: creators.map((c) => c.clicks), backgroundColor: p.gold, maxBarThickness: 26, yAxisID: "y" },
+        { label: "전환", data: creators.map((c) => c.conversions), backgroundColor: p.green, maxBarThickness: 26, yAxisID: "y1" },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, position: "left", title: { display: true, text: "클릭" }, grid: { color: p.line } },
+        y1: { beginAtZero: true, position: "right", title: { display: true, text: "전환" }, grid: { display: false } },
+        x: { grid: { display: false } },
+      },
+      plugins: { legend: { position: "top", align: "end", labels: { boxWidth: 8 } } },
+    },
+  });
+}
+
+// GA4 켜기/끄기 — 크리에이터 표는 시연 값이므로 배지·출처도 함께 바꿉니다.
+const ga4View = { status: "demo", note: "", meta: "출처: —" };
 
 function setGa4Visible(show) {
   $("ga4-panel").hidden = !show;
   $("creator-panel").hidden = show;
   setText("ga4-eyebrow", show ? "GA4 TRAFFIC" : "CREATOR CONVERSION");
   setText("ga4-title", show ? "GA4 트래픽 · 전환" : "크리에이터별 클릭 · 전환 Top 5");
+  if (show) {
+    setStatus("ga4-badge", ga4View.status === "public_demo" ? "공개 데모" : "시연", ga4View.status, ga4View.note);
+    setText("ga4-meta", ga4View.meta);
+  } else {
+    setStatus("ga4-badge", "시연", "demo", "크리에이터별 클릭·전환은 시연 값입니다.");
+    setText("ga4-meta", "출처: 시연 값(인플루언서 탭 공개 함수에 클릭·전환 항목 추가 필요) · 범위: 베트남 · 표본: 크리에이터 5명");
+  }
+  resizeCharts();
 }
 
 // ---------- VOC ----------
@@ -323,7 +432,119 @@ function showVocAi(demoReviews, ai) {
   setText("voc-summary", ai.summary_kr ? `AI 요약(검수 전): ${ai.summary_kr}` : "AI 요약이 비어 있습니다.");
 }
 
+// ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
+const sim = { data: null, items: [], nextId: 1 };
+const KIND_LABEL = { influencer: "인플루언서", ad: "배너·플랫폼 광고" };
+
+function simRoas(channel) {
+  return sim.data?.channels.find((c) => c.channel === channel)?.roas_percent ?? null;
+}
+
+function renderSimOptions() {
+  const d = sim.data;
+  const inf = d.influencers;
+  const select = $("sim-influencer");
+  select.replaceChildren(...inf.options.map((o) => {
+    const krw = Math.round((o.amount_vnd * d.base_rate) / 100);
+    const label = `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (≈${krwMan(krw)})`;
+    const opt = el("option", { text: label });
+    opt.value = o.id;
+    return opt;
+  }));
+  if (!inf.options.length) select.append(el("option", { text: "선택할 수 있는 인플루언서 단가가 없습니다" }));
+  $("sim-channel").replaceChildren(...d.ad_channels.map((ch) => {
+    const opt = el("option", { text: `${d.channels.find((c) => c.channel === ch)?.label || ch} (현재 ROAS ${pct(simRoas(ch))})` });
+    opt.value = ch;
+    return opt;
+  }));
+  setText("sim-source", `인플루언서 후보: ${inf.note}${inf.status === "demo" ? " · 시연" : ""} · 환산: 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND`);
+}
+
+function renderSim() {
+  const d = sim.data;
+  if (!d) return;
+  const now = d.budget.remaining_krw;
+  const planned = sim.items.reduce((s, it) => s + it.cost_krw, 0);
+  const after = now - planned;
+  const total = d.budget.total_krw;
+
+  fillRows("sim-rows", sim.items.map((it) => {
+    const remove = el("button", { text: "빼기", className: "btn kpi-sim-remove" });
+    remove.type = "button";
+    remove.dataset.kpiAction = "sim-remove";
+    remove.dataset.id = String(it.id);
+    return [it.label, KIND_LABEL[it.kind], krwMan(it.cost_krw), it.revenue_krw == null ? "—" : krwMan(it.revenue_krw), remove];
+  }));
+  if (!sim.items.length) fillRows("sim-rows", [["아직 추가한 항목이 없습니다", "", "", "", ""]]);
+
+  setText("sim-now", krwMan(now));
+  setText("sim-planned", krwMan(planned));
+  const afterEl = $("sim-after");
+  afterEl.textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
+  afterEl.classList.toggle("is-over", after < 0);
+
+  const used = Math.max(total - now, 0);
+  const bar = root.querySelector(".kpi-sim-bar");
+  bar.classList.toggle("is-over", after < 0);
+  $("sim-bar-used").style.width = `${Math.min((used / total) * 100, 100)}%`;
+  $("sim-bar-planned").style.width = `${Math.min((planned / total) * 100, Math.max(100 - (used / total) * 100, 0))}%`;
+
+  const revenue = sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0);
+  setText(
+    "sim-summary",
+    !sim.items.length
+      ? "항목을 추가하면 집행 후 남는 예산을 바로 계산합니다."
+      : after < 0
+        ? `예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다. (참고 예상 매출 ${krwMan(revenue)}, 현재 ROAS 유지 가정)`
+        : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (현재 ROAS 유지 가정)`,
+  );
+}
+
+function addSimItem(form) {
+  const d = sim.data;
+  const kind = form.elements.kind.value;
+  showError("sim-error", "");
+  let item;
+  if (kind === "influencer") {
+    const o = d.influencers.options.find((x) => x.id === form.elements.influencer.value);
+    if (!o) return showError("sim-error", "인플루언서 단가를 선택해 주세요.");
+    const cost = Math.round((o.amount_vnd * d.base_rate) / 100);
+    const roas = simRoas("Influencer");
+    item = { kind, label: `${o.influencer} (${o.price_type_label})`, cost_krw: cost, revenue_krw: roas == null ? null : Math.round((cost * roas) / 100) };
+  } else {
+    const amount = Number(form.elements.amount.value);
+    if (!Number.isFinite(amount) || amount <= 0) return showError("sim-error", "예정 광고비를 0보다 큰 숫자로 입력해 주세요.");
+    const channel = form.elements.channel.value;
+    const cost = form.elements.unit.value === "KRW" ? Math.round(amount) : Math.round((amount * d.base_rate) / 100);
+    const roas = simRoas(channel);
+    const label = d.channels.find((c) => c.channel === channel)?.label || channel;
+    item = { kind, label: `${label} 광고`, cost_krw: cost, revenue_krw: roas == null ? null : Math.round((cost * roas) / 100) };
+    form.elements.amount.value = "";
+  }
+  sim.items.push({ ...item, id: sim.nextId++ });
+  renderSim();
+}
+
+function setSimKind(kind) {
+  $("sim-influencer-fields").hidden = kind !== "influencer";
+  $("sim-ad-fields").hidden = kind !== "ad";
+}
+
+async function loadSimulator() {
+  try {
+    sim.data = await getJson(API.simulator);
+    renderSimOptions();
+    renderSim();
+  } catch (err) {
+    showError("sim-error", `시뮬레이션 데이터를 불러오지 못했습니다: ${err.message}`);
+  }
+}
+
 // ---------- 블록 확대 ----------
+function resizeCharts() {
+  requestAnimationFrame(() => Object.values(charts).forEach((c) => c.resize()));
+}
+
 function setExpanded(panel) {
   root.querySelectorAll(".kpi-panel.is-expanded").forEach((p) => p.classList.remove("is-expanded"));
   if (panel) panel.classList.add("is-expanded");
@@ -333,6 +554,7 @@ function setExpanded(panel) {
     btn.setAttribute("aria-label", open ? "원래 크기로" : "블록 확대");
     btn.title = open ? "닫기 (Esc)" : "확대";
   });
+  resizeCharts();
 }
 
 // ---------- 불러오기 ----------
@@ -396,6 +618,16 @@ root.addEventListener("click", (event) => {
   if (action === "refresh") {
     loadSummary();
     loadVoc();
+    loadSimulator();
+  } else if (action === "simulate") {
+    setExpanded(target.closest(".kpi-panel"));
+    requestAnimationFrame(() => {
+      $("sim").scrollIntoView({ block: "start", behavior: "smooth" });
+      $("sim-influencer").focus({ preventScroll: true });
+    });
+  } else if (action === "sim-remove") {
+    sim.items = sim.items.filter((it) => String(it.id) !== target.dataset.id);
+    renderSim();
   } else if (action === "voc-analyze") {
     analyzeVoc(target);
   } else if (action === "expand") {
@@ -408,6 +640,13 @@ root.addEventListener("click", (event) => {
 
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
+  if (event.target.matches('[data-kpi="sim-form"] [name="kind"]')) setSimKind(event.target.value);
+});
+
+root.addEventListener("submit", (event) => {
+  if (!event.target.matches('[data-kpi="sim-form"]')) return;
+  event.preventDefault();
+  if (sim.data) addSimItem(event.target);
 });
 
 document.addEventListener("keydown", (event) => {
@@ -418,3 +657,4 @@ chartNotice();
 setGa4Visible(true);
 loadSummary();
 loadVoc();
+loadSimulator();

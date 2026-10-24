@@ -85,6 +85,7 @@
         </div>
         <div class="kpi-tools">
           <span class="kpi-status is-demo">시연</span>
+          <button type="button" class="btn kpi-btn-small kpi-compact-only" data-kpi-action="simulate">집행 시뮬레이션</button>
           {{ expand_button() }}
         </div>
       </div>
@@ -106,6 +107,67 @@
         <div class="kpi-detail">
           <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
           <p class="kpi-note">원화 예산과 비교하려고 VND 지출을 편성 시점 기준 환율로 환산합니다(확정 전 안).</p>
+
+          <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중 <span class="kpi-status is-demo">시연</span></p>
+          <div class="table-wrap">
+            <table class="kpi-table">
+              <thead><tr><th class="is-text">채널</th><th>집행액(VND)</th><th>집행액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
+              <tbody data-kpi="spend-rows"></tbody>
+            </table>
+          </div>
+
+          <section class="kpi-sim" data-kpi="sim" aria-label="예산 집행 시뮬레이션">
+            <p class="kpi-detail-title">
+              집행 시뮬레이션 <span class="kpi-status is-fallback">추정</span>
+              {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 예정 비용 × 해당 채널의 현재 ROAS ÷ 100\n(현재 ROAS가 유지된다고 가정한 추정이며 저장되지 않습니다)") }}
+            </p>
+            <form class="kpi-sim-form" data-kpi="sim-form">
+              <div class="kpi-sim-kind" role="radiogroup" aria-label="집행 유형">
+                <label><input type="radio" name="kind" value="influencer" checked> 인플루언서</label>
+                <label><input type="radio" name="kind" value="ad"> 배너·플랫폼 광고</label>
+              </div>
+              <div class="kpi-sim-fields" data-kpi="sim-influencer-fields">
+                <label class="field kpi-sim-wide">인플루언서 · 단가
+                  <select name="influencer" data-kpi="sim-influencer"></select>
+                </label>
+              </div>
+              <div class="kpi-sim-fields" data-kpi="sim-ad-fields" hidden>
+                <label class="field">채널
+                  <select name="channel" data-kpi="sim-channel"></select>
+                </label>
+                <label class="field">예정 광고비
+                  <input type="number" name="amount" min="0" step="1" inputmode="numeric" placeholder="예: 20000000">
+                </label>
+                <label class="field">단위
+                  <select name="unit">
+                    <option value="VND">VND</option>
+                    <option value="KRW">원</option>
+                  </select>
+                </label>
+              </div>
+              <button type="submit" class="btn dark">목록에 추가</button>
+            </form>
+            <p class="kpi-note" data-kpi="sim-source"></p>
+            <p class="kpi-error" data-kpi="sim-error" hidden></p>
+
+            <div class="table-wrap">
+              <table class="kpi-table">
+                <thead><tr><th class="is-text">집행 예정 항목</th><th class="is-text">유형</th><th>비용(원)</th><th>예상 매출(원, 참고)</th><th></th></tr></thead>
+                <tbody data-kpi="sim-rows"></tbody>
+              </table>
+            </div>
+
+            <div class="kpi-sim-result">
+              <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong></div>
+              <div><span>집행 예정 합계</span><strong data-kpi="sim-planned">—</strong></div>
+              <div><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong></div>
+            </div>
+            <div class="kpi-sim-bar" aria-hidden="true">
+              <span class="kpi-sim-bar-used" data-kpi="sim-bar-used"></span>
+              <span class="kpi-sim-bar-planned" data-kpi="sim-bar-planned"></span>
+            </div>
+            <p class="kpi-note" data-kpi="sim-summary">항목을 추가하면 집행 후 남는 예산을 바로 계산합니다.</p>
+          </section>
         </div>
       </div>
       <p class="kpi-meta" data-kpi="budget-meta">출처: 시연 값 · 범위: 베트남 전체 캠페인</p>
@@ -130,7 +192,7 @@
         <div class="kpi-detail table-wrap">
           <table class="kpi-table">
             <thead>
-              <tr><th>채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
+              <tr><th class="is-text">채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
             </thead>
             <tbody data-kpi="channel-rows"></tbody>
           </table>
@@ -212,14 +274,38 @@
             </div>
           </div>
           <p class="kpi-note" data-kpi="ga4-proxy"></p>
-          <p class="kpi-note kpi-detail" data-kpi="ga4-note"></p>
+          <div class="kpi-detail">
+            <p class="kpi-note" data-kpi="ga4-note"></p>
+            <div data-kpi="ga4-channel-section">
+              <p class="kpi-detail-title">
+                유입 채널별 세션 · 참여율 <span class="kpi-status" data-kpi="ga4-channel-badge">공개 데모</span>
+                {{ info("채널 참여율 = 채널의 참여 세션 ÷ 채널 세션 × 100\n막대: 채널별 참여율 / 점선: 전체 참여율\n어느 유입 경로의 방문자가 실제로 읽고 가는지 비교합니다.") }}
+              </p>
+              <div class="kpi-chart kpi-chart-wide">
+                <canvas data-kpi-chart="ga4-channels" aria-label="유입 채널별 참여율 막대 차트" role="img"></canvas>
+              </div>
+              <div class="table-wrap">
+                <table class="kpi-table">
+                  <thead><tr><th class="is-text">채널</th><th>세션</th><th>세션 비중</th><th>참여 세션</th><th>참여율</th></tr></thead>
+                  <tbody data-kpi="ga4-channel-rows"></tbody>
+                </table>
+              </div>
+            </div>
+            <p class="kpi-note" data-kpi="ga4-channel-empty" hidden>채널별 데이터가 없습니다. kpi/data/ga4_demo.csv에 채널별 줄을 넣으면 표시됩니다.</p>
+          </div>
         </div>
 
         <div data-kpi="creator-panel" hidden>
+          <div class="kpi-detail">
+            <div class="kpi-chart kpi-chart-wide">
+              <canvas data-kpi-chart="creators" aria-label="크리에이터별 클릭·전환 막대 차트" role="img"></canvas>
+            </div>
+          </div>
           <div class="table-wrap">
             <table class="kpi-table">
-              <thead><tr><th>#</th><th>크리에이터</th><th>플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
+              <thead><tr><th class="is-text">#</th><th class="is-text">크리에이터</th><th class="is-text">플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
               <tbody data-kpi="creator-rows"></tbody>
+              <tfoot><tr data-kpi="creator-total"></tr></tfoot>
             </table>
           </div>
           <p class="kpi-note">크리에이터별 클릭·전환은 인플루언서 탭 공개 함수에 아직 없는 항목이라 시연 값입니다.</p>
