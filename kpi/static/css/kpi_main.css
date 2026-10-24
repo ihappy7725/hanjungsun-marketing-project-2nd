@@ -46,7 +46,7 @@
 .kpi-page .kpi-scorecards .label { align-items: center; gap: 8px; color: var(--ink); font-weight: 600; }
 .kpi-page .kpi-label-text { display: inline-flex; align-items: center; gap: 4px; }
 .kpi-page .kpi-scorecards .value { font-size: calc(var(--fs-kpi) - 4px); font-weight: 700; line-height: 1.3; white-space: nowrap; }
-.kpi-page .kpi-sub { color: var(--muted); font-size: var(--fs-min); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-page .kpi-sub { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sub .kpi-up { color: var(--green); font-weight: 600; }
 .kpi-page .kpi-sub .kpi-down { color: var(--badge-red-ink); font-weight: 600; }
 
@@ -100,12 +100,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+/* 블록 높이는 내용에 맞춰 늘어나고(글자·차트가 잘리지 않게), 같은 줄의 두 블록은 높이를 맞춥니다. */
 .kpi-page .kpi-panel {
   display: flex;
   flex-direction: column;
-  height: max(300px, calc((100vh - 330px) / 2));
-  padding: 15px 18px 10px;
-  overflow: hidden;
+  min-height: 340px;
+  padding: 16px 20px 12px;
 }
 .kpi-page .kpi-panel .panelhead { margin-bottom: 10px; }
 .kpi-page .kpi-panel .panelhead h2 { display: flex; align-items: center; gap: 5px; }
@@ -113,14 +113,12 @@
 .kpi-page .kpi-panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .kpi-page .kpi-detail { display: none; }
 .kpi-page .kpi-meta {
-  margin: 8px 0 0;
-  padding-top: 7px;
+  margin: 10px 0 0;
+  padding-top: 8px;
   border-top: 1px solid var(--line-soft);
   color: var(--muted);
   font-size: var(--fs-min);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.5;
 }
 .kpi-page .kpi-btn-small { padding: 5px 9px; }
 
@@ -152,21 +150,18 @@
 }
 .kpi-page .kpi-panel.is-expanded .kpi-detail { display: block; }
 .kpi-page .kpi-panel.is-expanded .kpi-panel-body { flex: none; }
-.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 300px; flex: none; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 300px; }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-donut { width: 190px; height: 190px; }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-small,
-.kpi-page .kpi-panel.is-expanded .kpi-chart-keywords { height: 190px; }
-.kpi-page .kpi-panel.is-expanded .kpi-chart-small { width: 190px; }
-.kpi-page .kpi-panel.is-expanded .kpi-ai-summary { -webkit-line-clamp: unset; }
-.kpi-page .kpi-panel.is-expanded .kpi-meta { white-space: normal; }
-.kpi-page .kpi-panel.is-expanded .kpi-one-line { white-space: normal; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-keywords { height: 200px; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-small { width: 220px; }
 
-/* ---------- 차트 ---------- */
+/* ---------- 차트 (블록마다 크기가 들쭉날쭉하지 않게 고정 높이) ---------- */
 .kpi-page .kpi-chart { position: relative; min-width: 0; }
-.kpi-page .kpi-chart-bar { flex: 1; min-height: 120px; }
-.kpi-page .kpi-chart-donut { width: 128px; height: 128px; flex: none; }
-.kpi-page .kpi-chart-small { width: 130px; height: 120px; flex: none; }
-.kpi-page .kpi-chart-keywords { flex: 1; height: 120px; }
+.kpi-page .kpi-chart-bar { flex: none; height: 220px; }
+.kpi-page .kpi-chart-donut { width: 140px; height: 140px; flex: none; }
+.kpi-page .kpi-chart-small { width: 180px; height: 160px; flex: none; }
+.kpi-page .kpi-chart-keywords { flex: 1; height: 160px; }
 
 .kpi-page .kpi-donut-center {
   position: absolute;
@@ -211,27 +206,22 @@
 
 /* ---------- 안내 ---------- */
 .kpi-page .kpi-note { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-min); }
-.kpi-page .kpi-one-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-page .kpi-one-line { line-height: 1.5; }
 .kpi-page .kpi-error { margin: 0 0 8px; padding: 7px 10px; background: var(--badge-red-bg); color: var(--badge-red-ink); font-size: var(--fs-min); }
 .kpi-page .kpi-error[hidden] { display: none; }
+/* AI 요약은 자르지 않고 끝까지 보여 줍니다. */
 .kpi-page .kpi-ai-summary {
-  display: -webkit-box;
-  margin: 0 0 8px;
-  padding: 6px 10px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
   border-left: 2px solid var(--gold);
   background: var(--paper);
   font-size: var(--fs-min);
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-height: 1.6;
 }
 .kpi-page .kpi-detail-title { display: flex; align-items: center; gap: 6px; margin: 14px 0 6px; font-size: var(--fs-min); font-weight: 600; }
 
 /* ---------- VOC ---------- */
-/* 차트가 남은 높이 안에서만 그려지게 해 위쪽 안내 문구와 겹치지 않게 합니다. */
-.kpi-page .kpi-voc { display: flex; align-items: stretch; gap: 14px; flex: 1; min-height: 110px; }
-.kpi-page .kpi-voc .kpi-chart-small,
-.kpi-page .kpi-voc .kpi-chart-keywords { height: auto; }
+.kpi-page .kpi-voc { display: flex; align-items: center; gap: 16px; }
 .kpi-page .kpi-qr {
   display: flex;
   flex-wrap: wrap;
@@ -268,13 +258,12 @@
   .kpi-page .kpi-scorecards .kpi:nth-child(2) { border-right: 0; }
   .kpi-page .kpi-scorecards .kpi:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
   .kpi-page .kpi-board { grid-template-columns: 1fr; }
-  .kpi-page .kpi-panel { height: 300px; }
+  .kpi-page .kpi-panel { min-height: 0; }
 }
 @media (max-width: 650px) {
   .kpi-page .kpi-head { flex-direction: column; align-items: flex-start; }
   .kpi-page .kpi-scorecards { grid-template-columns: 1fr; }
   .kpi-page .kpi-scorecards .kpi { border-right: 0; border-bottom: 1px solid var(--line); }
-  .kpi-page .kpi-panel { height: auto; }
   .kpi-page .kpi-budget,
   .kpi-page .kpi-voc { flex-direction: column; align-items: stretch; }
   .kpi-page .kpi-chart-donut,
@@ -288,7 +277,7 @@
 
 /* ---------- 인쇄 ---------- */
 @media print {
-  .kpi-page .kpi-panel { height: auto; break-inside: avoid; }
+  .kpi-page .kpi-panel { break-inside: avoid; }
   .kpi-page .kpi-detail { display: block; }
   .kpi-page [data-kpi-action],
   .kpi-page .kpi-expand,
