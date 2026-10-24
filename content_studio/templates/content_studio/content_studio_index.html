@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="studio-page" data-tab="{{ tab }}">
+<div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api">
   <header class="pagehead">
     <div>
       <p class="eyebrow">CONTENT STUDIO</p>
@@ -31,7 +31,7 @@
   <p class="studio-notice" data-role="notice" role="status" hidden></p>
 
   {# 첫 화면: 내 작업 가로 목록 + 추천 (README 2장). 카드는 sns.js가 그립니다. #}
-  <section class="studio-home">
+  <section class="studio-home" data-role="home-screen">
     <div class="panelhead">
       <h2>내 {{ tab_labels[tab] }} <span class="studio-count" data-role="gallery-count"></span></h2>
     </div>
@@ -44,12 +44,55 @@
     </div>
     <div class="studio-recs" data-role="recs"></div>
   </section>
+
+  {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 · 오른쪽 대화 (README 1장 ③④) #}
+  <section class="studio-work" data-role="work-screen" hidden>
+    <aside class="studio-history" data-role="history" hidden>
+      <div class="panelhead"><h2>이전 작업</h2></div>
+      <ul class="studio-history-list" data-role="history-list"></ul>
+    </aside>
+
+    <div class="studio-main">
+      <div class="studio-toolbar">
+        <div class="actions">
+          <button type="button" class="btn" data-role="go-home">← 첫 화면</button>
+          <button type="button" class="btn" data-role="history-toggle">☰ 이전 작업</button>
+        </div>
+        <div class="studio-settings">
+          <div class="studio-seg" data-role="set-ratio">
+            <button type="button" class="btn" data-value="9:16">9:16</button>
+            <button type="button" class="btn" data-value="16:9">16:9</button>
+            <button type="button" class="btn" data-value="1:1">1:1</button>
+          </div>
+          <div class="studio-seg" data-role="set-duration">
+            <button type="button" class="btn" data-value="5">5초</button>
+            <button type="button" class="btn" data-value="10">10초</button>
+          </div>
+          <button type="button" class="btn" data-role="set-sound">소리 끔</button>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" data-role="undo" title="되돌리기 (Ctrl+Z)" disabled>↶</button>
+          <button type="button" class="btn" data-role="redo" title="다시하기 (Ctrl+Shift+Z)" disabled>↷</button>
+        </div>
+      </div>
+      <div class="studio-canvas" data-role="canvas"></div>
+    </div>
+
+    <aside class="studio-chat">
+      <div class="studio-chat-log" data-role="chat-log" aria-live="polite"></div>
+      <div class="studio-choices" data-role="chat-choices"></div>
+      <form class="studio-chat-form" data-role="chat-form">
+        <textarea data-role="chat-input" rows="3" placeholder="예: 망고스틴 찹쌀떡 스승의 날 영상 만들어줘"></textarea>
+        <button type="submit" class="btn dark">보내기</button>
+      </form>
+    </aside>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
+{# sns.js가 sns_video.js를 import합니다 (README 9장). #}
 <script type="module" src="{{ url_for('content_studio.static', filename='js/sns.js') }}"></script>
-<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_video.js') }}"></script>
 <script type="module" src="{{ url_for('content_studio.static', filename='js/sns_editor.js') }}"></script>
 <script type="module" src="{{ url_for('content_studio.static', filename='js/sns_fonts.js') }}"></script>
 <script type="module" src="{{ url_for('content_studio.static', filename='js/sns_image.js') }}"></script>
