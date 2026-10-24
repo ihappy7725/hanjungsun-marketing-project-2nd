@@ -98,33 +98,123 @@ DEMO_REVIEWS = [
 ROAS_BEP_PERCENT = 300  # 손익분기 기준선 (README 9장)
 
 # ---------------------------------------------------------------------------
-# 환율 — open.er-api.com (키 없음). 1 VND당 KRW를 받아 100 VND당 KRW로 바꿉니다.
+# 환율 — 한국은행 ECOS Open API (ECOS_API_KEY, 일별 고시). 단위는 100 VND당 KRW로 맞춥니다.
+# 키가 없거나 ECOS 호출이 실패하면 open.er-api.com(키 없음)을 "대체 출처"로 표시해 씁니다.
+# 키는 URL 경로에 들어가므로 오류 안내에 URL·예외 메시지를 넣지 않습니다.
 # ---------------------------------------------------------------------------
 
-FX_URL = "https://open.er-api.com/v6/latest/VND"
+ECOS_BASE = "https://ecos.bok.or.kr/api"
+# 원/베트남 동이 있을 것으로 보는 일별 환율 통계표. 앞에서부터 찾아 "베트남" 항목이 있는 표를 씁니다.
+ECOS_STAT_CODES = ("731Y001", "731Y002", "731Y003")
+ECOS_LOOKBACK_DAYS = 14  # 주말·공휴일이면 직전 영업일 값을 씁니다.
+FALLBACK_FX_URL = "https://open.er-api.com/v6/latest/VND"
 FX_CACHE_SECONDS = 60 * 60
 _fx_cache = {"fetched_at": 0.0, "data": None}
+_ecos_item_cache = {"item": None}
+
+
+def _get_json(url, timeout=8):
+    with urllib.request.urlopen(url, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _ecos_rows(payload, service):
+    """ECOS 응답에서 row 목록을 꺼냅니다. 데이터 없음(INFO-200)은 빈 목록, 그 밖의 오류는 ValueError."""
+    if service in payload:
+        return payload[service].get("row") or []
+    result = payload.get("RESULT") or {}
+    if result.get("CODE") == "INFO-200":
+        return []
+    raise ValueError(result.get("CODE") or "ECOS_UNKNOWN")
+
+
+def _find_ecos_vnd_item(api_key):
+    if _ecos_item_cache["item"]:
+        return _ecos_item_cache["item"]
+    for stat_code in ECOS_STAT_CODES:
+        url = f"{ECOS_BASE}/StatisticItemList/{api_key}/json/kr/1/500/{stat_code}"
+        for row in _ecos_rows(_get_json(url), "StatisticItemList"):
+            if "베트남" in (row.get("ITEM_NAME") or "") and (row.get("CYCLE") or "D") == "D":
+                item = {
+                    "stat_code": stat_code,
+                    "stat_name": row.get("STAT_NAME") or "",
+                    "item_code": row.get("ITEM_CODE"),
+                    "item_name": row.get("ITEM_NAME") or "",
+                    "unit_name": row.get("UNIT_NAME") or "",
+                }
+                _ecos_item_cache["item"] = item
+                return item
+    raise LookupError("ECOS_VND_ITEM_NOT_FOUND")
+
+
+def _to_rate_per_100_vnd(value, item):
+    """ECOS 값이 1동당 원이면 100을 곱합니다. (100동당 원 ≈ 5원 수준, 1동당 원 ≈ 0.05원 수준)"""
+    per_100 = "100" in item["item_name"] or "100" in item["unit_name"]
+    if not per_100 and value < 1:
+        value *= 100
+    return round(value, 4)
+
+
+def _fetch_ecos_rate(api_key):
+    item = _find_ecos_vnd_item(api_key)
+    end = time.localtime()
+    start = time.localtime(time.time() - ECOS_LOOKBACK_DAYS * 86400)
+    url = (
+        f"{ECOS_BASE}/StatisticSearch/{api_key}/json/kr/1/100/{item['stat_code']}/D/"
+        f"{time.strftime('%Y%m%d', start)}/{time.strftime('%Y%m%d', end)}/{item['item_code']}"
+    )
+    rows = [r for r in _ecos_rows(_get_json(url), "StatisticSearch") if r.get("DATA_VALUE") not in (None, "", "-")]
+    if not rows:
+        raise LookupError("ECOS_NO_RECENT_DATA")
+    latest = max(rows, key=lambda r: r.get("TIME") or "")
+    day = latest["TIME"]
+    return {
+        "ok": True,
+        "rate_per_100_vnd": _to_rate_per_100_vnd(float(latest["DATA_VALUE"]), item),
+        "updated_at": f"{day[:4]}-{day[4:6]}-{day[6:8]} 고시",
+        "source": "한국은행 ECOS",
+        "source_detail": f"{item['stat_name']} · {item['item_name']}",
+        "is_fallback": False,
+    }
+
+
+def _fetch_fallback_rate(reason):
+    try:
+        payload = _get_json(FALLBACK_FX_URL, timeout=5)
+        if payload.get("result") != "success":
+            raise ValueError(payload.get("error-type") or "unknown")
+        krw_per_vnd = float(payload["rates"]["KRW"])
+    except (urllib.error.URLError, TimeoutError, ValueError, KeyError, TypeError) as exc:
+        return {"ok": False, "error": f"{reason} 대체 환율도 불러오지 못했습니다 ({exc.__class__.__name__})."}
+    return {
+        "ok": True,
+        "rate_per_100_vnd": round(krw_per_vnd * 100, 4),
+        "updated_at": payload.get("time_last_update_utc", ""),
+        "source": "open.er-api.com",
+        "source_detail": reason,
+        "is_fallback": True,
+    }
 
 
 def _fetch_exchange_rate():
     now = time.time()
     if _fx_cache["data"] and now - _fx_cache["fetched_at"] < FX_CACHE_SECONDS:
         return _fx_cache["data"]
-    try:
-        with urllib.request.urlopen(FX_URL, timeout=5) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-        if payload.get("result") != "success":
-            raise ValueError(payload.get("error-type") or "unknown")
-        krw_per_vnd = float(payload["rates"]["KRW"])
-    except (urllib.error.URLError, TimeoutError, ValueError, KeyError, TypeError) as exc:
-        return {"ok": False, "error": f"환율을 불러오지 못했습니다 ({exc.__class__.__name__})"}
-    data = {
-        "ok": True,
-        "rate_per_100_vnd": round(krw_per_vnd * 100, 4),
-        "updated_at": payload.get("time_last_update_utc", ""),
-        "source": "open.er-api.com",
-    }
-    _fx_cache.update(fetched_at=now, data=data)
+    api_key = os.environ.get("ECOS_API_KEY", "").strip()
+    if not api_key:
+        data = _fetch_fallback_rate("ECOS_API_KEY가 없어 대체 출처를 씁니다.")
+    else:
+        try:
+            data = _fetch_ecos_rate(api_key)
+        except urllib.error.HTTPError as exc:
+            data = _fetch_fallback_rate(f"ECOS 호출 실패(HTTP {exc.code})로 대체 출처를 씁니다.")
+        except (urllib.error.URLError, TimeoutError) as exc:
+            data = _fetch_fallback_rate(f"ECOS 서버에 연결하지 못해({exc.__class__.__name__}) 대체 출처를 씁니다.")
+        except (ValueError, LookupError, KeyError, TypeError) as exc:
+            code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
+            data = _fetch_fallback_rate(f"ECOS 응답 오류({code})로 대체 출처를 씁니다.")
+    if data.get("ok"):
+        _fx_cache.update(fetched_at=now, data=data)
     return data
 
 
@@ -192,6 +282,8 @@ def _build_summary():
         "live_rate": live_rate,
         "updated_at": fx.get("updated_at"),
         "source": fx.get("source"),
+        "source_detail": fx.get("source_detail"),
+        "is_fallback": bool(fx.get("is_fallback")),
         "revenue_krw_live": None,
         "gain_loss_krw": None,
         "revenue_gain_krw": None,
@@ -261,11 +353,11 @@ def _voc_stats(reviews):
 
 
 # ---------------------------------------------------------------------------
-# VOC AI — Gemini API (서버에서만 키 사용, 표준 라이브러리 urllib로 호출)
+# VOC AI — OpenAI API (OPENAI_API_KEY, 콘텐츠 스튜디오와 같은 키). 서버에서만 키 사용, urllib로 호출
 # ---------------------------------------------------------------------------
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-GEMINI_DEFAULT_MODEL = "gemini-2.5-flash"
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
 _voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
@@ -285,33 +377,36 @@ VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜�
 """
 
 
-def _call_gemini(reviews):
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+def _call_openai(reviews):
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
-        return None, "GEMINI_API_KEY 환경변수가 없어 AI 분석을 실행하지 못했습니다."
-    model = os.environ.get("GEMINI_MODEL", "").strip() or GEMINI_DEFAULT_MODEL
+        return None, "OPENAI_API_KEY 환경변수가 없어 AI 분석을 실행하지 못했습니다."
+    model = OPENAI_MODEL
     source = [{"review_id": r["review_id"], "platform": r["platform"], "text": r["raw_text_vn"]} for r in reviews]
     body = {
-        "contents": [{"role": "user", "parts": [{"text": VOC_PROMPT + json.dumps(source, ensure_ascii=False)}]}],
-        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+        "model": model,
+        "temperature": 0.2,
+        "response_format": {"type": "json_object"},
+        "messages": [{"role": "user", "content": VOC_PROMPT + json.dumps(source, ensure_ascii=False)}],
     }
     req = urllib.request.Request(
-        GEMINI_URL.format(model=model),
+        OPENAI_URL,
         data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
-        text = payload["candidates"][0]["content"]["parts"][0]["text"]
+        text = payload["choices"][0]["message"]["content"]
         parsed = json.loads(text)
     except urllib.error.HTTPError as exc:
-        return None, f"Gemini 호출 실패 (HTTP {exc.code}). 키·모델 이름·사용 한도를 확인해 주세요."
+        hint = {401: "키가 올바른지", 429: "사용 한도·결제 상태를", 404: "모델 이름을"}.get(exc.code, "키·사용 한도를")
+        return None, f"OpenAI 호출 실패 (HTTP {exc.code}). {hint} 확인해 주세요."
     except (urllib.error.URLError, TimeoutError) as exc:
-        return None, f"Gemini 서버에 연결하지 못했습니다 ({exc.__class__.__name__})."
+        return None, f"OpenAI 서버에 연결하지 못했습니다 ({exc.__class__.__name__})."
     except (ValueError, KeyError, IndexError, TypeError):
-        return None, "Gemini 응답 형식을 읽지 못했습니다."
+        return None, "OpenAI 응답 형식을 읽지 못했습니다."
 
     known_ids = {r["review_id"] for r in reviews}
     analyzed = []
@@ -327,7 +422,7 @@ def _call_gemini(reviews):
             "keyword_tag": tag,
         })
     if not analyzed:
-        return None, "Gemini 응답에 분석 결과가 없습니다."
+        return None, "OpenAI 응답에 분석 결과가 없습니다."
     return {
         "model": model,
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
@@ -364,7 +459,7 @@ def api_voc():
 
 @bp.post("/api/voc/analyze")
 def api_voc_analyze():
-    result, error = _call_gemini(DEMO_REVIEWS)
+    result, error = _call_openai(DEMO_REVIEWS)
     if error:
         return jsonify({"ok": False, "error": error}), 502
     _voc_ai_cache["result"] = result

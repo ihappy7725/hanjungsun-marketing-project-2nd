@@ -104,14 +104,15 @@ function renderScorecards(data) {
     setText("revenue-krw", krwMan(fx.revenue_krw_live));
     setText("revenue-vnd", `${vnd(totals.revenue_vnd)} · 현재 환율 환산`);
     setText("fx-rate", `${fx.live_rate.toFixed(2)}원`);
-    fxBadge.textContent = "실제 API";
-    fxBadge.className = "badge green";
+    fxBadge.textContent = fx.is_fallback ? "대체 출처" : "ECOS 고시";
+    fxBadge.className = fx.is_fallback ? "badge" : "badge green";
+    fxBadge.title = fx.source_detail || "";
     const tone = fx.gain_loss_krw >= 0 ? "kpi-up" : "kpi-down";
     gainEl.replaceChildren(
       el("span", { text: `환차${fx.gain_loss_krw >= 0 ? "익" : "손"} ${signedKrw(fx.gain_loss_krw)}`, className: tone }),
-      document.createTextNode(` · 기준 ${fx.base_rate.toFixed(2)}원`),
+      document.createTextNode(` · 기준 ${fx.base_rate.toFixed(2)}원 · ${fx.source} ${fx.is_fallback ? "" : fx.updated_at}`),
     );
-    gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${fx.source} ${fx.updated_at}`;
+    gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${fx.source} ${fx.updated_at}${fx.source_detail ? ` · ${fx.source_detail}` : ""}`;
   } else {
     setText("revenue-krw", krwMan(totals.revenue_krw_base));
     setText("revenue-vnd", `${vnd(totals.revenue_vnd)} · 기준 환율 환산`);
@@ -270,13 +271,13 @@ function renderVoc(stats, reviews, source) {
 
   const sourceBadge = $("voc-source");
   sourceBadge.textContent = source;
-  sourceBadge.className = source.startsWith("Gemini") ? "badge green" : "badge";
+  sourceBadge.className = source.startsWith("OpenAI") ? "badge green" : "badge";
 }
 
 function showVocAi(demoReviews, ai) {
   const byId = Object.fromEntries(ai.reviews.map((r) => [r.review_id, r]));
   const merged = demoReviews.map((r) => ({ ...r, ...(byId[r.review_id] || { translated_kr: "", sentiment: null, keyword_tag: null }) }));
-  renderVoc(ai, merged, `Gemini 분석 · ${ai.analyzed_at}`);
+  renderVoc(ai, merged, `OpenAI 분석 · ${ai.analyzed_at}`);
   setText("voc-summary", ai.summary_kr ? `AI 요약: ${ai.summary_kr}` : "AI 요약이 비어 있습니다.");
 }
 
@@ -330,7 +331,7 @@ async function analyzeVoc(button) {
     showError("voc-error", `${err.message} 시연 분류를 그대로 보여 줍니다.`);
   } finally {
     button.disabled = false;
-    button.textContent = "Gemini로 분석";
+    button.textContent = "AI로 분석";
   }
 }
 
