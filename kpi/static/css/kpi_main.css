@@ -4,8 +4,10 @@
    한 화면 구성: 머리 → 범례 한 줄 → KPI 4칸 → 2×2 블록(예산·ROAS·VOC·GA4). 상세 표는 블록 확대 시에만 보입니다. */
 
 /* ---------- 머리 (여백을 줄여 KPI를 위로) ---------- */
-.kpi-page .kpi-head { margin-bottom: 8px; }
-.kpi-page .kpi-head h1 { margin: 2px 0; font-weight: 600; }
+/* 공통 본문 위 여백(platform_core)은 그대로 두고 KPI 화면만 위로 당깁니다. */
+.kpi-page { margin-top: -18px; }
+.kpi-page .kpi-head { margin-bottom: 6px; }
+.kpi-page .kpi-head h1 { margin: 0; line-height: 1.25; font-weight: 600; }
 .kpi-page .kpi-head p { margin: 0; }
 .kpi-page .kpi-head-side { display: flex; align-items: center; gap: 8px; }
 
@@ -39,11 +41,11 @@
 .kpi-page .kpi-status.is-warn { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 
 /* ---------- 상단 KPI 4칸 (굵게) ---------- */
-.kpi-page .kpi-scorecards { margin: 10px 0 14px; }
-.kpi-page .kpi-scorecards .kpi { padding: 13px 20px; }
+.kpi-page .kpi-scorecards { margin: 8px 0 12px; }
+.kpi-page .kpi-scorecards .kpi { padding: 8px 18px; }
 .kpi-page .kpi-scorecards .label { align-items: center; gap: 8px; color: var(--ink); font-weight: 600; }
 .kpi-page .kpi-label-text { display: inline-flex; align-items: center; gap: 4px; }
-.kpi-page .kpi-scorecards .value { font-weight: 700; line-height: 1.45; white-space: nowrap; }
+.kpi-page .kpi-scorecards .value { font-size: calc(var(--fs-kpi) - 4px); font-weight: 700; line-height: 1.3; white-space: nowrap; }
 .kpi-page .kpi-sub { color: var(--muted); font-size: var(--fs-min); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi-page .kpi-sub .kpi-up { color: var(--green); font-weight: 600; }
 .kpi-page .kpi-sub .kpi-down { color: var(--badge-red-ink); font-weight: 600; }
@@ -101,7 +103,7 @@
 .kpi-page .kpi-panel {
   display: flex;
   flex-direction: column;
-  height: max(270px, calc((100vh - 400px) / 2));
+  height: max(300px, calc((100vh - 330px) / 2));
   padding: 15px 18px 10px;
   overflow: hidden;
 }
@@ -226,7 +228,10 @@
 .kpi-page .kpi-detail-title { display: flex; align-items: center; gap: 6px; margin: 14px 0 6px; font-size: var(--fs-min); font-weight: 600; }
 
 /* ---------- VOC ---------- */
-.kpi-page .kpi-voc { display: flex; align-items: center; gap: 14px; flex: 1; min-height: 0; }
+/* 차트가 남은 높이 안에서만 그려지게 해 위쪽 안내 문구와 겹치지 않게 합니다. */
+.kpi-page .kpi-voc { display: flex; align-items: stretch; gap: 14px; flex: 1; min-height: 110px; }
+.kpi-page .kpi-voc .kpi-chart-small,
+.kpi-page .kpi-voc .kpi-chart-keywords { height: auto; }
 .kpi-page .kpi-qr {
   display: flex;
   flex-wrap: wrap;
@@ -274,6 +279,8 @@
   .kpi-page .kpi-voc { flex-direction: column; align-items: stretch; }
   .kpi-page .kpi-chart-donut,
   .kpi-page .kpi-chart-small { margin: auto; }
+  .kpi-page .kpi-voc .kpi-chart-small,
+  .kpi-page .kpi-voc .kpi-chart-keywords { height: 140px; }
   .kpi-page .kpi-ga4-metrics { grid-template-columns: 1fr; }
   .kpi-page .kpi-ga4-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-panel.is-expanded { inset: 12px; }

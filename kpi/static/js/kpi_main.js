@@ -266,8 +266,11 @@ function renderVoc(stats, reviews, source) {
     options: {
       indexAxis: "y",
       maintainAspectRatio: false,
-      scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: p.line } }, y: { grid: { display: false } } },
-      plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start", padding: { bottom: 4 } } },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: p.line } },
+        y: { grid: { display: false }, ticks: { autoSkip: false } },  // 키워드 이름을 건너뛰지 않고 모두 표시
+      },
+      plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start", padding: { top: 0, bottom: 4 } } },
     },
   });
 
