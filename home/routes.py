@@ -23,13 +23,21 @@ def _load_events(start, end):
     한 건이라도 잘못되면 목록 전체를 실패로 처리해 조용한 누락을 막습니다.
     """
     document = json.loads(_EVENTS_PATH.read_text(encoding="utf-8"))
+    rows = _validate_event_document(document)
+    return sorted(
+        (row for row in rows if row["start_date"] <= end.isoformat() and row["end_date"] >= start.isoformat()),
+        key=lambda row: (row["start_date"], row["event_id"]),
+    )
+
+
+def _validate_event_document(document):
+    """조회와 관리 명령이 공유하는 형식 검사. 원문의 진실성 검증은 담당자가 수행합니다."""
     if not isinstance(document, dict) or document.get("schema_version") != 1:
         raise ValueError("지원하지 않는 일정 자료 형식")
     rows = document.get("events")
     if not isinstance(rows, list):
         raise ValueError("일정 목록 필요")
     seen = set()
-    result = []
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("일정 객체 필요")
@@ -74,9 +82,7 @@ def _load_events(start, end):
             urls.add(source["url"])
         if len(urls) < 2 or not {"primary", "independent_corrob"} <= roles:
             raise ValueError("교차 검증 근거 부족")
-        if dates["start_date"] <= end and dates["end_date"] >= start:
-            result.append(row)
-    return sorted(result, key=lambda row: (row["start_date"], row["event_id"]))
+    return rows
 
 
 def _load_news():

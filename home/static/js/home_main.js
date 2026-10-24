@@ -248,7 +248,7 @@ function initialize() {
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select'].forEach(sel => { $(sel).disabled = !c; });
     $('#retrospective').hidden = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('현지 기회에서 일정을 고르면 역산 캠페인을 만들 수 있습니다.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
+    if (!c) { $('#campaign-summary').innerHTML = empty('새 캠페인에서 이름과 목표일을 직접 입력하거나, 현지 기회의 일정을 골라 역산 캠페인을 만들 수 있습니다.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
     $('#campaign-summary').innerHTML = `<div class="home-campaign-meta">${badge(CAMPAIGN_STATES[c.status] || c.status)} &nbsp; ${esc(c.target_date)} · ${dday(c.target_date, today)}<p>${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</p></div>`;
     const tasks = store.tasks.filter(t => t.campaign_id === c.id), next = ordered(tasks.filter(unfinished), today)[0];
     $('#next-task').innerHTML = next ? `<button class="home-next" data-task="${esc(next.id)}"><span><span class="home-muted">다음 할 일</span> &nbsp; ${esc(next.title)} →</span><span class="home-muted">${esc(next.due_date || '날짜 없음')}</span></button>` : empty('남은 업무가 없습니다.');
@@ -327,7 +327,7 @@ function initialize() {
   function planner(kind, opportunity) {
     const original = kind === 'create' ? null : selected(); if (kind !== 'create' && !original) return;
     let rows = original ? store.tasks.filter(t => t.campaign_id === original.id) : TEMPLATE.map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
-    const target = original?.target_date || opportunity.start, initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity.name;
+    const target = original?.target_date || opportunity?.start || '', initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
     openDialog(kind === 'create' ? '역산 캠페인 생성' : kind === 'clone' ? '캠페인 복제' : '설정·재계획', `<form id="plan-form"><label class="home-field">캠페인명<input name="name" required maxlength="160" value="${esc(initialName)}"></label><div class="home-form-grid"><label class="home-field">목표일<input type="date" name="target_date" required value="${target}"></label><label class="home-field">템플릿<select name="template" ${original ? 'disabled' : ''}>${options({ launch: '첫 진출 · 9개 업무', anniversary: '기념일 · 8개 업무' }, original?.template || 'launch')}</select></label><label class="home-field">제품<input name="product" maxlength="160" value="${esc(original?.product)}"></label><label class="home-field">타깃<input name="audience" maxlength="160" value="${esc(original?.audience)}"></label><label class="home-field">채널<input name="channel" maxlength="160" value="${esc(original?.channel)}"></label></div><p class="home-muted">목표일 전은 음수, 이후는 양수입니다. 주말을 포함한 달력일로 계산합니다.${kind === 'replan' ? ' 완료·취소·날짜 고정 업무는 보존합니다.' : ''}</p><div id="template-rows"></div><p id="plan-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button type="submit" class="btn">일정 미리보기</button></div><div id="plan-preview"></div></form>`);
     const renderRows = () => { $('#template-rows').innerHTML = rows.map((t, i) => `<div class="home-template-row"><input aria-label="업무 ${i + 1} 이름" data-row-title="${i}" value="${esc(t.title)}" maxlength="160" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}><input aria-label="업무 ${i + 1} 상대 일수" data-row-offset="${i}" type="number" min="-3650" max="3650" value="${Number(t.offset) || 0}" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}></div>`).join(''); };
     renderRows();
@@ -352,7 +352,7 @@ function initialize() {
           next.tasks = next.tasks.map(t => changed.find(item => item.id === t.id) || t);
         } else {
           const campaignId = id();
-          next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity.event_id, status: 'preparing', review: '' });
+          next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity?.event_id || '', status: 'preparing', review: '' });
           const tasks = kind === 'clone' ? cloneTasks(edits, campaignId, newTarget, original.target_date, id) : edits.map(t => ({ ...t, id: id(), campaign_id: campaignId, due_date: addDays(newTarget, t.offset), start_date: '', fixed: false, status: 'todo', importance: 'normal', memo: '', completed_at: '' }));
           next.tasks.push(...tasks); next.preferences.selected = campaignId;
         }
@@ -382,6 +382,7 @@ function initialize() {
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
   $('#completed-toggle').onclick = () => { filter = filter === 'done' ? 'open' : 'done'; renderTasks(); };
   $('#scope').onchange = event => { scope = event.target.value; render(); };
+  $('#new-campaign').onclick = () => planner('create');
   $('#clone-campaign').onclick = () => planner('clone');
   $('#replan-campaign').onclick = () => planner('replan');
   $('#data-mode').onchange = event => {
