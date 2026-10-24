@@ -89,6 +89,11 @@ function imageSize(file) {
   });
 }
 
+// 지금 편집기에서 보고 있는 장 번호(0부터). sns.js가 대화로 고치기 요청에 page로 보냅니다.
+export function currentPage() {
+  return pageIndex;
+}
+
 // ---------- 편집기 ----------
 // root 안에 포스터·카드뉴스 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
 // 카드뉴스처럼 여러 장이면 위쪽 장 번호 버튼으로 장을 옮깁니다.
