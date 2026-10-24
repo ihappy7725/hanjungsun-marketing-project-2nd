@@ -17,7 +17,6 @@
       <h1>콘텐츠 스튜디오</h1>
     </div>
     <div class="actions">
-      <span class="demo">DEMO · 예시 데이터</span>
       <button type="button" class="btn dark" data-role="new">+ 새로 만들기</button>
     </div>
   </header>
@@ -45,7 +44,7 @@
     <div class="studio-recs" data-role="recs"></div>
   </section>
 
-  {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 · 오른쪽 대화 (README 1장 ③④) #}
+  {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 + 아래 한 줄 입력 (README 1장 ③④) #}
   <section class="studio-work" data-role="work-screen" hidden>
     <aside class="studio-history" data-role="history" hidden>
       <div class="panelhead"><h2>이전 작업</h2></div>
@@ -64,10 +63,10 @@
             <button type="button" class="btn" data-value="16:9">16:9</button>
             <button type="button" class="btn" data-value="1:1">1:1</button>
           </div>
-          <div class="studio-seg" data-role="set-duration">
-            <button type="button" class="btn" data-value="5">5초</button>
-            <button type="button" class="btn" data-value="10">10초</button>
-          </div>
+          <label class="studio-duration" title="생성 모델은 5단계(Higgsfield 연동)에서 연결합니다">
+            <input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이(초)">초
+            <small>5~30초</small>
+          </label>
           <button type="button" class="btn" data-role="set-sound">소리 끔</button>
         </div>
         <div class="actions">
@@ -76,16 +75,19 @@
         </div>
       </div>
       <div class="studio-canvas" data-role="canvas"></div>
-    </div>
 
-    <aside class="studio-chat">
-      <div class="studio-chat-log" data-role="chat-log" aria-live="polite"></div>
-      <div class="studio-choices" data-role="chat-choices"></div>
-      <form class="studio-chat-form" data-role="chat-form">
-        <textarea data-role="chat-input" rows="3" placeholder="예: 망고스틴 찹쌀떡 스승의 날 영상 만들어줘"></textarea>
-        <button type="submit" class="btn dark">보내기</button>
-      </form>
-    </aside>
+      <div class="studio-command">
+        <form class="studio-command-form" data-role="chat-form">
+          <input type="text" data-role="chat-input" autocomplete="off"
+                 placeholder='예: 망고스틴 찹쌀떡 스승의 날 영상 · 더 밝게 · 15초로 · 첫번째 장면을 먹는 장면으로 · 2번 자막 "…"'>
+          <button type="submit" class="btn dark">보내기</button>
+        </form>
+        <div class="studio-feedback" data-role="feedback" aria-live="polite">
+          <span data-role="feedback-text"></span>
+          <span class="studio-choices" data-role="chat-choices"></span>
+        </div>
+      </div>
+    </div>
   </section>
 </div>
 {% endblock %}

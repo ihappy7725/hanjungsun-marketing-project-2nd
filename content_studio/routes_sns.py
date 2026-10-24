@@ -12,10 +12,10 @@ from platform_core.extensions import db
 from . import bp
 from .models_sns import KINDS, SnsChat, SnsDesign, SnsMessage
 from .products import PRODUCTS, get_product
-from .videos import build_prompt, make_draft, revise_draft
+from .videos import make_draft, normalize_scenes, refresh_prompts, revise_draft
 
 TABS = ("poster", "cardnews", "video")
-REVISE_HINT = '예: 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
+REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·레트로로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
 
 
 @bp.route("/")
@@ -213,7 +213,7 @@ def save_design(chat_id):
         # 직접 고친 프롬프트(custom)·장면이 바뀌어 영상이 달라지면 다시 검토가 필요합니다.
         before = chat.design.doc
         try:
-            doc["prompt"] = build_prompt(doc)
+            doc = refresh_prompts(normalize_scenes(doc))  # 직접 고친 장면 시간 검사 + 영어·한국어 프롬프트
         except (KeyError, TypeError):
             return _error("영상 결과물 형식이 올바르지 않습니다. (README 8장)")
         if before is None or doc["prompt"] != before.get("prompt"):
