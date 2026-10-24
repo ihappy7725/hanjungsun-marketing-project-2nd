@@ -10,12 +10,15 @@ from flask import jsonify, render_template, request
 from platform_core.extensions import db
 
 from . import bp
+from .designs import make_poster
 from .models_sns import KINDS, SnsChat, SnsDesign, SnsMessage
 from .products import PRODUCTS, get_product
 from .videos import make_draft, normalize_scenes, refresh_prompts, revise_draft
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·레트로로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
+POSTER_EDIT_HINT = "지금은 가운데 편집기에서 직접 고쳐 주세요. (대화로 고치기는 다음 단계에서 연결됩니다)"
+DEFAULT_RATIO = {"video": "9:16", "poster": "4:5"}
 
 
 @bp.route("/")
@@ -84,8 +87,8 @@ def post_message():
         return _error("보낼 내용을 입력해 주세요.")
     if kind not in KINDS:
         return _error("탭 종류(kind)가 올바르지 않습니다.")
-    if kind != "video":
-        return _error("포스터·카드뉴스 대화는 희주 담당 designs.py 연결 후 사용할 수 있습니다.", 501)
+    if kind == "cardnews":
+        return _error("카드뉴스 대화는 희주 담당 designs.py 연결 후 사용할 수 있습니다.", 501)
 
     chat = _get_chat(body["chat_id"]) if body.get("chat_id") else None
     if body.get("chat_id") and chat is None:
@@ -100,39 +103,51 @@ def post_message():
             names = " / ".join(item["name_ko"] for item in PRODUCTS)
             return jsonify({"ok": True, "chat_id": None, "ask": "product", "reply": f"어떤 제품으로 만들까요? ({names})",
                             "changes": [], "design": None, "can_undo": False, "can_redo": False, "demo": True})
-        try:
-            duration = int(body.get("duration") or 5)
-        except (TypeError, ValueError):
-            duration = 5
-        doc = _call_ai(kind, text, None) or make_draft(
-            text,
-            ratio=body.get("ratio") or "9:16",
-            duration=duration,
-            sound=bool(body.get("sound")),
-            product=product["name_ko"],
-            event=body.get("event"),
-        )
+        ratio = body.get("ratio") or DEFAULT_RATIO[kind]
+        if kind == "poster":
+            # 포스터 틀은 희주 담당 designs.py. 길이·소리는 영상 전용이라 쓰지 않습니다.
+            doc = _call_ai(kind, text, None) or make_poster(text, ratio=ratio, product=product, event=body.get("event"))
+        else:
+            try:
+                duration = int(body.get("duration") or 5)
+            except (TypeError, ValueError):
+                duration = 5
+            doc = _call_ai(kind, text, None) or make_draft(
+                text,
+                ratio=ratio,
+                duration=duration,
+                sound=bool(body.get("sound")),
+                product=product["name_ko"],
+                event=body.get("event"),
+            )
         # 기념일 ID가 아직 없어(현지 시장 분석 get_events 준비 중) 이름을 그대로 저장합니다.
         chat = SnsChat(kind=kind, title=text[:40], product_id=product["id"], event_id=body.get("event"),
                        file_id=body.get("file_id"))
         chat.design = SnsDesign()
         chat.design.push(doc)
         db.session.add(chat)
-        reply = f"{len(doc['scenes'])}컷 초안을 만들었어요. 프롬프트와 자막을 검토해 주세요."
+        if kind == "poster":
+            reply = "포스터 초안을 만들었어요. 가운데에서 글자를 옮기고 고칠 수 있어요."
+        else:
+            reply = f"{len(doc['scenes'])}컷 초안을 만들었어요. 프롬프트와 자막을 검토해 주세요."
     else:
         current = chat.design.doc if chat.design else None
         if current is None:
             return _error("이 작업에는 고칠 결과물이 없습니다.")
-        doc = _call_ai(kind, text, current)
-        if doc is None:
-            doc, changes = revise_draft(current, text)
-        if changes:
-            chat.design.push(doc)
-            reply = "바꿨어요: " + ", ".join(changes)
-            if not doc["reviewed"]:
-                reply += ". 영상이 바뀌어 프롬프트를 다시 검토해 주세요."
+        if kind == "poster":
+            # 포스터를 대화로 고치는 함수는 아직 designs.py에 없습니다. (희주 다음 단계) 새 버전은 만들지 않습니다.
+            reply = POSTER_EDIT_HINT
         else:
-            reply = f"어떻게 고칠지 알아듣지 못했어요. {REVISE_HINT}"
+            doc = _call_ai(kind, text, current)
+            if doc is None:
+                doc, changes = revise_draft(current, text)
+            if changes:
+                chat.design.push(doc)
+                reply = "바꿨어요: " + ", ".join(changes)
+                if not doc["reviewed"]:
+                    reply += ". 영상이 바뀌어 프롬프트를 다시 검토해 주세요."
+            else:
+                reply = f"어떻게 고칠지 알아듣지 못했어요. {REVISE_HINT}"
 
     chat.messages.append(SnsMessage(role="user", text=text))
     chat.messages.append(SnsMessage(role="assistant", text=reply))
