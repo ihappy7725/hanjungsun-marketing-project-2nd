@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "news": [
+    {
+      "news_id": "vn_danang_shopeefood_proposal_2026",
+      "country": "VN",
+      "title": "다낭, ShopeeFood와 음식점 디지털화 협력안 논의",
+      "official_title": "ShopeeFood đề xuất phát triển hệ sinh thái ẩm thực số tại Đà Nẵng",
+      "published_at": "2026-10-07",
+      "verified_at": "2026-10-24",
+      "region": "다낭",
+      "tags": ["음식점 디지털화", "판매 채널", "추진 계획"],
+      "summary": "2026년 10월 7일 다낭시는 Foody(ShopeeFood)와 디지털 음식 지도 및 음식점 지원 등의 협력 제안을 논의하고, 구체적인 협약과 단계별 계획 마련을 지시했습니다. 이 기사는 당시 추진 상황에 관한 것으로, 서비스 운영 완료나 특정 브랜드의 참여 가능성을 확인한 자료가 아닙니다.",
+      "suggestion": "향후 현지 판매 채널을 검토할 때 상품 이미지·메뉴 정보·등록 조건을 조사할 체크리스트를 준비해봅니다. 한정선의 참여 자격이나 입점 가능 여부는 별도로 확인해야 합니다.",
+      "source": "다낭시 전자정보포털",
+      "url": "https://danang.gov.vn/vi/web/dng/w/shopeefood-de-xuat-phat-trien-he-sinh-thai-am-thuc-so-tai-da-nang",
+      "is_demo": false,
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "sources": [
+        {
+          "publisher": "다낭시 전자정보포털",
+          "title": "ShopeeFood đề xuất phát triển hệ sinh thái ẩm thực số tại Đà Nẵng",
+          "url": "https://danang.gov.vn/vi/web/dng/w/shopeefood-de-xuat-phat-trien-he-sinh-thai-am-thuc-so-tai-da-nang",
+          "published_at": "2026-10-07",
+          "role": "primary",
+          "supports": "10월 7일 회의, 협력 제안 논의, 구체 협약·단계별 계획 마련 지시. 일반 HTTP 요청으로 200 응답과 기사 본문을 직접 확인"
+        },
+        {
+          "publisher": "Báo Đà Nẵng · TRỌNG HUY",
+          "title": "Đà Nẵng hợp tác với ShopeeFood xây dựng hệ sinh thái ẩm thực số và bản đồ ẩm thực",
+          "url": "https://baodanang.vn/da-nang-hop-tac-voi-shopeefood-xay-dung-he-sinh-thai-am-thuc-so-va-ban-do-am-thuc-3354417.html",
+          "published_at": "2026-10-07",
+          "role": "independent_corrob",
+          "supports": "별도 작성자·현장 사진이 있는 회의 보도에서 회의일, 음식 지도·사업자 지원 논의, 협약 구체화 지시를 대조"
+        }
+      ],
+      "verification_notes": "시청 원문과 별도 작성자의 현장 보도를 대조했습니다. 관광 포털 재게시와 같은 신문의 번역판은 독립 출처로 추가 계산하지 않았습니다. 등록 범위는 2026-10-07 당시 논의 사실이며 현재 운영 상태를 보증하지 않습니다. 언론사 내부 취재 원자료까지 확인한 것은 아닙니다."
+    }
+  ]
+}
