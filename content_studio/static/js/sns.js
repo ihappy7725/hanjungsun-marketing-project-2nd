@@ -268,8 +268,7 @@ function goHome() {
 
 function resetWork() {
   Object.assign(work, { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null });
-  $("chat-log").replaceChildren();
-  $("chat-choices").replaceChildren();
+  feedback("", "");
 }
 
 function startNew() {
@@ -278,7 +277,7 @@ function startNew() {
   showScreen("work");
   setUrl(null);
   notify("");
-  addBubble("assistant", "어떤 영상을 만들까요? 제품·기념일·분위기를 말해 주세요. 위에서 규격(비율·길이·소리)을 먼저 고를 수 있어요.");
+  feedback("info", "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
   renderWork();
   $("chat-input").focus();
 }
@@ -290,7 +289,6 @@ async function openChat(chatId) {
     resetWork();
     showScreen("work");
     notify("");
-    for (const message of data.messages) addBubble(message.role, message.text);
     applyState(chatId, data);
     loadHistory();
   } catch (error) {
@@ -312,7 +310,7 @@ function renderWork() {
   const doc = work.doc;
   const current = doc ? { ratio: doc.ratio, duration: doc.duration, sound: doc.sound } : settings;
   for (const button of $("set-ratio").children) button.classList.toggle("dark", button.dataset.value === current.ratio);
-  for (const button of $("set-duration").children) button.classList.toggle("dark", Number(button.dataset.value) === current.duration);
+  $("set-duration").value = current.duration;
   $("set-sound").textContent = current.sound ? "소리 켬" : "소리 끔";
   $("set-sound").classList.toggle("dark", current.sound);
   $("undo").disabled = !work.canUndo || work.busy;
@@ -336,11 +334,12 @@ async function saveDesign(doc) {
   }
 }
 
-// ---------- 대화 ----------
-function addBubble(role, text) {
-  const bubble = el("p", `studio-bubble is-${role}`, text);
-  $("chat-log").append(bubble);
-  $("chat-log").scrollTop = $("chat-log").scrollHeight;
+// ---------- 한 줄 입력 · 한 줄 안내 ----------
+// type: ok(반영) · ask(정보 필요) · warn(못 알아들음·오류) · info(안내)
+function feedback(type, text) {
+  $("feedback").className = `studio-feedback${type ? ` is-${type}` : ""}`;
+  $("feedback-text").textContent = text;
+  $("chat-choices").replaceChildren();
 }
 
 // 제품을 되물으면 답의 "(찹쌀떡 / 망고스틴 찹쌀떡)" 목록으로 고르기 버튼을 만듭니다.
@@ -358,22 +357,26 @@ async function send(text, extra = {}) {
   text = text.trim();
   if (!text || work.busy) return;
   work.busy = true;
-  $("chat-choices").replaceChildren();
-  addBubble("user", text);
+  const isNew = !work.chatId;
+  feedback("info", "반영하는 중…");
   const body = { text, kind, chat_id: work.chatId, ...settings, ...extra };
   try {
     const data = await api("/messages", { method: "POST", body });
-    addBubble("assistant", data.reply);
     if (data.ask === "product") {
       work.pending = { text, extra };
+      feedback("ask", data.reply);
       showProductChoices(data.reply);
-    } else {
-      work.pending = null;
-      applyState(data.chat_id, data);
-      loadHistory();
+      return;
     }
+    work.pending = null;
+    applyState(data.chat_id, data);
+    loadHistory();
+    const recheck = data.design.reviewed ? "" : " — 프롬프트 다시 검토 필요";
+    if (isNew) feedback("ok", `✓ ${data.design.scenes.length}컷 초안을 만들었어요 — 장면·자막·프롬프트를 검토해 주세요`);
+    else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}${recheck}`);
+    else feedback("warn", data.reply);
   } catch (error) {
-    addBubble("assistant", `요청하지 못했습니다. (${error.message})`);
+    feedback("warn", `요청하지 못했습니다. (${error.message})`);
   } finally {
     work.busy = false;
     renderWork();
@@ -434,10 +437,11 @@ function bindWork() {
   for (const button of $("set-ratio").children) {
     button.addEventListener("click", () => changeSetting("ratio", button.dataset.value, phrases[button.dataset.value]));
   }
-  for (const button of $("set-duration").children) {
-    const value = Number(button.dataset.value);
-    button.addEventListener("click", () => changeSetting("duration", value, `${value}초로`));
-  }
+  $("set-duration").addEventListener("change", (event) => {
+    const value = Math.min(30, Math.max(5, Math.round(Number(event.target.value)) || 5));
+    event.target.value = value;
+    changeSetting("duration", value, `${value}초로`);
+  });
   $("set-sound").addEventListener("click", () => {
     const next = !(work.doc ? work.doc.sound : settings.sound);
     changeSetting("sound", next, next ? "소리 켜줘" : "소리 꺼줘");
@@ -449,12 +453,9 @@ function bindWork() {
     send(input.value);
     input.value = "";
   });
-  // Enter로 보내기, Shift+Enter로 줄바꿈
+  // 한글 입력 중(조합 중) Enter는 글자 확정만 하고 보내지 않습니다.
   $("chat-input").addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
-      event.preventDefault();
-      $("chat-form").requestSubmit();
-    }
+    if (event.key === "Enter" && event.isComposing) event.preventDefault();
   });
 
   // Ctrl+Z / Ctrl+Shift+Z: 입력칸에 쓰는 중에는 글자 되돌리기로 둡니다.

@@ -5,13 +5,15 @@
 지금은 단어 규칙으로 만듭니다. 나중에 AI(GPT)를 연결해도 같은 문서 형식(README 8장)을 돌려줍니다.
 - 영상에는 글자를 그리지 않고(prompt에 no text), 베트남어 자막(caption)은 장면마다 따로 저장해 영상 위에 얹습니다.
 - 자막 문구는 시연용이며 원어민 검수 전입니다(demo=True).
+- 길이는 5~30초. 한 번에 만들 수 있는 길이는 생성 모델마다 다르므로 5단계(Higgsfield 연동)에서 맞춥니다.
 """
 import copy
+import math
 import re
 
 RATIOS = ("9:16", "16:9", "1:1")
-DURATIONS = (5, 10)
-SCENE_TIMES = {5: ("0-2s", "2-4s", "4-5s"), 10: ("0-3s", "3-6s", "6-8s", "8-10s")}
+MIN_DURATION, MAX_DURATION = 5, 30
+MAX_SCENES = 8
 
 CAMERAS = ("slow smooth dolly-in", "steady medium push-in", "dynamic quick cuts")
 LIGHTINGS = ("dim warm low-key lighting", "soft warm natural lighting", "bright airy high-key lighting")
@@ -36,10 +38,48 @@ BITE_SCENE = {
     "en": "a person taking a happy first bite",
     "caption": "Ngọt ngào trong từng miếng",
 }
+# 길이가 길어 장면이 늘어날 때 가운데에 차례로 넣는 장면
+EXTRA_SCENES = (
+    {"ko": "접시를 천천히 돌리며 보여주기", "en": "a slowly rotating plate of rice cakes", "caption": ""},
+    {"ko": "손으로 집어 드는 장면", "en": "a hand gently picking up a rice cake", "caption": ""},
+    {"ko": "차 한 잔과 함께 놓인 찹쌀떡", "en": "rice cakes served beside a cup of tea", "caption": ""},
+    {"ko": "친구와 나눠 먹는 장면", "en": "friends sharing rice cakes and smiling", "caption": ""},
+    {"ko": "선물 상자에 담는 장면", "en": "rice cakes being placed into a gift box", "caption": ""},
+)
+ORDINALS = {"첫": 1, "두": 2, "세": 3, "네": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8}
 
 
 def _pick(value, allowed, default):
     return value if value in allowed else default
+
+
+def _duration(value, default=MIN_DURATION):
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        return default
+    return value if MIN_DURATION <= value <= MAX_DURATION else default
+
+
+def scene_count(duration):
+    """5초 3컷, 10초 4컷, 15초 5컷 … 30초 8컷."""
+    return min(MAX_SCENES, 2 + math.ceil(duration / 5))
+
+
+def _even_ends(duration, count):
+    return [math.ceil(duration * (i + 1) / count) for i in range(count)]
+
+
+def _apply_ends(scenes, ends):
+    start = 0
+    for scene, end in zip(scenes, ends):
+        scene["time"] = f"{start}-{end}s"
+        start = end
+
+
+def _parse_end(time):
+    match = re.fullmatch(r"\s*(\d+)\s*-\s*(\d+)\s*s?\s*", str(time or ""))
+    return int(match.group(2)) if match else None
 
 
 def _setting(text):
@@ -64,20 +104,48 @@ def _setting(text):
 
 
 def _retime(scenes, duration):
-    """장면 수를 길이에 맞추고(첫·마지막 장면 유지) 시간을 다시 매깁니다."""
-    times = SCENE_TIMES[duration]
+    """장면 수를 길이에 맞추고(첫·마지막 장면 유지) 시간을 고르게 다시 나눕니다."""
+    count = scene_count(duration)
     scenes = [dict(scene) for scene in scenes]
-    while len(scenes) < len(times):
-        scenes.insert(-1, dict(TEXTURE_SCENE))
-    while len(scenes) > len(times):
+    while len(scenes) < count:
+        used = {scene["ko"] for scene in scenes}
+        extra = next((s for s in (TEXTURE_SCENE, *EXTRA_SCENES) if s["ko"] not in used), TEXTURE_SCENE)
+        scenes.insert(-1, dict(extra))
+    while len(scenes) > count:
         scenes.pop(-2)
-    for scene, time in zip(scenes, times):
-        scene["time"] = time
+    _apply_ends(scenes, _even_ends(duration, count))
     return scenes
+
+
+def normalize_scenes(doc):
+    """직접 고친 장면 시간을 검사합니다. 0초부터 이어지고 길이에서 끝나야 하며, 아니면 고르게 다시 나눕니다."""
+    doc = copy.deepcopy(doc)
+    doc["duration"] = _duration(doc.get("duration"))
+    scenes = doc["scenes"]
+    ends = [_parse_end(scene.get("time")) for scene in scenes]
+    valid = (
+        bool(ends)
+        and all(end is not None for end in ends)
+        and all(a < b for a, b in zip([0, *ends], ends))
+        and ends[-1] == doc["duration"]
+    )
+    _apply_ends(scenes, ends if valid else _even_ends(doc["duration"], len(scenes)))
+    return doc
 
 
 def _has_bite(scenes):
     return any("bite" in scene["en"] for scene in scenes)
+
+
+def _scene_number(text):
+    """'첫번째 장면', '2번째', '3번 장면' → 장면 번호. ('2번 자막'은 자막 고치기라 제외)"""
+    match = re.search(r"(첫|두|세|네|다섯|여섯|일곱|여덟)\s*번?\s*째", text)
+    if match:
+        return ORDINALS[match.group(1)]
+    match = re.search(r"(\d+)\s*번\s*째|(\d+)\s*번\s*(?:장면|컷|씬)", text)
+    if match:
+        return int(match.group(1) or match.group(2))
+    return None
 
 
 def build_prompt(doc):
@@ -104,7 +172,7 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
     """요청 문장 → 영상 문서 (README 8장 형식 + caption·demo·reviewed)."""
     text = text or ""
     ratio = _pick(ratio, RATIOS, "9:16")
-    duration = _pick(duration, DURATIONS, 5)
+    duration = _duration(duration)
     setting = _setting(text)
     product_en = PRODUCT_EN.get(product, "Korean rice cake mochi")
     product_vi = PRODUCT_VI.get(product, "Bánh mochi Hanjungsun")
@@ -120,7 +188,7 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         dict(middle),
         {"ko": "브랜드 마무리 컷", "en": "the rice cakes beautifully plated, final hero shot", "caption": BRAND_CAPTION},
     ]
-    if duration == 10:
+    if scene_count(duration) >= 4:
         scenes.insert(0, {**setting["opening"], "caption": ""})
 
     doc = {
@@ -170,12 +238,18 @@ def revise_draft(doc, text):
         new["camera"] = CAMERAS[2]
         video_changes.append("카메라를 빠르게")
 
-    if re.search(r"한입|먹는 장면|베어", text) and not _has_bite(new["scenes"]):
-        new["scenes"][-2] = {**BITE_SCENE, "time": new["scenes"][-2]["time"]}
-        video_changes.append("한입 먹는 장면 넣기")
+    # 한입 장면: 장면 번호를 말하면 그 장면을, 아니면 끝에서 두 번째 장면을 바꿉니다.
+    if re.search(r"한입|먹는|먹어|먹게|베어", text):
+        number = _scene_number(text)
+        index = number - 1 if number else len(new["scenes"]) - 2
+        scene = new["scenes"][index] if 0 <= index < len(new["scenes"]) else None
+        if scene and "bite" not in scene["en"] and (number or not _has_bite(new["scenes"])):
+            new["scenes"][index] = {**BITE_SCENE, "time": scene["time"], "caption": scene.get("caption") or BITE_SCENE["caption"]}
+            video_changes.append(f"{index + 1}번 장면을 한입 먹는 장면으로")
 
-    duration = 10 if re.search(r"(?<!\d)10\s*초", text) else 5 if re.search(r"(?<!\d)5\s*초", text) else None
-    if duration and duration != new["duration"]:
+    match = re.search(r"(?<!\d)(\d{1,2})\s*초", text)
+    duration = int(match.group(1)) if match else None
+    if duration and MIN_DURATION <= duration <= MAX_DURATION and duration != new["duration"]:
         new["duration"] = duration
         new["scenes"] = _retime(new["scenes"], duration)
         video_changes.append(f"{duration}초로 ({len(new['scenes'])}컷)")
