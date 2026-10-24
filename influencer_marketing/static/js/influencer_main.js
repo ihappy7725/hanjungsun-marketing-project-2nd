@@ -159,8 +159,9 @@
         [sent ? Math.round(replied / sent * 100) + '%' : '–', '회신율', `${replied} / ${sent}명 회신`], [conf, '계약 확정 이상', '촬영·게시 포함'], [rv, '확인 필요 회신', rv ? '회신 정리 탭에서 확인' : '모두 확인됨']]
         .map(([b, s, e]) => `<div class="im-kpi"><span>${s}</span><b>${b}</b><em>${e}</em></div>`).join('');
       if (!L.length) {
-        $('#ovPipe', v).innerHTML = `<div class="im-empty">아직 등록된 인플루언서가 없어요.<div class="im-row" style="justify-content:center;margin-top:10px"><button type="button" class="im-btn is-primary" id="ovAdd">첫 인플루언서 추가</button>${S.inf.size ? '' : '<button type="button" class="im-btn" id="ovSeed">시연 데이터 넣기</button>'}</div></div>`;
+        $('#ovPipe', v).innerHTML = `<div class="im-empty">아직 등록된 인플루언서가 없어요.<div class="im-row" style="justify-content:center;margin-top:10px"><button type="button" class="im-btn is-primary" id="ovFind">[발굴] 탭에서 자동으로 찾기</button><button type="button" class="im-btn" id="ovAdd">직접 입력해서 추가</button>${S.inf.size ? '' : '<button type="button" class="im-btn" id="ovSeed">시연 데이터 넣기</button>'}</div><p class="im-muted im-small" style="margin:10px 0 0">[발굴] 탭: YouTube 후보 검색·인기 순위·파일 가져오기 / 직접 입력 창에서도 채널 주소를 넣고 [YouTube 지표 가져오기]를 누르면 숫자가 자동으로 채워져요</p></div>`;
         $('#ovAdd', v).onclick = () => openEditor(null);
+        $('#ovFind', v).onclick = () => show('discover');
         const sd = $('#ovSeed', v); if (sd) sd.onclick = async () => { try { replaceAll(await api('POST', 'api/demo/seed')); toast('시연 데이터를 넣었어요'); } catch (e) { toast(e.message); } };
         ['#ovTodo', '#ovPf', '#ovTier', '#ovSoon'].forEach(id => { $(id, v).innerHTML = '<p class="im-muted" style="margin:0">데이터 없음</p>'; });
         return;
@@ -450,6 +451,8 @@ ${[...by].reverse().join(' ') || '[담당자]'}
 ${contact}`.replace(/\n{3,}/g, '\n\n') };
   }
   const SET_FIELDS = { sBrand: 'brand', sBrandVi: 'brandVi', sProduct: 'product', sProductVi: 'productVi', sProductEn: 'productEn', sCompany: 'company', sSender: 'sender', sEmail: 'senderEmail', sZalo: 'senderZalo', sPeriod: 'period', sDeadline: 'deadline', sForm: 'formLink', sFee: 'feeText', sFeeVi: 'feeVi', sFeeEn: 'feeEn', sGuideVi: 'guideVi', sGuideEn: 'guideEn', sGuideKo: 'guideKo' };
+  const TR_NAME = { ko: '한국어', vi: '베트남어', en: '영어' };
+  const TR_PAIRS = [['ko', 'vi'], ['vi', 'ko'], ['en', 'vi'], ['vi', 'en'], ['ko', 'en'], ['en', 'ko']];
   VIEWS.outreach = {
     mount(v) {
       const s = S.settings, inp = (id, label, type = 'text', wide) => `<label class="im-field ${wide ? 'is-wide' : ''}">${label}<input type="${type}" id="${id}" value="${esc(s[SET_FIELDS[id]])}"></label>`;
@@ -460,7 +463,11 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <div class="im-recips" id="recips"></div>
           <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn" id="markSent">선택한 사람 '제안 발송'으로 표시</button><span class="im-muted im-small" id="selCnt"></span></div></div>
         <div class="im-panel"><h2>미리보기 <small id="pvWho"></small></h2><div id="pv"></div></div></div>
-        <div class="im-panel"><h2>캠페인 정보 <small>메일에 자동으로 들어가요</small></h2>
+        <div class="im-panel"><h2>캠페인 정보 <small>여기 적은 내용이 메일 본문에 자동으로 들어가요</small></h2>
+          <div style="background:var(--im-sunk);border-radius:8px;padding:10px 12px" style="margin-bottom:12px"><div class="im-eyebrow">저장된 캠페인</div>
+            <div class="im-row" style="margin-top:6px"><select id="cpSel" style="flex:1;min-width:160px"><option value="">불러올 캠페인 선택</option></select><button type="button" class="im-btn is-sm" id="cpLoad">불러오기</button><button type="button" class="im-btn is-sm" id="cpDel">삭제</button></div>
+            <div class="im-row" style="margin-top:6px"><input type="text" id="cpName" maxlength="40" placeholder="이름 (예: 2026 스승의 날 캠페인)" style="flex:1;min-width:160px"><button type="button" class="im-btn is-sm" id="cpSave">현재 정보를 이 이름으로 저장</button></div>
+            <p class="im-muted im-small" id="cpMsg" style="margin:6px 0 0">캠페인마다 정보를 저장해 두고 다시 꺼내 쓸 수 있어요. 불러오면 아래 칸과 메일에 바로 적용돼요.</p></div>
           <div class="im-fgrid">${inp('sBrand', '브랜드')}${inp('sBrandVi', '브랜드 (로마자)')}${inp('sProduct', '제품명 (한국어)')}${inp('sProductVi', '제품명 (베트남어)')}${inp('sProductEn', '제품명 (영어)', 'text', 1)}
           ${inp('sCompany', '회사명')}${inp('sSender', '보내는 사람')}${inp('sEmail', '회신 이메일', 'email')}${inp('sZalo', '회사 Zalo')}${inp('sPeriod', '예정 기간')}${inp('sDeadline', '회신 기한', 'date')}
           ${inp('sForm', '빠른 응답 폼 링크 (선택)', 'url', 1)}${inp('sFee', '비용 문구 (한국어)', 'text', 1)}${inp('sFeeVi', '비용 문구 (베트남어)', 'text', 1)}${inp('sFeeEn', '비용 문구 (영어)', 'text', 1)}
@@ -469,6 +476,19 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <p class="im-muted im-small" style="margin:12px 0 0">개정 광고법(Law No. 75/2025/QH15, 2026-01-01 시행)은 인플루언서가 광고임을 게시 전·중에 밝히고, 직접 써 보지 않은 제품은 홍보하지 않도록 정하고 있어요. 광고 표현 검수 안내는 콘텐츠 스튜디오 화면을 함께 확인하세요.</p></div></div>`;
       Object.keys(SET_FIELDS).forEach(id => { $('#' + id, v).oninput = e => { S.settings = { ...S.settings, [SET_FIELDS[id]]: e.target.value }; this.preview(v); }; });
       $('#sSave', v).onclick = async () => { const o = {}; Object.entries(SET_FIELDS).forEach(([id, k]) => { o[k] = $('#' + id, v).value; }); if (await saveSettings(o)) toast('캠페인 정보를 저장했어요'); };
+      const curFields = () => { const o = {}; Object.entries(SET_FIELDS).forEach(([id, k]) => { o[k] = $('#' + id, v).value; }); return o; };
+      const cpMsg = t => { $('#cpMsg', v).textContent = t; };
+      const loadPresets = async () => { try { this._presets = await api('GET', 'api/campaign-presets'); } catch (e) { this._presets = []; }
+        $('#cpSel', v).innerHTML = '<option value="">불러올 캠페인 선택</option>' + this._presets.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.saved_at || '')}</option>`).join(''); };
+      loadPresets();
+      $('#cpSave', v).onclick = () => { const name = $('#cpName', v).value.trim(); if (!name) { cpMsg('저장할 이름을 입력하세요'); return; }
+        const go = async (overwrite) => { try { await api('POST', 'api/campaign-presets', { name, data: curFields(), overwrite }); await loadPresets(); $('#cpSel', v).value = name; cpMsg(`'${name}'(으)로 저장했어요`); toast('캠페인을 저장했어요'); } catch (e) { cpMsg(e.message); } };
+        if ((this._presets || []).some(p => p.name === name)) armButton($('#cpSave', v), '같은 이름이 있어요. 한 번 더 누르면 덮어써요', () => go(true)); else go(false); };
+      $('#cpLoad', v).onclick = async () => { const p = (this._presets || []).find(x => x.name === $('#cpSel', v).value); if (!p) { cpMsg('불러올 캠페인을 고르세요'); return; }
+        Object.entries(SET_FIELDS).forEach(([id, k]) => { if (k in p.data) $('#' + id, v).value = p.data[k]; });
+        if (await saveSettings(curFields())) { $('#cpName', v).value = p.name; cpMsg(`'${p.name}'을(를) 불러와 현재 캠페인 정보로 적용했어요`); this.preview(v); } };
+      $('#cpDel', v).onclick = () => { const name = $('#cpSel', v).value; if (!name) { cpMsg('삭제할 캠페인을 고르세요'); return; }
+        armButton($('#cpDel', v), '한 번 더 누르면 삭제', async () => { try { await api('DELETE', 'api/campaign-presets', { name }); await loadPresets(); cpMsg(`'${name}'을(를) 삭제했어요`); } catch (e) { cpMsg(e.message); } }); };
       $$('#lang button', v).forEach(b => { b.onclick = () => { S.mail.lang = b.dataset.l; $$('#lang button', v).forEach(x => x.setAttribute('aria-pressed', x === b)); this.preview(v); }; });
       $('#markSent', v).onclick = async () => {
         const ids = [...S.mail.checked]; if (!ids.length) { toast('먼저 받는 사람을 체크하세요'); return; }
@@ -491,7 +511,18 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       if (!i) { pv.innerHTML = '<div class="im-empty">받는 사람을 고르면 메일이 여기에 만들어져요</div>'; $('#pvWho', v).textContent = ''; return; }
       const m = mailFor(i, S.mail.lang); $('#pvWho', v).textContent = `${i.name} · ${i.email || '이메일 미등록'}`;
       pv.innerHTML = `<div class="im-mail"><div class="im-subj"><span id="mSubj">${esc(m.subj)}</span><button type="button" class="im-btn is-sm" id="cpS">제목 복사</button></div><pre id="mBody">${esc(m.body)}</pre></div>
-        <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="cpB">본문 복사</button>${i.email ? '<button type="button" class="im-btn" id="cpE">받는 주소 복사</button>' : ''}<span class="im-muted im-small">메일 앱에 붙여 넣어 보내세요. 자동 발송은 팀에서 범위를 정한 뒤 추가해요.</span></div>`;
+        <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="cpB">본문 복사</button>${i.email ? '<button type="button" class="im-btn" id="cpE">받는 주소 복사</button>' : ''}<span class="im-muted im-small">메일 앱에 붙여 넣어 보내세요. 자동 발송은 팀에서 범위를 정한 뒤 추가해요.</span></div>
+        <div style="background:var(--im-sunk);border-radius:8px;padding:10px 12px" style="margin-top:12px"><div class="im-eyebrow">번역해서 대조하기 <span class="im-muted" style="text-transform:none;letter-spacing:0">· Google 번역이 새 창으로 열려요 (무료·키 없음)</span></div>
+          <div class="im-small" style="margin:8px 0 4px">① 위 메일 본문을 번역</div><div class="im-row" style="gap:6px">${TR_PAIRS.map(([a, b]) => `<button type="button" class="im-btn is-sm" data-tr="${a}|${b}" data-src="body">${TR_NAME[a]} → ${TR_NAME[b]}</button>`).join('')}</div>
+          <div class="im-small" style="margin:10px 0 4px">② 번역 결과를 아래에 붙여 넣고 다시 번역 → 원문과 대조</div>
+          <textarea id="trBox" rows="4" placeholder="Google 번역 결과를 복사해 붙여 넣으세요. 예: 베트남어 → 영어 결과를 붙여 넣고 [영어 → 베트남어]를 누르면 원래 문장과 비교할 수 있어요"></textarea>
+          <div class="im-row" style="gap:6px;margin-top:6px">${TR_PAIRS.map(([a, b]) => `<button type="button" class="im-btn is-sm" data-tr="${a}|${b}" data-src="box">${TR_NAME[a]} → ${TR_NAME[b]}</button>`).join('')}</div>
+          <p class="im-muted im-small" style="margin:6px 0 0">Google 번역 웹은 한 번에 약 5,000자까지 받아요. 기계 번역이라 발송 전 현지 직원 검수를 권장해요.</p></div>`;
+      $$('[data-tr]', v).forEach(b => { b.onclick = () => { const [sl, tl] = b.dataset.tr.split('|');
+        const txt = b.dataset.src === 'body' ? `${m.subj}\n\n${m.body}` : $('#trBox', v).value.trim();
+        if (!txt) { toast('번역할 글을 먼저 붙여 넣어 주세요'); return; }
+        if (txt.length > 5000) { copyText(txt, '글이 길어서(5,000자 초과) 복사만 했어요. Google 번역 창에 붙여 넣으세요 —'); window.open(`https://translate.google.com/?sl=${sl}&tl=${tl}&op=translate`, '_blank', 'noopener'); return; }
+        window.open(`https://translate.google.com/?sl=${sl}&tl=${tl}&text=${encodeURIComponent(txt)}&op=translate`, '_blank', 'noopener'); }; });
       $('#cpS', v).onclick = () => copyText(m.subj, '제목', $('#mSubj', v)); $('#cpB', v).onclick = () => copyText(m.body, '본문', $('#mBody', v));
       const ce = $('#cpE', v); if (ce) ce.onclick = () => copyText(i.email, '주소');
     },
@@ -527,7 +558,11 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       if (this._for !== S.resp.id) this.form(v);
       const R = L.filter(i => i.resp).sort((a, b) => (!!b.resp.review - !!a.resp.review) || (b.resp.at || '').localeCompare(a.resp.at || ''));
       $('#rList', v).innerHTML = R.length ? `<ul class="im-todo">${R.map(i => { const r = i.resp; return `<li><div class="im-grow"><b>${esc(i.name)}</b> ${demoTag(i)} ${r.review ? '<span class="im-chip st-replied">확인 필요</span>' : ''}<div class="im-muted im-small">${{ yes: '가능', cond: '조건부', no: '불가' }[r.avail] || '미확인'} · 촬영 가능 ${(r.shoot || []).map(fmtD).join(', ') || '–'}${i.confirmedShoot ? ' · <b style="color:var(--im-bean)">확정 ' + fmtD(i.confirmedShoot) + '</b>' : ''}</div></div><button type="button" class="im-btn is-sm" data-r="${esc(i.id)}">열기</button></li>`; }).join('')}</ul>` : '<div class="im-empty">아직 받은 회신이 없어요</div>';
-      $$('[data-r]', v).forEach(b => { b.onclick = () => { S.resp.id = b.dataset.r; S.resp.draft = null; $('#rWho', v).value = b.dataset.r; this.form(v); }; });
+      $$('[data-r]', v).forEach(b => { b.onclick = () => { S.resp.id = b.dataset.r; S.resp.draft = null; $('#rWho', v).value = b.dataset.r; this.form(v);
+        $$('#rList li', v).forEach(li => { li.style.background = li.contains(b) ? 'var(--im-accent-soft)' : ''; li.style.borderRadius = '6px'; });
+        const f = $('#rForm', v); f.style.transition = 'none'; f.style.boxShadow = '0 0 0 3px var(--im-accent)'; f.style.borderRadius = '8px';
+        setTimeout(() => { f.style.transition = 'box-shadow 1.2s'; f.style.boxShadow = '0 0 0 0 transparent'; }, 60);
+        $('#rWho', v).scrollIntoView({ behavior: 'smooth', block: 'start' }); toast(`${(S.inf.get(b.dataset.r) || {}).name || ''}의 회신을 왼쪽에 불러왔어요. 고친 뒤 [회신 저장]을 누르면 수정돼요`); }; });
     },
     form(v) {
       this._for = S.resp.id; const i = S.inf.get(S.resp.id), box = $('#rForm', v);
@@ -545,7 +580,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
         <div><div class="im-eyebrow">가능한 콘텐츠 형식</div><div class="im-seg" id="rFm">${FORMATS.map(f => `<button type="button" data-f="${esc(f)}" aria-pressed="${r.formats.includes(f)}">${esc(f)}</button>`).join('')}</div></div>
         <label class="im-field">기타 의견·조건<textarea id="rNote" rows="3">${esc(r.note)}</textarea></label>
         ${r.raw ? `<details><summary class="im-muted im-small">원문 보기</summary><pre class="im-raw">${esc(r.raw)}</pre></details>` : ''}
-        <div class="im-row"><button type="button" class="im-btn is-primary" id="rSave">회신 저장</button><span class="im-muted im-small">저장하면 상태가 바뀌어요 (불가 → 불가·보류, 그 외 → 회신 받음)</span></div>`;
+        <div class="im-row"><button type="button" class="im-btn is-primary" id="rSave">${i.resp ? '회신 수정 저장' : '회신 저장'}</button>${i.resp ? '<button type="button" class="im-btn" id="rDel">회신 삭제</button>' : ''}<span class="im-muted im-small">저장하면 상태가 바뀌어요 (불가 → 불가·보류, 그 외 → 회신 받음). 잘못 넣은 회신은 고쳐서 다시 저장하거나 삭제하세요</span></div>`;
       const keep = () => { r.post = $('#rPost', v).value; r.fee = $('#rFee', v).value; r.cur = $('#rCur', v).value; r.note = $('#rNote', v).value; S.resp.draft = r; };
       $$('#rAv button', v).forEach(b => { b.onclick = () => { r.avail = b.dataset.v; $$('#rAv button', v).forEach(x => x.setAttribute('aria-pressed', x === b)); keep(); }; });
       $$('#rFm button', v).forEach(b => { b.onclick = () => { const f = b.dataset.f; r.formats = r.formats.includes(f) ? r.formats.filter(x => x !== f) : [...r.formats, f]; b.setAttribute('aria-pressed', r.formats.includes(f)); keep(); }; });
@@ -557,6 +592,9 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
         const saved = await saveReply(i.id, { ...r, via: r.via || 'manual' });
         if (saved) { S.resp.draft = null; this._for = null; const raw = $('#rRaw', v); if (raw) raw.value = ''; $('#rAutoOut', v).innerHTML = ''; toast('회신을 저장했어요'); this.form(v); }
       };
+      const del = $('#rDel', v); if (del) del.onclick = () => armButton(del, '한 번 더 누르면 회신 삭제', async () => {
+        try { const saved = await api('DELETE', `api/influencers/${encodeURIComponent(i.id)}/reply`); S.inf.set(saved.id, saved); S.resp.draft = null; this._for = null; refresh(); toast('회신을 삭제했어요. 상태를 제안 발송으로 되돌렸어요'); }
+        catch (e) { toast(e.message); } });
     },
   };
 
@@ -626,7 +664,8 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <label class="im-field">실제 조회수 (게시 후)<input type="number" min="0" id="qAct"></label>
           <label class="im-field is-wide">포함 조건<input type="text" id="qCond" placeholder="예: VAT 별도, 2차 활용 3개월, 배송비 별도"></label></div>
           <div class="im-row" style="margin-top:12px"><button type="button" class="im-btn is-primary" id="qAdd">추가</button></div></div>
-        <div class="im-panel"><h2>환율 <small>환산용. 실제 환율로 바꿔 주세요</small></h2><div class="im-fgrid">
+        <div class="im-panel"><h2>환율 <small>직접 입력해요 (자동으로 가져오지 않아요)</small></h2>
+          <p class="im-small" id="xState" style="margin:0 0 8px"></p><div class="im-fgrid">
           <label class="im-field">1 USD = VND<input type="number" id="xV" value="${esc(S.settings.vndPerUsd)}"></label>
           <label class="im-field">1 USD = KRW<input type="number" id="xK" value="${esc(S.settings.krwPerUsd)}"></label></div>
           <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn" id="xSave">환율 저장</button></div></div>
@@ -640,7 +679,12 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
         if (!body.infId) { toast('인플루언서를 고르세요'); return; } if (!+body.amount) { toast('금액을 입력하세요'); return; }
         if (await saveQuote(body)) { toast('단가 기록을 추가했어요'); ['qAmt', 'qExp', 'qAct', 'qCond'].forEach(id => { $('#' + id, v).value = ''; }); }
       };
-      $('#xSave', v).onclick = async () => { const a = +$('#xV', v).value, b = +$('#xK', v).value; if (!a || !b) { toast('환율을 숫자로 입력하세요'); return; } if (await saveSettings({ vndPerUsd: a, krwPerUsd: b })) toast('환율을 저장했어요'); };
+      $('#xSave', v).onclick = async () => { const a = +$('#xV', v).value, b = +$('#xK', v).value; if (!a || !b) { toast('환율을 숫자로 입력하세요'); return; } if (await saveSettings({ vndPerUsd: a, krwPerUsd: b, rateConfirm: true })) { toast('환율을 저장했어요'); this.rateState(v); } };
+      this.rateState(v);
+    },
+    rateState(v) {
+      const d = S.settings.rateSavedAt, el = $('#xState', v); if (!el) return;
+      el.innerHTML = d ? `직접 입력한 환율 · 저장일 <b>${esc(d)}</b>` : '<span style="color:var(--im-warn)">아직 예시값이에요. 실제 환율을 입력하고 [환율 저장]을 누르세요</span>';
     },
     update(v) {
       const L = infList().sort((a, b) => a.name.localeCompare(b.name)), qi = $('#qInf', v), cur = qi.value;
@@ -697,7 +741,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
   const OPTIONAL_SVC = ['modash', 'hypeauditor'];
   const optFold = (n, inner) => `<details class="im-optfold"><summary>선택 연동 서비스 보기 <span class="im-muted im-small">(${n}개 · 키 미설정, 있으면 쓰는 유료 API)</span></summary><div class="im-optfold-body">${inner}</div></details>`;
   const DISC_CATS = C.discoveryCategories || ['Food', 'Dessert', 'Mukbang', 'Korean Food', 'Lifestyle'];
-  const TTO_LINKS = [['TikTok One 열기', 'https://one.tiktok.com/'], ['크리에이터 검색 공식 안내', 'https://ads.tiktok.com/help/article/how-to-find-creators-in-tiktok-one']];
+  const TTO_LINKS = [['TikTok One 열기', 'https://ads.tiktok.com/creative'], ['크리에이터 검색 공식 안내', 'https://ads.tiktok.com/help/article/how-to-find-creators-in-tiktok-one']];
   S.disc = S.disc || { platform: 'tt', provider: '', cats: ['Dessert', 'Korean Food'], rows: [], sel: new Set(), meta: null, source: '' };
   VIEWS.discover = {
     mount(v) {
@@ -720,8 +764,20 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <div class="im-eyebrow" style="margin-top:14px">조회할 곳</div>
           <div id="dProv" class="im-stack" style="gap:6px"></div>
           <div class="im-row" style="margin-top:12px"><button type="button" class="im-btn is-primary" id="dGo">후보 검색</button><span class="im-muted im-small" id="dGoMsg"></span></div></div>
-        <div class="im-panel"><h2>검색 결과 <small id="dMeta"></small></h2><div id="dRes"></div>
-          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="dReg" disabled>선택한 후보 등록</button><span class="im-muted im-small" id="dRegMsg">같은 플랫폼의 같은 계정은 자동으로 건너뛰어요. 등록하면 '후보' 상태로 인플루언서 목록에 들어가요.</span></div></div></div>
+        <div class="im-panel"><h2>검색 결과 <small id="dMeta"></small></h2><div id="dNotice"></div><div id="dRes"></div>
+          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="dReg" disabled>선택한 후보 등록</button><span class="im-muted im-small" id="dRegMsg">같은 플랫폼의 같은 계정은 자동으로 건너뛰어요. 등록하면 '후보' 상태로 인플루언서 목록에 들어가요.</span></div></div>
+        <div class="im-panel" id="rkPanel"><h2>인기 순위 <small>공식 API로 가져와요 · 크롤링 없음</small></h2>
+          <div class="im-fgrid">
+            <label class="im-field is-wide">순위 종류<select id="rkKind"></select></label>
+            <label class="im-field" id="rkPfWrap" hidden>플랫폼<select id="rkPf"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option></select></label>
+            <label class="im-field">개수<select id="rkSize"><option value="30">Top 30</option><option value="50" selected>Top 50</option><option value="100">Top 100</option></select></label>
+            <label class="im-field is-wide" id="rkKwWrap" hidden>키워드<input type="text" id="rkKw" placeholder="예: mukbang"></label>
+            <label class="im-field is-wide" id="rkFoodWrap" style="flex-direction:row;align-items:center;gap:8px" hidden><input type="checkbox" id="rkFood" checked>식품 관련만 보기 <span class="im-muted im-small">(게임·음악·스포츠·뉴스 제외 + 제목·태그에 음식 단어 포함)</span></label></div>
+          <div id="rkKwChips" hidden>${kwChips('rkKw')}</div>
+          <p class="im-muted im-small" id="rkInfo" style="margin:8px 0 0"></p>
+          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="rkGo">순위 가져오기</button><a class="im-btn" id="rkCsv" href="${API}export/ranking.csv" hidden>순위 CSV 내려받기</a><span class="im-muted im-small" id="rkMsg"></span></div>
+          <div id="rkMeta" style="margin-top:10px"></div><div id="rkRes"></div>
+          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn is-primary" id="rkReg" disabled>선택한 계정 후보로 등록</button><span class="im-muted im-small" id="rkRegMsg"></span></div></div></div>
         <div class="im-stack">
         <div class="im-panel"><h2>TikTok One 연계 <small>API 없이 쓰는 기본 방법</small></h2>
           <p class="im-small" style="margin:0 0 8px">TikTok One 크리에이터 검색 API는 일반 광고주 권한이 확인되지 않아 연결하지 않았어요. 화면에서 찾고, 숫자를 옮겨 적어 등록해요.</p>
@@ -730,7 +786,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
         <div class="im-panel"><h2>후보 직접 입력 <small>TikTok One·인플루언서 자료에서 확인한 값</small></h2>
           <div class="im-fgrid">
             <label class="im-field">플랫폼<select id="mPf"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option><option value="fb">Facebook</option></select></label>
-            <label class="im-field">출처<select id="mSrc"><option value="manual|TikTok One (화면 확인)">TikTok One 화면 확인</option><option value="manual|직접 확인">채널에서 직접 확인</option><option value="submitted|인플루언서 제출">인플루언서 제출 자료</option><option value="submitted|에이전시 자료">에이전시 자료</option></select></label>
+            <label class="im-field">출처<select id="mSrc"><option value="manual|TikTok One (화면 확인)">TikTok One 화면 확인</option><option value="manual|직접 확인">채널에서 직접 확인</option><option value="submitted|인플루언서 제출">인플루언서 제출 자료</option><option value="submitted|에이전시 자료">에이전시 자료</option><option value="official_api|YouTube API">YouTube API (자동 채우기)</option><option value="saas|Phyllo">Phyllo (자동 채우기)</option></select></label>
             <label class="im-field is-wide">계정 주소 또는 @핸들 *<input type="text" id="mRef" placeholder="https://www.tiktok.com/@아이디"></label>
             <label class="im-field">이름<input type="text" id="mName"></label>
             <label class="im-field">팔로워<input type="number" min="0" id="mF"></label>
@@ -741,10 +797,16 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
             <label class="im-field">수집일<input type="date" id="mAt" value="${today()}"></label>
             <label class="im-field">분야<select id="mCat"><option value="">선택 안 함</option>${C.categories.map(c => `<option>${esc(c)}</option>`).join('')}</select></label></div>
           <p class="im-muted im-small" style="margin:6px 0 0">평균만 알면 평균 칸에만 넣으세요. 중앙값 칸에 평균을 넣지 않아요.</p>
-          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn" id="mChk">중복 확인</button><button type="button" class="im-btn is-primary" id="mAdd">후보로 등록</button><span class="im-small" id="mMsg"></span></div></div>
-        <div class="im-panel"><h2>CSV로 여러 명 가져오기</h2>
-          <p class="im-small" style="margin:0 0 8px">양식에 채워서 올리면 미리보기로 보여 주고, 중복을 표시해요. 저장은 결과 표에서 골라서 해요. (TikTok One에서 CSV를 바로 내보낼 수 있는지는 확인되지 않아, 이 양식에 옮겨 적는 방식이에요.)</p>
-          <div class="im-row"><a class="im-btn is-sm" href="${API}export/discovery_template.csv">발굴 후보 CSV 양식</a><label class="im-btn is-sm" for="dCsv" style="cursor:pointer">CSV 올리기</label><input type="file" id="dCsv" accept=".csv,text/csv" hidden></div></div>
+          <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn" id="mFill">주소로 지표 채우기</button><button type="button" class="im-btn" id="mChk">중복 확인</button><button type="button" class="im-btn is-primary" id="mAdd">후보로 등록</button><span class="im-small" id="mMsg"></span></div></div>
+        <div class="im-panel"><h2>파일로 여러 명 가져오기 <small>CSV·TSV · 자동 정제 후 미리보기</small></h2>
+          <p class="im-small" style="margin:0 0 8px">우리 양식뿐 아니라 SaaS 내보내기·에이전시 자료처럼 열 이름과 숫자 표기가 다른 파일도 정리해서 미리보기로 보여 줘요. 저장은 결과 표에서 골라서 해요. 엑셀 파일은 'CSV UTF-8'로 저장해서 올려 주세요.</p>
+          <div class="im-fgrid">
+            <label class="im-field">이 파일의 출처<select id="dCsvSrc"><option value="">파일의 '출처' 열 따르기 (우리 양식)</option><option value="saas">전문 SaaS 내보내기 파일</option><option value="submitted">에이전시·인플루언서 제출 자료</option><option value="manual">직접 확인한 값</option></select></label>
+            <label class="im-field">제공처 이름 (선택)<input type="text" id="dCsvProv" maxlength="60" placeholder="예: Modash 내보내기, OO에이전시"></label>
+            <label class="im-field">플랫폼 열이 없을 때<select id="dCsvPf"><option value="">주소로 자동 판별</option><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option><option value="fb">Facebook</option></select></label>
+            <label class="im-field" style="flex-direction:row;align-items:center;gap:8px;margin-top:22px"><input type="checkbox" id="dCsvDemo">시연용 파일 (시연 데이터로 표시)</label></div>
+          <div class="im-row" style="margin-top:10px"><a class="im-btn is-sm" href="${API}export/discovery_template.csv">발굴 후보 CSV 양식</a><label class="im-btn is-sm is-primary" for="dCsv" style="cursor:pointer">파일 올리기</label><input type="file" id="dCsv" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" hidden></div>
+          <div id="dCsvRep" style="margin-top:10px"></div></div>
         </div></div>`;
       $('#dPf', v).onchange = e => { D.platform = e.target.value; this.providers(v); this.crit(v); };
       ['dCountry', 'dLang', 'dMinF', 'dMaxF', 'dMinV', 'dMinEr', 'dMinVn'].forEach(id => { $('#' + id, v).oninput = () => this.crit(v); });
@@ -754,14 +816,102 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       $('#dReg', v).onclick = () => this.register(v, D.rows.filter((r, i) => D.sel.has(i)));
       const manual = () => { const [st, prov] = $('#mSrc', v).value.split('|'); return { platform: $('#mPf', v).value, url: $('#mRef', v).value.trim(), name: $('#mName', v).value.trim(), followers: $('#mF', v).value, median_views: $('#mV', v).value, avg_views: $('#mAvg', v).value, er: $('#mEr', v).value, vn_audience: $('#mVn', v).value, collected_on: $('#mAt', v).value, category: $('#mCat', v).value, source_type: st, provider: prov, country: $('#dCountry', v).value, language: $('#dLang', v).value }; };
       const mMsg = (t, bad) => { const m = $('#mMsg', v); m.textContent = t; m.style.color = bad ? 'var(--im-bad)' : 'var(--im-ok)'; };
+      $('#mFill', v).onclick = async () => { const pf = $('#mPf', v).value, ref = $('#mRef', v).value.trim();
+        if (!ref) { mMsg('계정 주소를 먼저 넣어 주세요', true); return; }
+        if (pf === 'fb') { mMsg('Facebook은 자동으로 채울 수 없어요. 직접 입력해 주세요', true); return; }
+        const b = $('#mFill', v); b.disabled = true; mMsg(pf === 'yt' ? 'YouTube에서 가져오는 중… (약 3유닛)' : 'Phyllo에서 가져오는 중…', false);
+        try { const r = await api('POST', 'api/discovery/fill', { platform: pf, ref });
+          const set = (id, val) => { if (val != null && val !== '') $('#' + id, v).value = val; };
+          if (!$('#mName', v).value.trim()) set('mName', r.name); set('mF', r.followers); set('mV', r.median_views); set('mAvg', r.avg_views); set('mEr', r.er);
+          $('#mAt', v).value = today(); $('#mSrc', v).value = pf === 'yt' ? 'official_api|YouTube API' : 'saas|Phyllo';
+          mMsg(`채웠어요. ${r.note || ''} 베트남 시청자 비중은 공개 API로 알 수 없어 비워 둬요`, false); }
+        catch (e) { mMsg(e.message, true); } finally { b.disabled = false; } };
       $('#mChk', v).onclick = async () => { const m = manual(); if (!m.url) { mMsg('계정 주소를 넣어 주세요', true); return; }
         try { const r = await api('POST', 'api/discovery/check', { platform: m.platform, ref: m.url }); mMsg(r.duplicate ? `이미 등록된 계정이에요: ${r.duplicate_of.name}` : '새 계정이에요. 등록할 수 있어요', r.duplicate); } catch (e) { mMsg(e.message, true); } };
       $('#mAdd', v).onclick = async () => { const m = manual(); if (!m.url) { mMsg('계정 주소를 넣어 주세요', true); return; } await this.register(v, [m], mMsg); };
       $('#dCsv', v).onchange = async e => { const file = e.target.files[0]; e.target.value = ''; if (!file) return;
-        const fd = new FormData(); fd.append('file', file);
-        try { const r = await api('POST', 'api/discovery/import-csv', fd, true); D.rows = r.rows; D.sel = new Set(r.rows.map((x, i) => x.duplicate ? -1 : i).filter(i => i >= 0)); D.meta = { csv: true, errors: r.errors }; D.source = 'CSV'; this.results(v); toast(`${r.rows.length}명을 읽었어요. 확인 후 [선택한 후보 등록]을 누르세요`); }
-        catch (err) { toast(err.message); } };
-      bindKw(v); this.providers(v); this.crit(v); this.results(v);
+        const fd = new FormData(); fd.append('file', file); fd.append('source', $('#dCsvSrc', v).value); fd.append('provider', $('#dCsvProv', v).value.trim());
+        fd.append('platform', $('#dCsvPf', v).value); if ($('#dCsvDemo', v).checked) fd.append('demo', '1');
+        try { const r = await api('POST', 'api/discovery/import-csv', fd, true); D.rows = r.rows; D.sel = new Set(r.rows.map((x, i) => x.duplicate ? -1 : i).filter(i => i >= 0)); D.meta = { csv: true, errors: r.errors, report: r.report }; D.source = 'CSV'; this.csvReport(v, r.report, r.errors, file.name); this.results(v); toast(`${r.rows.length}명을 읽었어요. 확인 후 [선택한 후보 등록]을 누르세요`); }
+        catch (err) { $('#dCsvRep', v).innerHTML = `<div class="im-note">${esc(err.message)}</div>`; toast(err.message); } };
+      bindKw(v); this.providers(v); this.crit(v); this.results(v); this.rankInit(v);
+    },
+    async rankInit(v) {
+      const R = S.disc.rank = S.disc.rank || { rows: [], meta: null, sel: new Set(), kinds: [] };
+      let d; try { d = await api('GET', 'api/discovery/ranking'); } catch (e) { $('#rkInfo', v).textContent = e.message; return; }
+      R.kinds = d.kinds;
+      $('#rkKind', v).innerHTML = d.kinds.map(k => `<option value="${k.key}" ${k.configured ? '' : 'disabled'}>${esc(k.label)}${k.configured ? '' : ' (키 없음)'}</option>`).join('');
+      const firstOk = d.kinds.find(k => k.configured); if (firstOk) $('#rkKind', v).value = firstOk.key;
+      const sync = () => { const k = R.kinds.find(x => x.key === $('#rkKind', v).value) || {};
+        $('#rkKwWrap', v).hidden = $('#rkKwChips', v).hidden = !k.needs_keyword; $('#rkPfWrap', v).hidden = (k.platforms || []).length < 2;
+        $('#rkFoodWrap', v).hidden = !(k.key || '').startsWith('yt_popular');
+        $('#rkInfo', v).textContent = k.key ? `집계 기준: ${k.basis} · 비용: ${k.cost}` : '';
+        $('#rkGo', v).disabled = !k.configured; if (!k.configured) $('#rkMsg', v).textContent = 'YouTube 키가 있어야 순위를 가져올 수 있어요. 키가 없을 때는 위의 직접 입력·파일 가져오기를 쓰세요'; };
+      $('#rkKind', v).onchange = sync; sync();
+      $('#rkGo', v).onclick = () => this.rankFetch(v);
+      $('#rkReg', v).onclick = () => this.rankRegister(v);
+      if (!R.meta && d.last && d.last.meta) { R.rows = d.last.rows || []; R.meta = d.last.meta; }
+      this.rankRender(v);
+    },
+    async rankFetch(v) {
+      const R = S.disc.rank, b = $('#rkGo', v), kind = $('#rkKind', v).value;
+      b.disabled = true; $('#rkMsg', v).textContent = '가져오는 중…';
+      try { const r = await api('POST', 'api/discovery/ranking', { kind, size: +$('#rkSize', v).value, platform: $('#rkPf', v).value, keyword: $('#rkKw', v).value.trim(), food_only: $('#rkFood', v).checked });
+        R.rows = r.rows; R.meta = r.meta; R.sel = new Set(); $('#rkMsg', v).textContent = `${r.rows.length}개를 가져왔어요`; this.rankRender(v); }
+      catch (e) { $('#rkMsg', v).textContent = e.message; }
+      finally { b.disabled = false; }
+    },
+    rankRender(v) {
+      const R = S.disc.rank, box = $('#rkRes', v), m = R.meta;
+      $('#rkCsv', v).hidden = !R.rows.length;
+      if (m && !R.rows.length && (m.food_filter || {}).applied) { box.innerHTML = `<div class="im-empty">오늘 인기 차트 ${m.food_filter.chart_total}개 중 식품 관련 영상이 없어요. 'YouTube 키워드 채널'로 mukbang·review đồ ăn 등을 검색해 보세요</div>`; $('#rkMeta', v).innerHTML = ''; $('#rkReg', v).disabled = true; return; }
+      if (!m || !R.rows.length) { box.innerHTML = '<div class="im-empty">[순위 가져오기]를 누르면 기준 시각과 함께 순위가 나와요</div>'; $('#rkMeta', v).innerHTML = ''; $('#rkReg', v).disabled = true; return; }
+      const at = m.collected_at || {}, isVid = m.kind === 'yt_popular_videos';
+      $('#rkMeta', v).innerHTML = `<div class="im-banner is-info" style="margin:0"><div class="im-grow"><b>${esc(m.label)} · Top ${m.size}${m.keyword ? ` · 키워드 "${esc(m.keyword)}"` : ''}</b>
+        <div class="im-small">기준 시각: ${esc(at.kst || '')} = ${esc(at.ict || '')}</div><div class="im-small im-muted">집계 기준: ${esc(m.basis)} · 지역 ${esc(m.region || '')} · ${m.count}개</div>
+        ${(m.food_filter || {}).applied ? `<div class="im-small">식품 관련만: 인기 차트 ${m.food_filter.chart_total}개 중 ${m.food_filter.matched}개 (${esc(m.food_filter.rule)})</div>` : ''}
+        ${(m.food_filter || {}).applied && m.count < m.size ? `<div class="im-small" style="color:var(--im-warn)">오늘 차트에 식품 영상이 ${m.count}개뿐이에요. 더 많이 보려면 순위 종류를 'YouTube 키워드 채널'로 바꾸고 mukbang·review đồ ăn 같은 검색어를 쓰세요</div>` : ''}</div></div>`;
+      box.innerHTML = `<div class="im-tblwrap" style="margin-top:8px;max-height:560px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="rkAll" aria-label="모두 선택"></th><th class="r">순위</th><th>${isVid ? '영상 · 채널' : '계정'}</th>${isVid ? '<th class="r">영상 조회수</th>' : ''}<th class="r">${m.platform === 'yt' ? '구독자' : '팔로워'}</th><th>출처</th><th>등록 여부</th></tr></thead><tbody>${R.rows.map((r, i) => `<tr>
+        <td><input type="checkbox" data-rk="${i}" ${R.sel.has(i) ? 'checked' : ''} ${r.duplicate ? 'disabled' : ''} aria-label="${esc(r.name)} 선택"></td>
+        <td class="r im-num">${r.rank}</td>
+        <td>${isVid ? `<a href="${esc(r.video_url)}" target="_blank" rel="noopener">${esc(r.video_title)}</a><div class="im-sub">` : ''}<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name || r.handle)}</b></a>${isVid ? '' : '<div class="im-sub">'}<span class="im-pf pf-${r.platform}"><i></i>${PFN[r.platform]}</span> @${esc(r.handle)}${r.country ? ' · ' + esc(r.country) : ''}</div></td>
+        ${isVid ? `<td class="r im-num">${r.video_views != null ? short(r.video_views) : '–'}</td>` : ''}
+        <td class="r im-num">${r.followers != null ? short(r.followers) : '비공개'}</td>
+        <td>${esc(r.provider || '')}<div class="im-sub">${esc(r.source_label || '')} ${confChip(r.confidence)}</div></td>
+        <td>${r.duplicate ? `<span class="im-chip st-declined">등록됨</span><div class="im-sub">${esc((r.duplicate_of || {}).name || '')}</div>` : '<span class="im-chip st-sent">신규</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+      const upd = () => { $('#rkReg', v).disabled = !R.sel.size; $('#rkReg', v).textContent = R.sel.size ? `선택한 계정 ${R.sel.size}개 후보로 등록` : '선택한 계정 후보로 등록'; };
+      $$('input[data-rk]', box).forEach(c => { c.onchange = () => { const i = +c.dataset.rk; c.checked ? R.sel.add(i) : R.sel.delete(i); upd(); }; });
+      $('#rkAll', box).onchange = e => { R.rows.forEach((r, i) => { if (!r.duplicate) e.target.checked ? R.sel.add(i) : R.sel.delete(i); }); this.rankRender(v); };
+      upd();
+    },
+    async rankRegister(v) {
+      const R = S.disc.rank, recs = R.rows.filter((r, i) => R.sel.has(i));
+      if (!recs.length) { toast('등록할 계정을 고르세요'); return; }
+      try { const r = await api('POST', 'api/discovery/register', { records: recs, eventId: S.flt.ev || '' }); replaceAll(r);
+        const made = new Map(r.created.map(x => [x.account_key, x.name]));
+        R.rows.forEach(row => { if (row.account_key && made.has(row.account_key)) { row.duplicate = true; row.duplicate_of = { name: made.get(row.account_key) }; } });
+        R.sel = new Set(); this.rankRender(v);
+        $('#rkRegMsg', v).textContent = `등록 ${r.created.length}명${r.skipped.length ? ` · 중복으로 건너뜀 ${r.skipped.length}명` : ''}${r.errors.length ? ` · 오류 ${r.errors.length}명` : ''}`;
+        toast(r.created.length ? `${r.created.length}명을 후보로 등록했어요` : '새로 등록된 후보가 없어요'); }
+      catch (e) { $('#rkRegMsg', v).textContent = e.message; }
+    },
+    csvReport(v, rep, errors, fname) {
+      const box = $('#dCsvRep', v); if (!rep) { box.innerHTML = ''; return; }
+      const li = (t) => `<li>${t}</li>`;
+      const items = [
+        `읽은 행 ${grp(rep.rows_read)}개 → 미리보기 ${grp(rep.rows_ok)}명${rep.row_errors ? ` · 오류 ${rep.row_errors}줄` : ''}${rep.truncated ? ' · 2,000행까지만 읽음' : ''}`,
+        `인코딩 ${esc(rep.encoding)} · 구분자 ${esc(rep.delimiter)}`,
+        `열 대응: ${rep.mapping.map(m => `${esc(m.column)} → <b>${esc(m.label)}</b>`).join(', ')}`,
+        rep.unused_columns.length ? `사용하지 않은 열: ${esc(rep.unused_columns.join(', '))}` : '',
+        rep.fixed_cells ? `숫자 표기 정리 ${grp(rep.fixed_cells)}칸 (예: 1.2M → 1,200,000)` : '',
+        rep.blanked_cells ? `<span style="color:var(--im-warn)">읽지 못해 비워 둔 칸 ${grp(rep.blanked_cells)}개</span>` : '',
+        rep.pct_scaled.length ? `${esc(rep.pct_scaled.join('·'))}: 0~1 비율로 적혀 있어 %로 바꿈` : '',
+        rep.views_basis_unknown ? '<span style="color:var(--im-warn)">조회수 기준(중앙값/평균)이 없는 열 → 중앙값 칸에 넣지 않고 평균 칸에 저장</span>' : '',
+        rep.date_filled ? `수집일이 없는 ${grp(rep.date_filled)}행은 오늘 날짜로 채움` : '',
+        rep.duplicates_in_file.length ? `파일 안 중복 ${rep.duplicates_in_file.length}행 제외 (${rep.duplicates_in_file.map(d => d.line + '행=' + d.same_as_line + '행').join(', ')})` : '',
+        rep.skipped_example ? `양식 예시 줄 ${rep.skipped_example}개 건너뜀` : '',
+      ].filter(Boolean);
+      box.innerHTML = `<div class="im-eyebrow">정제 결과</div><div class="im-muted im-small">${esc(fname)}</div><ul class="im-small" style="margin:6px 0 0;padding-left:18px">${items.map(li).join('')}</ul>${(errors || []).length ? `<div class="im-note" style="margin-top:8px">${errors.slice(0, 20).map(e => esc(e.line + '행: ' + e.error)).join('<br>')}${errors.length > 20 ? '<br>…' : ''}</div>` : ''}`;
     },
     filters(v) {
       const n = id => { const x = $('#' + id, v).value; return x === '' ? null : +x; };
@@ -803,21 +953,37 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     },
     results(v) {
       const D = S.disc, box = $('#dRes', v);
-      if (!D.rows.length) { box.innerHTML = '<div class="im-empty">검색하거나 CSV를 올리면 후보가 여기에 나와요</div>'; $('#dReg', v).disabled = true; $('#dMeta', v).textContent = ''; return; }
+      if (!D.rows.length) { box.innerHTML = '<div class="im-empty">검색하거나 CSV를 올리면 후보가 여기에 나와요</div>'; $('#dReg', v).disabled = true; $('#dMeta', v).textContent = ''; $('#dNotice', v).innerHTML = ''; return; }
+      this.notice(v);
       const m = D.meta || {};
       $('#dMeta', v).textContent = m.csv ? `CSV ${D.rows.length}명${(m.errors || []).length ? ` · 오류 ${m.errors.length}줄: ` + m.errors.map(e => e.line + '행 ' + e.error).join(', ') : ''}` : `받은 결과 ${m.returned ?? D.rows.length}건 → 조건 적용 후 ${D.rows.length}건${m.category_filter_applied === false && D.provider !== 'youtube' ? ' · 카테고리는 이 API 필터에 적용 안 됨' : ''}`;
       box.innerHTML = `<div class="im-tblwrap"><table><thead><tr><th><input type="checkbox" id="dAll" aria-label="모두 선택"></th><th>계정</th><th class="r">팔로워</th><th class="r">조회수</th><th class="r">참여율</th><th class="r">베트남 시청자</th><th>출처·신뢰도</th><th>등록 여부</th></tr></thead><tbody>${D.rows.map((r, i) => `<tr>
         <td><input type="checkbox" data-i="${i}" ${D.sel.has(i) ? 'checked' : ''} ${r.duplicate ? 'disabled' : ''} aria-label="${esc(r.name)} 선택"></td>
-        <td><a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name || r.handle)}</b></a><div class="im-sub"><span class="im-pf pf-${r.platform}"><i></i>${PFN[r.platform]}</span> @${esc(r.handle)}${r.country ? ' · ' + esc(r.country) : ''}</div>${(r.unverified || []).length ? `<div class="im-sub" style="color:var(--im-warn)">확인 불가: ${esc(r.unverified.join(', '))}</div>` : ''}</td>
+        <td><a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name || r.handle)}</b></a><div class="im-sub"><span class="im-pf pf-${r.platform}"><i></i>${PFN[r.platform]}</span> @${esc(r.handle)}${r.country ? ' · ' + esc(r.country) : ''}</div>${(r.unverified || []).filter(x => x.startsWith('활동 국가')).length ? `<div class="im-sub" style="color:var(--im-warn)">채널 표기 국가가 달라요</div>` : ''}${r.enriched ? `<div class="im-sub">지표 채움: ${esc(r.enriched)}</div>` : ''}${(r.cleansing || []).length ? `<div class="im-sub" style="color:var(--im-warn)">정제: ${esc(r.cleansing.join(', '))}</div>` : ''}</td>
         <td class="r im-num">${r.followers != null ? short(r.followers) : '–'}</td>
         <td class="r im-num">${r.median_views != null ? short(r.median_views) + '<div class="im-sub">중앙값</div>' : r.avg_views != null ? short(r.avg_views) + '<div class="im-sub">평균</div>' : '–'}</td>
-        <td class="r im-num">${pct(r.er)}</td><td class="r im-num">${pct(r.vn_audience)}</td>
+        <td class="r im-num">${r.er != null ? pct(r.er) : '<span class="im-faint" title="이 조회 방식에서는 값을 주지 않아요">–</span>'}</td><td class="r im-num">${r.vn_audience != null ? pct(r.vn_audience) : '<span class="im-faint" title="채널 주인만 볼 수 있는 정보예요">–</span>'}</td>
         <td>${esc(r.provider || '')}<div class="im-sub">${esc(srcLabel(r.source_type))} ${confChip(r.confidence)} · ${esc(r.collected_on || '')}</div>${r.est_cost != null ? `<div class="im-sub">SaaS 추정 광고비 ${grp(r.est_cost)} (계약가 아님)</div>` : ''}</td>
         <td>${r.duplicate ? `<span class="im-chip st-declined">등록됨</span><div class="im-sub">${esc(r.duplicate_of.name)}</div>` : '<span class="im-chip st-sent">신규</span>'}</td></tr>`).join('')}</tbody></table></div>`;
       const upd = () => { $('#dReg', v).disabled = !D.sel.size; $('#dReg', v).textContent = D.sel.size ? `선택한 후보 ${D.sel.size}명 등록` : '선택한 후보 등록'; };
       $$('input[data-i]', box).forEach(c => { c.onchange = () => { const i = +c.dataset.i; c.checked ? D.sel.add(i) : D.sel.delete(i); upd(); }; });
       $('#dAll', box).onchange = e => { D.rows.forEach((r, i) => { if (!r.duplicate) e.target.checked ? D.sel.add(i) : D.sel.delete(i); }); this.results(v); };
       upd();
+    },
+    notice(v) {
+      const D = S.disc, labels = [...new Set(D.rows.flatMap(r => (r.unverified || []).filter(x => !x.startsWith('활동 국가'))))];
+      const canFill = D.rows.some(r => ['yt', 'tt', 'ig'].includes(r.platform) && !r.enriched && (r.median_views == null || r.er == null));
+      const parts = [];
+      if (labels.length) parts.push(`검색 조건 중 <b>${esc(labels.join('·'))}</b>은(는) 이 조회 방식이 값을 주지 않아 걸러지지 않았어요. 값이 없는 후보도 빼지 않고 보여 줘요.`);
+      if (labels.includes('베트남 시청자 비중')) parts.push('베트남 시청자 비중은 채널 주인만 볼 수 있어 공개 API로는 알 수 없어요 (협업 제안 때 인사이트 캡처를 요청하세요).');
+      if (canFill) parts.push('<b>[지표 채우기]</b>를 누르면 YouTube는 최근 영상 기준 조회수 중앙값·참여율을 가져오고(채널당 약 3유닛), TikTok·Instagram은 Phyllo 권한이 있을 때 채워요. 채운 뒤 조건을 다시 적용해요.');
+      $('#dNotice', v).innerHTML = parts.length ? `<div class="im-banner is-info" style="margin:0 0 10px"><div class="im-grow im-small">${parts.join('<br>')}</div>${canFill ? '<button type="button" class="im-btn is-sm" id="dFill">지표 채우기</button>' : ''}</div>` : '';
+      const fb = $('#dFill', v); if (fb) fb.onclick = async () => {
+        fb.disabled = true; fb.textContent = '가져오는 중…';
+        try { const targets = D.rows.slice(0, 25); const r = await api('POST', 'api/discovery/enrich', { rows: targets, filters: this.filters(v) });
+          D.rows = [...r.rows, ...D.rows.slice(25)]; D.sel = new Set(); this.results(v);
+          toast(`지표를 채웠어요${r.removed ? ` · 조건에 맞지 않아 ${r.removed}명 제외` : ''}${r.failed.length ? ` · 실패 ${r.failed.length}명(${r.failed[0].error})` : ''}`); }
+        catch (e) { toast(e.message); fb.disabled = false; fb.textContent = '지표 채우기'; } };
     },
     async register(v, recs, msgFn) {
       if (!recs.length) { toast('등록할 후보를 고르세요'); return; }

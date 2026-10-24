@@ -221,6 +221,7 @@ def youtube_channel(ref, recent=15):
         "subscribers_hidden": bool(st.get("hiddenSubscriberCount")),
         "total_views": int(st.get("viewCount", 0) or 0), "video_count": int(st.get("videoCount", 0) or 0),
         "median_views": None, "videos_used": 0, "note": "",
+        "er": None, "er_videos": 0,  # 참여율(%) = 최근 영상 (좋아요+댓글)÷조회수의 중앙값. 공식 API 값으로 계산한 추정치
     }
     if not uploads or not result["video_count"]:
         result["note"] = "공개 영상이 없어 조회수 중앙값을 계산하지 못했어요"
@@ -232,7 +233,7 @@ def youtube_channel(ref, recent=15):
         return result
     vids = _yt("videos", {"part": "statistics,contentDetails,snippet", "id": ",".join(ids[:25])}, f"videos.list {len(ids[:25])}개")
     cutoff = datetime.now(timezone.utc) - timedelta(days=3)
-    views = []
+    views, ers = [], []
     for v in vids.get("items") or []:
         sn_v, st_v = v.get("snippet") or {}, v.get("statistics") or {}
         if sn_v.get("liveBroadcastContent") in ("live", "upcoming") or "viewCount" not in st_v:
@@ -244,12 +245,17 @@ def youtube_channel(ref, recent=15):
         except ValueError:
             pass
         views.append(int(st_v["viewCount"]))
+        if int(st_v["viewCount"]) > 0 and "likeCount" in st_v:  # 좋아요 수를 숨긴 영상은 참여율 계산에서 제외
+            ers.append((int(st_v.get("likeCount") or 0) + int(st_v.get("commentCount") or 0)) / int(st_v["viewCount"]) * 100)
         if len(views) >= recent:
             break
     if views:
         result["median_views"] = int(statistics.median(views))
         result["videos_used"] = len(views)
         result["note"] = f"최근 영상 {len(views)}개 조회수 중앙값 (올라온 지 3일 안 된 영상·라이브 제외). 광고 영상 여부는 구분하지 못해요"
+    if ers:
+        result["er"] = round(statistics.median(ers), 2)
+        result["er_videos"] = len(ers)
     return result
 
 
@@ -274,6 +280,65 @@ def youtube_search(query, max_results=15):
                     "total_views": int(st.get("viewCount", 0) or 0), "video_count": int(st.get("videoCount", 0) or 0)})
     order = {cid: i for i, cid in enumerate(ids)}
     return sorted(out, key=lambda x: order.get(x["channel_id"], 99))
+
+
+def youtube_channels_stats(ids):
+    """채널 ID 목록 → {id: 채널 정보}. 50개씩 나눠 조회 (50개당 1유닛)."""
+    out, ids = {}, [i for i in dict.fromkeys(ids) if i]
+    for n in range(0, len(ids), 50):
+        part = ids[n:n + 50]
+        chs = _yt("channels", {"part": "snippet,statistics", "id": ",".join(part)}, f"channels.list {len(part)}개")
+        for ch in chs.get("items") or []:
+            st, sn = ch.get("statistics") or {}, ch.get("snippet") or {}
+            out[ch.get("id")] = {"channel_id": ch.get("id"), "title": sn.get("title", ""), "handle": sn.get("customUrl", ""),
+                                 "country": sn.get("country", ""), "url": f"https://www.youtube.com/channel/{ch.get('id')}",
+                                 "subscribers": None if st.get("hiddenSubscriberCount") else int(st.get("subscriberCount", 0) or 0),
+                                 "total_views": int(st.get("viewCount", 0) or 0), "video_count": int(st.get("videoCount", 0) or 0)}
+    return out
+
+
+def youtube_popular_videos(region="VN", total=50):
+    """YouTube 공식 인기 차트(videos.list chart=mostPopular). 지역별 최대 200개, 50개당 1유닛."""
+    total = max(1, min(int(total), 200))
+    items, token = [], None
+    while len(items) < total:
+        params = {"part": "snippet,statistics", "chart": "mostPopular", "regionCode": region, "maxResults": min(50, total - len(items))}
+        if token:
+            params["pageToken"] = token
+        data = _yt("videos", params, f"videos.list 인기 차트 {region}")
+        for v in data.get("items") or []:
+            sn, st = v.get("snippet") or {}, v.get("statistics") or {}
+            items.append({"video_id": v.get("id"), "title": sn.get("title", ""), "channel_id": sn.get("channelId", ""),
+                          "channel_title": sn.get("channelTitle", ""), "published_at": (sn.get("publishedAt") or "")[:10],
+                          "category_id": str(sn.get("categoryId") or ""), "tags": (sn.get("tags") or [])[:30],
+                          "description": (sn.get("description") or "")[:300],
+                          "views": int(st["viewCount"]) if st.get("viewCount") else None,
+                          "likes": int(st["likeCount"]) if st.get("likeCount") else None,
+                          "comments": int(st["commentCount"]) if st.get("commentCount") else None,
+                          "url": f"https://www.youtube.com/watch?v={v.get('id')}"})
+        token = data.get("nextPageToken")
+        if not token or not data.get("items"):
+            break
+    return items[:total]
+
+
+def youtube_search_channels(query, total=50):
+    """키워드로 베트남 지역 채널을 모음 (검색 1페이지=100유닛, 최대 50개). 구독자 수 포함."""
+    q = (query or "").strip()
+    if not q:
+        raise ApiError("검색어를 입력하세요. 예: mukbang")
+    total = max(1, min(int(total), 100))
+    ids, token = [], None
+    while len(ids) < total:
+        params = {"part": "snippet", "type": "channel", "q": q, "regionCode": "VN", "relevanceLanguage": "vi", "maxResults": 50}
+        if token:
+            params["pageToken"] = token
+        data = _yt("search", params, f"search.list \"{q[:20]}\"")
+        ids += [it["id"]["channelId"] for it in data.get("items") or [] if (it.get("id") or {}).get("channelId")]
+        token = data.get("nextPageToken")
+        if not token or not data.get("items"):
+            break
+    return list(youtube_channels_stats(ids[:total]).values())
 
 
 def youtube_test():
@@ -451,7 +516,7 @@ def _modash_location_id(mplat, country):
     return _MODASH_LOC[key]
 
 
-def modash_search(platform, f):
+def modash_search(platform, f, page=0):
     """f: 표준 필터 dict. 응답의 InfluencerResponse 구조는 공개 문서에 상세하지 않아 이름으로 값을 찾습니다."""
     mplat = MODASH_PLATFORM.get(platform)
     if not mplat:
@@ -471,7 +536,7 @@ def modash_search(platform, f):
         influencer["location"] = [loc_id]
         if f.get("min_vn_audience"):
             audience["location"] = [{"id": loc_id, "weight": float(f["min_vn_audience"]) / 100}]
-    body = {"page": 0, "calculationMethod": "median", "sort": {"field": "followers", "direction": "desc"},
+    body = {"page": int(page or 0), "calculationMethod": "median", "sort": {"field": "followers", "direction": "desc"},
             "filter": {"influencer": influencer, **({"audience": audience} if audience else {})}}
     data = _modash("POST", f"/{mplat}/search", body, label=f"POST /{mplat}/search")
     rows = []
@@ -548,11 +613,11 @@ def hypeauditor_test():
     return {"ok": True, "message": "연결됐어요 (샌드박스 검색 응답 확인)" + (f". 남은 조회 {left:,}" if isinstance(left, (int, float)) else "")}
 
 
-def hypeauditor_search(platform, f):
+def hypeauditor_search(platform, f, page=1):
     if platform not in HYPE_PLATFORM:
         raise ApiError("HypeAuditor는 TikTok·Instagram·YouTube만 지원해요")
     endpoint = "auditor.searchSandbox" if _hype_sandbox() else "auditor.search"
-    data = _hype("POST", endpoint, _hype_search_body(platform, f), label=f"POST {endpoint} {HYPE_PLATFORM[platform]}")
+    data = _hype("POST", endpoint, _hype_search_body(platform, f, page=page), label=f"POST {endpoint} {HYPE_PLATFORM[platform]}")
     result = data.get("result") if isinstance(data, dict) and isinstance(data.get("result"), dict) else data
     items = []
     for k in ("search_results", "items", "results", "data"):
