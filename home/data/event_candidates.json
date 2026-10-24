@@ -1,12 +1,27 @@
 {
   "schema_version": 1,
   "calendar_eligible": false,
+  "review_policy": {
+    "workflow": "API 미리보기 → 독립 원문 대조 → 검토 완료 후보 보관 → 등록 미리보기 → 사용자 승인 등록",
+    "api_preview_persisted": false,
+    "staged_verification_status": "verified",
+    "staged_registration_status": "pending_approval",
+    "registration_record": "등록 여부는 events.json의 event_id로 판단한다. 후보 파일은 검토 기록으로 보존하며 등록 명령에서 함께 수정하지 않는다.",
+    "truth_check": "프로그램은 형식·체크값·근거 메모를 검사한다. 원문의 진실성·독립성을 자동 인증하지 않는다."
+  },
+  "research_scope": {
+    "country": "VN",
+    "holiday_and_event_regions": ["베트남 전국", "다낭"],
+    "fruit_regions": "베트남 전 지역",
+    "fruit_note": "생산지·품종·수확/출하 시기를 구분한다. 제철 정보만으로 OEM 공장의 실제 조달 가능성이나 냉동 원료 공급 기간을 확정하지 않는다."
+  },
   "candidates": [
     {
       "candidate_id": "vn_danang_christmas_market_2026",
       "name": "다낭 크리스마스 마켓 2026",
       "type": "regional_event",
       "year": 2026,
+      "verification_status": "insufficient_evidence",
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
@@ -24,6 +39,7 @@
       "name": "다낭 국제불꽃축제 DIFF 2027",
       "type": "regional_event",
       "year": 2027,
+      "verification_status": "insufficient_evidence",
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
@@ -37,16 +53,22 @@
     },
     {
       "candidate_id": "vn_danang_mango_season_2027",
-      "name": "2027년 다낭용 망고 시즌",
+      "name": "2027년 베트남 망고 시즌 · 생산지·품종 확인 대기",
       "type": "fruit_season",
       "year": 2027,
+      "verification_status": "insufficient_evidence",
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
+      "region": null,
+      "variety": null,
+      "date_precision": "unconfirmed",
+      "original_period": null,
+      "scope_note": "조사 범위를 다낭에서 베트남 전 지역으로 확대했다. candidate_id는 기존 기록과의 연결을 위해 유지한다. 아래 finding은 이전 조사 기록이며, 동탑 Cát Chu 관련 언급을 2027년 확정 정보로 승격하지 않는다.",
       "last_reviewed_at": "2026-10-23",
       "finding": "2019년 국가농업지도센터 자료의 재수록 기사에 동탑 Cát Chu 망고 주 수확철 4~5월 언급. 다낭·2027년 자료가 아님.",
       "missing_evidence": "실제 조달 산지·품종 및 2027년 수확 전망의 1차 자료와 독립적 교차 확인 부족.",
-      "next_check": "조달 산지·품종을 정한 뒤 해당 농업기관 자료 확인. 월 단위 정보를 일 단위로 임의 변환하지 않음.",
+      "next_check": "베트남 전 지역의 농업기관 자료에서 망고 생산지·품종별 수확/출하 시기를 조사하고 독립 출처와 대조한다. 통상 제철과 2027년 전망을 구분하며, 실제 조달 가능성은 OEM 공장에 별도 확인한다. 월 단위 정보를 일 단위로 임의 변환하지 않음.",
       "source_urls": [
         "https://khuyennongvn.gov.vn/portals/0/tailieu/2019/11/hangweb/ruot_tap_chi_khuyen_nong_so_062019_gui_0110.pdf"
       ]
