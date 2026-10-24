@@ -12,6 +12,7 @@ from flask import jsonify, render_template, request
 from . import bp
 
 _EVENTS_PATH = Path(__file__).parent / "data" / "events.json"
+_NEWS_PATH = Path(__file__).parent / "data" / "news.json"
 
 
 def _load_events(start, end):
@@ -22,13 +23,21 @@ def _load_events(start, end):
     한 건이라도 잘못되면 목록 전체를 실패로 처리해 조용한 누락을 막습니다.
     """
     document = json.loads(_EVENTS_PATH.read_text(encoding="utf-8"))
+    rows = _validate_event_document(document)
+    return sorted(
+        (row for row in rows if row["start_date"] <= end.isoformat() and row["end_date"] >= start.isoformat()),
+        key=lambda row: (row["start_date"], row["event_id"]),
+    )
+
+
+def _validate_event_document(document):
+    """조회와 관리 명령이 공유하는 형식 검사. 원문의 진실성 검증은 담당자가 수행합니다."""
     if not isinstance(document, dict) or document.get("schema_version") != 1:
         raise ValueError("지원하지 않는 일정 자료 형식")
     rows = document.get("events")
     if not isinstance(rows, list):
         raise ValueError("일정 목록 필요")
     seen = set()
-    result = []
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("일정 객체 필요")
@@ -73,9 +82,58 @@ def _load_events(start, end):
             urls.add(source["url"])
         if len(urls) < 2 or not {"primary", "independent_corrob"} <= roles:
             raise ValueError("교차 검증 근거 부족")
-        if dates["start_date"] <= end and dates["end_date"] >= start:
-            result.append(row)
-    return sorted(result, key=lambda row: (row["start_date"], row["event_id"]))
+    return rows
+
+
+def _load_news():
+    """담당자가 검증·승인한 뉴스만 최대 3건 읽습니다. 수집·사실 판정은 하지 않습니다."""
+    document = json.loads(_NEWS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        raise ValueError("지원하지 않는 뉴스 자료 형식")
+    rows = document.get("news")
+    if not isinstance(rows, list):
+        raise ValueError("뉴스 목록 필요")
+    result, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("뉴스 객체 필요")
+        if row.get("verification_status") != "verified" or row.get("registration_status") != "approved":
+            continue
+        required = ("news_id", "title", "summary", "region", "source", "url", "verification_notes")
+        if any(not isinstance(row.get(key), str) or not row[key].strip() for key in required):
+            raise ValueError("필수 뉴스 필드 누락")
+        if row["news_id"] in seen:
+            raise ValueError("중복 뉴스 ID")
+        seen.add(row["news_id"])
+        if row.get("country") != "VN" or row.get("is_demo") is not False:
+            raise ValueError("실제 베트남 자료 필요")
+        for key in ("published_at", "verified_at"):
+            value = row.get(key)
+            if not isinstance(value, str) or date.fromisoformat(value).isoformat() != value:
+                raise ValueError("YYYY-MM-DD 필요")
+        if row["verified_at"] < row["published_at"]:
+            raise ValueError("발행일보다 앞선 확인일")
+        if "suggestion" in row and not isinstance(row["suggestion"], str):
+            raise ValueError("적용 제안 문자열 필요")
+        sources = row.get("sources")
+        if not isinstance(sources, list) or len(sources) < 2:
+            raise ValueError("뉴스 검증 출처 부족")
+        urls, roles = set(), set()
+        for source in sources:
+            if not isinstance(source, dict) or any(
+                not isinstance(source.get(key), str) or not source[key].strip()
+                for key in ("publisher", "title", "url", "supports", "role")
+            ):
+                raise ValueError("출처 필드 누락")
+            url = urlsplit(source["url"])
+            if url.scheme != "https" or not url.hostname or url.username or url.password:
+                raise ValueError("HTTPS 원문 주소 필요")
+            urls.add(source["url"])
+            roles.add(source["role"])
+        if row["url"] not in urls or len(urls) < 2 or not {"primary", "independent_corrob"} <= roles:
+            raise ValueError("뉴스 교차 검증 근거 부족")
+        result.append(row)
+    return sorted(result, key=lambda row: (row["published_at"], row["news_id"]), reverse=True)[:3]
 
 
 @bp.route("/")
@@ -85,7 +143,7 @@ def index():
 
 @bp.get("/api/signals")
 def signals():
-    """일정은 HOME 파일, 뉴스·협업은 기존 공개 함수에서 읽습니다. DB에는 쓰지 않습니다."""
+    """일정·뉴스는 HOME 파일, 협업은 기존 공개 함수에서 읽습니다. DB에는 쓰지 않습니다."""
     try:
         start = date.fromisoformat(request.args.get("start", ""))
         end = date.fromisoformat(request.args.get("end", ""))
@@ -110,8 +168,7 @@ def signals():
         return _load_events(start, end)
 
     def news():
-        from market_analysis.public import get_news_summary
-        return get_news_summary(country="VN", limit=3)
+        return _load_news()
 
     def collaborations():
         from influencer_marketing.public import get_collaborations

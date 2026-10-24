@@ -115,7 +115,7 @@
 .home-page .home-signal-meta { color: var(--muted); font-size: 11px; margin: 6px 0; }
 .home-page .home-creator-status { margin: 14px 0; border-left: 2px solid var(--green); padding: 5px 10px; color: var(--green); }
 .home-page .home-news { grid-column: 1 / -1; }
-.home-page .home-news-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-page .home-news-grid { display: grid; grid-template-columns: repeat(var(--home-news-columns, 3), minmax(0, 1fr)); }
 .home-page .home-news-item { padding: 0 20px; border-right: 1px solid var(--line); overflow-wrap: anywhere; }
 .home-page .home-news-item:first-child { padding-left: 0; }
 .home-page .home-news-item:last-child { border-right: 0; padding-right: 0; }

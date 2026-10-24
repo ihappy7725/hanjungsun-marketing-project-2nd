@@ -248,7 +248,7 @@ function initialize() {
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select'].forEach(sel => { $(sel).disabled = !c; });
     $('#retrospective').hidden = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('현지 기회에서 일정을 고르면 역산 캠페인을 만들 수 있습니다.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
+    if (!c) { $('#campaign-summary').innerHTML = empty('새 캠페인에서 이름과 목표일을 직접 입력하거나, 현지 기회의 일정을 골라 역산 캠페인을 만들 수 있습니다.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
     $('#campaign-summary').innerHTML = `<div class="home-campaign-meta">${badge(CAMPAIGN_STATES[c.status] || c.status)} &nbsp; ${esc(c.target_date)} · ${dday(c.target_date, today)}<p>${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</p></div>`;
     const tasks = store.tasks.filter(t => t.campaign_id === c.id), next = ordered(tasks.filter(unfinished), today)[0];
     $('#next-task').innerHTML = next ? `<button class="home-next" data-task="${esc(next.id)}"><span><span class="home-muted">다음 할 일</span> &nbsp; ${esc(next.title)} →</span><span class="home-muted">${esc(next.due_date || '날짜 없음')}</span></button>` : empty('남은 업무가 없습니다.');
@@ -274,8 +274,16 @@ function initialize() {
       return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div>${c.is_demo ? badge('DEMO · 예시 데이터') : ''}<p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
     }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없습니다. 원본 탭에서 전체 협업을 확인할 수 있습니다.'));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
-    const news = (signals?.news.items || []).filter(n => mode === 'demo' || n.is_demo !== true).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
-    $('#news-list').innerHTML = news.map(n => `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · ${esc(n.published_at || '발행일 미제공')}</div><h3>${esc(n.title)}</h3><p>${esc(n.summary)}</p>${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}<p class="home-signal-meta">${esc(n.source || '출처 미제공')} ${safeUrl(n.url) ? `<a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener noreferrer">원문 ↗</a>` : ''}</p></article>`).join('') || empty(signalMessage('news', '등록된 뉴스·트렌드가 없습니다.'));
+    const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
+    $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
+    $('#news-list').innerHTML = news.map(n => {
+      const sources = Array.isArray(n.sources) ? n.sources : [];
+      const evidence = sources.length ? sources.map((source, i) => {
+        const url = safeUrl(source.url);
+        return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">출처 ${i + 1} · ${esc(source.publisher)} ↗</a>` : esc(source.publisher);
+      }).join('<br>') : `${esc(n.source || '출처 미제공')}${safeUrl(n.url) ? ` <a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener noreferrer">원문 ↗</a>` : ''}`;
+      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span><p>${esc(n.summary)}</p>${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}<p class="home-signal-meta">${evidence}</p>${n.verification_notes ? `<p class="home-signal-meta">확인 범위: ${esc(n.verification_notes)}</p>` : ''}</article>`;
+    }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
   }
   function render() {
     $('#reference-date').value = today;
@@ -319,7 +327,7 @@ function initialize() {
   function planner(kind, opportunity) {
     const original = kind === 'create' ? null : selected(); if (kind !== 'create' && !original) return;
     let rows = original ? store.tasks.filter(t => t.campaign_id === original.id) : TEMPLATE.map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
-    const target = original?.target_date || opportunity.start, initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity.name;
+    const target = original?.target_date || opportunity?.start || '', initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
     openDialog(kind === 'create' ? '역산 캠페인 생성' : kind === 'clone' ? '캠페인 복제' : '설정·재계획', `<form id="plan-form"><label class="home-field">캠페인명<input name="name" required maxlength="160" value="${esc(initialName)}"></label><div class="home-form-grid"><label class="home-field">목표일<input type="date" name="target_date" required value="${target}"></label><label class="home-field">템플릿<select name="template" ${original ? 'disabled' : ''}>${options({ launch: '첫 진출 · 9개 업무', anniversary: '기념일 · 8개 업무' }, original?.template || 'launch')}</select></label><label class="home-field">제품<input name="product" maxlength="160" value="${esc(original?.product)}"></label><label class="home-field">타깃<input name="audience" maxlength="160" value="${esc(original?.audience)}"></label><label class="home-field">채널<input name="channel" maxlength="160" value="${esc(original?.channel)}"></label></div><p class="home-muted">목표일 전은 음수, 이후는 양수입니다. 주말을 포함한 달력일로 계산합니다.${kind === 'replan' ? ' 완료·취소·날짜 고정 업무는 보존합니다.' : ''}</p><div id="template-rows"></div><p id="plan-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button type="submit" class="btn">일정 미리보기</button></div><div id="plan-preview"></div></form>`);
     const renderRows = () => { $('#template-rows').innerHTML = rows.map((t, i) => `<div class="home-template-row"><input aria-label="업무 ${i + 1} 이름" data-row-title="${i}" value="${esc(t.title)}" maxlength="160" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}><input aria-label="업무 ${i + 1} 상대 일수" data-row-offset="${i}" type="number" min="-3650" max="3650" value="${Number(t.offset) || 0}" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}></div>`).join(''); };
     renderRows();
@@ -344,7 +352,7 @@ function initialize() {
           next.tasks = next.tasks.map(t => changed.find(item => item.id === t.id) || t);
         } else {
           const campaignId = id();
-          next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity.event_id, status: 'preparing', review: '' });
+          next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity?.event_id || '', status: 'preparing', review: '' });
           const tasks = kind === 'clone' ? cloneTasks(edits, campaignId, newTarget, original.target_date, id) : edits.map(t => ({ ...t, id: id(), campaign_id: campaignId, due_date: addDays(newTarget, t.offset), start_date: '', fixed: false, status: 'todo', importance: 'normal', memo: '', completed_at: '' }));
           next.tasks.push(...tasks); next.preferences.selected = campaignId;
         }
@@ -374,6 +382,7 @@ function initialize() {
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
   $('#completed-toggle').onclick = () => { filter = filter === 'done' ? 'open' : 'done'; renderTasks(); };
   $('#scope').onchange = event => { scope = event.target.value; render(); };
+  $('#new-campaign').onclick = () => planner('create');
   $('#clone-campaign').onclick = () => planner('clone');
   $('#replan-campaign').onclick = () => planner('replan');
   $('#data-mode').onchange = event => {
