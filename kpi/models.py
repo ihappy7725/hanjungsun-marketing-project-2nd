@@ -45,7 +45,7 @@ class KpiVocReview(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     review_id = db.Column(db.String(64), nullable=False, unique=True)
-    platform = db.Column(db.String(20), nullable=False)  # Shopee_VN | Instagram | TikTok
+    platform = db.Column(db.String(20), nullable=False)  # Shopee_VN | Instagram | TikTok | Zalo_OA(팜플렛 QR)
     raw_text_vn = db.Column(db.Text, nullable=False)
     translated_kr = db.Column(db.Text)
     sentiment = db.Column(db.String(10))  # Positive | Neutral | Negative

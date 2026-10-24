@@ -6,167 +6,230 @@
 <link rel="stylesheet" href="{{ url_for('kpi.static', filename='css/kpi_main.css') }}">
 {% endblock %}
 
+{% macro info(tip) -%}
+<button type="button" class="kpi-info" aria-label="계산식 보기" data-tip="{{ tip }}">i</button>
+{%- endmacro %}
+
+{% macro expand_button() -%}
+<button type="button" class="kpi-expand" data-kpi-action="expand" aria-label="블록 확대" title="확대">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+</button>
+{%- endmacro %}
+
 {% block content %}
 <div class="kpi-page">
-  <header class="pagehead">
+  <header class="pagehead kpi-head">
     <div>
       <p class="eyebrow">PERFORMANCE & BUDGET</p>
       <h1>KPI</h1>
       <p>베트남 광고비·매출·예산과 현지 고객 반응을 한 화면에서 확인합니다.</p>
     </div>
-    <div class="kpi-pagehead-side">
+    <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
       <button type="button" class="btn" data-kpi-action="refresh">새로고침</button>
     </div>
   </header>
 
-  <p class="empty-note">DEMO · 예시 데이터 — 광고비·매출·예산·VOC 리뷰·GA4는 시연 값입니다. 환율(한국은행 ECOS 일별 고시)과 VOC AI 분석(OpenAI)만 실제 API를 호출합니다. 공식은 확정 전 안(README 9장)입니다.</p>
+  <p class="kpi-legend">
+    <span>데이터 상태</span>
+    <span class="kpi-status is-live">실제 API</span>
+    <span class="kpi-status is-fallback">대체 출처</span>
+    <span class="kpi-status is-public">공개 데모</span>
+    <span class="kpi-status is-demo">시연</span>
+    <span class="kpi-legend-note">범위: 베트남(다낭 우선) · 공식은 확정 전 안(README 9장) · ⓘ에서 계산식 확인</span>
+  </p>
 
   <!-- 상단: 핵심 KPI 요약 -->
   <section class="kpis kpi-scorecards" aria-label="핵심 KPI 요약">
     <div class="kpi">
-      <div class="label"><span>총 집행 광고비</span><span class="badge">DEMO</span></div>
+      <div class="label">
+        <span class="kpi-label-text">총 집행 광고비 {{ info("광고비 합계(VND) × 기준 환율 ÷ 100\n기준 환율: 예산 편성 시점 100 VND당 KRW") }}</span>
+        <span class="kpi-status is-demo">시연</span>
+      </div>
       <div class="value" data-kpi="spend-krw">—</div>
       <div class="kpi-sub" data-kpi="spend-vnd">—</div>
     </div>
     <div class="kpi">
-      <div class="label"><span>종합 ROAS</span><span class="badge">DEMO</span></div>
+      <div class="label">
+        <span class="kpi-label-text">종합 ROAS {{ info("ROAS(%) = 광고로 발생한 매출액 ÷ 투입 광고비 × 100\n손익분기 기준선 300%") }}</span>
+        <span class="kpi-status is-demo">시연</span>
+      </div>
       <div class="value" data-kpi="roas">—</div>
       <div class="kpi-sub" data-kpi="roas-sub">손익분기 기준 300%</div>
     </div>
     <div class="kpi">
-      <div class="label"><span>누적 매출액</span><span class="badge">DEMO</span></div>
+      <div class="label">
+        <span class="kpi-label-text">누적 매출액 {{ info("원화 환산 매출(KRW) = 현지 매출액(VND) × 환율(100 VND당 KRW) ÷ 100\n매출은 시연 값, 환율은 아래 환율 칸의 출처") }}</span>
+        <span class="kpi-status is-demo">시연</span>
+      </div>
       <div class="value" data-kpi="revenue-krw">—</div>
       <div class="kpi-sub" data-kpi="revenue-vnd">—</div>
     </div>
     <div class="kpi">
-      <div class="label"><span>환율 (100 VND당 KRW)</span><span class="badge" data-kpi="fx-badge">불러오는 중</span></div>
+      <div class="label">
+        <span class="kpi-label-text">환율 · 100 VND당 {{ info("환차손익 = 현지 집행·매출액(VND) × (현재 환율 − 기준 환율) ÷ 100\n매출은 환율이 오르면 이익, 지출은 손실") }}</span>
+        <span class="kpi-status" data-kpi="fx-badge">불러오는 중</span>
+      </div>
       <div class="value" data-kpi="fx-rate">—</div>
       <div class="kpi-sub" data-kpi="fx-gain">—</div>
     </div>
   </section>
 
-  <!-- 중단: 예산 · ROAS -->
-  <div class="grid kpi-row">
-    <section class="panel">
+  <!-- 2×2: 예산 · ROAS · VOC · GA4 -->
+  <div class="kpi-board">
+    <section class="panel kpi-panel" data-kpi-panel="budget">
       <div class="panelhead">
         <div>
           <p class="eyebrow">BUDGET TRACKING</p>
-          <h2>마케팅 예산 트래킹</h2>
+          <h2>마케팅 예산 트래킹 {{ info("예산 소진율(%) = (플랫폼 광고 집행비 + 인플루언서 협찬 집행비) ÷ 총 배정 예산 × 100\n잔여 가용 예산 = 총 배정 예산 − (실제 지출 확정액 + 인플루언서 예상 지출액)") }}</h2>
         </div>
-        <span class="badge">DEMO</span>
+        <div class="kpi-tools">
+          <span class="kpi-status is-demo">시연</span>
+          {{ expand_button() }}
+        </div>
       </div>
-      <div class="kpi-budget">
-        <div class="kpi-chart kpi-chart-donut">
-          <canvas data-kpi-chart="budget" aria-label="예산 구성 도넛 차트" role="img"></canvas>
-          <div class="kpi-donut-center">
-            <span>잔여</span>
-            <strong data-kpi="remaining-pct">—</strong>
+      <div class="kpi-panel-body">
+        <div class="kpi-budget">
+          <div class="kpi-chart kpi-chart-donut">
+            <canvas data-kpi-chart="budget" aria-label="예산 구성 도넛 차트" role="img"></canvas>
+            <div class="kpi-donut-center">
+              <span>잔여</span>
+              <strong data-kpi="remaining-pct">—</strong>
+            </div>
           </div>
+          <dl class="kpi-budget-list" data-kpi="budget-list"></dl>
         </div>
-        <dl class="kpi-budget-list" data-kpi="budget-list"></dl>
+        <div class="kpi-burn">
+          <div class="kpi-burn-label"><span>예산 소진율</span><b data-kpi="burn-pct">—</b></div>
+          <div class="progress"><span data-kpi="burn-bar" style="width:0"></span></div>
+        </div>
+        <div class="kpi-detail">
+          <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
+          <p class="kpi-note">원화 예산과 비교하려고 VND 지출을 편성 시점 기준 환율로 환산합니다(확정 전 안).</p>
+        </div>
       </div>
-      <div class="kpi-burn">
-        <div class="kpi-burn-label"><span>예산 소진율</span><b data-kpi="burn-pct">—</b></div>
-        <div class="progress"><span data-kpi="burn-bar" style="width:0"></span></div>
-      </div>
-      <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
-      <p class="kpi-note">원화 예산과 비교하려고 VND 지출을 편성 시점 기준 환율로 환산합니다(확정 전 안).</p>
+      <p class="kpi-meta" data-kpi="budget-meta">출처: 시연 값 · 범위: 베트남 전체 캠페인</p>
     </section>
 
-    <section class="panel">
+    <section class="panel kpi-panel" data-kpi-panel="roas">
       <div class="panelhead">
         <div>
           <p class="eyebrow">ROAS BY CHANNEL</p>
-          <h2>채널별 ROAS · 광고 성과</h2>
+          <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%") }}</h2>
         </div>
-        <span class="badge">DEMO</span>
+        <div class="kpi-tools">
+          <span class="kpi-status is-demo">시연</span>
+          {{ expand_button() }}
+        </div>
       </div>
-      <div class="kpi-chart kpi-chart-bar">
-        <canvas data-kpi-chart="roas" aria-label="채널별 ROAS 막대 차트" role="img"></canvas>
+      <div class="kpi-panel-body">
+        <div class="kpi-chart kpi-chart-bar">
+          <canvas data-kpi-chart="roas" aria-label="채널별 ROAS 막대 차트" role="img"></canvas>
+        </div>
+        <p class="kpi-note kpi-one-line" data-kpi="roas-advice"></p>
+        <div class="kpi-detail table-wrap">
+          <table class="kpi-table">
+            <thead>
+              <tr><th>채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
+            </thead>
+            <tbody data-kpi="channel-rows"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="kpi-table">
-          <thead>
-            <tr><th>채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
-          </thead>
-          <tbody data-kpi="channel-rows"></tbody>
-        </table>
-      </div>
-      <p class="kpi-note" data-kpi="roas-advice"></p>
+      <p class="kpi-meta" data-kpi="roas-meta">출처: 시연 값(정산 CSV 업로드 예정) · 범위: 베트남</p>
     </section>
-  </div>
 
-  <!-- 하단: VOC · GA4 -->
-  <div class="grid kpi-row">
-    <section class="panel">
+    <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
           <p class="eyebrow">VOICE OF CUSTOMER</p>
-          <h2>VOC 감성 분석 · 현지 이슈 키워드</h2>
+          <h2>VOC 감성 · 이슈 키워드 {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
-        <div class="kpi-actions">
-          <span class="badge" data-kpi="voc-source">DEMO 분류</span>
-          <button type="button" class="btn dark" data-kpi-action="voc-analyze">AI로 분석</button>
-        </div>
-      </div>
-      <p class="kpi-ai-summary" data-kpi="voc-summary">시연 리뷰 10건에 미리 붙인 분류입니다. [AI로 분석]을 누르면 베트남어 원문을 OpenAI가 다시 번역·분류합니다.</p>
-      <p class="kpi-error" data-kpi="voc-error" hidden></p>
-      <div class="kpi-voc">
-        <div class="kpi-chart kpi-chart-donut kpi-chart-small">
-          <canvas data-kpi-chart="sentiment" aria-label="리뷰 감성 비율 도넛 차트" role="img"></canvas>
-        </div>
-        <div class="kpi-chart kpi-chart-keywords">
-          <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
+        <div class="kpi-tools">
+          <span class="kpi-status is-demo" data-kpi="voc-source">시연 분류</span>
+          <button type="button" class="btn dark kpi-btn-small" data-kpi-action="voc-analyze">AI로 분석</button>
+          {{ expand_button() }}
         </div>
       </div>
-      <div class="table-wrap kpi-review-wrap">
-        <table class="kpi-table">
-          <thead><tr><th>수집처</th><th>한국어 번역</th><th>감성</th><th>토픽</th></tr></thead>
-          <tbody data-kpi="review-rows"></tbody>
-        </table>
+      <div class="kpi-panel-body">
+        <p class="kpi-ai-summary" data-kpi="voc-summary">시연 리뷰에 미리 붙인 분류입니다. [AI로 분석]을 누르면 베트남어 원문을 OpenAI가 다시 번역·분류합니다.</p>
+        <p class="kpi-error" data-kpi="voc-error" hidden></p>
+        <div class="kpi-voc">
+          <div class="kpi-chart kpi-chart-small">
+            <canvas data-kpi-chart="sentiment" aria-label="리뷰 감성 비율 도넛 차트" role="img"></canvas>
+          </div>
+          <div class="kpi-chart kpi-chart-keywords">
+            <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
+          </div>
+        </div>
+        <div class="kpi-qr" data-kpi="qr-strip"></div>
+        <div class="kpi-detail">
+          <p class="kpi-detail-title">팜플렛 QR 설문 만족도 <span class="kpi-status is-demo">시연</span></p>
+          <dl class="kpi-survey" data-kpi="survey-list"></dl>
+          <div class="table-wrap kpi-review-wrap">
+            <table class="kpi-table">
+              <thead><tr><th>수집처</th><th>한국어 번역 / 베트남어 원문</th><th>감성</th><th>토픽</th></tr></thead>
+              <tbody data-kpi="review-rows"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
+      <p class="kpi-meta" data-kpi="voc-meta">출처: 시연 리뷰 · 범위: 베트남</p>
     </section>
 
-    <section class="panel">
+    <section class="panel kpi-panel" data-kpi-panel="ga4">
       <div class="panelhead">
         <div>
           <p class="eyebrow" data-kpi="ga4-eyebrow">GA4 TRAFFIC</p>
-          <h2 data-kpi="ga4-title">GA4 트래픽 · 전환</h2>
+          <h2><span data-kpi="ga4-title">GA4 트래픽 · 전환</span> {{ info("유효 참여율 = 참여 세션(10초 이상 등) ÷ 전체 세션 × 100\n쇼피 구매처 이동 클릭률 = 쇼피 이동 클릭 ÷ 전체 세션 × 100\n팜플렛 QR 유입 = utm_source=pamphlet 세션") }}</h2>
         </div>
-        <label class="kpi-toggle">
-          <input type="checkbox" data-kpi-action="ga4-toggle" checked>
-          <span>Show GA4 Metrics</span>
-        </label>
+        <div class="kpi-tools">
+          <span class="kpi-status is-demo" data-kpi="ga4-badge">시연</span>
+          <label class="kpi-toggle">
+            <input type="checkbox" data-kpi-action="ga4-toggle" checked>
+            <span>GA4</span>
+          </label>
+          {{ expand_button() }}
+        </div>
       </div>
-
-      <div data-kpi="ga4-panel">
-        <div class="kpi-ga4-metrics">
-          <div>
-            <span class="kpi-metric-label">유효 참여율</span>
-            <strong data-kpi="ga4-engagement">—</strong>
-            <span class="kpi-sub-text" data-kpi="ga4-engagement-sub"></span>
+      <div class="kpi-panel-body">
+        <div data-kpi="ga4-panel">
+          <div class="kpi-ga4-metrics">
+            <div>
+              <span class="kpi-metric-label">유효 참여율</span>
+              <strong data-kpi="ga4-engagement">—</strong>
+              <span class="kpi-sub-text" data-kpi="ga4-engagement-sub"></span>
+            </div>
+            <div>
+              <span class="kpi-metric-label">쇼피 이동 클릭률 <span class="kpi-status is-demo">시연</span></span>
+              <strong data-kpi="ga4-ctr">—</strong>
+              <span class="kpi-sub-text" data-kpi="ga4-ctr-sub"></span>
+            </div>
+            <div>
+              <span class="kpi-metric-label">팜플렛 QR 유입 <span class="kpi-status is-demo">시연</span></span>
+              <strong data-kpi="ga4-pamphlet">—</strong>
+              <span class="kpi-sub-text">utm_source=pamphlet 세션</span>
+            </div>
           </div>
-          <div>
-            <span class="kpi-metric-label">쇼피 구매처 이동 클릭률</span>
-            <strong data-kpi="ga4-ctr">—</strong>
-            <span class="kpi-sub-text" data-kpi="ga4-ctr-sub"></span>
-          </div>
+          <p class="kpi-note" data-kpi="ga4-proxy"></p>
+          <p class="kpi-note kpi-detail" data-kpi="ga4-note"></p>
         </div>
-        <p class="kpi-note">DEMO · 예시 데이터 — GA4 Data API 연동 전 시연 값입니다. 유효 참여 = 10초 이상 머문 세션.</p>
-      </div>
 
-      <div data-kpi="creator-panel" hidden>
-        <div class="table-wrap">
-          <table class="kpi-table">
-            <thead><tr><th>#</th><th>크리에이터</th><th>플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
-            <tbody data-kpi="creator-rows"></tbody>
-          </table>
+        <div data-kpi="creator-panel" hidden>
+          <div class="table-wrap">
+            <table class="kpi-table">
+              <thead><tr><th>#</th><th>크리에이터</th><th>플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
+              <tbody data-kpi="creator-rows"></tbody>
+            </table>
+          </div>
+          <p class="kpi-note">크리에이터별 클릭·전환은 인플루언서 탭 공개 함수에 아직 없는 항목이라 시연 값입니다.</p>
         </div>
-        <p class="kpi-note">DEMO · 예시 데이터 — 크리에이터별 클릭·전환은 인플루언서 탭 공개 함수에 아직 없는 항목입니다.</p>
       </div>
+      <p class="kpi-meta" data-kpi="ga4-meta">출처: — </p>
     </section>
   </div>
+
+  <div class="kpi-backdrop" data-kpi-action="collapse" hidden></div>
 </div>
 {% endblock %}
 

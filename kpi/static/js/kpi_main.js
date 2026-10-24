@@ -24,12 +24,12 @@ const pct = (n) => (n === null || n === undefined ? "—" : `${n.toFixed(1)}%`);
 const signedKrw = (n) => `${n >= 0 ? "+" : "−"}${num(Math.abs(n))}원`;
 
 const SENTIMENT_LABEL = { Positive: "긍정", Neutral: "중립", Negative: "부정" };
-const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok" };
+const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok", Zalo_OA: "Zalo QR" };
+const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
 // ---------- 디자인 변수 ----------
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const palette = () => ({
-  ink: cssVar("--ink"),
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
@@ -53,9 +53,16 @@ function badge(text, tone) {
   return el("span", { text, className: tone ? `badge ${tone}` : "badge" });
 }
 
+function setStatus(name, text, status, title = "") {
+  const node = $(name);
+  if (!node) return;
+  node.textContent = text;
+  node.className = `kpi-status ${STATUS_CLASS[status] || ""}`;
+  node.title = title;
+}
+
 function fillRows(name, rows) {
-  const body = $(name);
-  body.replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c) => (c instanceof Node ? el("td", {}, [c]) : el("td", { text: c }))))));
+  $(name).replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c) => (c instanceof Node ? el("td", {}, [c]) : el("td", { text: c }))))));
 }
 
 // ---------- 차트 ----------
@@ -70,14 +77,14 @@ function drawChart(key, config) {
   charts[key] = new window.Chart(canvas, config);
 }
 
-function doughnut(key, labels, values, colors, cutout = "68%") {
+function doughnut(key, labels, values, colors, { cutout = "68%", legend = false } = {}) {
   drawChart(key, {
     type: "doughnut",
     data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
     options: {
       cutout,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: legend ? { position: "right", labels: { boxWidth: 8, padding: 6 } } : { display: false } },
     },
   });
 }
@@ -85,7 +92,7 @@ function doughnut(key, labels, values, colors, cutout = "68%") {
 function chartNotice() {
   if (window.Chart) return;
   root.querySelectorAll("[data-kpi-chart]").forEach((canvas) => {
-    canvas.replaceWith(el("p", { text: "차트 라이브러리를 불러오지 못했습니다. 표의 숫자를 확인해 주세요.", className: "kpi-note" }));
+    canvas.replaceWith(el("p", { text: "차트 라이브러리를 불러오지 못했습니다. 확대해서 표의 숫자를 확인해 주세요.", className: "kpi-note" }));
   });
 }
 
@@ -94,33 +101,34 @@ function renderScorecards(data) {
   const { totals, fx } = data;
   setText("month", `기준월 ${data.campaign_month}`);
   setText("spend-krw", krwMan(totals.ad_spend_krw_base));
-  setText("spend-vnd", `${vnd(totals.ad_spend_vnd)} · 기준 환율 환산`);
+  setText("spend-vnd", `${vnd(totals.ad_spend_vnd)} · 기준 환율 ${fx.base_rate.toFixed(2)}원 환산`);
   setText("roas", pct(totals.roas_percent));
-  setText("roas-sub", `손익분기 ${data.roas_bep_percent}% 대비 ${totals.roas_percent >= data.roas_bep_percent ? "초과" : "미달"} · 전환 ${num(totals.conversions)}건`);
+  setText("roas-sub", `손익분기 ${data.roas_bep_percent}% ${totals.roas_percent >= data.roas_bep_percent ? "초과" : "미달"} · 전환 ${num(totals.conversions)}건`);
 
-  const fxBadge = $("fx-badge");
   const gainEl = $("fx-gain");
-  if (fx.ok) {
-    setText("revenue-krw", krwMan(fx.revenue_krw_live));
-    setText("revenue-vnd", `${vnd(totals.revenue_vnd)} · 현재 환율 환산`);
-    setText("fx-rate", `${fx.live_rate.toFixed(2)}원`);
-    fxBadge.textContent = fx.is_fallback ? "대체 출처" : "ECOS 고시";
-    fxBadge.className = fx.is_fallback ? "badge" : "badge green";
-    fxBadge.title = fx.source_detail || "";
-    const tone = fx.gain_loss_krw >= 0 ? "kpi-up" : "kpi-down";
-    gainEl.replaceChildren(
-      el("span", { text: `환차${fx.gain_loss_krw >= 0 ? "익" : "손"} ${signedKrw(fx.gain_loss_krw)}`, className: tone }),
-      document.createTextNode(` · 기준 ${fx.base_rate.toFixed(2)}원 · ${fx.source} ${fx.is_fallback ? "" : fx.updated_at}`),
-    );
-    gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${fx.source} ${fx.updated_at}${fx.source_detail ? ` · ${fx.source_detail}` : ""}`;
-  } else {
+  if (!fx.ok) {
     setText("revenue-krw", krwMan(totals.revenue_krw_base));
     setText("revenue-vnd", `${vnd(totals.revenue_vnd)} · 기준 환율 환산`);
     setText("fx-rate", "—");
-    fxBadge.textContent = "연결 실패";
-    fxBadge.className = "badge red";
+    setStatus("fx-badge", "연결 실패", "warn", fx.error || "");
     gainEl.textContent = `${fx.error} · 기준 ${fx.base_rate.toFixed(2)}원`;
+    return;
   }
+
+  setText("revenue-krw", krwMan(fx.revenue_krw_live));
+  setText("revenue-vnd", `${vnd(totals.revenue_vnd)} · ${fx.is_fallback ? "대체 환율" : "ECOS 환율"} 환산`);
+  setText("fx-rate", `${fx.live_rate.toFixed(2)}원`);
+  const tip = `${fx.source} ${fx.updated_at || ""}${fx.source_detail ? ` · ${fx.source_detail}` : ""}`;
+  if (fx.is_stale) setStatus("fx-badge", `${fx.age_days}일 지난 값`, "warn", `기준일이 ${fx.stale_days}일보다 오래되었습니다. ${tip}`);
+  else if (fx.is_fallback) setStatus("fx-badge", "대체 출처", "fallback", tip);
+  else setStatus("fx-badge", "ECOS 고시", "live", tip);
+
+  const tone = fx.gain_loss_krw >= 0 ? "kpi-up" : "kpi-down";
+  gainEl.replaceChildren(
+    el("span", { text: `환차${fx.gain_loss_krw >= 0 ? "익" : "손"} ${signedKrw(fx.gain_loss_krw)}`, className: tone }),
+    document.createTextNode(` · 기준 ${fx.base_rate.toFixed(2)}원 · ${fx.as_of || ""}`),
+  );
+  gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${tip} · 금액은 시연 매출·지출 기준`;
 }
 
 // ---------- 예산 ----------
@@ -130,14 +138,13 @@ function renderBudget(data) {
   const remaining = Math.max(b.remaining_krw, 0);
   const parts = [
     ["플랫폼 광고비", b.platform_krw, p.brown],
-    ["인플루언서 협찬비 (집행)", b.influencer_paid_krw, p.gold],
-    ["인플루언서 예상 지출", b.influencer_expected_krw, p.muted],
+    ["인플루언서 집행", b.influencer_paid_krw, p.gold],
+    ["인플루언서 예상", b.influencer_expected_krw, p.muted],
     ["잔여 가용 예산", remaining, p.line],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
   setText("remaining-pct", pct(b.remaining_percent));
 
-  const list = $("budget-list");
   const rows = parts.map(([label, value, color]) => {
     const swatch = el("span", { className: "kpi-swatch" });
     swatch.style.background = color;
@@ -145,7 +152,7 @@ function renderBudget(data) {
   });
   rows.push(el("div", {}, [el("dt", { text: "총 배정 예산" }), el("dd", { text: krwMan(b.total_krw) })]));
   if (b.remaining_krw < 0) rows.push(el("div", {}, [el("dt", {}, [badge("예산 초과", "red")]), el("dd", { text: krwMan(-b.remaining_krw) })]));
-  list.replaceChildren(...rows);
+  $("budget-list").replaceChildren(...rows);
 
   setText("burn-pct", pct(b.burn_rate_percent));
   $("burn-bar").style.width = `${Math.min(b.burn_rate_percent ?? 0, 100)}%`;
@@ -159,6 +166,7 @@ function renderBudget(data) {
         ? "인플루언서 탭 단가 데이터: 아직 없음 — 협찬비는 시연 값으로 표시합니다."
         : `인플루언서 탭 단가 ${link.total}건 연동(견적 ${link.counts.quote} · 계약 ${link.counts.contract}). 예산 반영 기준은 확정 전이라 협찬비는 시연 값입니다.`,
   );
+  setText("budget-meta", `출처: 시연 값 · 기간: ${data.campaign_month} · 범위: 베트남 전체 캠페인 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
 }
 
 // ---------- ROAS ----------
@@ -175,7 +183,7 @@ function renderRoas(data) {
           label: "ROAS(%)",
           data: ch.map((c) => c.roas_percent),
           backgroundColor: ch.map((c) => (c.roas_percent >= bep ? p.green : p.gold)),
-          maxBarThickness: 46,
+          maxBarThickness: 40,
         },
         {
           type: "line",
@@ -194,7 +202,7 @@ function renderRoas(data) {
         y: { beginAtZero: true, ticks: { callback: (v) => `${v}%` }, grid: { color: p.line } },
         x: { grid: { display: false } },
       },
-      plugins: { legend: { position: "bottom", labels: { boxWidth: 10 } } },
+      plugins: { legend: { position: "top", align: "end", labels: { boxWidth: 8 } } },
     },
   });
 
@@ -211,18 +219,27 @@ function renderRoas(data) {
   const below = ch.filter((c) => c.roas_percent < bep).map((c) => c.label);
   setText(
     "roas-advice",
-    `참고: ROAS가 가장 높은 채널은 ${best.label}(${pct(best.roas_percent)})입니다.` +
-      (below.length ? ` 손익분기 미달 채널(${below.join(", ")})은 예산 조정을 검토해 보세요.` : ""),
+    `최고 ${best.label} ${pct(best.roas_percent)}` + (below.length ? ` · 손익분기 미달: ${below.join(", ")} → 예산 조정 검토` : ""),
   );
+  setText("roas-meta", `출처: 시연 값(Meta·TikTok·Shopee 정산 CSV 업로드 예정) · 기간: ${data.campaign_month} · 범위: 베트남 · 단위: VND`);
 }
 
 // ---------- GA4 / 크리에이터 ----------
 function renderGa4(data) {
   const g = data.ga4;
   setText("ga4-engagement", pct(g.engagement_rate_percent));
-  setText("ga4-engagement-sub", `${num(g.engaged_sessions)} / ${num(g.sessions)} 세션`);
+  setText("ga4-engagement-sub", g.engaged_sessions == null ? "참여 세션 열 없음" : `${num(g.engaged_sessions)} / ${num(g.sessions)} 세션`);
   setText("ga4-ctr", pct(g.shopee_ctr_percent));
-  setText("ga4-ctr-sub", `${num(g.shopee_clicks)} / ${num(g.sessions)} 세션`);
+  setText("ga4-ctr-sub", `${num(g.shopee_clicks)}회 이동`);
+  setText("ga4-pamphlet", num(g.pamphlet_sessions));
+  setText(
+    "ga4-proxy",
+    g.purchase_rate_percent != null ? `대체 지표(데모): 구매 전환율 ${pct(g.purchase_rate_percent)} — 데모 스토어 값, 쇼피 이동 클릭률을 대신 참고` : "",
+  );
+  setText("ga4-note", g.note);
+  setStatus("ga4-badge", g.status === "public_demo" ? "공개 데모" : "시연", g.status, g.note);
+  const period = g.period && (g.period.start || g.period.end) ? `${g.period.start || "?"} ~ ${g.period.end || "?"}` : "—";
+  setText("ga4-meta", `출처: ${g.source} · 기간: ${period} · 범위: ${g.scope} · 표본: 세션 ${num(g.sessions)}`);
   fillRows("creator-rows", data.creators.map((c, i) => [String(i + 1), c.creator, c.platform, num(c.clicks), num(c.conversions), pct(c.cvr_percent)]));
 }
 
@@ -230,7 +247,7 @@ function setGa4Visible(show) {
   $("ga4-panel").hidden = !show;
   $("creator-panel").hidden = show;
   setText("ga4-eyebrow", show ? "GA4 TRAFFIC" : "CREATOR CONVERSION");
-  setText("ga4-title", show ? "GA4 트래픽 · 전환" : "크리에이터별 링크 클릭 · 전환 Top 5");
+  setText("ga4-title", show ? "GA4 트래픽 · 전환" : "크리에이터별 클릭 · 전환 Top 5");
 }
 
 // ---------- VOC ----------
@@ -238,23 +255,19 @@ function renderVoc(stats, reviews, source) {
   const p = palette();
   const counts = stats.sentiment_counts;
   const keys = ["Positive", "Neutral", "Negative"];
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.green, p.lineStrong, p.red], "60%");
-  if (charts.sentiment) {
-    charts.sentiment.options.plugins.legend = { display: true, position: "bottom", labels: { boxWidth: 10 } };
-    charts.sentiment.update();
-  }
+  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.green, p.lineStrong, p.red], { cutout: "58%", legend: true });
 
   drawChart("keywords", {
     type: "bar",
     data: {
       labels: stats.top_keywords.map((k) => k.keyword),
-      datasets: [{ label: "언급 수", data: stats.top_keywords.map((k) => k.count), backgroundColor: p.gold, maxBarThickness: 18 }],
+      datasets: [{ label: "언급 수", data: stats.top_keywords.map((k) => k.count), backgroundColor: p.gold, maxBarThickness: 14 }],
     },
     options: {
       indexAxis: "y",
       maintainAspectRatio: false,
       scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: p.line } }, y: { grid: { display: false } } },
-      plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start" } },
+      plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start", padding: { bottom: 4 } } },
     },
   });
 
@@ -269,16 +282,54 @@ function renderVoc(stats, reviews, source) {
     ];
   }));
 
-  const sourceBadge = $("voc-source");
-  sourceBadge.textContent = source;
-  sourceBadge.className = source.startsWith("OpenAI") ? "badge green" : "badge";
+  setStatus("voc-source", source.text, source.status, source.title || "");
+  const platforms = [...new Set(reviews.map((r) => PLATFORM_LABEL[r.platform] || r.platform))].join("·");
+  setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: 리뷰 ${num(stats.sample_size ?? reviews.length)}건 · 범위: 베트남`);
+}
+
+function renderQr(qr) {
+  const strip = $("qr-strip");
+  const step = (label, value) => el("span", {}, [document.createTextNode(`${label} `), el("b", { text: value })]);
+  const arrow = () => el("span", { text: "→", className: "kpi-arrow" });
+  strip.replaceChildren(
+    el("span", { text: "시연", className: "kpi-status is-demo" }),
+    step("팜플렛 QR 스캔", num(qr.qr_scans)),
+    arrow(),
+    step("Zalo 친구 추가", num(qr.zalo_follows)),
+    arrow(),
+    step("설문 응답", `${num(qr.survey_responses)} (${pct(qr.response_rate_percent)})`),
+  );
+  strip.title = `배포 팜플렛 ${num(qr.pamphlets)}장 · 스캔율 ${pct(qr.scan_rate_percent)} · 친구 추가율 ${pct(qr.follow_rate_percent)}`;
+
+  $("survey-list").replaceChildren(...qr.survey.map((s) => {
+    const bar = el("div", { className: "progress" }, [el("span")]);
+    bar.firstChild.style.width = `${(s.score / 5) * 100}%`;
+    return el("div", {}, [el("dt", { text: s.item }), el("dd", {}, [bar]), el("dd", { text: s.score.toFixed(1) })]);
+  }));
 }
 
 function showVocAi(demoReviews, ai) {
   const byId = Object.fromEntries(ai.reviews.map((r) => [r.review_id, r]));
   const merged = demoReviews.map((r) => ({ ...r, ...(byId[r.review_id] || { translated_kr: "", sentiment: null, keyword_tag: null }) }));
-  renderVoc(ai, merged, `OpenAI 분석 · ${ai.analyzed_at}`);
-  setText("voc-summary", ai.summary_kr ? `AI 요약: ${ai.summary_kr}` : "AI 요약이 비어 있습니다.");
+  renderVoc({ ...ai, sample_size: merged.length }, merged, {
+    text: "OpenAI 분석 · 검수 전",
+    status: "live",
+    title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
+    meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전) · 원문은 시연 리뷰`,
+  });
+  setText("voc-summary", ai.summary_kr ? `AI 요약(검수 전): ${ai.summary_kr}` : "AI 요약이 비어 있습니다.");
+}
+
+// ---------- 블록 확대 ----------
+function setExpanded(panel) {
+  root.querySelectorAll(".kpi-panel.is-expanded").forEach((p) => p.classList.remove("is-expanded"));
+  if (panel) panel.classList.add("is-expanded");
+  root.querySelector(".kpi-backdrop").hidden = !panel;
+  root.querySelectorAll(".kpi-expand").forEach((btn) => {
+    const open = btn.closest(".kpi-panel") === panel;
+    btn.setAttribute("aria-label", open ? "원래 크기로" : "블록 확대");
+    btn.title = open ? "닫기 (Esc)" : "확대";
+  });
 }
 
 // ---------- 불러오기 ----------
@@ -305,7 +356,7 @@ async function loadSummary() {
     renderRoas(data);
     renderGa4(data);
   } catch (err) {
-    root.querySelector(".empty-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
+    root.querySelector(".kpi-legend-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
   }
 }
 
@@ -313,8 +364,9 @@ async function loadVoc() {
   try {
     const data = await getJson(API.voc);
     vocReviews = data.reviews;
+    renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
-    else renderVoc(data, vocReviews, "DEMO 분류");
+    else renderVoc(data, vocReviews, { text: "시연 분류", status: "demo", meta: "시연 리뷰·시연 분류" });
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }
@@ -336,17 +388,27 @@ async function analyzeVoc(button) {
 }
 
 root.addEventListener("click", (event) => {
-  const action = event.target.closest("[data-kpi-action]")?.dataset.kpiAction;
+  const target = event.target.closest("[data-kpi-action]");
+  const action = target?.dataset.kpiAction;
   if (action === "refresh") {
     loadSummary();
     loadVoc();
   } else if (action === "voc-analyze") {
-    analyzeVoc(event.target.closest("button"));
+    analyzeVoc(target);
+  } else if (action === "expand") {
+    const panel = target.closest(".kpi-panel");
+    setExpanded(panel.classList.contains("is-expanded") ? null : panel);
+  } else if (action === "collapse") {
+    setExpanded(null);
   }
 });
 
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setExpanded(null);
 });
 
 chartNotice();
