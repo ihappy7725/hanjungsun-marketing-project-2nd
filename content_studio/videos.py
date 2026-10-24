@@ -9,6 +9,7 @@
 - 길이는 5~30초. 한 번에 만들 수 있는 길이는 생성 모델마다 다르므로 5단계(Higgsfield 연동)에서 맞춥니다.
 """
 import copy
+import difflib
 import math
 import re
 
@@ -440,14 +441,96 @@ def build_prompt(doc):
 
 
 def build_prompt_ko(doc):
-    """영어 프롬프트와 같은 내용을 한국어로 조립합니다. 직접 고친 영어(custom)는 번역하지 않고 None을 돌려줍니다 (AI 연결 후)."""
+    """영어 프롬프트와 같은 내용을 한국어로 조립합니다. 직접 고친 한국어(custom_ko)가 있으면 그대로 씁니다.
+    예전 방식으로 영어만 직접 고친 문서(custom만 있음)는 번역하지 않고 None을 돌려줍니다."""
+    if doc.get("custom_ko"):
+        return doc["custom_ko"]
     if doc.get("custom"):
         return None
     return "\n".join(_prompt_lines(doc, 1))
 
 
+# ---------- 직접 고친 한국어 → 영어 (단어 규칙, AI 연결 전) ----------
+# 영어·한국어 프롬프트는 한 줄씩 짝입니다. 고친 줄만 아는 표현을 영어로 바꾸고,
+# 모르는 한국어가 남으면 영어를 바꾸지 않고 untranslated에 적습니다(영상 모델에 한국어를 보내지 않음).
+KO_LABELS = (("조명·색감:", "Lighting and color:"), ("컷 구성:", "Shots:"), ("스타일:", "Style:"), ("배경:", "Setting:"),
+             ("분위기:", "Mood:"), ("카메라:", "Camera:"), ("금지:", "Avoid:"), ("효과음:", "SFX:"), ("소리:", "Sound:"),
+             ("제품:", "Product:"))
+KO_FIXED = (
+    ("모든 컷에서 제품 모양·색·크기·속을 똑같이 유지", "Keep the product's shape, color, size and filling identical in every shot"),
+    ("첨부한 제품 사진과 똑같이", "exactly matching the attached product photo"),
+    ("컷마다 적은 효과음", "plus the sound effects noted per shot"),
+    ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
+)
+HANGUL = re.compile(r"[가-힣ㄱ-ㆎ]")
+
+
+def _ko_phrases(doc):
+    """(한국어, 영어) 표현 목록. 긴 표현부터 바꿔야 짧은 표현이 긴 표현 속을 먼저 바꾸지 않습니다."""
+    pairs = list(KO_FIXED)
+    for table in (CAMERA_KO, LIGHTING_KO, MOOD_KO, BACKGROUND_KO):
+        pairs += [(ko, en) for en, ko in table.items()]
+    for style in STYLES.values():
+        for key in ("genre", "keywords", "camera", "grade", "music", "avoid"):
+            pairs.append(style[key][::-1])
+        first, middles, last = style["shots"]
+        pairs += [shot[::-1] for shot in (first, *middles, last)]
+        pairs += [sfx[::-1] for sfx in style["sfx"]]
+    pairs += [(ko, en) for en, ko in RATIO_WORDS.values()]
+    pairs.append(COMMON_AVOID[::-1])
+    for name, en in PRODUCT_EN.items():
+        pairs.append((f"한정선 {name}", f"{en} by Hanjungsun"))
+        pairs.append(PRODUCT_LOOK.get(name, ("", ""))[::-1])
+    scenes = [TEXTURE_SCENE, BITE_SCENE, *EXTRA_SCENES, *doc.get("scenes", [])]
+    pairs += [(scene["ko"], scene["en"]) for scene in scenes if scene.get("ko") and scene.get("en")]
+    return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: len(pair[0]), reverse=True)
+
+
+def _ko_line_to_en(line, phrases):
+    """한국어 한 줄 → 영어. 한국어가 남으면 None."""
+    for ko, en in phrases:
+        line = line.replace(ko, en)
+    for ko, en in KO_LABELS:
+        line = line.replace(ko, en)
+    line = re.sub(r"(\d+)초", r"\1 seconds", line)
+    return None if HANGUL.search(line) else line
+
+
+def korean_to_english(doc):
+    """직접 고친 한국어(custom_ko) → (영어 프롬프트, 반영 못 한 한국어 줄들).
+    자동 한국어와 줄마다 비교해, 같은 줄은 자동 영어 그대로 · 지운 줄은 영어도 지움 · 고친 줄은 아는 표현만 바꿉니다.
+    반영 못 한 고친 줄은 원래 영어를 남기고, 새로 쓴 줄은 영어에 넣지 않습니다."""
+    ko_auto, en_auto = _prompt_lines(doc, 1), _prompt_lines(doc, 0)
+    edited = [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()]
+    phrases = _ko_phrases(doc)
+    out, untranslated = [], []
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ko_auto, edited, autojunk=False).get_opcodes():
+        if tag == "equal":
+            out += en_auto[i1:i2]
+            continue
+        olds, news = en_auto[i1:i2], edited[j1:j2]
+        for k in range(max(len(olds), len(news))):
+            if k >= len(news):
+                continue  # 지운 줄
+            english = _ko_line_to_en(news[k], phrases)
+            if english:
+                out.append(english)
+            else:
+                untranslated.append(news[k])
+                if k < len(olds):
+                    out.append(olds[k])
+    return "\n".join(out), untranslated
+
+
 def refresh_prompts(doc):
-    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다."""
+    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다. 직접 고친 한국어가 있으면 영어(custom)를 거기서 만듭니다."""
+    doc["untranslated"] = []
+    if doc.get("custom_ko"):
+        if [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()] == _prompt_lines(doc, 1):
+            doc["custom_ko"] = doc["custom"] = ""  # 자동과 같으면 직접 고친 것이 아닙니다.
+        else:
+            english, doc["untranslated"] = korean_to_english(doc)
+            doc["custom"] = "" if english == "\n".join(_prompt_lines(doc, 0)) else english
     doc["prompt"] = build_prompt(doc)
     doc["prompt_ko"] = build_prompt_ko(doc)
     return doc
@@ -495,6 +578,8 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         "prompt": "",
         "prompt_ko": "",
         "custom": "",
+        "custom_ko": "",
+        "untranslated": [],
         "image": None,
         "job": {"request_id": None, "status": None, "video_url": None},
         "demo": True,
@@ -601,8 +686,8 @@ def revise_draft(doc, text):
         caption_changes.append("자막 넣기")
 
     if video_changes:
-        if new["custom"]:
-            new["custom"] = ""  # 말로 고치면 직접 고친 프롬프트 대신 새로 만듭니다.
+        if new["custom"] or new.get("custom_ko"):
+            new["custom"] = new["custom_ko"] = ""  # 말로 고치면 직접 고친 프롬프트 대신 새로 만듭니다.
             video_changes.append("직접 고친 프롬프트를 새로 만들기")
         new["summary"] = re.sub(r"^\d+초 [\d:]+", f"{new['duration']}초 {new['ratio']}", new["summary"])
         new["reviewed"] = False

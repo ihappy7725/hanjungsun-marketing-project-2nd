@@ -193,7 +193,7 @@ hanjeongseon_dashboard/
 
 | 탭 | 문서 | 담당 |
 | --- | --- | --- |
-| HOME | `home/README.md` (받은 파일명 `README-HOME.md` → 이름 통일 제안) | 주연 |
+| HOME | `home/README.md` | 주연 |
 | 현지 시장 분석 | `market_analysis/README.md` (받은 파일 `market_analysis.md`) | 상준 |
 | 콘텐츠 스튜디오 | `content_studio/README.md` | 유진·희주 (파일 주인은 유진, 희주 부분은 희주가 작성해 전달) |
 | KPI | `kpi/README.md` (받은 파일 `KPI.md`) | 민지 |

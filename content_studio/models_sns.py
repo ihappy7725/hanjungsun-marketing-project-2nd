@@ -97,3 +97,18 @@ class SnsDesign(db.Model):
             return False
         self.current += 1
         return True
+
+
+class SnsCreditLog(db.Model):
+    """대시보드에서 Higgsfield에 보낸 유료 요청 기록. 하루 한도(higgsfield.DAILY_LIMIT)를 여기서 셉니다.
+    실패한 작업도 지우지 않습니다(환불 여부를 알 수 없어 넉넉하게 셈)."""
+
+    __tablename__ = "content_studio_sns_credit_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.Integer, index=True)            # 작업이 지워져도 기록은 남깁니다 (외래키 없음)
+    job_kind = db.Column(db.String(20), nullable=False)    # image(미리보기) / video
+    model = db.Column(db.String(64), nullable=False)
+    credits = db.Column(db.Float, nullable=False)          # 요청 직전 generate cost 값
+    request_id = db.Column(db.String(64))                  # Higgsfield 작업 ID
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_now, index=True)
