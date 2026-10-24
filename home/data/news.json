@@ -36,6 +36,42 @@
         }
       ],
       "verification_notes": "시청 원문과 별도 작성자의 현장 보도를 대조했습니다. 관광 포털 재게시와 같은 신문의 번역판은 독립 출처로 추가 계산하지 않았습니다. 등록 범위는 2026-10-07 당시 논의 사실이며 현재 운영 상태를 보증하지 않습니다. 언론사 내부 취재 원자료까지 확인한 것은 아닙니다."
+    },
+    {
+      "news_id": "vn_danang_foreign_buyer_program_2026",
+      "country": "VN",
+      "title": "다낭시, 해외 바이어 초청 구매 상담회 10월 28~30일 개최",
+      "official_title": "Đoàn doanh nghiệp nước ngoài vào thành phố Đà Nẵng giao dịch để mua hàng năm 2026",
+      "published_at": "2026-10-17",
+      "verified_at": "2026-10-24",
+      "region": "다낭",
+      "tags": ["수출 판로", "바이어 상담", "식음료"],
+      "summary": "다낭시 전자정보포털이 2026년 10월 17일 보도자료에서, 산업무역국이 10월 28일부터 30일까지 해외 구매자·수입업체를 초청해 현지 생산·수출 기업과 직접 연결하는 상담 프로그램을 연다고 알렸습니다. 2026년 9월 28일 Báo Đà Nẵng 보도는 식음료, 인테리어·가구, 생활용품, 수출지원 서비스 4개 분야를 대상으로 한다고 전했으며 당시에는 추진 예정 단계였습니다. 두 자료 모두 장소, 참여 자격, 신청 방법, 참가 바이어 수는 밝히지 않았습니다.",
+      "suggestion": "다낭 산업무역국에 참여 자격과 신청 방법을 문의해봅니다. 이번 회차 참여가 어렵더라도 다낭시가 어떤 식품 분야 바이어를 초청하는지 확인해 두면 다음 회차 준비와 현지 유통 채널 검토에 활용할 수 있습니다. 한정선의 참가 자격이나 성사 가능성은 확인된 바 없습니다.",
+      "source": "다낭시 전자정보포털",
+      "url": "https://danang.gov.vn/en/w/thong-tin-bao-chi-chieu-17-10-2026",
+      "is_demo": false,
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "sources": [
+        {
+          "publisher": "다낭시 전자정보포털",
+          "title": "Thông tin báo chí chiều 17-10-2026",
+          "url": "https://danang.gov.vn/en/w/thong-tin-bao-chi-chieu-17-10-2026",
+          "published_at": "2026-10-17",
+          "role": "primary",
+          "supports": "산업무역국 주최, 개최 기간 10/28~10/30, 해외 구매자·수입업체와 현지 생산·수출 기업의 직접 연결 목적. 일반 HTTP 요청으로 본문을 직접 확인"
+        },
+        {
+          "publisher": "Báo và Phát thanh, Truyền hình Đà Nẵng · Văn Hoàng",
+          "title": "Mở rộng dư địa cho sản phẩm",
+          "url": "https://baodanang.vn/mo-rong-du-dia-cho-san-pham-3353398.html",
+          "published_at": "2026-09-28",
+          "role": "independent_corrob",
+          "supports": "별도 작성자의 9월 보도에서 같은 프로그램의 10월 말 개최 예정과 식음료 포함 4개 분야, 기업 간 직접 상담 방식을 확인"
+        }
+      ],
+      "verification_notes": "시청 보도자료와 별도 작성자의 신문 보도를 대조했습니다. 개최 기간 10/28~10/30은 시청 보도자료에서 확인했고, 식음료 포함 4개 분야는 9월 신문 보도에서만 확인되며 당시 표현은 추진 예정이었습니다. 시청 보도자료에는 분야 목록이 없어 두 자료의 확인 범위가 다릅니다. 장소·참여 자격·신청 방법·마감일은 어느 자료에서도 확인하지 못했습니다. 한정선의 참여 가능 여부와 상담 성과는 확인 범위 밖이며, 참여를 권유하거나 보장하는 자료가 아닙니다."
     }
   ]
 }
