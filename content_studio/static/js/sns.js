@@ -1,6 +1,7 @@
 // 첫 화면·대화·이전 작업·되돌리기 [유진]
 // type="module"로 불러오므로 전역 변수·함수가 생기지 않습니다.
 import { renderVideo } from "./sns_video.js";
+import { renderDesign } from "./sns_editor.js";  // 포스터 편집기 [희주]
 
 // ---------- 시연 데이터 (DEMO) ----------
 // 영상 탭 "내 영상"은 저장된 작업(/api/gallery)이 없을 때만 시연 카드를 보여줍니다.
@@ -35,7 +36,7 @@ const DEMO_SEASON = { name: "감", note: "이번 달 제철", tone: "gold" };
 const DEMO_NEW_MENU = { name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero" };
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
-const WORK_KINDS = ["video"];  // 작업 화면이 연결된 탭 (포스터·카드뉴스는 희주 편집기 연결 후)
+const WORK_KINDS = ["video", "poster"];  // 작업 화면이 연결된 탭 (카드뉴스는 희주 편집기 연결 후)
 const MAX_RECS = 6;
 
 // ---------- 화면 요소 ----------
@@ -243,7 +244,7 @@ function enableRailScroll(rail) {
 
 // ---------- 작업 화면 ----------
 const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false };
-const settings = { ratio: "9:16", duration: 5, sound: false };  // 첫 초안을 만들 때 쓰는 규격
+const settings = { ratio: kind === "poster" ? "4:5" : "9:16", duration: 5, sound: false };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -277,7 +278,9 @@ function startNew() {
   showScreen("work");
   setUrl(null);
   notify("");
-  feedback("info", "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
+  feedback("info", kind === "poster"
+    ? "어떤 포스터를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요."
+    : "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
   renderWork();
   $("chat-input").focus();
 }
@@ -309,7 +312,13 @@ function applyState(chatId, data) {
 function renderWork() {
   const doc = work.doc;
   const current = doc ? { ratio: doc.ratio, duration: doc.duration, sound: doc.sound } : settings;
-  for (const button of $("set-ratio").children) button.classList.toggle("dark", button.dataset.value === current.ratio);
+  // 비율 버튼은 탭이 지원하는 것만 보이고(data-kinds), 길이·소리는 영상 전용입니다.
+  for (const button of $("set-ratio").children) {
+    button.hidden = !(button.dataset.kinds || "video poster").split(" ").includes(kind);
+    button.classList.toggle("dark", button.dataset.value === current.ratio);
+  }
+  $("set-duration").closest("label").hidden = kind !== "video";
+  $("set-sound").hidden = kind !== "video";
   $("set-duration").value = current.duration;
   $("set-sound").textContent = current.sound ? "소리 켬" : "소리 끔";
   $("set-sound").classList.toggle("dark", current.sound);
@@ -317,10 +326,12 @@ function renderWork() {
   $("redo").disabled = !work.canRedo || work.busy;
 
   if (!doc) {
-    $("canvas").replaceChildren(el("p", "empty-note", "오른쪽 대화로 요청하면 여기에 장면 구성과 프롬프트 초안이 나타납니다."));
+    const what = kind === "poster" ? "포스터 초안이" : "장면 구성과 프롬프트 초안이";
+    $("canvas").replaceChildren(el("p", "empty-note", `아래 입력줄로 요청하면 여기에 ${what} 나타납니다.`));
     return;
   }
-  renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
+  if (kind === "video") renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
+  else renderDesign($("canvas"), doc, { onSave: saveDesign });
 }
 
 async function saveDesign(doc) {
@@ -371,6 +382,12 @@ async function send(text, extra = {}) {
     work.pending = null;
     applyState(data.chat_id, data);
     loadHistory();
+    if (kind === "poster") {
+      // 포스터는 대화로 고치기가 아직 없어 고치는 말에는 안내만 옵니다. (희주 다음 단계)
+      if (isNew) feedback("ok", "✓ 포스터 초안을 만들었어요 — 가운데에서 글자를 끌어 옮기고 고칠 수 있어요");
+      else feedback("info", data.reply);
+      return;
+    }
     const recheck = data.design.reviewed ? "" : " — 프롬프트 다시 검토 필요";
     if (isNew) feedback("ok", `✓ ${data.design.scenes.length}컷 초안을 만들었어요 — 장면·자막·프롬프트를 검토해 주세요`);
     else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}${recheck}`);
@@ -433,7 +450,7 @@ function bindWork() {
   $("undo").addEventListener("click", () => move("undo"));
   $("redo").addEventListener("click", () => move("redo"));
 
-  const phrases = { "9:16": "세로로", "16:9": "가로로", "1:1": "정사각형으로" };
+  const phrases = { "9:16": "세로로", "16:9": "가로로", "1:1": "정사각형으로", "4:5": "4:5로" };
   for (const button of $("set-ratio").children) {
     button.addEventListener("click", () => changeSetting("ratio", button.dataset.value, phrases[button.dataset.value]));
   }
