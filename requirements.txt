@@ -4,3 +4,4 @@ Flask-SQLAlchemy>=3.1,<4
 opencv-python-headless>=4.10,<6
 numpy>=2.0,<3
 Pillow>=10.0,<14
+rembg[cpu]>=2.0.57,<3
