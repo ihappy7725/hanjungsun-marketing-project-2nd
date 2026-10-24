@@ -150,15 +150,19 @@
 .studio-page .studio-choices:empty { display: none; }
 
 /* 영상 (sns_video.js): 위에 큰 미리보기, 아래에 장면·프롬프트 */
-.studio-page .studio-video { display: grid; gap: 22px; }
-.studio-page .studio-video-preview { display: grid; justify-items: center; gap: 10px; }
+.studio-page .studio-video { display: grid; gap: 26px; }
+/* 위: 미리보기 | 장면 구성 */
+.studio-page .studio-video-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: start; }
+.studio-page .studio-video-preview { position: sticky; top: 16px; display: grid; justify-items: center; gap: 10px; }
+/* 아래: 영어 프롬프트 | 한국어 번역 */
+.studio-page .studio-video-prompts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .studio-page .studio-video-frame {
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 6px;
-  width: min(100%, calc(62vh * var(--ar)));
+  width: min(calc(62vh * var(--ar)), 520px);
   aspect-ratio: var(--ar);
   overflow: hidden;
   background: var(--ink);
@@ -187,15 +191,16 @@
 .studio-page .studio-video-dot { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--white); font-size: var(--fs-min); }
 .studio-page .studio-video-dot.dark { background: var(--brown); border-color: var(--brown); color: var(--on-dark); }
 
-.studio-page .studio-video-detail h3 { margin: 22px 0 6px; font-size: var(--fs-panel-title); font-weight: 600; }
-.studio-page .studio-video-detail .studio-hint { display: block; margin: 0 0 10px; }
-.studio-page .studio-video-detail .actions { margin-top: 8px; }
+.studio-page .studio-video h3 { margin: 0 0 6px; font-size: var(--fs-panel-title); font-weight: 600; }
+.studio-page .studio-video .studio-hint { display: block; margin: 0 0 10px; }
+.studio-page .studio-video-scenes-block h3 { margin-top: 16px; }
+.studio-page .studio-video .actions { margin-top: 8px; }
 .studio-page .studio-video-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .studio-page .studio-video-status .studio-hint { margin: 0; }
 .studio-page .studio-video-scenes { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .studio-page .studio-video-scenes li {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1.2fr) 28px;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
@@ -213,11 +218,21 @@
 }
 .studio-page .studio-video-time:disabled { border-style: solid; border-color: transparent; background: none; cursor: default; }
 .studio-page .studio-video-time-input { width: 76px; padding: 4px 6px; }
+.studio-page .studio-video-remove { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 16px; }
+.studio-page .studio-video-remove:hover:not(:disabled) { background: var(--badge-red-bg); color: var(--badge-red-ink); }
+.studio-page .studio-video-remove:disabled { opacity: .3; cursor: default; }
+.studio-page .studio-video-add { margin-top: 8px; padding: 5px 10px; color: var(--muted); }
 .studio-page .studio-video-input { width: 100%; font-family: var(--font-vi); }
+.studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--muted); }
 .studio-page .studio-video-prompt { width: 100%; font-size: var(--fs-min); line-height: 1.6; resize: vertical; }
 
 @media (max-width: 1100px) {
+  .studio-page .studio-video-top,
+  .studio-page .studio-video-prompts { grid-template-columns: minmax(0, 1fr); }
+  .studio-page .studio-video-preview { position: static; }
+  .studio-page .studio-video-frame { width: min(100%, calc(62vh * var(--ar))); }
   .studio-page .studio-work.has-history { grid-template-columns: minmax(0, 1fr); }
-  .studio-page .studio-video-scenes li { grid-template-columns: 76px minmax(0, 1fr); }
+  .studio-page .studio-video-scenes li { grid-template-columns: 76px minmax(0, 1fr) 28px; }
+  .studio-page .studio-video-scenes li .studio-video-remove { grid-row: 1; grid-column: 3; }
   .studio-page .studio-video-scenes li .studio-video-input { grid-column: 1 / -1; }
 }

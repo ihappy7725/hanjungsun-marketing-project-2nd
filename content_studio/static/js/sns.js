@@ -320,7 +320,7 @@ function renderWork() {
     $("canvas").replaceChildren(el("p", "empty-note", "오른쪽 대화로 요청하면 여기에 장면 구성과 프롬프트 초안이 나타납니다."));
     return;
   }
-  renderVideo($("canvas"), doc, { onSave: saveDesign });
+  renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
 }
 
 async function saveDesign(doc) {

@@ -14,8 +14,9 @@ function endOf(time) {
   return match ? Number(match[2]) : 0;
 }
 
-// root 안에 영상 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
-export function renderVideo(root, doc, { onSave }) {
+// root 안에 영상 문서(README 8장 형식)를 그립니다.
+// onSave(newDoc): 직접 고친 결과 저장 (Promise) · onCommand(text): 입력줄과 같은 명령 보내기
+export function renderVideo(root, doc, { onSave, onCommand }) {
   let selected = 0;
   const ends = doc.scenes.map((scene) => endOf(scene.time));
   const startOf = (i) => (i === 0 ? 0 : ends[i - 1]);
@@ -75,7 +76,14 @@ export function renderVideo(root, doc, { onSave }) {
     input.addEventListener("focus", () => select(index));
     input.addEventListener("input", () => { markDirty(); if (index === selected) caption.textContent = input.value; });
 
-    li.append(time, el("span", "", scene.ko), input);
+    const remove = el("button", "studio-video-remove", "×");
+    remove.type = "button";
+    remove.title = doc.scenes.length > 1 ? `${index + 1}번 컷 삭제 (시간은 앞 컷이 이어받음)` : "마지막 1컷은 지울 수 없어요";
+    remove.disabled = doc.scenes.length <= 1;
+    remove.setAttribute("aria-label", `${index + 1}번 컷 삭제`);
+    remove.addEventListener("click", (event) => { event.stopPropagation(); removeScene(index); });
+
+    li.append(time, el("span", "", scene.ko), input, remove);
     li.addEventListener("click", () => select(index));
     sceneList.append(li);
 
@@ -127,10 +135,28 @@ export function renderVideo(root, doc, { onSave }) {
 
   // ---------- ② 프롬프트 검토 ----------
   const prompt = el("textarea", "studio-video-prompt");
-  prompt.rows = 6;
+  prompt.rows = 8;
   prompt.lang = "en";
   prompt.value = doc.custom || doc.prompt;
-  prompt.addEventListener("input", markDirty);
+  prompt.addEventListener("input", () => { markDirty(); showKorean(); });
+
+  // 한국어 번역 칸: 지금은 읽기 전용. 직접 고친 영어는 AI 연결 후 번역합니다.
+  const promptKo = el("textarea", "studio-video-prompt is-readonly");
+  promptKo.rows = 8;
+  promptKo.readOnly = true;
+  promptKo.setAttribute("aria-label", "프롬프트 한국어 번역 (읽기 전용)");
+  const koNote = el("p", "studio-hint");
+  function showKorean() {
+    const edited = prompt.value.trim() !== doc.prompt.trim() || Boolean(doc.custom);
+    if (edited) {
+      promptKo.value = "";
+      promptKo.placeholder = "직접 고친 영어 문장은 아직 번역하지 않아요. (AI 연결 후 번역)";
+    } else {
+      promptKo.value = doc.prompt_ko || "";
+      promptKo.placeholder = "이전에 만든 작업이라 번역이 없어요. 입력줄로 한 번 고치면 생깁니다.";
+    }
+    koNote.textContent = "읽기 전용 · 고치려면 아래 입력줄에 말하거나 왼쪽 영어를 직접 고치세요.";
+  }
 
   const save = el("button", "btn dark", "저장");
   save.type = "button";
@@ -145,16 +171,41 @@ export function renderVideo(root, doc, { onSave }) {
   generate.type = "button";
   generate.disabled = true;
 
-  const detail = el("div", "studio-video-detail");
-  detail.append(
+  // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
+  const maxScenes = Math.min(doc.duration, 12);
+  const addScene = el("button", "btn studio-video-add", `+ 컷 추가 (${doc.scenes.length}/${maxScenes})`);
+  addScene.type = "button";
+  addScene.disabled = doc.scenes.length >= maxScenes;
+  addScene.title = addScene.disabled ? "컷마다 1초 이상이라 더 넣을 수 없어요" : "마지막 컷 앞에 새 컷을 넣어요";
+  addScene.addEventListener("click", async () => {
+    if (!save.disabled) await saveDoc();
+    onCommand("컷 하나 추가");
+  });
+
+  // 위: 미리보기 | ① 장면 구성   아래: ② 영어 프롬프트 | 한국어 번역   맨 아래: ③ 만들기
+  const scenesBlock = el("div", "studio-video-scenes-block");
+  scenesBlock.append(
     status,
     el("h3", "", "① 장면 구성"),
     el("p", "studio-hint", "시간을 누르면 끝나는 초를 고칠 수 있어요. 자막은 영상 위에 얹는 베트남어 문구입니다."),
     sceneList,
-    el("h3", "", "② 프롬프트 검토"),
-    el("p", "studio-hint", "Higgsfield로 보낼 영어 프롬프트입니다. 글자는 영상에 그리지 않고 위 자막을 얹습니다."),
+    addScene,
+  );
+
+  const englishBlock = el("div");
+  englishBlock.append(
+    el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용)"),
+    el("p", "studio-hint", "글자는 영상에 그리지 않고 장면 자막을 얹습니다."),
     prompt,
     actions(save, reset),
+  );
+  const koreanBlock = el("div");
+  koreanBlock.append(el("h3", "", "한국어 번역"), koNote, promptKo);
+  const prompts = el("div", "studio-video-prompts");
+  prompts.append(englishBlock, koreanBlock);
+
+  const generateBlock = el("div", "studio-video-generate");
+  generateBlock.append(
     el("h3", "", "③ 영상 만들기"),
     generate,
     el("p", "studio-hint", "Higgsfield 연결 전이라 요청을 보내지 않습니다. (5단계) 버튼을 눌러야만 생성을 요청합니다."),
@@ -180,7 +231,8 @@ export function renderVideo(root, doc, { onSave }) {
     save.disabled = false;
   }
 
-  async function saveDoc() {
+  // 화면에서 고친 자막·시간·프롬프트를 담은 새 문서
+  function collect() {
     const next = structuredClone(doc);
     next.scenes.forEach((scene, i) => {
       scene.caption = captionInputs[i].value.trim();
@@ -189,6 +241,10 @@ export function renderVideo(root, doc, { onSave }) {
     // 자동 프롬프트와 같으면 직접 고친 것이 아닙니다.
     const text = prompt.value.trim();
     next.custom = text && text !== doc.prompt ? text : "";
+    return next;
+  }
+
+  async function saveDoc(next = collect()) {
     save.disabled = true;
     try {
       await onSave(next);
@@ -196,11 +252,26 @@ export function renderVideo(root, doc, { onSave }) {
       save.disabled = false;
     }
   }
-  save.addEventListener("click", saveDoc);
+  save.addEventListener("click", () => saveDoc());
 
+  // 컷 삭제: 지운 컷의 시간은 앞 컷이 이어받고(첫 컷이면 다음 컷이 0초부터), 바로 새 버전으로 저장합니다. (↶로 되돌리기)
+  function removeScene(index) {
+    if (doc.scenes.length <= 1) return;
+    const next = collect();
+    const nextEnds = [...ends];
+    nextEnds.splice(index > 0 ? index - 1 : 0, 1);
+    next.scenes.splice(index, 1);
+    let start = 0;
+    next.scenes.forEach((scene, i) => { scene.time = `${start}-${nextEnds[i]}s`; start = nextEnds[i]; });
+    saveDoc(next);
+  }
+
+  const top = el("div", "studio-video-top");
+  top.append(preview, scenesBlock);
   const wrap = el("div", "studio-video");
-  wrap.append(preview, detail);
+  wrap.append(top, prompts, generateBlock);
   root.replaceChildren(wrap);
   updateTimes();
+  showKorean();
   select(0, false);
 }

@@ -13,7 +13,8 @@ import re
 
 RATIOS = ("9:16", "16:9", "1:1")
 MIN_DURATION, MAX_DURATION = 5, 30
-MAX_SCENES = 8
+MAX_SCENES = 8        # 길이로 자동으로 정하는 컷 수의 최대
+MAX_MANUAL_SCENES = 12  # 컷 추가로 늘릴 수 있는 최대 (컷마다 1초 이상)
 
 CAMERAS = ("slow smooth dolly-in", "steady medium push-in", "dynamic quick cuts")
 LIGHTINGS = ("dim warm low-key lighting", "soft warm natural lighting", "bright airy high-key lighting")
@@ -47,6 +48,28 @@ EXTRA_SCENES = (
     {"ko": "선물 상자에 담는 장면", "en": "rice cakes being placed into a gift box", "caption": ""},
 )
 ORDINALS = {"첫": 1, "두": 2, "세": 3, "네": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8}
+
+# 한국어 프롬프트 보기(prompt_ko)용 대응표. 번역기가 아니라 같은 조합을 한국어로 조립합니다.
+CAMERA_KO = {
+    CAMERAS[0]: "천천히 부드럽게 다가가는 카메라",
+    CAMERAS[1]: "안정적으로 조금씩 다가가는 카메라",
+    CAMERAS[2]: "빠르고 역동적인 컷 전환",
+}
+LIGHTING_KO = {
+    LIGHTINGS[0]: "어둡고 따뜻한 저조도 조명",
+    LIGHTINGS[1]: "부드럽고 따뜻한 자연광",
+    LIGHTINGS[2]: "밝고 화사한 조명",
+}
+MOOD_KO = {
+    "cozy, welcoming": "아늑하고 반가운",
+    "warm, festive, heartfelt": "따뜻하고 축제 같은, 진심 어린",
+    "fresh, delicious, premium": "신선하고 맛있는, 고급스러운",
+}
+BACKGROUND_KO = {
+    "a cozy Korean dessert shop in Da Nang": "다낭의 아늑한 한국 디저트 가게",
+    "a gift table with ribbon and wrapping paper": "리본과 포장지가 놓인 선물 테이블",
+    "a clean light wooden table": "깔끔하고 밝은 나무 테이블",
+}
 
 
 def _pick(value, allowed, default):
@@ -133,6 +156,48 @@ def normalize_scenes(doc):
     return doc
 
 
+def _ends_of(scenes, duration):
+    ends = [_parse_end(scene.get("time")) for scene in scenes]
+    if any(end is None for end in ends):
+        return _even_ends(duration, len(scenes))
+    return ends
+
+
+def remove_scene(doc, index):
+    """컷 하나 삭제. 지운 컷의 시간은 앞 컷이 이어받습니다(첫 컷이면 다음 컷이 0초부터). 1컷 아래로는 지우지 않습니다."""
+    scenes = doc["scenes"]
+    if len(scenes) <= 1 or not 0 <= index < len(scenes):
+        return False
+    ends = _ends_of(scenes, doc["duration"])
+    del ends[index - 1 if index > 0 else 0]
+    scenes.pop(index)
+    _apply_ends(scenes, ends)
+    return True
+
+
+def max_scenes(duration):
+    return min(duration, MAX_MANUAL_SCENES)
+
+
+def add_scene(doc):
+    """마지막 컷 앞에 새 컷을 넣습니다. 앞 컷의 시간을 반으로 나눠 가지고, 나눌 수 없으면 고르게 다시 나눕니다."""
+    scenes, duration = doc["scenes"], doc["duration"]
+    if len(scenes) >= max_scenes(duration):
+        return False
+    used = {scene["ko"] for scene in scenes}
+    extra = next((s for s in (*EXTRA_SCENES, TEXTURE_SCENE) if s["ko"] not in used), EXTRA_SCENES[0])
+    ends = _ends_of(scenes, duration)
+    target = len(scenes) - 2 if len(scenes) >= 2 else 0  # 나눌 컷 (새 컷은 그 바로 뒤)
+    start = ends[target - 1] if target > 0 else 0
+    scenes.insert(target + 1, dict(extra))
+    if ends[target] - start >= 2:
+        ends.insert(target, start + (ends[target] - start) // 2)
+        _apply_ends(scenes, ends)
+    else:
+        _apply_ends(scenes, _even_ends(duration, len(scenes)))
+    return True
+
+
 def _has_bite(scenes):
     return any("bite" in scene["en"] for scene in scenes)
 
@@ -166,6 +231,36 @@ def build_prompt(doc):
         "no text, no letters, no subtitles, no logos",
     ]
     return ". ".join(parts) + "."
+
+
+def build_prompt_ko(doc):
+    """영어 프롬프트와 같은 내용을 한국어로 조립합니다. 직접 고친 영어(custom)는 번역하지 않고 None을 돌려줍니다 (AI 연결 후)."""
+    if doc.get("custom"):
+        return None
+    def ko(table, value):
+        return table.get(value, value)  # 대응표에 없으면 영어 그대로
+
+    shots = "; ".join(f"{scene['time']}: {scene['ko']}" for scene in doc["scenes"])
+    parts = [
+        f"{doc['duration']}초 {doc['ratio']} 홍보용 음식 영상",
+        shots,
+        f"배경: {ko(BACKGROUND_KO, doc['background'])}",
+        f"카메라: {ko(CAMERA_KO, doc['camera'])}",
+        f"조명: {ko(LIGHTING_KO, doc['lighting'])}",
+        f"분위기: {ko(MOOD_KO, doc['mood'])}",
+        *doc["extras"],
+        "잔잔한 배경음악과 자연스러운 소리" if doc["sound"] else "소리 없음",
+        "사실적이고 먹음직스러운 클로즈업",
+        "화면에 글자·자막·로고 없음",
+    ]
+    return ". ".join(parts) + "."
+
+
+def refresh_prompts(doc):
+    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다."""
+    doc["prompt"] = build_prompt(doc)
+    doc["prompt_ko"] = build_prompt_ko(doc)
+    return doc
 
 
 def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡", event=None):
@@ -204,14 +299,14 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         "background": setting["background"],
         "extras": [],
         "prompt": "",
+        "prompt_ko": "",
         "custom": "",
         "image": None,
         "job": {"request_id": None, "status": None, "video_url": None},
         "demo": True,
         "reviewed": False,
     }
-    doc["prompt"] = build_prompt(doc)
-    return doc
+    return refresh_prompts(doc)
 
 
 def revise_draft(doc, text):
@@ -238,8 +333,18 @@ def revise_draft(doc, text):
         new["camera"] = CAMERAS[2]
         video_changes.append("카메라를 빠르게")
 
+    # 컷 삭제·추가 ('2번 자막 지워'는 자막 고치기라 제외)
+    number = _scene_number(text)
+    removing = bool(number and "자막" not in text and re.search(r"빼|삭제|지워|없애", text))
+    if removing:
+        if remove_scene(new, number - 1):
+            video_changes.append(f"{number}번 컷 삭제 ({len(new['scenes'])}컷)")
+    elif re.search(r"(컷|장면)\s*(하나\s*|한\s*개\s*)?(추가|더\s*넣|늘려)", text):
+        if add_scene(new):
+            video_changes.append(f"컷 추가 ({len(new['scenes'])}컷)")
+
     # 한입 장면: 장면 번호를 말하면 그 장면을, 아니면 끝에서 두 번째 장면을 바꿉니다.
-    if re.search(r"한입|먹는|먹어|먹게|베어", text):
+    if not removing and re.search(r"한입|먹는|먹어|먹게|베어", text):
         number = _scene_number(text)
         index = number - 1 if number else len(new["scenes"]) - 2
         scene = new["scenes"][index] if 0 <= index < len(new["scenes"]) else None
@@ -287,5 +392,5 @@ def revise_draft(doc, text):
             video_changes.append("직접 고친 프롬프트를 새로 만들기")
         new["summary"] = re.sub(r"^\d+초 [\d:]+", f"{new['duration']}초 {new['ratio']}", new["summary"])
         new["reviewed"] = False
-        new["prompt"] = build_prompt(new)
+        refresh_prompts(new)
     return new, video_changes + caption_changes
