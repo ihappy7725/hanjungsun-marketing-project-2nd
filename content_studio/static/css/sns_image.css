@@ -159,3 +159,8 @@
 .img-editor .img-editor-checker {
   background: repeating-conic-gradient(var(--line) 0 25%, var(--white) 0 50%) 0 0 / 20px 20px;
 }
+
+/* 글꼴 목록 (sns_fonts.js) [희주] */
+.studio-editor .studio-editor-font {
+  max-width: 220px;
+}

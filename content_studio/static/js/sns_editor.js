@@ -1,9 +1,12 @@
 // 포스터·카드뉴스 편집기, 미리보기, PNG 내보내기 [희주]
 // sns.js가 import합니다. 가운데 영역만 그리고, 저장은 sns.js가 넘겨준 onSave로 합니다.
 // 문서 형식은 designs.py 위쪽 설명과 같습니다: x·y·w·h는 페이지 대비 %, size는 원본 크기 기준 px.
+import {
+  FONT_GROUPS, LOCAL_PREFIX, fontFamily, getLocalFonts, loadFont, loadFontsFor, loadLocalFonts, localFontsSupported,
+} from "./sns_fonts.js";
 
 export const SIZES = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080] };
-const FONTS = { sans: 'system-ui, "Segoe UI", Arial, sans-serif', serif: 'Georgia, "Times New Roman", serif' };
+const LOCAL_ACTION = "__local__";  // 글꼴 목록의 "내 PC 글꼴 불러오기…"
 const LINE = 1.2;     // 줄 간격 (글자 크기의 배수)
 const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
@@ -23,7 +26,7 @@ function sizeOf(doc) {
 }
 
 function fontOf(item) {
-  return `${item.weight || 400} ${item.size}px ${FONTS[item.font] || FONTS.sans}`;
+  return `${item.weight || 400} ${item.size}px ${fontFamily(item.font)}`;
 }
 
 function padOf(item) {
@@ -174,6 +177,64 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
   const status = el("span", "studio-hint");
 
+  function option(value, text, disabled = false) {
+    const node = el("option", "", text);
+    node.value = value;
+    node.disabled = disabled;
+    return node;
+  }
+
+  // 글꼴 목록: 묶음별 웹글꼴 + 맨 아래 내 PC 글꼴 (README 3-5)
+  function fontSelect(item) {
+    const current = item.font || "sans";
+    const select = el("select", "studio-editor-font");
+    for (const group of FONT_GROUPS) {
+      const box = el("optgroup");
+      box.label = group.label;
+      for (const font of group.fonts) {
+        box.append(option(font.key, font.vi && font.google ? `${font.name} · 🇻🇳 성조 지원` : font.name));
+      }
+      select.append(box);
+    }
+
+    const local = el("optgroup");
+    local.label = "내 PC 글꼴 (이 PC에서만 보임)";
+    const names = new Set(getLocalFonts());
+    if (current.startsWith(LOCAL_PREFIX)) names.add(current.slice(LOCAL_PREFIX.length));
+    for (const name of names) local.append(option(LOCAL_PREFIX + name, name));
+    if (!getLocalFonts().length) {
+      local.append(localFontsSupported()
+        ? option(LOCAL_ACTION, "내 PC 글꼴 불러오기…")
+        : option(LOCAL_ACTION, "내 PC 글꼴 (크롬·엣지에서만)", true));
+    }
+    select.append(local);
+    select.value = current;
+    if (select.value !== current) select.value = "sans";
+
+    select.addEventListener("change", async () => {
+      const key = select.value;
+      if (key === LOCAL_ACTION) {
+        select.value = current;
+        status.textContent = "내 PC 글꼴을 불러오는 중…";
+        try {
+          await loadLocalFonts();
+          status.textContent = "내 PC 글꼴은 이 PC에서만 보입니다. 상업적 사용은 글꼴마다 확인해 주세요.";
+          updateBar();
+        } catch (error) {
+          status.textContent = error.message;
+        }
+        return;
+      }
+      status.textContent = "글꼴을 불러오는 중…";
+      await loadFont(key, item.weight || 400);
+      status.textContent = "";
+      item.font = key;
+      draw();
+      save();
+    });
+    return select;
+  }
+
   function updateBar() {
     const item = find(selectedId);
     const tools = [];
@@ -195,6 +256,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
         save();
       });
       tools.push(
+        field("글꼴", fontSelect(item)),
         field("크기", size),
         field("글자색", colorInput(item.color, (value) => { item.color = value; draw(); save(); })),
         button(Number(item.weight) >= 700 ? "굵게 끄기" : "굵게", () => {
@@ -202,6 +264,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
           draw();
           updateBar();
           save();
+          loadFont(item.font, item.weight).then(draw);  // 굵은 글꼴 파일을 받은 뒤 다시 그립니다.
         }),
       );
     } else if (item.type === "shape") {
@@ -309,6 +372,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
   draw();
   updateBar();
   fit();
+  // 웹글꼴을 받은 뒤 글자 폭이 달라지므로 다시 그립니다.
+  loadFontsFor(page).then(() => { if (wrap.isConnected) draw(); });
 }
 
 // ---------- 내보내기 ----------
@@ -386,6 +451,7 @@ export async function exportImage(doc, type = "png", pageIndex = 0) {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d");
+  await loadFontsFor(page);
   if (document.fonts) await document.fonts.ready;
 
   ctx.fillStyle = page.bg || "#ffffff";  // JPG는 투명이 없어 배경을 먼저 채웁니다.
