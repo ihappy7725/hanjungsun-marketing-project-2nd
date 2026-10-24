@@ -10,9 +10,16 @@ const LOCAL_ACTION = "__local__";  // 글꼴 목록의 "내 PC 글꼴 불러오�
 const LINE = 1.2;     // 줄 간격 (글자 크기의 배수)
 const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
+const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIDE = 4096;
+// [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
+const EMOJIS = ["❤️", "⭐", "✨", "🌸", "🎁", "🎀", "🎉", "🔥", "😊", "👍", "🍡", "🍰", "🍵", "🍃", "🥭", "🍓"];
+const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 
 const measure = document.createElement("canvas").getContext("2d");
 let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다. (모듈 안 변수)
+let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -57,24 +64,52 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function round2(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function stickerSize(item, W, H) {
+  return Math.min(item.w / 100 * W, item.h / 100 * H) * 0.85;
+}
+
+// 배경 위에서 읽히는 글자색 (새 텍스트 기본값)
+function contrastOf(hex) {
+  const value = /^#[0-9a-f]{6}$/i.test(hex || "") ? hex : "#ffffff";
+  const [r, g, b] = [1, 3, 5].map((index) => parseInt(value.slice(index, index + 2), 16) / 255);
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.55 ? "#222222" : "#ffffff";
+}
+
+function imageSize(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { resolve([img.naturalWidth, img.naturalHeight]); URL.revokeObjectURL(url); };
+    img.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+}
+
 // ---------- 편집기 ----------
-// root 안에 포스터 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
+// root 안에 포스터·카드뉴스 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
+// 카드뉴스처럼 여러 장이면 위쪽 장 번호 버튼으로 장을 옮깁니다.
 export function renderDesign(root, doc, { onSave } = {}) {
   const draft = structuredClone(doc);
-  const page = draft.pages[0];
+  if (pageIndex >= draft.pages.length) pageIndex = 0;
+  let page = draft.pages[pageIndex];
   const [W, H] = sizeOf(draft);
   let scale = 1;
   let action = null;   // 끌기·크기 조절 중인 정보
   let editing = false; // 글자 수정 중에는 다시 그리지 않습니다.
 
   const wrap = el("div", "studio-editor");
+  const pagesBar = el("div", "studio-editor-pages");
   const bar = el("div", "studio-editor-bar");
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  wrap.append(bar, view);
+  wrap.append(pagesBar, bar, view);
   root.replaceChildren(wrap);
 
   const find = (id) => page.elements.find((item) => item.id === id);
@@ -125,8 +160,13 @@ export function renderDesign(root, doc, { onSave } = {}) {
     } else if (item.type === "shape") {
       node.style.background = item.fill;
       node.style.borderRadius = item.shape === "circle" ? "50%" : `${item.radius || 0}px`;
+    } else if (item.type === "sticker") {
+      node.classList.add("is-sticker");
+      node.style.fontSize = `${stickerSize(item, W, H)}px`;
+      node.style.fontFamily = EMOJI_FONT;
+      node.append(el("span", "", item.emoji || "⭐"));
     } else {
-      return null;  // 아직 그리지 못하는 종류 (스티커 등은 다음 단계)
+      return null;  // 아직 그리지 못하는 종류
     }
 
     if (item.id === selectedId) {
@@ -152,6 +192,123 @@ export function renderDesign(root, doc, { onSave } = {}) {
   }
   const observer = new ResizeObserver(fit);
   observer.observe(view);
+
+  // ---------- 장 번호 (카드뉴스) ----------
+  function renderPages() {
+    pagesBar.hidden = draft.pages.length < 2;
+    pagesBar.replaceChildren(el("span", "", "장"), ...draft.pages.map((_, index) => {
+      const node = button(String(index + 1), () => goPage(index), index === pageIndex ? "btn dark" : "btn");
+      if (index === pageIndex) node.setAttribute("aria-current", "page");
+      return node;
+    }));
+  }
+
+  function goPage(index) {
+    if (index === pageIndex) return;
+    pageIndex = index;
+    page = draft.pages[index];
+    selectedId = null;
+    renderPages();
+    draw();
+    updateBar();
+    loadFontsFor(page).then(() => { if (wrap.isConnected && page === draft.pages[index]) draw(); });
+  }
+
+  // ---------- 요소 추가 · 순서 · 사진 ----------
+  function nextZ() {
+    return Math.max(0, ...page.elements.map((item) => item.z || 0)) + 1;
+  }
+
+  function centered(w, h) {
+    return { x: round2((100 - w) / 2), y: round2((100 - h) / 2), w: round2(w), h: round2(h) };
+  }
+
+  // 정사각형으로 보이는 높이(%)
+  function square(w) {
+    return w * W / H;
+  }
+
+  // 사진을 골라 서버에 올리고 주소를 돌려줍니다. 취소하거나 실패하면 null.
+  function pickPhoto() {
+    return new Promise((resolve) => {
+      const input = el("input");
+      input.type = "file";
+      input.accept = PHOTO_TYPES.join(",");
+      input.addEventListener("cancel", () => resolve(null));
+      input.addEventListener("change", async () => {
+        const file = input.files[0];
+        if (!file) return resolve(null);
+        if (!PHOTO_TYPES.includes(file.type)) {
+          status.textContent = "JPEG·PNG·WEBP 이미지만 올릴 수 있습니다.";
+          return resolve(null);
+        }
+        const size = await imageSize(file);
+        if (size && (size[0] > MAX_SIDE || size[1] > MAX_SIDE)) {
+          status.textContent = `가로·세로가 각각 ${MAX_SIDE}px 이하인 사진만 올릴 수 있습니다. (지금 ${size[0]}×${size[1]})`;
+          return resolve(null);
+        }
+        status.textContent = "사진을 올리는 중…";
+        try {
+          const form = new FormData();
+          form.append("image", file);
+          const res = await fetch(UPLOAD_API, { method: "POST", body: form });
+          const data = await res.json().catch(() => ({ ok: false }));
+          if (!data.ok) throw new Error(data.error || "사진을 올리지 못했습니다.");
+          status.textContent = "";
+          resolve(data.url);
+        } catch (error) {
+          status.textContent = error.message;
+          resolve(null);
+        }
+      });
+      input.click();
+    });
+  }
+
+  async function addItem(value) {
+    let item;
+    if (value === "text") {
+      const size = 48;
+      item = {
+        type: "text", role: "body", text: "두 번 눌러 고치기", font: "sans", size, weight: 400,
+        color: contrastOf(page.bg), align: "center", ...centered(60, size * 1.3 / H * 100),
+      };
+    } else if (value === "rect") {
+      item = { type: "shape", role: "shape", shape: "rect", fill: page.accent || contrastOf(page.bg), radius: 0, ...centered(30, 20) };
+    } else if (value === "circle") {
+      item = { type: "shape", role: "shape", shape: "circle", fill: page.accent || contrastOf(page.bg), ...centered(24, square(24)) };
+    } else if (value.startsWith("emoji:")) {
+      item = { type: "sticker", role: "sticker", emoji: value.slice("emoji:".length), ...centered(14, square(14)) };
+    } else if (value === "photo") {
+      const src = await pickPhoto();
+      if (!src) return;
+      item = { type: "image", role: "photo", src, radius: 24, ...centered(50, square(50)) };
+    } else {
+      return;
+    }
+    item.id = `${item.type}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+    item.z = nextZ();
+    page.elements.push(item);
+    selectedId = item.id;
+    draw();
+    updateBar();
+    save();
+  }
+
+  // where: top(맨 앞) · up(앞으로) · down(뒤로) · bottom(맨 뒤). 순서를 1부터 다시 매깁니다.
+  function reorder(item, where) {
+    const list = [...page.elements].sort((a, b) => (a.z || 0) - (b.z || 0));
+    const from = list.indexOf(item);
+    const to = where === "top" ? list.length - 1
+      : where === "bottom" ? 0
+        : clamp(from + (where === "up" ? 1 : -1), 0, list.length - 1);
+    if (from === to) return;
+    list.splice(from, 1);
+    list.splice(to, 0, item);
+    list.forEach((other, index) => { other.z = index + 1; });
+    draw();
+    save();
+  }
 
   // ---------- 편집 막대 ----------
   function field(label, input) {
@@ -235,10 +392,35 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return select;
   }
 
+  function selectBox(className, choices, value, onChange) {
+    const select = el("select", className);
+    for (const [key, text] of choices) select.append(option(key, text));
+    select.value = value;
+    select.addEventListener("change", () => onChange(select.value));
+    return select;
+  }
+
+  // [추가] 메뉴: 고르면 바로 추가하고 다시 "＋ 추가"로 돌아갑니다.
+  function addSelect() {
+    const select = selectBox("studio-editor-add",
+      [["", "＋ 추가"], ["text", "텍스트"], ["photo", "사진"], ["rect", "사각형"], ["circle", "원"]], "", () => {});
+    const box = el("optgroup");
+    box.label = "이모지";
+    for (const emoji of EMOJIS) box.append(option(`emoji:${emoji}`, emoji));
+    select.append(box);
+    select.addEventListener("change", () => {
+      const value = select.value;
+      select.value = "";
+      addItem(value);
+    });
+    return select;
+  }
+
   function updateBar() {
     const item = find(selectedId);
     const tools = [];
     if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
+    tools.push(addSelect());
 
     if (!item) {
       tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
@@ -266,11 +448,30 @@ export function renderDesign(root, doc, { onSave } = {}) {
           save();
           loadFont(item.font, item.weight).then(draw);  // 굵은 글꼴 파일을 받은 뒤 다시 그립니다.
         }),
+        field("정렬", selectBox("", [["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"]], item.align || "left",
+          (value) => { item.align = value; draw(); save(); })),
       );
     } else if (item.type === "shape") {
       tools.push(field("색", colorInput(item.fill, (value) => { item.fill = value; draw(); save(); })));
+    } else if (item.type === "image") {
+      tools.push(button("사진 바꾸기", async () => {
+        const src = await pickPhoto();
+        if (!src) return;
+        item.src = src;
+        draw();
+        save();
+      }));
+    } else if (item.type === "sticker") {
+      tools.push(field("이모지", selectBox("", EMOJIS.map((emoji) => [emoji, emoji]), item.emoji,
+        (value) => { item.emoji = value; draw(); save(); })));
     }
     if (item) {
+      tools.push(
+        button("맨 앞", () => reorder(item, "top")),
+        button("앞으로", () => reorder(item, "up")),
+        button("뒤로", () => reorder(item, "down")),
+        button("맨 뒤", () => reorder(item, "bottom")),
+      );
       tools.push(button("삭제", () => {
         page.elements = page.elements.filter((other) => other.id !== item.id);
         selectedId = null;
@@ -280,15 +481,32 @@ export function renderDesign(root, doc, { onSave } = {}) {
       }));
     }
 
+    const multi = draft.pages.length > 1;
     tools.push(el("span", "studio-editor-spacer"), status,
-      button("PNG 받기", () => download("png")), button("JPG 받기", () => download("jpg")));
+      button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
+      button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
+    if (multi) tools.push(button("모든 장 PNG", downloadAll));
     bar.replaceChildren(...tools);
   }
 
   async function download(type) {
     status.textContent = "이미지를 만드는 중…";
     try {
-      await exportImage(draft, type);
+      await exportImage(draft, type, pageIndex);
+      status.textContent = "";
+    } catch (error) {
+      status.textContent = `내려받지 못했습니다. (${error.message})`;
+    }
+  }
+
+  // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
+  async function downloadAll() {
+    try {
+      for (let index = 0; index < draft.pages.length; index += 1) {
+        status.textContent = `${index + 1}/${draft.pages.length}장 만드는 중…`;
+        await exportImage(draft, "png", index);
+        await new Promise((resolve) => { setTimeout(resolve, 300); });
+      }
       status.textContent = "";
     } catch (error) {
       status.textContent = `내려받지 못했습니다. (${error.message})`;
@@ -369,6 +587,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
     }, { once: true });
   });
 
+  renderPages();
   draw();
   updateBar();
   fit();
@@ -440,6 +659,11 @@ async function paint(ctx, item, W, H) {
     ctx.textAlign = align;
     ctx.textBaseline = "middle";
     lines.forEach((line, index) => ctx.fillText(line, tx, top + lineH * (index + 0.5)));
+  } else if (item.type === "sticker") {
+    ctx.font = `${stickerSize(item, W, H)}px ${EMOJI_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(item.emoji || "⭐", x + w / 2, y + h / 2);
   }
 }
 

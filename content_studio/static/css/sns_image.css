@@ -164,3 +164,26 @@
 .studio-editor .studio-editor-font {
   max-width: 220px;
 }
+
+/* 장 번호 버튼 (카드뉴스) · [추가] 메뉴 · 이모지 요소 [희주] */
+.studio-editor .studio-editor-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.studio-editor .studio-editor-pages[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-add {
+  font-weight: 700;
+}
+
+.studio-editor .studio-editor-item.is-sticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
