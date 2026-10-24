@@ -104,3 +104,58 @@
   background: Highlight;
   cursor: nwse-resize;
 }
+
+/* ---------- 배경 제거 팝업 (sns_image.js) [희주] ---------- */
+.img-editor {
+  max-width: 900px;
+}
+
+.img-editor .img-editor-hint {
+  color: var(--muted);
+  font-size: var(--fs-min);
+}
+
+.img-editor .img-editor-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.img-editor .img-editor-msg {
+  min-height: 1.5em;
+}
+
+.img-editor .img-editor-msg.is-error {
+  color: var(--badge-red-ink);
+}
+
+.img-editor .img-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.img-editor .img-editor-row figure {
+  margin: 0;
+  text-align: center;
+}
+
+.img-editor .img-editor-row img {
+  display: block;
+  max-width: 380px;
+  max-height: 380px;
+  min-width: 120px;
+  min-height: 120px;
+  border: 1px solid var(--line);
+}
+
+.img-editor .img-editor-row img:not([src]) {
+  visibility: hidden;
+}
+
+/* 체크무늬 배경: 투명한 부분을 확인하기 쉽게 */
+.img-editor .img-editor-checker {
+  background: repeating-conic-gradient(var(--line) 0 25%, var(--white) 0 50%) 0 0 / 20px 20px;
+}
