@@ -22,6 +22,20 @@ export function validDate(value) {
 export function addDays(value, offset) { return new Date(Date.parse(value) + Number(offset) * DAY).toISOString().slice(0, 10); }
 export function dayDiff(a, b) { return Math.round((Date.parse(a) - Date.parse(b)) / DAY); }
 export function dday(target, today) { const n = dayDiff(target, today); return n === 0 ? 'D-Day' : n > 0 ? `D-${n}` : `D+${-n}`; }
+export function periodSegments(events, weekStart) {
+  const weekEnd = addDays(weekStart, 6), lanes = [];
+  return events.filter(e => e.kind === 'local' && e.date < e.end && e.date <= weekEnd && e.end >= weekStart)
+    .sort((a, b) => a.date.localeCompare(b.date) || b.end.localeCompare(a.end) || a.id.localeCompare(b.id))
+    .map(event => {
+      const start = event.date < weekStart ? weekStart : event.date;
+      const end = event.end > weekEnd ? weekEnd : event.end;
+      let lane = lanes.findIndex(last => last < start);
+      if (lane < 0) lane = lanes.length;
+      lanes[lane] = end;
+      return { event, start, end, lane, column: dayDiff(start, weekStart) + 1,
+        span: dayDiff(end, start) + 1, continuesBefore: event.date < start, continuesAfter: event.end > end };
+    });
+}
 export function progress(tasks) {
   const included = tasks.filter(t => t.status !== 'cancelled');
   const done = included.filter(t => t.status === 'done').length;
@@ -157,10 +171,26 @@ function initialize() {
     }));
     return events;
   }
+  function eventSources(e) {
+    const sources = Array.isArray(e.sources) ? e.sources : [];
+    if (sources.length) return sources.map((source, i) => {
+      const url = safeUrl(source.url);
+      return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">출처 ${i + 1} · ${esc(source.publisher)} ↗</a>` : esc(source.publisher);
+    }).join('<br>');
+    return `${esc(e.source_name || '출처 정보 미제공')}${safeUrl(e.source_url) ? ` <a href="${esc(safeUrl(e.source_url))}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : ''}`;
+  }
+  function eventSummary(e) {
+    return `<p class="home-signal-meta">${esc(e.start)}${e.end !== e.start ? ` ~ ${esc(e.end)}` : ''}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
+  }
+  function showLocalEvent(eventId) {
+    const e = localEvents().find(item => item.event_id === eventId);
+    if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
+    openDialog(e.name, `${e.is_demo ? badge('DEMO · 예시 데이터') : badge('출처 확인 자료')}<p>${esc(e.official_name || e.name)}</p>${eventSummary(e)}<p>${esc(e.description || '')}</p>${e.original_period ? `<p class="home-muted">원문 기간: ${esc(e.original_period)}</p>` : ''}${e.schedule_nature ? `<p class="home-muted">일정 성격: ${esc(e.schedule_nature)}</p>` : ''}${e.verification_notes ? `<p class="home-muted">검증 범위: ${esc(e.verification_notes)}</p>` : ''}<div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 역산 캠페인 생성</button></div>`);
+  }
   function eventAction(e) {
     if (e.kind === 'task') return `<button class="btn" data-task="${esc(e.id)}">열기</button>`;
     if (e.kind === 'creator') return `<a class="btn" href="${esc(safeUrl(e.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(e.id)}`))}">협업 보기 ↗</a>`;
-    if (e.kind === 'local') return '<a class="btn" href="/market_analysis/?country=VN&tab=trend">현지 일정 ↗</a>';
+    if (e.kind === 'local') return `<button class="btn" data-local="${esc(e.id)}">일정 상세</button>`;
     if (e.kind === 'campaign') return `<button class="btn" data-select="${esc(e.id)}">캠페인 보기</button>`;
     return '';
   }
@@ -179,10 +209,20 @@ function initialize() {
       const rows = events.filter(e => e.date <= end && e.end >= start).sort((a, b) => a.date.localeCompare(b.date));
       $('#calendar-body').innerHTML = rows.length ? rows.map(e => `<div class="home-agenda-row"><div><span class="home-muted">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}</span><br>${esc(e.title)} ${e.done ? badge('완료') : ''}</div>${eventAction(e)}</div>`).join('') : empty('이달에 등록된 일정이 없습니다.');
     } else {
-      let html = '<div class="home-month">' + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('');
-      for (let day = start; day <= end; day = addDays(day, 1)) {
-        const dayEvents = at(day);
-        html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${dayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span>${dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}">${esc(e.title)}</span>`).join('')}${dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : ''}</button>`;
+      let html = '<div class="home-month"><div class="home-weekdays">' + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('') + '</div>';
+      for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
+        const segments = periodSegments(events, weekStart);
+        const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:28px ${laneCount ? `repeat(${laneCount}, minmax(26px, auto)) ` : ''}minmax(48px, 1fr)">`;
+        for (let column = 1; column <= 7; column++) {
+          const day = addDays(weekStart, column - 1), allDayEvents = at(day);
+          const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
+          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span><span class="home-day-events">${dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}">${esc(e.title)}</span>`).join('')}${dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : ''}</span></button>`;
+        }
+        html += segments.map(segment => {
+          const e = segment.event;
+          return `<button class="home-period-bar${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}" style="grid-column:${segment.column} / span ${segment.span};grid-row:${segment.lane + 2}" data-local="${esc(e.id)}" data-period-start="${segment.start}" data-period-end="${segment.end}" aria-label="${esc(e.title)}, ${e.date}부터 ${e.end}까지${segment.continuesBefore ? ', 앞 주에서 이어짐' : ''}${segment.continuesAfter ? ', 다음 주에 이어짐' : ''}">${segment.continuesBefore ? '<span aria-hidden="true">← </span>' : ''}${esc(e.title)}${segment.continuesAfter ? '<span aria-hidden="true"> →</span>' : ''}</button>`;
+        }).join('') + '</div>';
       }
       $('#calendar-body').innerHTML = html + '</div>';
     }
@@ -226,7 +266,7 @@ function initialize() {
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
-    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3><p class="home-signal-meta">${esc(e.start)}${e.end !== e.start ? ` ~ ${esc(e.end)}` : ''}<br>${esc(e.source_name || '출처 정보 미제공')}${safeUrl(e.source_url) ? ` <a href="${esc(safeUrl(e.source_url))}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : ''}</p>${e.is_demo ? badge('DEMO · 예시 데이터') : ''}<br><button class="btn" data-create="${esc(e.event_id)}">+ 역산 캠페인 생성</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 현지 일정이 없습니다. 현지 시장 분석 탭에서 일정을 준비해주세요.'));
+    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}${e.is_demo ? badge('DEMO · 예시 데이터') : ''}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 역산 캠페인 생성</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
     const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
     const rows = creators().filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
     $('#collaboration-list').innerHTML = rows.map(c => {
@@ -319,7 +359,8 @@ function initialize() {
     if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
     if (button.dataset.filter) { filter = button.dataset.filter; renderTasks(); }
     if (button.dataset.task) editTask(button.dataset.task);
-    if (button.dataset.create) { const e = localEvents().find(item => item.event_id === button.dataset.create); if (e) planner('create', e); }
+    if (button.dataset.local) showLocalEvent(button.dataset.local);
+    if (button.dataset.create) { const e = localEvents().find(item => item.event_id === button.dataset.create); if (e) { if (dialog.open) dialog.close(); planner('create', e); } }
     if (button.dataset.select) changeCampaign(button.dataset.select);
   });
   root.addEventListener('change', event => {

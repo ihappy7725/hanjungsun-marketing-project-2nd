@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "events": [
+    {
+      "event_id": "vn_teachers_day_2026",
+      "country": "VN",
+      "name": "베트남 스승의 날",
+      "official_name": "Ngày Nhà giáo Việt Nam",
+      "type": "anniversary",
+      "year": 2026,
+      "start_date": "2026-11-20",
+      "end_date": "2026-11-20",
+      "date_precision": "day",
+      "original_period": "매년 11월 20일",
+      "region": "베트남 전국 · 다낭 포함",
+      "applies_to": "전국 기념일이며 일괄 휴무를 뜻하지 않음",
+      "description": "교원을 기리는 국가 기념일입니다. 개별 학교의 행사 개최일이나 휴무 여부는 별도로 확인해야 합니다.",
+      "schedule_nature": "법률로 정한 기념일",
+      "event_status": "not_applicable",
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "verified_at": "2026-10-24",
+      "is_demo": false,
+      "sources": [
+        {
+          "publisher": "베트남 정부 전자신문 · 교원법 제32조",
+          "title": "TOÀN VĂN: LUẬT NHÀ GIÁO",
+          "url": "https://xaydungchinhsach.chinhphu.vn/toan-van-luat-nha-giao-119250703171419548.htm",
+          "published_at": "2025-07-16",
+          "role": "primary",
+          "supports": "매년 11월 20일을 베트남 스승의 날로 지정"
+        },
+        {
+          "publisher": "Trường THPT An Lạc",
+          "title": "스승의 날 44주년 기념활동 계획 402/KH-THPTAL",
+          "url": "https://thptanlac.hcm.edu.vn/van-ban-truong/ke-hoach-to-chuc-cac-hoat-dong-chao-mung-ky-niem-44-nam-ngay-nha-giao-viet-nam/vbct/98483/579873",
+          "published_at": "2026-10-10",
+          "role": "independent_corrob",
+          "supports": "학교 자체 계획에서 2026년 11월 20일을 기념 기준일로 명시"
+        }
+      ],
+      "verification_notes": "전국 법률과 학교 자체 계획을 대조했습니다. 학교 계획은 다낭의 행사 개최를 증명하지 않습니다. 날짜 변경 근거를 검색 범위에서 발견하지 못했으며, 개별 학교 행사 변경 여부는 확인 대상 밖입니다."
+    },
+    {
+      "event_id": "vn_tet_public_sector_break_2027",
+      "country": "VN",
+      "name": "베트남 설 연휴 · 공공부문 기준",
+      "official_name": "Nghỉ Tết Âm lịch Đinh Mùi năm 2027",
+      "type": "holiday",
+      "year": 2027,
+      "start_date": "2027-02-04",
+      "end_date": "2027-02-10",
+      "date_precision": "day",
+      "original_period": "04/02/2027–10/02/2027, 연속 7일",
+      "region": "베트남 전국 · 다낭 포함",
+      "applies_to": "공지 적용 공공부문 기준. 민간 사업장의 일괄 휴무 기간이 아님",
+      "description": "공공부문 기준 설 휴일과 보상휴일을 합한 연속 휴무 기간입니다. 민간 사업장은 별도 방식을 선택하므로 자체 일정을 확인해야 합니다.",
+      "schedule_nature": "공식 승인·시행 안내에 따른 연속 휴무 기간",
+      "event_status": "scheduled",
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "verified_at": "2026-10-24",
+      "is_demo": false,
+      "sources": [
+        {
+          "publisher": "베트남 정부 전자신문 · 내무부 시행 안내",
+          "title": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN ĐINH MÙI, NGHỈ LỄ QUỐC KHÁNH 2027",
+          "url": "https://xaydungchinhsach.chinhphu.vn/de-xuat-2-phuong-an-nghi-tet-nguyen-dan-2027-tet-dinh-mui-11926080513033257.htm",
+          "published_at": "2026-10-22",
+          "role": "primary",
+          "supports": "내무부 공지 11483/TB-BNV의 2월 4~10일 및 적용 대상 안내. 재열람 시 페이지 표시일 기준"
+        },
+        {
+          "publisher": "베트남 정부사무처",
+          "title": "10065/VPCP-KGVX",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf",
+          "published_at": "2026-10-02",
+          "role": "primary",
+          "supports": "설 연휴 7일안 승인. 이 문서만으로 시작일·종료일을 확정하지 않음"
+        },
+        {
+          "publisher": "VnExpress",
+          "title": "Trình Chính phủ phương án nghỉ Tết Đinh Mùi 7 ngày",
+          "url": "https://vnexpress.net/trinh-chinh-phu-phuong-an-nghi-tet-dinh-mui-7-ngay-5119276.html",
+          "published_at": "2026-09-11",
+          "role": "independent_corrob",
+          "supports": "별도 기자회견 취재에서 2월 4~10일 제안 날짜 확인. 승인 이전 기사이므로 최종 확정 근거로 사용하지 않음"
+        }
+      ],
+      "verification_notes": "기자회견 보도와 이후 공식 시행 안내의 날짜가 일치합니다. 승인 상태는 공식 자료로 판단했습니다. 정부 승인문과 시행 안내는 독립 출처 2개로 세지 않습니다. 내무부 공지 서명 원본은 직접 확보하지 못했습니다. 이후 변경 공지는 검색 범위에서 발견하지 못했습니다."
+    }
+  ]
+}
