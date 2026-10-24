@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "calendar_eligible": false,
+  "candidates": [
+    {
+      "candidate_id": "vn_danang_christmas_market_2026",
+      "name": "다낭 크리스마스 마켓 2026",
+      "type": "regional_event",
+      "year": 2026,
+      "registration_status": "on_hold",
+      "start_date": null,
+      "end_date": null,
+      "last_reviewed_at": "2026-10-23",
+      "finding": "공식 관광 안내상 2026-12-04~12-06, Ariyana Convention Centre. 이번 단계에 재검증한 등록 자료가 아님.",
+      "missing_evidence": "추가 행사 페이지가 같은 공식 안내를 인용하므로 독립적 교차 확인 부족. 주최 측 최신 직접 공지 필요.",
+      "next_check": "행사장·주최 측의 2026년 직접 공지와 변경·취소 여부 확인",
+      "source_urls": [
+        "https://danangfantasticity.com/en/tin-tuc/top-su-kien-va-le-hoi-noi-bat-nhat-tai-da-nang-tu-nay-den-dau-nam-2027",
+        "https://digitaldanang.com/event/da-nang-christmas-market-2026-2026-12-04/"
+      ]
+    },
+    {
+      "candidate_id": "vn_diff_2027",
+      "name": "다낭 국제불꽃축제 DIFF 2027",
+      "type": "regional_event",
+      "year": 2027,
+      "registration_status": "on_hold",
+      "start_date": null,
+      "end_date": null,
+      "last_reviewed_at": "2026-10-23",
+      "finding": "이전 조사에서 확인한 공식 구체 일정은 2026년 행사에 관한 자료였음.",
+      "missing_evidence": "2027년 개최일을 확정할 공식 발표 미확보. 미개최나 발표 부재를 단정하지 않음.",
+      "next_check": "DIFF 주최 측·다낭시·시 관광정보 포털의 2027년 발표 확인",
+      "source_urls": [
+        "https://danangfantasticity.com/en/tin-tuc/top-su-kien-va-le-hoi-noi-bat-nhat-tai-da-nang-tu-nay-den-dau-nam-2027"
+      ]
+    },
+    {
+      "candidate_id": "vn_danang_mango_season_2027",
+      "name": "2027년 다낭용 망고 시즌",
+      "type": "fruit_season",
+      "year": 2027,
+      "registration_status": "on_hold",
+      "start_date": null,
+      "end_date": null,
+      "last_reviewed_at": "2026-10-23",
+      "finding": "2019년 국가농업지도센터 자료의 재수록 기사에 동탑 Cát Chu 망고 주 수확철 4~5월 언급. 다낭·2027년 자료가 아님.",
+      "missing_evidence": "실제 조달 산지·품종 및 2027년 수확 전망의 1차 자료와 독립적 교차 확인 부족.",
+      "next_check": "조달 산지·품종을 정한 뒤 해당 농업기관 자료 확인. 월 단위 정보를 일 단위로 임의 변환하지 않음.",
+      "source_urls": [
+        "https://khuyennongvn.gov.vn/portals/0/tailieu/2019/11/hangweb/ruot_tap_chi_khuyen_nong_so_062019_gui_0110.pdf"
+      ]
+    }
+  ]
+}
