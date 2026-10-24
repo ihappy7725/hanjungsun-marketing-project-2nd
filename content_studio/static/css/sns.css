@@ -1,6 +1,7 @@
 /* 콘텐츠 스튜디오 화면 전체 스타일 [유진]
    선택자는 .studio-page / .studio-chat / .studio-tabs 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
 .studio-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.studio-page [hidden] { display: none !important; }  /* display: grid 등이 hidden 속성을 덮지 않게 */
 
 /* ---------- 안내 줄 ---------- */
 .studio-page .studio-notice { margin: 0 0 16px; padding: 10px 14px; background: var(--note-bg); color: var(--note-ink); font-size: var(--fs-min); }
@@ -89,12 +90,12 @@
 .studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
 
-/* ---------- 작업 화면: 이전 작업 · 가운데 · 대화 ---------- */
-.studio-page .studio-work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
-.studio-page .studio-work.has-history { grid-template-columns: 200px minmax(0, 1fr) 320px; }
+/* ---------- 작업 화면: 이전 작업 · 가운데(결과물 + 한 줄 입력) ---------- */
+.studio-page .studio-work { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.studio-page .studio-work.has-history { grid-template-columns: 200px minmax(0, 1fr); }
 .studio-page .studio-history,
-.studio-page .studio-main,
-.studio-page .studio-chat { min-width: 0; padding: 18px; background: var(--white); border: 1px solid var(--line); }
+.studio-page .studio-main { min-width: 0; padding: 18px; background: var(--white); border: 1px solid var(--line); }
+.studio-page .studio-main { padding-bottom: 0; }
 
 .studio-page .studio-history-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .studio-page .studio-history-item {
@@ -111,60 +112,95 @@
 .studio-page .studio-history-item small { color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
 
 .studio-page .studio-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-.studio-page .studio-settings { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio-page .studio-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .studio-page .studio-seg { display: flex; }
 .studio-page .studio-seg .btn + .btn { margin-left: -1px; }
 .studio-page .btn:disabled { opacity: .45; cursor: default; }
+.studio-page .studio-duration { display: flex; align-items: center; gap: 5px; font-size: var(--fs-min); }
+.studio-page .studio-duration small { color: var(--muted); }
 
-/* 대화 */
-.studio-page .studio-chat { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 10px; }
-.studio-page .studio-chat-log { display: flex; flex-direction: column; gap: 8px; height: 440px; overflow-y: auto; }
-.studio-page .studio-bubble { max-width: 88%; margin: 0; padding: 8px 11px; border-radius: var(--radius); white-space: pre-wrap; }
-.studio-page .studio-bubble.is-user { align-self: flex-end; background: var(--brown); color: var(--on-dark); }
-.studio-page .studio-bubble.is-assistant { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
-.studio-page .studio-choices { display: flex; flex-wrap: wrap; gap: 6px; }
-.studio-page .studio-choices:empty { display: none; }
-.studio-page .studio-chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
-.studio-page .studio-chat-form textarea,
+.studio-page .studio-command-form input,
+.studio-page .studio-duration input,
 .studio-page .studio-video-input,
+.studio-page .studio-video-time-input,
 .studio-page .studio-video-prompt {
-  width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--white);
   color: var(--ink);
-  resize: vertical;
 }
+.studio-page .studio-duration input { width: 64px; padding: 7px 8px; }
 
-/* 영상 (sns_video.js) */
-.studio-page .studio-video { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 22px; align-items: start; }
-.studio-page .studio-video-preview { position: sticky; top: 16px; display: grid; gap: 10px; }
-.studio-page .studio-video-frame { justify-content: space-between; }
-.studio-page .studio-video-frame .badge { position: static; align-self: flex-start; }
-.studio-page .studio-video-scene { margin-top: auto; }
+/* 한 줄 입력 + 한 줄 안내: 화면 아래에 붙어 있습니다 */
+.studio-page .studio-command {
+  position: sticky;
+  bottom: 0;
+  margin: 18px -18px 0;
+  padding: 12px 18px;
+  background: var(--white);
+  border-top: 1px solid var(--line);
+}
+.studio-page .studio-command-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.studio-page .studio-feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 22px; margin-top: 8px; color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-feedback.is-ok { color: var(--green); }
+.studio-page .studio-feedback.is-ask { color: var(--ink); font-weight: 600; }
+.studio-page .studio-feedback.is-warn { color: var(--badge-red-ink); }
+.studio-page .studio-choices { display: flex; flex-wrap: wrap; gap: 6px; font-weight: 400; }
+.studio-page .studio-choices:empty { display: none; }
+
+/* 영상 (sns_video.js): 위에 큰 미리보기, 아래에 장면·프롬프트 */
+.studio-page .studio-video { display: grid; gap: 26px; }
+/* 위: 미리보기 | 장면 구성 */
+.studio-page .studio-video-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: start; }
+.studio-page .studio-video-preview { position: sticky; top: 16px; display: grid; justify-items: center; gap: 10px; }
+/* 아래: 영어 프롬프트 | 한국어 번역 */
+.studio-page .studio-video-prompts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.studio-page .studio-video-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  width: min(calc(62vh * var(--ar)), 520px);
+  aspect-ratio: var(--ar);
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--on-dark);
+}
+.studio-page .studio-video-frame.is-placeholder { padding: 16px; background: linear-gradient(160deg, var(--hero-from), var(--hero-to)); }
+.studio-page .studio-video-frame .badge { position: absolute; top: 12px; left: 12px; }
+.studio-page .studio-video-player { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--ink); }
+.studio-page .studio-video-scene { font-size: var(--fs-min); opacity: .85; }
 .studio-page .studio-video-caption {
+  position: relative;
   min-height: 1.4em;
-  margin: 0;
-  padding: 6px 8px;
+  margin: 0 0 8%;
+  padding: 8px 12px;
+  align-self: center;
+  max-width: 90%;
   background: var(--backdrop);
   font-family: var(--font-vi);
-  font-size: var(--fs-body);
+  font-size: 17px;
   font-weight: 600;
   text-align: center;
 }
+.studio-page .studio-video-frame:has(video) .studio-video-caption { pointer-events: none; margin-bottom: 14%; }
 .studio-page .studio-video-caption:empty { visibility: hidden; }
-.studio-page .studio-video-dots { display: flex; justify-content: center; gap: 6px; }
+.studio-page .studio-video-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .studio-page .studio-video-dot { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--white); font-size: var(--fs-min); }
 .studio-page .studio-video-dot.dark { background: var(--brown); border-color: var(--brown); color: var(--on-dark); }
 
-.studio-page .studio-video-detail h3 { margin: 22px 0 10px; font-size: var(--fs-panel-title); font-weight: 600; }
-.studio-page .studio-video-detail .actions { margin-top: 8px; }
+.studio-page .studio-video h3 { margin: 0 0 6px; font-size: var(--fs-panel-title); font-weight: 600; }
+.studio-page .studio-video .studio-hint { display: block; margin: 0 0 10px; }
+.studio-page .studio-video-scenes-block h3 { margin-top: 16px; }
+.studio-page .studio-video .actions { margin-top: 8px; }
 .studio-page .studio-video-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.studio-page .studio-video-status .studio-hint { margin: 0; }
 .studio-page .studio-video-scenes { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .studio-page .studio-video-scenes li {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1.2fr) 28px;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
@@ -173,15 +209,30 @@
   cursor: pointer;
 }
 .studio-page .studio-video-scenes li.is-selected { border-color: var(--gold); background: var(--paper); }
-.studio-page .studio-video-scenes b { font-family: var(--font-serif); font-weight: 400; }
-.studio-page .studio-video-input { font-family: var(--font-vi); }
-.studio-page .studio-video-prompt { font-size: var(--fs-min); line-height: 1.6; }
+.studio-page .studio-video-time {
+  padding: 4px 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-family: var(--font-serif);
+}
+.studio-page .studio-video-time:disabled { border-style: solid; border-color: transparent; background: none; cursor: default; }
+.studio-page .studio-video-time-input { width: 76px; padding: 4px 6px; }
+.studio-page .studio-video-remove { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 16px; }
+.studio-page .studio-video-remove:hover:not(:disabled) { background: var(--badge-red-bg); color: var(--badge-red-ink); }
+.studio-page .studio-video-remove:disabled { opacity: .3; cursor: default; }
+.studio-page .studio-video-add { margin-top: 8px; padding: 5px 10px; color: var(--muted); }
+.studio-page .studio-video-input { width: 100%; font-family: var(--font-vi); }
+.studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--muted); }
+.studio-page .studio-video-prompt { width: 100%; font-size: var(--fs-min); line-height: 1.6; resize: vertical; }
 
 @media (max-width: 1100px) {
-  .studio-page .studio-work,
-  .studio-page .studio-work.has-history,
-  .studio-page .studio-video { grid-template-columns: minmax(0, 1fr); }
-  .studio-page .studio-chat,
+  .studio-page .studio-video-top,
+  .studio-page .studio-video-prompts { grid-template-columns: minmax(0, 1fr); }
   .studio-page .studio-video-preview { position: static; }
-  .studio-page .studio-video-preview { max-width: 260px; }
+  .studio-page .studio-video-frame { width: min(100%, calc(62vh * var(--ar))); }
+  .studio-page .studio-work.has-history { grid-template-columns: minmax(0, 1fr); }
+  .studio-page .studio-video-scenes li { grid-template-columns: 76px minmax(0, 1fr) 28px; }
+  .studio-page .studio-video-scenes li .studio-video-remove { grid-row: 1; grid-column: 3; }
+  .studio-page .studio-video-scenes li .studio-video-input { grid-column: 1 / -1; }
 }
