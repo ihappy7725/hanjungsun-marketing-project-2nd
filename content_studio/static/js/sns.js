@@ -1,7 +1,8 @@
 // 첫 화면·대화·이전 작업·되돌리기 [유진]
 // type="module"로 불러오므로 전역 변수·함수가 생기지 않습니다.
 import { renderVideo } from "./sns_video.js";
-import { renderDesign } from "./sns_editor.js";  // 포스터 편집기 [희주]
+// 포스터·카드뉴스 편집기 [희주]. 묶어서 불러와, currentPage()가 아직 없어도 오류 없이 동작합니다.
+import * as editor from "./sns_editor.js";
 
 // ---------- 시연 데이터 (DEMO) ----------
 // 영상 탭 "내 영상"은 저장된 작업(/api/gallery)이 없을 때만 시연 카드를 보여줍니다.
@@ -28,15 +29,19 @@ const DEMO_GALLERY = {
   ],
 };
 
+// concept: 추천 카드에 붙는 임시 컨셉 한 줄 (마케터 검토 전 문구)
 const DEMO_EVENTS = [
-  { name: "베트남 스승의 날", date: "2026-11-20", tone: "red" },
-  { name: "크리스마스", date: "2026-12-25", tone: "green" },
+  { name: "베트남 스승의 날", date: "2026-11-20", tone: "red", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
+  { name: "크리스마스", date: "2026-12-25", tone: "green", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
 ];
 const DEMO_SEASON = { name: "감", note: "이번 달 제철", tone: "gold" };
-const DEMO_NEW_MENU = { name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero" };
+const DEMO_NEW_MENU = {
+  name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero", concept: "새콤달콤 망고스틴을 쫀득하게 감싼 첫 맛을 보여 주세요",
+};
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
-const WORK_KINDS = ["video", "poster"];  // 작업 화면이 연결된 탭 (카드뉴스는 희주 편집기 연결 후)
+const WORK_KINDS = ["video", "poster", "cardnews"];  // 작업 화면이 연결된 탭
+const DESIGN_KINDS = ["poster", "cardnews"];          // 희주 편집기(sns_editor.js)로 그리는 탭
 const MAX_RECS = 6;
 
 // ---------- 화면 요소 ----------
@@ -149,6 +154,7 @@ async function loadGallery() {
 }
 
 // ---------- 첫 화면 · 추천 ----------
+// 영상 탭은 2장만: 신메뉴 출시 1 + 가장 가까운 기념일 1. 포스터·카드뉴스는 기념일·제철·신메뉴 모두.
 function recommendations() {
   const label = KIND_LABELS[kind];
   const recs = [];
@@ -159,11 +165,21 @@ function recommendations() {
       badge: ["badge dday", days === 0 ? "D-DAY" : `D-${days}`],
       title: `${event.name} ${label}`,
       note: `${event.date.slice(5).replace("-", "/")} 기념일`,
+      concept: event.concept,
       tone: event.tone,
       thumbTitle: event.name,
       event: event.name,
     });
   }
+  const launch = {
+    badge: ["badge", "NEW"],
+    title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
+    note: DEMO_NEW_MENU.note,
+    concept: DEMO_NEW_MENU.concept,
+    tone: DEMO_NEW_MENU.tone,
+    thumbTitle: DEMO_NEW_MENU.name,
+  };
+  if (kind === "video") return [launch, ...recs.slice(0, 1)];
   recs.push({
     badge: ["badge season", "제철"],
     title: `제철 ${DEMO_SEASON.name} × 찹쌀떡 ${label}`,
@@ -171,13 +187,7 @@ function recommendations() {
     tone: DEMO_SEASON.tone,
     thumbTitle: DEMO_SEASON.name,
   });
-  recs.push({
-    badge: ["badge", "NEW"],
-    title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
-    note: DEMO_NEW_MENU.note,
-    tone: DEMO_NEW_MENU.tone,
-    thumbTitle: DEMO_NEW_MENU.name,
-  });
+  recs.push(launch);
   return recs.slice(0, MAX_RECS);
 }
 
@@ -189,6 +199,7 @@ function recCard(rec) {
 
   const text = el("div", "studio-rec-text");
   text.append(el("span", rec.badge[0], rec.badge[1]), el("p", "studio-rec-title", rec.title), el("p", "", rec.note));
+  if (rec.concept && kind === "video") text.append(el("p", "studio-rec-concept", rec.concept));
   card.append(text);
 
   card.addEventListener("click", () => {
@@ -244,7 +255,7 @@ function enableRailScroll(rail) {
 
 // ---------- 작업 화면 ----------
 const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false };
-const settings = { ratio: kind === "poster" ? "4:5" : "9:16", duration: 5, sound: false };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
+const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -278,9 +289,11 @@ function startNew() {
   showScreen("work");
   setUrl(null);
   notify("");
-  feedback("info", kind === "poster"
-    ? "어떤 포스터를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요."
-    : "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
+  feedback("info", {
+    poster: "어떤 포스터를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요.",
+    cardnews: "어떤 카드뉴스를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요.",
+    video: "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.",
+  }[kind]);
   renderWork();
   $("chat-input").focus();
 }
@@ -313,9 +326,13 @@ function renderWork() {
   const doc = work.doc;
   const current = doc ? { ratio: doc.ratio, duration: doc.duration, sound: doc.sound } : settings;
   // 비율 버튼은 탭이 지원하는 것만 보이고(data-kinds), 길이·소리는 영상 전용입니다.
+  // 포스터·카드뉴스는 대화로 비율을 바꾸지 못해(designs.py revise_design) 초안 뒤에는 끕니다.
+  const ratioLocked = Boolean(doc) && DESIGN_KINDS.includes(kind);
   for (const button of $("set-ratio").children) {
     button.hidden = !(button.dataset.kinds || "video poster").split(" ").includes(kind);
     button.classList.toggle("dark", button.dataset.value === current.ratio);
+    button.disabled = ratioLocked;
+    button.title = ratioLocked ? "비율은 새로 만들 때 정해요" : "";
   }
   $("set-duration").closest("label").hidden = kind !== "video";
   $("set-sound").hidden = kind !== "video";
@@ -326,12 +343,12 @@ function renderWork() {
   $("redo").disabled = !work.canRedo || work.busy;
 
   if (!doc) {
-    const what = kind === "poster" ? "포스터 초안이" : "장면 구성과 프롬프트 초안이";
+    const what = { poster: "포스터 초안이", cardnews: "카드뉴스 초안이", video: "장면 구성과 프롬프트 초안이" }[kind];
     $("canvas").replaceChildren(el("p", "empty-note", `아래 입력줄로 요청하면 여기에 ${what} 나타납니다.`));
     return;
   }
   if (kind === "video") renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
-  else renderDesign($("canvas"), doc, { onSave: saveDesign });
+  else editor.renderDesign($("canvas"), doc, { onSave: saveDesign });
 }
 
 async function saveDesign(doc) {
@@ -371,6 +388,8 @@ async function send(text, extra = {}) {
   const isNew = !work.chatId;
   feedback("info", "반영하는 중…");
   const body = { text, kind, chat_id: work.chatId, ...settings, ...extra };
+  // 카드뉴스에서 보고 있는 장(0부터). 희주 편집기에 currentPage()가 생기면 보냅니다. 없으면 서버가 1장 기준으로 고칩니다.
+  if (!isNew && DESIGN_KINDS.includes(kind) && typeof editor.currentPage === "function") body.page = editor.currentPage();
   try {
     const data = await api("/messages", { method: "POST", body });
     if (data.ask === "product") {
@@ -382,10 +401,11 @@ async function send(text, extra = {}) {
     work.pending = null;
     applyState(data.chat_id, data);
     loadHistory();
-    if (kind === "poster") {
-      // 포스터는 대화로 고치기가 아직 없어 고치는 말에는 안내만 옵니다. (희주 다음 단계)
-      if (isNew) feedback("ok", "✓ 포스터 초안을 만들었어요 — 가운데에서 글자를 끌어 옮기고 고칠 수 있어요");
-      else feedback("info", data.reply);
+    if (DESIGN_KINDS.includes(kind)) {
+      if (isNew && kind === "poster") feedback("ok", "✓ 포스터 초안을 만들었어요 — 가운데에서 글자를 끌어 옮기고 고칠 수 있어요");
+      else if (isNew) feedback("ok", `✓ 카드뉴스 ${data.design.pages.length}장 초안을 만들었어요 — 위 장 번호로 장을 옮기며 고칠 수 있어요`);
+      else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}`);
+      else feedback("warn", data.reply);
       return;
     }
     const recheck = data.design.reviewed ? "" : " — 프롬프트 다시 검토 필요";

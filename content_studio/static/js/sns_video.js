@@ -15,6 +15,9 @@ const STYLE_LABELS = {
   vlog: "브이로그·리뷰",
   energetic: "역동적 숏폼",
   retro: "레트로",
+  fantasy: "판타지 변신",
+  miniature: "미니어처 월드",
+  asmr: "ASMR 클로즈업",
 };
 
 // "3-6s" → 6
@@ -25,7 +28,8 @@ function endOf(time) {
 
 // root 안에 영상 문서(README 8장 형식)를 그립니다.
 // onSave(newDoc): 직접 고친 결과 저장 (Promise) · onCommand(text): 입력줄과 같은 명령 보내기
-export function renderVideo(root, doc, { onSave, onCommand }) {
+// notice: ③ 아래에 보여 줄 안내(크레딧 사용·남은 크레딧). 생성 결과로 다시 그릴 때 이어서 보여 줍니다.
+export function renderVideo(root, doc, { onSave, onCommand, notice }) {
   let selected = 0;
   const ends = doc.scenes.map((scene) => endOf(scene.time));
   const startOf = (i) => (i === 0 ? 0 : ends[i - 1]);
@@ -49,6 +53,12 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
       if (index >= 0 && index !== selected) select(index, false);
     });
     frame.append(video);
+  } else if (doc.keyframe?.image_url) {
+    // 영상 전에는 미리보기 이미지(첫 장면)를 보여 줍니다.
+    const image = el("img", "studio-video-player");
+    image.src = doc.keyframe.image_url;
+    image.alt = "미리보기 이미지 (영상 첫 장면)";
+    frame.append(image, el("span", "badge", "미리보기 이미지 · 영상 생성 전"));
   } else {
     frame.classList.add("is-placeholder");
     frame.append(el("span", "badge", "미리보기 · 영상 생성 전"), sceneLabel);
@@ -144,28 +154,42 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
   }
 
   // ---------- ② 프롬프트 검토 ----------
-  const prompt = el("textarea", "studio-video-prompt");
+  // 영어(Higgsfield로 보내는 문장)는 읽기 전용이고, 한국어를 고쳐 저장하면 서버가 영어에 반영합니다(videos.py korean_to_english).
+  const prompt = el("textarea", "studio-video-prompt is-readonly");
   prompt.rows = 16;
   prompt.lang = "en";
-  prompt.value = doc.custom || doc.prompt;
-  prompt.addEventListener("input", () => { markDirty(); showKorean(); });
+  prompt.readOnly = true;
+  prompt.value = doc.prompt;
+  prompt.setAttribute("aria-label", "Higgsfield로 보낼 영어 프롬프트 (읽기 전용)");
 
-  // 한국어 번역 칸: 지금은 읽기 전용. 직접 고친 영어는 AI 연결 후 번역합니다.
-  const promptKo = el("textarea", "studio-video-prompt is-readonly");
-  promptKo.rows = 16;
-  promptKo.readOnly = true;
-  promptKo.setAttribute("aria-label", "프롬프트 한국어 번역 (읽기 전용)");
-  const koNote = el("p", "studio-hint");
-  function showKorean() {
-    const edited = prompt.value.trim() !== doc.prompt.trim() || Boolean(doc.custom);
-    if (edited) {
-      promptKo.value = "";
-      promptKo.placeholder = "직접 고친 영어 문장은 아직 번역하지 않아요. (AI 연결 후 번역)";
-    } else {
-      promptKo.value = doc.prompt_ko || "";
-      promptKo.placeholder = "이전에 만든 작업이라 번역이 없어요. 입력줄로 한 번 고치면 생깁니다.";
+  const copy = el("button", "btn studio-video-copy", "복사");
+  copy.type = "button";
+  copy.title = "영어 프롬프트 복사";
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(prompt.value);
+    } catch {
+      prompt.select();
+      document.execCommand("copy");  // http 주소 등에서 clipboard API가 막힐 때
     }
-    koNote.textContent = "읽기 전용 · 고치려면 아래 입력줄에 말하거나 왼쪽 영어를 직접 고치세요.";
+    copy.textContent = "복사됨";
+    setTimeout(() => { copy.textContent = "복사"; }, 1500);
+  });
+
+  const promptKo = el("textarea", "studio-video-prompt");
+  promptKo.rows = 16;
+  promptKo.value = doc.prompt_ko || "";
+  promptKo.placeholder = "예전에 영어를 직접 고친 작업이라 한국어가 없어요. [자동 프롬프트로]를 누르면 새로 만들어요.";
+  promptKo.setAttribute("aria-label", "프롬프트 한국어 (고치면 저장할 때 영어에 반영)");
+  promptKo.addEventListener("input", markDirty);
+
+  // 단어 규칙으로 영어에 못 바꾼 줄 (AI 연결 전). 그 줄의 영어는 바뀌지 않았습니다.
+  const untranslated = el("div", "studio-video-untranslated");
+  untranslated.hidden = !doc.untranslated?.length;
+  if (doc.untranslated?.length) {
+    const list = el("ul");
+    list.append(...doc.untranslated.map((line) => el("li", "", line)));
+    untranslated.append(el("p", "", `영어에 반영하지 못한 줄 ${doc.untranslated.length}개 — 아직 아는 표현만 바꿀 수 있어요. 이 줄들의 영어는 그대로예요.`), list);
   }
 
   const save = el("button", "btn dark", "저장");
@@ -173,13 +197,19 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
   save.disabled = true;
   const reset = el("button", "btn", "자동 프롬프트로");
   reset.type = "button";
-  reset.hidden = !doc.custom;
-  reset.addEventListener("click", () => { prompt.value = ""; markDirty(); saveDoc(); });
+  reset.hidden = !doc.custom && !doc.custom_ko;
+  reset.addEventListener("click", () => { promptKo.value = ""; markDirty(); saveDoc(); });
 
-  // ---------- ③ 영상 만들기 (5단계 Higgsfield 연결 전) ----------
-  const generate = el("button", "btn dark", "이 프롬프트로 영상 만들기");
+  // ---------- ③ 만들기 (Higgsfield · 유진 Ultra 계정 크레딧) ----------
+  // 누르면 먼저 무료로 비용·계정 남은 크레딧·오늘 사용량을 받아 확인 창을 띄우고, [실행]을 눌러야만 요청합니다.
+  const makeImage = el("button", "btn", doc.keyframe?.request_id ? "미리보기 이미지 다시 만들기" : "미리보기 이미지 만들기");
+  makeImage.type = "button";
+  const generate = el("button", "btn dark", doc.job?.request_id ? "영상 다시 만들기" : "이 프롬프트로 영상 만들기");
   generate.type = "button";
-  generate.disabled = true;
+  const genStatus = el("p", "studio-hint");
+  const genButtons = [makeImage, generate];
+  makeImage.addEventListener("click", () => askGenerate("image"));
+  generate.addEventListener("click", () => askGenerate("video"));
 
   // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
   const maxScenes = Math.min(doc.duration, 12);
@@ -202,24 +232,150 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
     addScene,
   );
 
+  const englishHead = el("div", "studio-video-prompt-head");
+  englishHead.append(el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용)"), copy);
   const englishBlock = el("div");
   englishBlock.append(
-    el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용)"),
-    el("p", "studio-hint", "글자는 영상에 그리지 않고 장면 자막을 얹습니다."),
+    englishHead,
+    el("p", "studio-hint", "읽기 전용 · 오른쪽 한국어를 고쳐 저장하면 여기에 반영돼요. 글자는 영상에 그리지 않고 장면 자막을 얹습니다."),
     prompt,
-    actions(save, reset),
   );
   const koreanBlock = el("div");
-  koreanBlock.append(el("h3", "", "한국어 번역"), koNote, promptKo);
+  koreanBlock.append(
+    el("h3", "", "한국어 (고치기)"),
+    el("p", "studio-hint", "고친 줄은 [저장]할 때 영어로 바꿔요. 지운 줄은 영어에서도 빠져요."),
+    promptKo,
+    untranslated,
+    actions(save, reset),
+  );
   const prompts = el("div", "studio-video-prompts");
   prompts.append(englishBlock, koreanBlock);
 
   const generateBlock = el("div", "studio-video-generate");
   generateBlock.append(
     el("h3", "", "③ 영상 만들기"),
-    generate,
-    el("p", "studio-hint", "Higgsfield 연결 전이라 요청을 보내지 않습니다. (5단계) 버튼을 눌러야만 생성을 요청합니다."),
+    el("p", "studio-hint", "Kling 4.0 · 720p. 미리보기 이미지를 먼저 만들면 그 그림을 첫 장면으로 영상을 만듭니다. "
+      + "누를 때마다 쓰일 크레딧·남은 크레딧을 먼저 보여 드리고, [실행]을 눌러야만 요청합니다."),
+    actions(makeImage, generate),
+    genStatus,
   );
+
+  // ---------- ③ 만들기: 확인 창 · 요청 · 상태 확인 ----------
+  const STATUS_LABELS = { queued: "대기 중", in_progress: "만드는 중", processing: "만드는 중", completed: "완료",
+    failed: "실패", nsfw: "거절됨(부적절 판정)", canceled: "취소됨", cancelled: "취소됨" };
+  const RUNNING = ["queued", "in_progress", "processing"];
+  const TARGET = { image: { key: "keyframe", label: "미리보기 이미지" }, video: { key: "job", label: "영상" } };
+  const chatId = new URL(location.href).searchParams.get("chat");
+  const apiBase = root.closest(".studio-page")?.dataset.api;
+
+  async function call(path, options = {}) {
+    const response = await fetch(`${apiBase}/chats/${chatId}${path}`, {
+      ...options,
+      headers: { "Content-Type": "application/json" },
+      body: options.body && JSON.stringify(options.body),
+    });
+    const data = await response.json().catch(() => ({ ok: false, error: "서버 응답을 읽지 못했습니다." }));
+    if (!data.ok) throw Object.assign(new Error(data.error || "요청에 실패했습니다."), { data });
+    return data;
+  }
+
+  const fmt = (n) => Number(n).toLocaleString("ko-KR", { maximumFractionDigits: 2 });
+
+  function showStatus() {
+    const parts = Object.entries(TARGET).map(([, { key, label }]) => {
+      const status = doc[key]?.status;
+      return status ? `${label}: ${STATUS_LABELS[status] || status}` : "";
+    }).filter(Boolean);
+    genStatus.textContent = parts.join(" · ");
+  }
+
+  // 비용 확인 창 (base.css dialog). 실행할 수 없으면 이유를 보여 주고 [실행]을 끕니다.
+  function confirmDialog(target, quote) {
+    return new Promise((resolve) => {
+      const dialog = el("dialog");
+      const usingImage = target === "video" && doc.keyframe?.status === "completed";
+      const lines = el("ul");
+      lines.append(
+        el("li", "", `이번에 쓰일 크레딧: ${fmt(quote.credits)}`),
+        el("li", "", `계정 남은 크레딧: ${fmt(quote.balance)} → 실행 후 약 ${fmt(quote.balance - quote.credits)}`),
+        el("li", "", `오늘 대시보드 사용: ${fmt(quote.today_used)} / ${fmt(quote.daily_limit)}`),
+      );
+      const run = el("button", "btn dark", "실행");
+      run.type = "button";
+      run.disabled = !quote.allowed;
+      const cancel = el("button", "btn", "취소");
+      cancel.type = "button";
+      dialog.append(
+        el("h2", "", `${TARGET[target].label} 만들기`),
+        el("p", "studio-hint", target === "image" ? "Nano Banana 2 · 영상 첫 장면 그림"
+          : `Kling 4.0 · 720p · ${doc.duration}초 · ${usingImage ? "미리보기 이미지를 첫 장면으로" : `글 설명만으로 (${doc.ratio})`}`),
+        lines,
+      );
+      if (!quote.allowed) dialog.append(el("p", "badge dday", quote.reason));
+      dialog.append(actions(run, cancel));
+      const close = (answer) => { dialog.close(); dialog.remove(); resolve(answer); };
+      run.addEventListener("click", () => close(true));
+      cancel.addEventListener("click", () => close(false));
+      dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
+      root.append(dialog);
+      dialog.showModal();
+    });
+  }
+
+  async function askGenerate(target) {
+    genButtons.forEach((button) => { button.disabled = true; });
+    genStatus.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    try {
+      let { quote } = await call("/generate/quote", { method: "POST", body: { target } });
+      while (await confirmDialog(target, quote)) {
+        genStatus.textContent = `${TARGET[target].label} 요청을 보내는 중…`;
+        try {
+          const data = await call("/generate", { method: "POST", body: { target, credits: quote.credits } });
+          applyResult(data.design, `✓ ${fmt(data.spent)} 크레딧으로 ${TARGET[target].label} 요청을 보냈어요 · `
+            + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)} · 만드는 동안 상태를 확인합니다`);
+          return;
+        } catch (error) {
+          // 비용이 바뀌었거나 한도를 넘으면 새 숫자로 다시 묻습니다.
+          if (!error.data?.quote) throw error;
+          quote = error.data.quote;
+        }
+      }
+      showStatus();
+    } catch (error) {
+      genStatus.textContent = `요청하지 못했습니다. (${error.message})`;
+    } finally {
+      genButtons.forEach((button) => { button.disabled = !save.disabled; });
+    }
+  }
+
+  // 작업 상태는 지금 문서에 바로 적습니다(sns.js가 들고 있는 문서와 같은 객체). 고치던 내용이 없을 때만 다시 그립니다.
+  function applyResult(next, message) {
+    doc.keyframe = next.keyframe;
+    doc.job = next.job;
+    if (save.disabled) return renderVideo(root, doc, { onSave, onCommand, notice: message });
+    genStatus.textContent = message || "";
+    if (!message) showStatus();
+  }
+
+  // 만드는 중이면 8초마다 상태만 확인합니다(무료, 다시 만들지 않음). 화면을 떠나면 멈춥니다.
+  function poll() {
+    const target = Object.keys(TARGET).find((name) => RUNNING.includes(doc[TARGET[name].key]?.status));
+    if (!target || !chatId) return;
+    setTimeout(async () => {
+      if (!wrap.isConnected) return;
+      try {
+        const data = await call(`/generate/status?target=${target}`);
+        const status = data.design[TARGET[target].key]?.status;
+        if (RUNNING.includes(status)) return poll();
+        const balance = data.balance === null ? "" : ` · 계정 남은 크레딧 ${fmt(data.balance)}`;
+        applyResult(data.design, `${TARGET[target].label} ${STATUS_LABELS[status] || status}${balance} · `
+          + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)}`);
+      } catch (error) {
+        genStatus.textContent = `상태를 확인하지 못했습니다. (${error.message}) 잠시 후 다시 확인합니다.`;
+        poll();
+      }
+    }, 8000);
+  }
 
   function actions(...buttons) {
     const box = el("div", "actions");
@@ -237,8 +393,10 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
     if (video && seek) video.currentTime = startOf(index);
   }
 
+  // 고친 내용이 저장되지 않았으면 만들기를 막습니다(저장된 프롬프트로 만들기 때문).
   function markDirty() {
     save.disabled = false;
+    genButtons.forEach((button) => { button.disabled = true; button.title = "먼저 [저장]해 주세요"; });
   }
 
   // 화면에서 고친 자막·시간·프롬프트를 담은 새 문서
@@ -248,9 +406,13 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
       scene.caption = captionInputs[i].value.trim();
       scene.time = `${startOf(i)}-${ends[i]}s`;
     });
-    // 자동 프롬프트와 같으면 직접 고친 것이 아닙니다.
-    const text = prompt.value.trim();
-    next.custom = text && text !== doc.prompt ? text : "";
+    // 한국어를 고쳤으면 그 글을 보내고 영어는 서버가 다시 만듭니다. 비우면 자동 프롬프트로 돌아갑니다.
+    // 고치지 않았으면 그대로 둡니다(예전에 영어만 고친 작업의 custom 유지).
+    const ko = promptKo.value.trim();
+    if (ko !== (doc.prompt_ko || "").trim()) {
+      next.custom_ko = ko;
+      next.custom = "";
+    }
     return next;
   }
 
@@ -282,6 +444,8 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
   wrap.append(top, prompts, generateBlock);
   root.replaceChildren(wrap);
   updateTimes();
-  showKorean();
   select(0, false);
+  if (notice) genStatus.textContent = notice;
+  else showStatus();
+  poll();
 }

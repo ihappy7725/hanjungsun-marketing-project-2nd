@@ -104,3 +104,151 @@
   background: Highlight;
   cursor: nwse-resize;
 }
+
+/* ---------- 배경 제거 팝업 (sns_image.js) [희주] ---------- */
+.img-editor {
+  max-width: 900px;
+}
+
+.img-editor .img-editor-hint {
+  color: var(--muted);
+  font-size: var(--fs-min);
+}
+
+.img-editor .img-editor-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.img-editor .img-editor-msg {
+  min-height: 1.5em;
+}
+
+.img-editor .img-editor-msg.is-error {
+  color: var(--badge-red-ink);
+}
+
+.img-editor .img-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.img-editor .img-editor-row figure {
+  margin: 0;
+  text-align: center;
+}
+
+.img-editor .img-editor-row img {
+  display: block;
+  max-width: 380px;
+  max-height: 380px;
+  min-width: 120px;
+  min-height: 120px;
+  border: 1px solid var(--line);
+}
+
+.img-editor .img-editor-row img:not([src]) {
+  visibility: hidden;
+}
+
+/* 체크무늬 배경: 투명한 부분을 확인하기 쉽게 */
+.img-editor .img-editor-checker {
+  background: repeating-conic-gradient(var(--line) 0 25%, var(--white) 0 50%) 0 0 / 20px 20px;
+}
+
+/* 글꼴 목록 (sns_fonts.js) [희주] */
+.studio-editor .studio-editor-font {
+  max-width: 220px;
+}
+
+/* 장 번호 버튼 (카드뉴스) · [추가] 메뉴 · 이모지 요소 [희주] */
+.studio-editor .studio-editor-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.studio-editor .studio-editor-pages[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-add {
+  font-weight: 700;
+}
+
+.studio-editor .studio-editor-item.is-sticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* 광고 표현 검수 결과 · 카드뉴스 프롬프트 팝업 [희주] */
+.studio-editor .studio-editor-review {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+}
+
+.studio-editor .studio-editor-review[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.studio-editor .studio-editor-findings li {
+  padding: 8px 12px;
+  border-left: 4px solid var(--line);
+}
+
+.studio-editor .studio-editor-findings p {
+  margin: 2px 0;
+}
+
+.studio-editor .studio-editor-findings a {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.studio-editor .studio-editor-findings .is-block,
+.studio-editor .studio-editor-review .is-error {
+  border-left-color: var(--badge-red-ink);
+  color: var(--badge-red-ink);
+}
+
+.studio-editor .studio-editor-findings .is-warn,
+.studio-editor .studio-editor-review .is-warn {
+  border-left-color: var(--gold);
+}
+
+.studio-editor .studio-editor-prompt {
+  width: min(720px, 92vw);
+}
+
+.studio-editor .studio-editor-prompt .studio-editor-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+
+.studio-editor .studio-editor-prompt textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.studio-editor .studio-editor-prompt textarea[hidden],
+.studio-editor .studio-editor-prompt button[hidden] {
+  display: none;
+}
