@@ -49,5 +49,5 @@ class KpiVocReview(db.Model):
     raw_text_vn = db.Column(db.Text, nullable=False)
     translated_kr = db.Column(db.Text)
     sentiment = db.Column(db.String(10))  # Positive | Neutral | Negative
-    keyword_tag = db.Column(db.String(40))  # 당도/맛 | 냉장배송/포장 | 가격 | 선물용
+    keyword_tag = db.Column(db.String(40))  # 당도/맛 | 포장/보냉 | 가격 | 선물용 | 기타 (배송 없음)
     is_demo = db.Column(db.Boolean, nullable=False, default=False)

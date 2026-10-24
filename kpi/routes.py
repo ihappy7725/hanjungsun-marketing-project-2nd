@@ -56,7 +56,8 @@ DEMO_CREATORS = [
 ]
 
 SENTIMENTS = ("Positive", "Neutral", "Negative")
-KEYWORD_TAGS = ("당도/맛", "냉장배송/포장", "가격", "선물용", "기타")
+# 한정선은 배송을 하지 않습니다. 포장·보냉(매장 구매 후 휴대) 반응만 다룹니다.
+KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "기타")
 
 DEMO_REVIEWS = [
     {"review_id": "demo_voc_01", "platform": "Shopee_VN",
@@ -64,9 +65,9 @@ DEMO_REVIEWS = [
      "translated_kr": "딸기 찹쌀떡이 아주 신선하고 단맛이 적당해서 가족 모두 좋아해요.",
      "sentiment": "Positive", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_02", "platform": "Shopee_VN",
-     "raw_text_vn": "Trời nóng quá nên khi nhận hàng phần kem bên trong hơi bị chảy.",
-     "translated_kr": "날씨가 너무 더워서 받았을 때 안쪽 크림이 조금 녹아 있었어요.",
-     "sentiment": "Negative", "keyword_tag": "냉장배송/포장"},
+     "raw_text_vn": "Trời nóng quá nên trên đường mua về nhà phần kem bên trong hơi bị chảy.",
+     "translated_kr": "날씨가 너무 더워서 사서 집에 오는 동안 안쪽 크림이 조금 녹았어요.",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_03", "platform": "Instagram",
      "raw_text_vn": "Hộp quà gói bằng vải bojagi nhìn sang trọng, rất hợp để biếu tặng.",
      "translated_kr": "보자기로 싼 선물 상자가 고급스러워 보여서 선물하기 딱 좋아요.",
@@ -80,9 +81,9 @@ DEMO_REVIEWS = [
      "translated_kr": "떡피가 쫀득하고 부드럽고 망고 소가 향긋해요. 재구매할게요.",
      "sentiment": "Positive", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_06", "platform": "Instagram",
-     "raw_text_vn": "Giao hàng đến Đà Nẵng mất 3 ngày, đá khô đã tan hết.",
-     "translated_kr": "다낭까지 배송이 3일 걸려서 드라이아이스가 다 녹았어요.",
-     "sentiment": "Negative", "keyword_tag": "냉장배송/포장"},
+     "raw_text_vn": "Mua ở cửa hàng nhưng không có túi giữ lạnh, cầm về một tiếng là bánh bị mềm nhũn.",
+     "translated_kr": "매장에서 샀는데 보냉백이 없어서 1시간 들고 오니 떡이 너무 물러졌어요.",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_07", "platform": "TikTok",
      "raw_text_vn": "Mình mua làm quà Tết cho sếp, ai cũng khen đẹp.",
      "translated_kr": "상사에게 뗏(설) 선물로 샀는데 다들 예쁘다고 칭찬했어요.",
@@ -103,15 +104,15 @@ DEMO_REVIEWS = [
     {"review_id": "demo_voc_11", "platform": "Zalo_OA",
      "raw_text_vn": "Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",
      "translated_kr": "보냉 상자가 좋아서 다낭 집에 도착했을 때도 떡이 말랑했어요.",
-     "sentiment": "Positive", "keyword_tag": "냉장배송/포장"},
+     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_12", "platform": "Zalo_OA",
      "raw_text_vn": "Cho mình hỏi bánh để tủ lạnh được mấy ngày?",
      "translated_kr": "냉장고에 며칠 보관할 수 있나요?",
      "sentiment": "Neutral", "keyword_tag": "기타"},
     {"review_id": "demo_voc_13", "platform": "Zalo_OA",
-     "raw_text_vn": "Hộp bị móp một góc khi giao, mong shop đóng gói kỹ hơn.",
-     "translated_kr": "배송 중에 상자 한쪽이 찌그러졌어요. 포장을 더 꼼꼼히 해 주세요.",
-     "sentiment": "Negative", "keyword_tag": "냉장배송/포장"},
+     "raw_text_vn": "Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",
+     "translated_kr": "매장에서 받을 때 상자 한쪽이 찌그러져 있었어요. 포장을 더 꼼꼼히 해 주세요.",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
 ]
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
@@ -119,7 +120,7 @@ DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_r
 DEMO_SURVEY = [
     {"item": "맛", "score": 4.5},
     {"item": "포장", "score": 3.6},
-    {"item": "배송", "score": 3.8},
+    {"item": "매장 응대", "score": 3.8},
 ]
 
 FX_STALE_DAYS = 7  # 환율 기준일이 이보다 오래되면 화면에 주의 표시
@@ -613,7 +614,7 @@ VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜�
 감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어 한 문장으로 요약하세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
-- keyword_tag는 당도/맛, 냉장배송/포장, 가격, 선물용, 기타 중 하나
+- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
 - review_id는 입력 값을 그대로 사용
 - 과장하지 말고 리뷰에 있는 내용만 근거로 요약
 
