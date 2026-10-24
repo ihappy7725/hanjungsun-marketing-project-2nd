@@ -1,2 +1,106 @@
 /* 사진 편집 창 스타일 [희주]
    선택자는 .img-editor 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
+
+/* ---------- 포스터·카드뉴스 편집기 (sns_editor.js) [희주] ----------
+   선택자는 .studio-editor 아래로 제한합니다. 포스터 안의 색은 문서 데이터라 JS가 넣습니다.
+   크기 값(px)은 원본 크기 기준이라 화면에서는 축소되어 보입니다.
+   TODO: 선택 표시 색(Highlight)은 base.css 변수 확인 후 바꿉니다. */
+.studio-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.studio-editor .studio-editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.studio-editor .studio-editor-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.studio-editor .studio-editor-field input[type="number"] {
+  width: 72px;
+}
+
+.studio-editor .studio-editor-spacer {
+  flex: 1;
+}
+
+.studio-editor .studio-editor-view {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.studio-editor .studio-editor-stage {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  transform-origin: 0 0;
+  outline: 2px solid currentColor;
+  touch-action: none;
+  user-select: none;
+}
+
+.studio-editor .studio-editor-item {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: visible;
+  cursor: move;
+}
+
+.studio-editor .studio-editor-item.is-text {
+  display: flex;
+  align-items: center;
+}
+
+.studio-editor .studio-editor-text {
+  width: 100%;
+  white-space: pre;
+}
+
+.studio-editor .studio-editor-text[contenteditable="true"] {
+  white-space: pre-wrap;
+  outline: none;
+  cursor: text;
+  user-select: text;
+}
+
+.studio-editor .studio-editor-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.studio-editor .studio-editor-item.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 6px dashed;
+  font-size: 40px;
+}
+
+.studio-editor .studio-editor-item.is-selected {
+  outline: 6px solid Highlight;
+  outline-offset: 4px;
+}
+
+.studio-editor .studio-editor-handle {
+  position: absolute;
+  right: -22px;
+  bottom: -22px;
+  width: 36px;
+  height: 36px;
+  background: Highlight;
+  cursor: nwse-resize;
+}
