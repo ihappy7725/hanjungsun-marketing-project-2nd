@@ -28,12 +28,14 @@
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
-      "last_reviewed_at": "2026-10-23",
-      "finding": "공식 관광 안내상 2026-12-04~12-06, Ariyana Convention Centre. 이번 단계에 재검증한 등록 자료가 아님.",
-      "missing_evidence": "추가 행사 페이지가 같은 공식 안내를 인용하므로 독립적 교차 확인 부족. 주최 측 최신 직접 공지 필요.",
-      "next_check": "행사장·주최 측의 2026년 직접 공지와 변경·취소 여부 확인",
+      "last_reviewed_at": "2026-10-24",
+      "finding": "다낭시 공식 관광 포털의 하반기 행사 일정과 주요 행사 안내에 2026-12-04~12-06, Ariyana Convention Centre로 기재되어 있다. 2026-10-24 재확인 시 해당 안내 페이지의 표시 발행일은 2026-06-05였다. 같은 날 행사장(Ariyana Convention Centre)의 예정 행사 페이지를 직접 열었으나 12월 행사 안내는 없었고 2026-10-16~19 관광 페스티벌만 게시되어 있었다. 개최 41일 전 기준 행사장 공지 미확인 상태다. 2025년 3회차는 12-05~12-07에 Da Nang 365 주최로 열렸으나 이는 2026년 개최를 증명하지 않는다.",
+      "missing_evidence": "날짜 근거가 모두 다낭시 관광 포털 한 곳에서 나오므로 독립적 교차 확인이 없다. 행사장·주최 측의 2026년 직접 공지를 확보하지 못했고, 관광 포털 안내는 5개월 전 자료여서 이후 변경 여부를 확인할 수 없다. 2026년 주최자도 확인되지 않았다.",
+      "next_check": "행사장 예정 행사 페이지와 주최 측(2025년 기준 Da Nang 365)의 2026년 직접 공지를 확인한다. 개최 1주 전까지 공지가 없으면 개최 여부를 미확정으로 유지한다. 공지 부재를 취소 확정으로 해석하지 않는다.",
       "source_urls": [
         "https://danangfantasticity.com/en/tin-tuc/top-su-kien-va-le-hoi-noi-bat-nhat-tai-da-nang-tu-nay-den-dau-nam-2027",
+        "https://danangfantasticity.com/en/news/event-and-festival-calendar-in-danang-for-the-second-half-of-2026",
+        "https://ariyanacentre.com/upcoming-events-at-acc/",
         "https://digitaldanang.com/event/da-nang-christmas-market-2026-2026-12-04/"
       ]
     },
@@ -140,6 +142,72 @@
         "comparison_notes": "국회 결의 원문(2026-04-24)과 Tuổi Trẻ 보도(2026-04-24)가 11월 24일·유급휴무·2026-07-01 시행일에서 일치합니다. 2026년 휴무 일수는 정부 공문(2026-10-02)에서 1일로 확정되어, 8~9월에 보도된 4일 연휴안과의 차이가 해소되었습니다. 적용 범위는 전국이며 다낭 한정 자료가 아닙니다.",
         "independence_notes": "정부 결의 PDF와 정부사무처 공문은 모두 정부 1차 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Tuổi Trẻ의 별도 기자(Thành Chung, Ngọc An) 작성 기사로, 정부 포털 보도자료 재게시가 아니라 표결 수치와 자체 사진을 포함한 현장 취재입니다.",
         "latest_notice_result": "2026-10-24 검색 결과 최신 공지는 2026-10-02 정부사무처 공문 10065/VPCP-KGVX이며 1일 휴무로 확정되었습니다. 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
+      }
+    },
+    {
+      "candidate_id": "vn_national_day_2027",
+      "verification_status": "verified",
+      "registration_status": "pending_approval",
+      "event": {
+        "event_id": "vn_national_day_2027",
+        "country": "VN",
+        "name": "베트남 국경일 연휴 · 공공부문 기준",
+        "official_name": "Nghỉ lễ Quốc khánh năm 2027",
+        "type": "holiday",
+        "year": 2027,
+        "start_date": "2027-09-02",
+        "end_date": "2027-09-05",
+        "date_precision": "day",
+        "original_period": "02/9/2027–05/9/2027, 연속 4일",
+        "region": "베트남 전국 · 다낭 포함",
+        "applies_to": "공지 적용 공공부문 기준 연속 휴무. 민간 사업장은 법정 2일(9월 2일과 인접한 하루)만 적용되며 연속 4일 휴무가 일괄 적용되지 않음",
+        "description": "법정 공휴일 2일(9월 2일·3일)과 주말 2일을 합한 공공부문 기준 연속 휴무 기간입니다. 민간 사업장은 9월 2일과 인접한 하루를 사업장이 정하므로 거래처 일정은 따로 확인해야 합니다.",
+        "schedule_nature": "내무부 공지에 따른 연속 휴무 기간",
+        "event_status": "scheduled",
+        "verification_status": "verified",
+        "registration_status": "pending_approval",
+        "verified_at": "2026-10-24",
+        "is_demo": false,
+        "sources": [
+          {
+            "publisher": "베트남 정부 전자신문 · 내무부 공지 안내",
+            "title": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN ĐINH MÙI, NGHỈ LỄ QUỐC KHÁNH 2027",
+            "url": "https://xaydungchinhsach.chinhphu.vn/de-xuat-2-phuong-an-nghi-tet-nguyen-dan-2027-tet-dinh-mui-11926080513033257.htm",
+            "published_at": "2026-10-22",
+            "role": "primary",
+            "supports": "내무부 공지 11483/TB-BNV(2026-10-09)의 국경일 휴무 안내. 2027-09-02 목요일부터 09-05 일요일까지 연속 4일, 법정 2일은 09-02과 09-03. 재열람 시 페이지 표시일 기준"
+          },
+          {
+            "publisher": "베트남 정부사무처(VPCP)",
+            "title": "10065/VPCP-KGVX — 2026년·2027년 일부 명절·공휴일 휴무 방안",
+            "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf",
+            "published_at": "2026-10-02",
+            "role": "primary",
+            "supports": "제1항에서 2027년 국경일 4일 휴무안 승인. 이 문서는 일수만 승인하며 시작일·종료일은 내무부 공지로 확정됨"
+          },
+          {
+            "publisher": "Tiền Phong · Luân Dũng",
+            "title": "Bộ Nội vụ thông báo chi tiết lịch nghỉ Tết âm lịch, Quốc khánh 2027",
+            "url": "https://tienphong.vn/bo-noi-vu-thong-bao-chi-tiet-lich-nghi-tet-am-lich-quoc-khanh-2027-post1883914.tpo",
+            "published_at": "2026-10-10",
+            "role": "independent_corrob",
+            "supports": "별도 기자 작성 보도에서 2027-09-02~09-05 연속 4일과 법정 2일 구성을 대조. 민간 사업장에는 일괄 적용되지 않는다는 설명도 확인"
+          }
+        ],
+        "verification_notes": "정부 전자신문의 내무부 공지 안내와 별도 기자 작성 보도의 날짜·일수·구성이 일치합니다. 승인 사실은 정부사무처 서명 공문으로 확인했으며 이 공문은 일수만 정합니다. 정부 전자신문과 정부 공문은 독립 출처 2개로 세지 않았습니다. 내무부 공지 11483/TB-BNV의 서명 원본은 직접 확보하지 못했고 번호와 날짜만 보도로 확인했습니다. Calendarific는 2027-09-02 하루만 제공해 연속 휴무 기간을 확인할 수 없었으므로 등록 날짜는 정부 공지를 기준으로 했습니다. 이후 변경 공지는 검색 범위에서 발견하지 못했습니다."
+      },
+      "review": {
+        "reviewed_at": "2026-10-24",
+        "reviewed_by": "주연",
+        "originals_opened": true,
+        "dates_match": true,
+        "scope_match": true,
+        "independent_sources": true,
+        "latest_notice_checked": true,
+        "conflicts_resolved": true,
+        "comparison_notes": "정부 전자신문(2026-10-22)과 Tiền Phong(2026-10-10)이 2027-09-02~09-05 연속 4일, 법정 2일(09-02·09-03) + 주말 2일 구성에서 일치합니다. Calendarific가 제공한 2027-09-02 단일 날짜와의 차이는 API가 법정일만 제공하고 주말·연속 휴무를 포함하지 않기 때문으로 확인했으며, 정부 공지를 기준으로 삼아 해소했습니다. 적용 범위는 전국 공공부문이며 민간 일괄 적용이 아님을 두 자료에서 모두 확인했습니다.",
+        "independence_notes": "정부 전자신문과 정부사무처 공문은 모두 정부 1차 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Tiền Phong 소속 기자(Luân Dũng)가 작성한 보도로, 정부 포털 기사 재게시가 아니라 자체 지면 기사입니다. 다만 베트남 언론 일반과 같이 국가 계열 매체입니다.",
+        "latest_notice_result": "2026-10-24 검색 결과 최신 공지는 내무부 공지 11483/TB-BNV(2026-10-09)이며 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
       }
     }
   ]

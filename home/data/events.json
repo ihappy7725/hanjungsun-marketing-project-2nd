@@ -136,6 +136,54 @@
         }
       ],
       "verification_notes": "국회 결의 원문 PDF에서 제2조 제1항과 제13조 시행일을 직접 확인했습니다. 2026년 휴무 일수는 정부사무처 서명 공문 10065/VPCP-KGVX 제2항에서 1일 승인으로 확인했으며, 같은 공문 제1항은 2027년 설 7일안 승인으로 기존 등록 일정과 같은 문서입니다. 정부 결의와 정부 공문은 독립 출처 2개로 세지 않고, 독립 교차는 별도 취재진의 Tuổi Trẻ 보도로 확인했습니다. Tuổi Trẻ는 자체 편집국을 가진 일간지이나 베트남 언론 일반과 같이 국가 계열 매체입니다. 민간 사업장의 실제 휴무 운영과 다낭 현지 영업 여부는 확인 범위 밖입니다."
+    },
+    {
+      "event_id": "vn_national_day_2027",
+      "country": "VN",
+      "name": "베트남 국경일 연휴 · 공공부문 기준",
+      "official_name": "Nghỉ lễ Quốc khánh năm 2027",
+      "type": "holiday",
+      "year": 2027,
+      "start_date": "2027-09-02",
+      "end_date": "2027-09-05",
+      "date_precision": "day",
+      "original_period": "02/9/2027–05/9/2027, 연속 4일",
+      "region": "베트남 전국 · 다낭 포함",
+      "applies_to": "공지 적용 공공부문 기준 연속 휴무. 민간 사업장은 법정 2일(9월 2일과 인접한 하루)만 적용되며 연속 4일 휴무가 일괄 적용되지 않음",
+      "description": "법정 공휴일 2일(9월 2일·3일)과 주말 2일을 합한 공공부문 기준 연속 휴무 기간입니다. 민간 사업장은 9월 2일과 인접한 하루를 사업장이 정하므로 거래처 일정은 따로 확인해야 합니다.",
+      "schedule_nature": "내무부 공지에 따른 연속 휴무 기간",
+      "event_status": "scheduled",
+      "verification_status": "verified",
+      "registration_status": "approved",
+      "verified_at": "2026-10-24",
+      "is_demo": false,
+      "sources": [
+        {
+          "publisher": "베트남 정부 전자신문 · 내무부 공지 안내",
+          "title": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN ĐINH MÙI, NGHỈ LỄ QUỐC KHÁNH 2027",
+          "url": "https://xaydungchinhsach.chinhphu.vn/de-xuat-2-phuong-an-nghi-tet-nguyen-dan-2027-tet-dinh-mui-11926080513033257.htm",
+          "published_at": "2026-10-22",
+          "role": "primary",
+          "supports": "내무부 공지 11483/TB-BNV(2026-10-09)의 국경일 휴무 안내. 2027-09-02 목요일부터 09-05 일요일까지 연속 4일, 법정 2일은 09-02과 09-03. 재열람 시 페이지 표시일 기준"
+        },
+        {
+          "publisher": "베트남 정부사무처(VPCP)",
+          "title": "10065/VPCP-KGVX — 2026년·2027년 일부 명절·공휴일 휴무 방안",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf",
+          "published_at": "2026-10-02",
+          "role": "primary",
+          "supports": "제1항에서 2027년 국경일 4일 휴무안 승인. 이 문서는 일수만 승인하며 시작일·종료일은 내무부 공지로 확정됨"
+        },
+        {
+          "publisher": "Tiền Phong · Luân Dũng",
+          "title": "Bộ Nội vụ thông báo chi tiết lịch nghỉ Tết âm lịch, Quốc khánh 2027",
+          "url": "https://tienphong.vn/bo-noi-vu-thong-bao-chi-tiet-lich-nghi-tet-am-lich-quoc-khanh-2027-post1883914.tpo",
+          "published_at": "2026-10-10",
+          "role": "independent_corrob",
+          "supports": "별도 기자 작성 보도에서 2027-09-02~09-05 연속 4일과 법정 2일 구성을 대조. 민간 사업장에는 일괄 적용되지 않는다는 설명도 확인"
+        }
+      ],
+      "verification_notes": "정부 전자신문의 내무부 공지 안내와 별도 기자 작성 보도의 날짜·일수·구성이 일치합니다. 승인 사실은 정부사무처 서명 공문으로 확인했으며 이 공문은 일수만 정합니다. 정부 전자신문과 정부 공문은 독립 출처 2개로 세지 않았습니다. 내무부 공지 11483/TB-BNV의 서명 원본은 직접 확보하지 못했고 번호와 날짜만 보도로 확인했습니다. Calendarific는 2027-09-02 하루만 제공해 연속 휴무 기간을 확인할 수 없었으므로 등록 날짜는 정부 공지를 기준으로 했습니다. 이후 변경 공지는 검색 범위에서 발견하지 못했습니다."
     }
   ]
 }
