@@ -87,6 +87,7 @@
 .studio-page .studio-rec-text { min-width: 0; }
 .studio-page .studio-rec-text p { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-min); }
 .studio-page .studio-rec-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.studio-page .studio-rec-text .studio-rec-concept { margin-top: 6px; color: var(--ink); line-height: 1.45; }
 .studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
 
@@ -223,7 +224,13 @@
 .studio-page .studio-video-remove:disabled { opacity: .3; cursor: default; }
 .studio-page .studio-video-add { margin-top: 8px; padding: 5px 10px; color: var(--muted); }
 .studio-page .studio-video-input { width: 100%; font-family: var(--font-vi); }
-.studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--muted); }
+/* 영어 프롬프트: 읽기 전용이지만 Higgsfield로 보내는 문장이라 글자는 진하게 */
+.studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--ink); }
+.studio-page .studio-video-prompt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.studio-page .studio-video-copy { padding: 2px 10px; font-size: var(--fs-min); }
+.studio-page .studio-video-untranslated { margin-top: 8px; padding: 8px 12px; background: var(--badge-red-bg); color: var(--badge-red-ink); font-size: var(--fs-min); }
+.studio-page .studio-video-untranslated p { margin: 0 0 4px; }
+.studio-page .studio-video-untranslated ul { margin: 0; padding-left: 18px; }
 .studio-page .studio-video-prompt { width: 100%; font-size: var(--fs-min); line-height: 1.6; resize: vertical; }
 
 @media (max-width: 1100px) {

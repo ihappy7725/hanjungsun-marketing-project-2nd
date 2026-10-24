@@ -28,12 +28,15 @@ const DEMO_GALLERY = {
   ],
 };
 
+// concept: 추천 카드에 붙는 임시 컨셉 한 줄 (마케터 검토 전 문구)
 const DEMO_EVENTS = [
-  { name: "베트남 스승의 날", date: "2026-11-20", tone: "red" },
-  { name: "크리스마스", date: "2026-12-25", tone: "green" },
+  { name: "베트남 스승의 날", date: "2026-11-20", tone: "red", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
+  { name: "크리스마스", date: "2026-12-25", tone: "green", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
 ];
 const DEMO_SEASON = { name: "감", note: "이번 달 제철", tone: "gold" };
-const DEMO_NEW_MENU = { name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero" };
+const DEMO_NEW_MENU = {
+  name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero", concept: "새콤달콤 망고스틴을 쫀득하게 감싼 첫 맛을 보여 주세요",
+};
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
 const WORK_KINDS = ["video", "poster"];  // 작업 화면이 연결된 탭 (카드뉴스는 희주 편집기 연결 후)
@@ -149,6 +152,7 @@ async function loadGallery() {
 }
 
 // ---------- 첫 화면 · 추천 ----------
+// 영상 탭은 2장만: 신메뉴 출시 1 + 가장 가까운 기념일 1. 포스터·카드뉴스는 기념일·제철·신메뉴 모두.
 function recommendations() {
   const label = KIND_LABELS[kind];
   const recs = [];
@@ -159,11 +163,21 @@ function recommendations() {
       badge: ["badge dday", days === 0 ? "D-DAY" : `D-${days}`],
       title: `${event.name} ${label}`,
       note: `${event.date.slice(5).replace("-", "/")} 기념일`,
+      concept: event.concept,
       tone: event.tone,
       thumbTitle: event.name,
       event: event.name,
     });
   }
+  const launch = {
+    badge: ["badge", "NEW"],
+    title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
+    note: DEMO_NEW_MENU.note,
+    concept: DEMO_NEW_MENU.concept,
+    tone: DEMO_NEW_MENU.tone,
+    thumbTitle: DEMO_NEW_MENU.name,
+  };
+  if (kind === "video") return [launch, ...recs.slice(0, 1)];
   recs.push({
     badge: ["badge season", "제철"],
     title: `제철 ${DEMO_SEASON.name} × 찹쌀떡 ${label}`,
@@ -171,13 +185,7 @@ function recommendations() {
     tone: DEMO_SEASON.tone,
     thumbTitle: DEMO_SEASON.name,
   });
-  recs.push({
-    badge: ["badge", "NEW"],
-    title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
-    note: DEMO_NEW_MENU.note,
-    tone: DEMO_NEW_MENU.tone,
-    thumbTitle: DEMO_NEW_MENU.name,
-  });
+  recs.push(launch);
   return recs.slice(0, MAX_RECS);
 }
 
@@ -189,6 +197,7 @@ function recCard(rec) {
 
   const text = el("div", "studio-rec-text");
   text.append(el("span", rec.badge[0], rec.badge[1]), el("p", "studio-rec-title", rec.title), el("p", "", rec.note));
+  if (rec.concept && kind === "video") text.append(el("p", "studio-rec-concept", rec.concept));
   card.append(text);
 
   card.addEventListener("click", () => {

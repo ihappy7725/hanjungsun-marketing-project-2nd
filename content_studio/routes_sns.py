@@ -3,15 +3,17 @@
 API는 /content_studio/api/... 아래에 둡니다.
 포스터·카드뉴스를 대화로 고치는 규칙은 designs.py(희주)에 있고, 여기서는 부르기만 합니다.
 """
-from datetime import datetime, timezone
+import copy
+from datetime import datetime, timedelta, timezone
 
 from flask import jsonify, render_template, request
 
 from platform_core.extensions import db
 
 from . import bp
+from . import higgsfield
 from .designs import make_poster
-from .models_sns import KINDS, SnsChat, SnsDesign, SnsMessage
+from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import PRODUCTS, get_product
 from .videos import make_draft, normalize_scenes, refresh_prompts, revise_draft
 
@@ -258,3 +260,136 @@ def undo_design(chat_id):
 @bp.route("/api/chats/<int:chat_id>/design/redo", methods=["POST"])
 def redo_design(chat_id):
     return _move(chat_id, "redo")
+
+
+# ---------- ③ 생성 (Higgsfield CLI) ----------
+# 미리보기 이미지(image)와 영상(video). 실행 전에 비용·계정 남은 크레딧·오늘 대시보드 사용량을 보여 주고,
+# 화면에서 [실행]을 눌러 확인한 비용(credits)이 지금 비용과 같을 때만 요청합니다.
+KST = timezone(timedelta(hours=9))
+TARGETS = {"image": ("keyframe", "image_url"), "video": ("job", "video_url")}
+RUNNING = ("queued", "in_progress", "processing")
+
+
+def _today_used():
+    """오늘(한국 시간 0시부터) 대시보드에서 쓴 크레딧."""
+    start = datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+    rows = SnsCreditLog.query.filter(SnsCreditLog.created_at >= start).all()
+    return round(sum(row.credits for row in rows), 2)
+
+
+def _video_chat(chat_id):
+    chat = _get_chat(chat_id)
+    if chat is None or chat.kind != "video" or chat.design is None or chat.design.doc is None:
+        return None
+    return chat
+
+
+def _target():
+    target = (request.get_json(silent=True) or {}).get("target") or request.args.get("target")
+    return target if target in TARGETS else None
+
+
+def _gen_args(doc, target):
+    if target == "image":
+        return higgsfield.image_args(doc)
+    keyframe = doc.get("keyframe") or {}
+    start = keyframe.get("request_id") if keyframe.get("status") == higgsfield.DONE else None
+    return higgsfield.video_args(doc, start_image=start)
+
+
+def _quote(doc, target):
+    """무료 확인: 이번 비용 · 계정 남은 크레딧 · 오늘 사용량. 실행할 수 없으면 reason에 이유."""
+    credits = higgsfield.cost(_gen_args(doc, target))
+    balance = higgsfield.balance()
+    used = _today_used()
+    reason = None
+    key = TARGETS[target][0]
+    if (doc.get(key) or {}).get("status") in RUNNING:
+        reason = "이미 만드는 중입니다. 상태를 확인해 주세요."
+    elif used + credits > higgsfield.DAILY_LIMIT:
+        reason = f"오늘 대시보드 한도({higgsfield.DAILY_LIMIT})를 넘습니다. (오늘 {used:g} 사용)"
+    elif credits > balance:
+        reason = "계정에 남은 크레딧이 모자랍니다."
+    return {"target": target, "credits": credits, "balance": balance, "today_used": used,
+            "daily_limit": higgsfield.DAILY_LIMIT, "allowed": reason is None, "reason": reason}
+
+
+def _set_result(chat, target, job):
+    """지금 보고 있는 버전에 작업 상태를 적습니다. (새 버전을 만들지 않음 — 되돌리기 목록이 늘지 않게)"""
+    key, url_key = TARGETS[target]
+    versions = copy.deepcopy(chat.design.versions)
+    doc = versions[chat.design.current]
+    doc[key] = {"request_id": job["request_id"], "status": job["status"], url_key: job["url"]}
+    chat.design.versions = versions  # JSON 칸은 새 목록을 넣어야 저장됩니다.
+
+
+def _hf_error(error):
+    status = 503 if error.code in ("missing", "login") else 502
+    return jsonify({"ok": False, "error": str(error), "code": error.code}), status
+
+
+@bp.route("/api/chats/<int:chat_id>/generate/quote", methods=["POST"])
+def generate_quote(chat_id):
+    chat, target = _video_chat(chat_id), _target()
+    if chat is None:
+        return _error("영상 작업을 찾을 수 없습니다.", 404)
+    if target is None:
+        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
+    try:
+        return jsonify({"ok": True, "quote": _quote(chat.design.doc, target)})
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+
+
+@bp.route("/api/chats/<int:chat_id>/generate", methods=["POST"])
+def generate(chat_id):
+    """크레딧이 나가는 유일한 API. 화면에서 확인한 비용과 지금 비용이 같아야 보냅니다."""
+    chat, target = _video_chat(chat_id), _target()
+    if chat is None:
+        return _error("영상 작업을 찾을 수 없습니다.", 404)
+    if target is None:
+        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
+    confirmed = (request.get_json(silent=True) or {}).get("credits")
+    doc = chat.design.doc
+    try:
+        quote = _quote(doc, target)
+        if confirmed is None or float(confirmed) != quote["credits"]:
+            return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        if not quote["allowed"]:
+            return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
+        job = higgsfield.create(_gen_args(doc, target))
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    except (TypeError, ValueError):
+        return _error("확인한 비용(credits)이 올바르지 않습니다.")
+
+    model = higgsfield.IMAGE_MODEL if target == "image" else higgsfield.VIDEO_MODEL
+    db.session.add(SnsCreditLog(chat_id=chat.id, job_kind=target, model=model, credits=quote["credits"],
+                                request_id=job["request_id"]))
+    _set_result(chat, target, job)
+    _touch(chat)
+    db.session.commit()
+    return jsonify({"ok": True, "spent": quote["credits"], "today_used": quote["today_used"] + quote["credits"],
+                    "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)})
+
+
+@bp.route("/api/chats/<int:chat_id>/generate/status")
+def generate_status(chat_id):
+    """무료. 결과가 늦어도 다시 만들지 않고 상태만 확인합니다(이중 결제 방지). 완료되면 남은 크레딧도 돌려줍니다."""
+    chat, target = _video_chat(chat_id), _target()
+    if chat is None:
+        return _error("영상 작업을 찾을 수 없습니다.", 404)
+    if target is None:
+        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
+    request_id = (chat.design.doc.get(TARGETS[target][0]) or {}).get("request_id")
+    if not request_id:
+        return _error("아직 요청한 작업이 없습니다.")
+    try:
+        job = higgsfield.get_job(request_id)
+        balance = higgsfield.balance() if job["status"] not in RUNNING else None
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    _set_result(chat, target, job)
+    db.session.commit()
+    return jsonify({"ok": True, "balance": balance, "today_used": _today_used(),
+                    "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)})
