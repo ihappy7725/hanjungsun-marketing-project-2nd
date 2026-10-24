@@ -8,6 +8,15 @@ function el(tag, className, text) {
   return node;
 }
 
+// videos.py STYLES의 이름과 같아야 합니다. 바꾸려면 입력줄에 "브이로그 느낌으로"처럼 말합니다.
+const STYLE_LABELS = {
+  premium: "프리미엄 광고",
+  warm: "따뜻한 감성",
+  vlog: "브이로그·리뷰",
+  energetic: "역동적 숏폼",
+  retro: "레트로",
+};
+
 // "3-6s" → 6
 function endOf(time) {
   const match = /(\d+)\s*-\s*(\d+)/.exec(time || "");
@@ -54,6 +63,7 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
   const status = el("div", "studio-video-status");
   if (doc.demo) status.append(el("span", "demo", "시연 · 자막 원어민 검수 전"));
   status.append(el("span", doc.reviewed ? "badge season" : "badge dday", doc.reviewed ? "검토 완료" : "검토 필요"));
+  status.append(el("span", "badge", `분위기 · ${STYLE_LABELS[doc.style] || STYLE_LABELS.premium}`));
   status.append(el("span", "studio-hint", doc.summary));
 
   const sceneList = el("ol", "studio-video-scenes");
@@ -135,14 +145,14 @@ export function renderVideo(root, doc, { onSave, onCommand }) {
 
   // ---------- ② 프롬프트 검토 ----------
   const prompt = el("textarea", "studio-video-prompt");
-  prompt.rows = 8;
+  prompt.rows = 16;
   prompt.lang = "en";
   prompt.value = doc.custom || doc.prompt;
   prompt.addEventListener("input", () => { markDirty(); showKorean(); });
 
   // 한국어 번역 칸: 지금은 읽기 전용. 직접 고친 영어는 AI 연결 후 번역합니다.
   const promptKo = el("textarea", "studio-video-prompt is-readonly");
-  promptKo.rows = 8;
+  promptKo.rows = 16;
   promptKo.readOnly = true;
   promptKo.setAttribute("aria-label", "프롬프트 한국어 번역 (읽기 전용)");
   const koNote = el("p", "studio-hint");
