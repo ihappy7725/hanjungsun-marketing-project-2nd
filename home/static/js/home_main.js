@@ -93,7 +93,7 @@ function initialize() {
   const root = document.querySelector('.home-page');
   if (!root) return;
   const $ = selector => root.querySelector(selector);
-  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', filter = 'open';
+  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all';
   let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
   let mode = 'demo', store, loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
   const key = () => `hjs-home-browser-v1-${mode}`;
@@ -179,8 +179,14 @@ function initialize() {
     }).join('<br>');
     return `${esc(e.source_name || '출처 정보 미제공')}${safeUrl(e.source_url) ? ` <a href="${esc(safeUrl(e.source_url))}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : ''}`;
   }
+  function monthly(e) { return e?.date_precision === 'month'; }
+  function eventPeriod(e) {
+    // 월 단위 자료는 달까지만 보여 주어 확인되지 않은 일 단위 기간으로 읽히지 않게 합니다.
+    const from = monthly(e) ? String(e.start).slice(0, 7) : e.start, to = monthly(e) ? String(e.end).slice(0, 7) : e.end;
+    return `${esc(from)}${to !== from ? ` ~ ${esc(to)}` : ''}`;
+  }
   function eventSummary(e) {
-    return `<p class="home-signal-meta">${esc(e.start)}${e.end !== e.start ? ` ~ ${esc(e.end)}` : ''}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
+    return `<p class="home-signal-meta">${eventPeriod(e)}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
   }
   function showLocalEvent(eventId) {
     const e = localEvents().find(item => item.event_id === eventId);
@@ -226,20 +232,40 @@ function initialize() {
       }
       $('#calendar-body').innerHTML = html + '</div>';
     }
-    $('#selected-date').textContent = selectedDate;
-    $('#day-events').innerHTML = at(selectedDate).map(e => `<div class="home-agenda-row"><div>${esc(e.title)} ${e.done ? badge('완료') : ''}</div>${eventAction(e)}</div>`).join('') || empty('등록된 일정이 없습니다.');
   }
   function renderTasks() {
-    const tasks = inScope(), p = progress(tasks), open = tasks.filter(unfinished);
-    const predicates = { open: unfinished, late: t => unfinished(t) && t.due_date && t.due_date < today, blocked: t => t.status === 'blocked', overlap: t => unfinished(t) && overlaps(t).length, done: t => t.status === 'done' };
-    $('#task-progress').innerHTML = `<div class="home-progress-line"><div><strong class="home-progress-number">${p.percent}%</strong> <span class="home-muted">완료</span></div><span class="home-muted">${p.done}/${p.total} 업무 완료</span></div><div class="home-progress-track" role="progressbar" aria-label="업무 완료율" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${p.percent}%"></span></div>`;
-    $('#task-filters').innerHTML = [['open', '미완료'], ['late', '지연'], ['blocked', '보류'], ['overlap', '일정겹침']].map(([value, label]) => `<button data-filter="${value}" aria-pressed="${filter === value}">${label} ${tasks.filter(predicates[value]).length}</button>`).join('');
-    $('#completed-toggle').textContent = filter === 'done' ? '미완료 보기' : '완료 보기';
-    const rows = ordered(tasks.filter(predicates[filter]), today);
+    // 진척도는 현재 선택한 캠페인의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
+    const campaign = selected(), campaignTasks = campaign ? store.tasks.filter(t => t.campaign_id === campaign.id) : [];
+    const p = progress(campaignTasks);
+    $('#progress-campaign').textContent = campaign ? campaign.name : '';
+    $('#task-progress').innerHTML = campaign
+      ? `<div class="home-progress-line"><div><strong class="home-progress-number">${p.percent}%</strong> <span class="home-muted">완료</span></div><span class="home-muted">${p.done}/${p.total} 업무 완료</span></div><div class="home-progress-track" role="progressbar" aria-label="캠페인 업무 완료율" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${p.percent}%"></span></div>`
+      : empty('캠페인을 만들면 업무 진척이 표시됩니다.');
+
+    const isToday = selectedDate === today;
+    $('#tasks-title').textContent = isToday ? '오늘의 해야 할 일' : `${selectedDate} 해야 할 일`;
+    $('#today-reset').hidden = isToday;
+    // 완료한 업무도 목록에 남겨 그날 무엇을 했는지 볼 수 있게 합니다. 취소 업무는 제외합니다.
+    const rows = ordered(inScope().filter(t => t.due_date === selectedDate && t.status !== 'cancelled'), today);
     $('#task-list').innerHTML = rows.map(t => {
-      const late = unfinished(t) && t.due_date && t.due_date < today;
-      return `<div class="home-task"><input type="checkbox" data-check="${esc(t.id)}" ${t.status === 'done' ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button>${badge(late ? '기한 초과' : t.due_date === today && unfinished(t) ? '오늘 마감' : TASK_STATES[t.status], late)}</div><div class="home-task-meta">${esc(t.due_date || '날짜 없음')} · ${esc(campaignName(t.campaign_id))}</div>${filter === 'overlap' ? `<div class="home-overlap">확인할 겹침: ${esc(overlaps(t).map(e => e.name).join(', '))}</div>` : ''}${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
-    }).join('') || empty(filter === 'open' && tasks.length && !open.length ? '등록한 업무를 모두 마쳤습니다.' : '이 조건에 해당하는 업무가 없습니다.');
+      const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
+      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${esc(campaignName(t.campaign_id))}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
+    }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
+  }
+  function moveTask(taskId) {
+    const t = store.tasks.find(item => item.id === taskId);
+    if (!t) { toast('업무를 찾지 못했습니다.'); return; }
+    openDialog('업무 이월', `<form id="move-form"><p class="home-muted">${esc(t.title)}</p><label class="home-field">옮길 날짜<input name="due_date" type="date" required value="${esc(t.due_date || today)}"></label><p class="home-muted">마감일만 바뀝니다. 캠페인 목표일과 다른 업무는 그대로입니다.</p><p id="move-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn dark" type="submit">이월</button></div></form>`);
+    $('#move-form').onsubmit = event => {
+      event.preventDefault();
+      const value = new FormData(event.currentTarget).get('due_date');
+      if (!validDate(value)) { $('#move-error').hidden = false; $('#move-error').textContent = '옮길 날짜를 올바르게 입력해주세요.'; return; }
+      const next = structuredClone(store), target = next.tasks.find(item => item.id === taskId);
+      target.due_date = value;
+      if (target.start_date && validDate(target.start_date)) target.start_date = '';
+      target.fixed = true;   // 재계획에서 되돌아가지 않도록 날짜 고정으로 표시합니다.
+      if (save(next)) { dialog.close(); render(); toast(`${value}로 이월했습니다.`); }
+    };
   }
   function renderCampaign() {
     const c = selected();
@@ -272,7 +298,7 @@ function initialize() {
     $('#collaboration-list').innerHTML = rows.map(c => {
       const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
       return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div>${c.is_demo ? badge('DEMO · 예시 데이터') : ''}<p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
-    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없습니다. 원본 탭에서 전체 협업을 확인할 수 있습니다.'));
+    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.'));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
@@ -363,9 +389,9 @@ function initialize() {
   }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
-    if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); }
+    if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
     if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
-    if (button.dataset.filter) { filter = button.dataset.filter; renderTasks(); }
+    if (button.dataset.move) moveTask(button.dataset.move);
     if (button.dataset.task) editTask(button.dataset.task);
     if (button.dataset.local) showLocalEvent(button.dataset.local);
     if (button.dataset.create) { const e = localEvents().find(item => item.event_id === button.dataset.create); if (e) { if (dialog.open) dialog.close(); planner('create', e); } }
@@ -380,13 +406,13 @@ function initialize() {
   });
   function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (save(next)) render(); }
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
-  $('#completed-toggle').onclick = () => { filter = filter === 'done' ? 'open' : 'done'; renderTasks(); };
+  $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
   $('#scope').onchange = event => { scope = event.target.value; render(); };
   $('#new-campaign').onclick = () => planner('create');
   $('#clone-campaign').onclick = () => planner('clone');
   $('#replan-campaign').onclick = () => planner('replan');
   $('#data-mode').onchange = event => {
-    mode = event.target.value; filter = 'open'; load(); updateRange();
+    mode = event.target.value; load(); updateRange();
     try { localStorage.setItem('hjs-home-browser-mode', mode); } catch { /* load에 저장소 오류 안내가 있습니다. */ }
     refreshSignals();
   };

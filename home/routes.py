@@ -2,6 +2,7 @@
 
 API는 /home/api/... 아래에만 추가합니다. 다른 기능 데이터는 그 기능의 public.py로만 읽습니다. (README 8장)
 """
+import calendar
 import json
 from datetime import date
 from pathlib import Path
@@ -49,7 +50,7 @@ def _validate_event_document(document):
             raise ValueError("중복 일정 ID")
         seen.add(row["event_id"])
         if (row.get("country") != "VN" or row.get("is_demo") is not False
-                or row.get("date_precision") != "day"
+                or row.get("date_precision") not in {"day", "month"}
                 or row.get("verification_status") != "verified"
                 or row.get("registration_status") != "approved"
                 or row.get("type") not in {"holiday", "anniversary", "regional_event", "fruit_season"}
@@ -65,6 +66,13 @@ def _validate_event_document(document):
                 raise ValueError("YYYY-MM-DD 필요")
         if dates["end_date"] < dates["start_date"] or row.get("year") != dates["start_date"].year:
             raise ValueError("일정 기간·연도 불일치")
+        if row["date_precision"] == "month":
+            # 월 단위 자료는 과일 시즌만 허용하고, 달 경계에 맞지 않는 날짜는 거부합니다.
+            # 원문이 월까지만 밝힌 기간에 임의의 시작일·종료일을 붙이지 않기 위해서입니다.
+            end = dates["end_date"]
+            if (row["type"] != "fruit_season" or dates["start_date"].day != 1
+                    or end.day != calendar.monthrange(end.year, end.month)[1]):
+                raise ValueError("월 단위는 과일 시즌의 달 경계 기간만 허용")
         sources = row.get("sources")
         if not isinstance(sources, list) or len(sources) < 2:
             raise ValueError("검증 출처 부족")

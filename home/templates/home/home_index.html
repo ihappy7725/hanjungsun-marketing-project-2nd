@@ -27,14 +27,18 @@
         <div class="home-inline"><button class="btn" id="calendar-today">오늘</button><div class="home-segment" aria-label="캘린더 보기"><button data-view="month">월</button><button data-view="week">주</button><button data-view="list">목록</button></div></div>
       </div>
       <div id="calendar-body" class="home-calendar-body"></div>
-      <div class="home-day-detail"><div class="home-inline"><strong id="selected-date"></strong><span class="home-muted">선택한 날짜</span></div><div id="day-events" class="home-scroll"></div></div>
     </section>
-    <section class="home-card home-tasks" aria-labelledby="tasks-title">
-      <div class="home-panel-head"><div><p class="eyebrow">FOCUS FOR TODAY</p><h2 id="tasks-title">업무 진척·해야 할 업무</h2></div><button class="home-text-btn" id="completed-toggle">완료 보기</button></div>
-      <div id="task-progress"></div><div id="task-filters" class="home-filters"></div>
-      <div id="task-list" class="home-scroll home-task-list"></div>
-      <p class="home-footnote">완료 체크는 캘린더와 디데이 일정에 함께 반영됩니다.</p>
-    </section>
+    <div class="home-task-column">
+      <section class="home-card home-progress-card" aria-labelledby="progress-title">
+        <div class="home-panel-head"><h2 id="progress-title">캠페인 업무 진척</h2><span id="progress-campaign" class="home-muted"></span></div>
+        <div id="task-progress"></div>
+      </section>
+      <section class="home-card home-today-card" aria-labelledby="tasks-title">
+        <div class="home-panel-head"><h2 id="tasks-title">오늘의 해야 할 일</h2><button class="home-text-btn" id="today-reset" type="button" hidden>오늘로</button></div>
+        <div id="task-list" class="home-task-list"></div>
+        <p class="home-footnote">완료 체크는 캘린더와 디데이 일정에 함께 반영됩니다. 날짜를 바꾸려면 ‑&gt; 를 누르세요.</p>
+      </section>
+    </div>
     <section class="home-card home-campaign" aria-labelledby="planner-title">
       <div class="home-panel-head"><div><p class="eyebrow">WORK BACK FROM THE DAY</p><h2 id="planner-title">디데이 업무 관리</h2></div><div class="home-inline"><button class="btn" id="new-campaign" type="button">+ 새 캠페인</button><button class="btn" id="clone-campaign">복제</button><button class="btn" id="replan-campaign">설정·재계획</button></div></div>
       <label class="home-field">현재 캠페인<select id="campaign-select"></select></label>
