@@ -88,3 +88,100 @@
 .studio-page .studio-rec-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
 .studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
+
+/* ---------- 작업 화면: 이전 작업 · 가운데 · 대화 ---------- */
+.studio-page .studio-work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.studio-page .studio-work.has-history { grid-template-columns: 200px minmax(0, 1fr) 320px; }
+.studio-page .studio-history,
+.studio-page .studio-main,
+.studio-page .studio-chat { min-width: 0; padding: 18px; background: var(--white); border: 1px solid var(--line); }
+
+.studio-page .studio-history-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.studio-page .studio-history-item {
+  display: grid;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+}
+.studio-page .studio-history-item:hover { background: var(--paper); }
+.studio-page .studio-history-item.is-current { background: var(--paper); border-color: var(--line-strong); font-weight: 600; }
+.studio-page .studio-history-item small { color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
+
+.studio-page .studio-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.studio-page .studio-settings { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio-page .studio-seg { display: flex; }
+.studio-page .studio-seg .btn + .btn { margin-left: -1px; }
+.studio-page .btn:disabled { opacity: .45; cursor: default; }
+
+/* 대화 */
+.studio-page .studio-chat { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.studio-page .studio-chat-log { display: flex; flex-direction: column; gap: 8px; height: 440px; overflow-y: auto; }
+.studio-page .studio-bubble { max-width: 88%; margin: 0; padding: 8px 11px; border-radius: var(--radius); white-space: pre-wrap; }
+.studio-page .studio-bubble.is-user { align-self: flex-end; background: var(--brown); color: var(--on-dark); }
+.studio-page .studio-bubble.is-assistant { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
+.studio-page .studio-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.studio-page .studio-choices:empty { display: none; }
+.studio-page .studio-chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.studio-page .studio-chat-form textarea,
+.studio-page .studio-video-input,
+.studio-page .studio-video-prompt {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  resize: vertical;
+}
+
+/* 영상 (sns_video.js) */
+.studio-page .studio-video { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 22px; align-items: start; }
+.studio-page .studio-video-preview { position: sticky; top: 16px; display: grid; gap: 10px; }
+.studio-page .studio-video-frame { justify-content: space-between; }
+.studio-page .studio-video-frame .badge { position: static; align-self: flex-start; }
+.studio-page .studio-video-scene { margin-top: auto; }
+.studio-page .studio-video-caption {
+  min-height: 1.4em;
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--backdrop);
+  font-family: var(--font-vi);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  text-align: center;
+}
+.studio-page .studio-video-caption:empty { visibility: hidden; }
+.studio-page .studio-video-dots { display: flex; justify-content: center; gap: 6px; }
+.studio-page .studio-video-dot { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--white); font-size: var(--fs-min); }
+.studio-page .studio-video-dot.dark { background: var(--brown); border-color: var(--brown); color: var(--on-dark); }
+
+.studio-page .studio-video-detail h3 { margin: 22px 0 10px; font-size: var(--fs-panel-title); font-weight: 600; }
+.studio-page .studio-video-detail .actions { margin-top: 8px; }
+.studio-page .studio-video-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.studio-page .studio-video-scenes { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.studio-page .studio-video-scenes li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.studio-page .studio-video-scenes li.is-selected { border-color: var(--gold); background: var(--paper); }
+.studio-page .studio-video-scenes b { font-family: var(--font-serif); font-weight: 400; }
+.studio-page .studio-video-input { font-family: var(--font-vi); }
+.studio-page .studio-video-prompt { font-size: var(--fs-min); line-height: 1.6; }
+
+@media (max-width: 1100px) {
+  .studio-page .studio-work,
+  .studio-page .studio-work.has-history,
+  .studio-page .studio-video { grid-template-columns: minmax(0, 1fr); }
+  .studio-page .studio-chat,
+  .studio-page .studio-video-preview { position: static; }
+  .studio-page .studio-video-preview { max-width: 260px; }
+}
