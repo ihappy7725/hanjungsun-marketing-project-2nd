@@ -1,0 +1,17 @@
+# 출처: GA4 공식 데모 계정(Google Merchandise Store) · 트래픽 획득 보고서(세션 기본 채널 그룹)를 화면에서 옮겨 적음
+# 시작 날짜: 20260926
+# 종료 날짜: 20261023
+# 총계는 GA4 화면의 합계 값입니다. 채널별 세션을 더한 값(131,556)과 다른 것은 GA4가 총계에서 중복 세션을 빼기 때문입니다.
+
+세션 기본 채널 그룹,세션수,참여 세션수
+총계,130076,56854
+Direct,81774,26550
+Organic Search,32801,22882
+Unassigned,7258,780
+Paid Search,4010,1788
+Referral,3126,2288
+Cross-network,1273,935
+Organic Social,714,543
+Organic Shopping,493,411
+Organic Video,73,60
+Email,34,29
