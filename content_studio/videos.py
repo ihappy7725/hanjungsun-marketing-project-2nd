@@ -83,19 +83,47 @@ PRODUCT_LOOK = {
 COMMON_AVOID = ("no text, no letters, no subtitles, no logos, no watermarks, no distorted hands or extra fingers, "
                 "no warping or morphing of the product",
                 "글자·자막·로고·워터마크 없음, 손 모양 왜곡·손가락 추가 없음, 제품 모양이 변하거나 일그러지지 않게")
+# 싸 보이는 결과를 막는 금지 (예시 프롬프트 분석)
+REALISM_AVOID = ("no artificial CGI look, no fake physics, no over-saturated plastic colors",
+                 "인공적인 CGI 느낌·가짜 물리 효과·과하게 쨍한 플라스틱 같은 색 없음")
+# 제품이 갑자기 나타나거나 바뀌지 않게 (예시 프롬프트 분석)
+CONTINUITY = ("Continuity: everything changes gradually and naturally, nothing appears suddenly, "
+              "and the rice cakes keep the same shape, color, size and filling in every shot",
+              "연속성: 모든 변화는 단계적이고 자연스럽게, 갑자기 나타나는 것 없이, 모든 컷에서 찹쌀떡의 모양·색·크기·속 유지")
+PHOTO_MATCH = ("the final hero shot matches the attached product photo exactly", "마지막 히어로 컷은 첨부한 제품 사진과 정확히 일치")
+MUSIC_AVOID = ("no vocals, no lyrics, no familiar melodies", "보컬·가사·익숙한 멜로디 없음")
+# 프롬프트가 길면(PROMPT_LIMIT 초과) 금지 줄을 이 짧은 문장으로 씁니다.
+AVOID_SHORT = ("no text, logos or watermarks, no distorted hands, no product morphing, no CGI look or fake physics",
+               "글자·로고·워터마크·손 왜곡·제품 변형·CGI 느낌·가짜 물리 없음")
+# Kling 쪽 문서에 흔한 프롬프트 한도. Higgsfield에서 실제 한도는 확인 전입니다(2026-10-24).
+PROMPT_LIMIT = 2500
 
-# 분위기 5가지. 요청 문장의 단어로 고르고, 입력줄에서 "브이로그 느낌으로"처럼 바꿀 수 있습니다.
-# 구조는 영상 프롬프트 모음(youmind) 분석: 장르 줄 → 스타일 키워드 → 대상 고정 → 초 단위 컷 → 카메라 → 조명·색감 → 소리 → 금지.
-# shots: (첫 컷, 가운데 컷들(차례로 반복), 마지막 컷) 화면·카메라 지시 / sfx: 같은 자리의 효과음 / weights: 컷 길이 비율
+# 찹쌀떡 질감 단어 모음. 디테일 컷(가운데 컷)에 차례로 붙입니다.
+TEXTURES = (
+    ("the soft mochi stretching into long chewy strands", "쫀득하게 길게 늘어나는 떡"),
+    ("fine rice flour drifting slowly through the light", "빛 사이로 천천히 흩날리는 고운 쌀가루"),
+    ("the pillowy surface gently pressed and springing back", "말랑하게 눌렸다가 다시 돌아오는 표면"),
+    ("the cut cross-section revealing the filling inside", "갈라진 단면 속으로 드러나는 소"),
+    ("a moist, delicate sheen on the surface", "표면의 촉촉하고 은은한 광택"),
+)
+
+# 분위기 8가지. 요청 문장의 단어로 고르고, 입력줄에서 "브이로그 느낌으로"처럼 바꿀 수 있습니다.
+# 구조는 영상 프롬프트 예시 분석: 콘셉트 줄 → 스타일 → 편집 리듬 → 대상 고정 → 배경·분위기 → 구간별 컷 → 카메라 → 조명·색감 → 연속성 → 소리 → 금지.
+# 컷 자리 4가지: 소개(첫 컷) · 디테일(가운데 컷들) · 클라이맥스(끝에서 두 번째) · 히어로(마지막). 컷이 2개 이하면 클라이맥스가 없습니다.
+# beats: 자리별 구간 이름 / actions: 자리별 움직임·물리·공기 중 요소(디테일은 TEXTURES) / shots: (소개, 디테일들, 클라이맥스, 히어로) 카메라 지시
+# sfx: 자리별 효과음(ASMR) / weights: 자리별 컷 길이 비율
 STYLES = {
     "premium": {
         "label": "프리미엄 광고",
         "pattern": r"고급|프리미엄|럭셔리",
+        "concept": ("The First Chewy Bite", "첫 쫀득한 한입"),
         "genre": ("Premium food commercial", "프리미엄 음식 광고"),
-        "keywords": ("photorealistic, macro cinematography, shallow depth of field, glossy dark surface, "
-                     "fine rice flour drifting in the air, warm golden rim light, high-end commercial color grading",
-                     "사실적, 매크로 촬영, 얕은 심도, 광택 있는 어두운 바닥, 공기 중에 흩날리는 고운 쌀가루, "
-                     "따뜻한 금빛 윤곽광, 고급 광고 색보정"),
+        "quality": ("4K photorealistic", "4K 실사"),
+        "keywords": ("macro cinematography, shallow depth of field, real food textures, glossy dark surface, "
+                     "warm golden rim light, high-end commercial color grading",
+                     "매크로 촬영, 얕은 심도, 실제 같은 음식 질감, 광택 있는 어두운 바닥, 따뜻한 금빛 윤곽광, 고급 광고 색보정"),
+        "pace": ("smooth seamless transitions, elegant pacing that builds to one dramatic moment",
+                 "매끄러운 트랜지션, 한 번의 극적인 순간으로 쌓아 가는 우아한 리듬"),
         "camera": ("smooth, slow cinematic moves; the product stays still and only the camera moves; "
                    "no spinning or orbiting around the product",
                    "부드럽고 느린 시네마틱 움직임, 제품은 고정하고 카메라만 움직임, 제품 주위를 돌지 않음"),
@@ -103,93 +131,226 @@ STYLES = {
         "lighting": 0,
         "music": ("elegant minimal piano with soft ambient pads", "우아하고 간결한 피아노와 잔잔한 앰비언트"),
         "avoid": ("no cluttered background, no kitchen tools", "어수선한 배경·주방 도구 없음"),
+        "beats": (("Introduction", "소개"), ("Texture detail", "질감 디테일"), ("Climax", "클라이맥스"), ("Hero shot", "히어로 샷")),
+        "actions": (("the rice cake lands softly in slow motion, fine flour puffing up into the golden light",
+                     "찹쌀떡이 슬로모션으로 살며시 내려앉고, 고운 가루가 금빛 빛 속으로 피어오름"),
+                    ("the rice cake is pulled apart in slow motion, chewy strands stretching as flour swirls around it",
+                     "찹쌀떡이 슬로모션으로 갈라지며 쫀득하게 늘어나고, 주위로 쌀가루가 소용돌이침"),
+                    ("the flour settles and the rice cakes rest perfectly still on the glossy surface",
+                     "가루가 가라앉고 찹쌀떡이 광택 있는 바닥 위에 완벽하게 멈춰 있음")),
         "shots": (("extreme macro close-up, slow dolly-in", "초접사 클로즈업, 천천히 다가가기"),
                   (("macro slow motion, shallow depth of field", "매크로 슬로모션, 얕은 심도"),
                    ("smooth lateral tracking shot", "부드러운 옆 방향 트래킹"),
                    ("top-down overhead shot", "위에서 내려다보는 샷")),
-                  ("slow pull-back to a centered hero shot, product perfectly still", "천천히 빠지며 가운데 제품 히어로 샷, 제품은 고정")),
+                  ("slow-motion macro, the camera gliding through drifting flour", "슬로모션 매크로, 흩날리는 가루 사이로 미끄러지는 카메라"),
+                  ("slow pull-back to a centered hero shot", "천천히 빠지며 가운데 히어로 샷")),
         "sfx": (("soft whoosh", "부드러운 바람 소리"), ("gentle squish of soft mochi", "말랑한 떡이 눌리는 소리"),
-                ("subtle shimmer chime", "은은한 반짝임 소리")),
-        "weights": (1, 1, 1.6),
+                ("soft sticky stretch", "쫀득하게 늘어나는 소리"), ("subtle shimmer chime", "은은한 반짝임 소리")),
+        "weights": (1, 1, 1.2, 1.6),
     },
     "warm": {
         "label": "따뜻한 감성",
         "pattern": r"감성|가족|따뜻한\s*(느낌|분위기)|선물|기념일|축하",
         "switch": r"감성|가족|따뜻한\s*(느낌|분위기)",  # 고칠 때는 '선물 상자 장면' 같은 말로 바뀌지 않게
+        "concept": ("Sweetness to Share", "나누는 달콤함"),
         "genre": ("Heartwarming lifestyle short film", "따뜻한 일상 단편 영상"),
-        "keywords": ("photorealistic, natural skin texture, soft warm window light, gentle film grain, cozy and tender atmosphere",
-                     "사실적, 자연스러운 피부 결, 부드럽고 따뜻한 창가 빛, 은은한 필름 그레인, 아늑하고 다정한 분위기"),
+        "quality": ("4K photorealistic", "4K 실사"),
+        "keywords": ("natural skin texture, soft warm window light, gentle film grain, cozy and tender atmosphere",
+                     "자연스러운 피부 결, 부드럽고 따뜻한 창가 빛, 은은한 필름 그레인, 아늑하고 다정한 분위기"),
+        "pace": ("gentle unhurried pacing with soft dissolves", "서두르지 않는 잔잔한 리듬, 부드러운 디졸브"),
         "camera": ("gentle, steady camera at a natural conversational pace", "자연스러운 대화 속도의 차분하고 안정적인 카메라"),
         "grade": ("soft warm tones, creamy highlights", "부드럽고 따뜻한 색감, 크림색 하이라이트"),
         "lighting": 1,
         "music": ("calm acoustic guitar and soft piano", "잔잔한 어쿠스틱 기타와 부드러운 피아노"),
         "avoid": ("no exaggerated expressions", "과장된 표정 없음"),
+        "beats": (("Everyday moment", "일상의 순간"), ("Preparing the gift", "마음 준비"), ("Sharing", "나누는 순간"),
+                  ("Warm ending", "따뜻한 마무리")),
+        "actions": (("soft daylight drifts across the table, a little steam rising from a cup of tea",
+                     "부드러운 햇살이 식탁 위로 번지고, 찻잔에서 김이 조금 피어오름"),
+                    ("hands offer the rice cake and a smile spreads as it is shared",
+                     "손으로 찹쌀떡을 건네고, 나누며 미소가 번짐"),
+                    ("the rice cakes rest beside the gift box in warm light", "찹쌀떡이 따뜻한 빛 속 선물 상자 옆에 놓여 있음")),
         "shots": (("soft medium shot, gentle push-in", "부드러운 미디엄 샷, 살짝 다가가기"),
-                  (("close-up on hands and smiling faces", "손과 웃는 얼굴 클로즈업"),
-                   ("over-the-shoulder shot", "어깨 너머 샷"),
+                  (("over-the-shoulder shot", "어깨 너머 샷"),
                    ("slow handheld follow", "천천히 따라가는 핸드헬드")),
+                  ("close-up on hands and smiling faces", "손과 웃는 얼굴 클로즈업"),
                   ("warm wide shot, slow pull-back", "따뜻한 와이드 샷, 천천히 빠지기")),
-        "sfx": (("quiet room tone", "조용한 실내 소리"), ("soft laughter", "작은 웃음소리"), ("gentle sigh of delight", "기분 좋은 감탄")),
-        "weights": (1, 1.1, 1.4),
+        "sfx": (("quiet room tone", "조용한 실내 소리"), ("soft rustle of wrapping paper", "포장지가 부드럽게 바스락거리는 소리"),
+                ("soft laughter", "작은 웃음소리"), ("gentle sigh of delight", "기분 좋은 감탄")),
+        "weights": (1, 1.1, 1.2, 1.4),
     },
     "vlog": {
         "label": "브이로그·리뷰",
         "pattern": r"브이로그|일상|셀카|리뷰|후기",
+        "concept": ("Trying Hanjungsun Mochi", "한정선 찹쌀떡 먹어 보기"),
         "genre": ("Handheld social media vlog", "핸드헬드 SNS 브이로그"),
-        "keywords": ("realistic smartphone footage, natural daylight, authentic and unpolished, real-time speed",
-                     "사실적인 휴대폰 촬영, 자연광, 꾸미지 않은 진짜 같은 느낌, 실제 속도"),
+        "quality": ("realistic smartphone footage", "사실적인 휴대폰 영상"),
+        "keywords": ("natural daylight, authentic and unpolished, real-time speed",
+                     "자연광, 꾸미지 않은 진짜 같은 느낌, 실제 속도"),
+        "pace": ("casual jump cuts at real-time speed", "실제 속도의 편한 점프컷"),
         "camera": ("handheld phone camera with natural micro shake, real-time speed, no slow motion",
                    "자연스럽게 흔들리는 휴대폰 핸드헬드, 실제 속도, 슬로모션 없음"),
         "grade": ("natural phone colors, slightly bright highlights", "자연스러운 휴대폰 색감, 살짝 밝은 하이라이트"),
         "lighting": 1,
         "music": ("real ambient sound of a cafe, no background music", "카페의 실제 현장 소리, 배경음악 없음"),
         "avoid": ("no studio lighting, no cinematic color grading", "스튜디오 조명·영화 같은 색보정 없음"),
+        "beats": (("Hook", "첫 마디"), ("Unboxing", "열어 보기"), ("First bite", "첫입"), ("Reaction", "리액션")),
+        "actions": (("holding the box up to the camera in natural daylight", "자연광 아래 상자를 카메라에 들어 보임"),
+                    ("taking a big first bite, the mochi stretching naturally", "크게 한입 베어 물고 떡이 자연스럽게 늘어남"),
+                    ("a genuine happy reaction while holding the rice cake up", "찹쌀떡을 들어 보이며 진심으로 기뻐하는 리액션")),
         "shots": (("handheld selfie-style shot, natural micro shake", "셀카처럼 든 핸드헬드, 자연스러운 흔들림"),
-                  (("POV close-up as if filmed on a phone", "휴대폰으로 찍은 듯한 1인칭 클로즈업"),
-                   ("quick handheld pan", "빠른 핸드헬드 패닝"),
+                  (("quick handheld pan", "빠른 핸드헬드 패닝"),
                    ("casual medium shot at eye level", "눈높이의 편한 미디엄 샷")),
+                  ("POV close-up as if filmed on a phone", "휴대폰으로 찍은 듯한 1인칭 클로즈업"),
                   ("selfie reaction shot, holding the product up to the camera", "제품을 카메라에 들어 보이는 셀카 리액션")),
-        "sfx": (("cafe chatter", "카페 웅성거림"), ("crinkle of a paper wrapper", "포장지 바스락 소리"), ("a happy 'mmm'", "맛있다는 '음~'")),
-        "weights": (1, 1, 1),
+        "sfx": (("cafe chatter", "카페 웅성거림"), ("crinkle of a paper wrapper", "포장지 바스락 소리"),
+                ("a soft chewy bite", "쫀득하게 씹는 소리"), ("a happy 'mmm'", "맛있다는 '음~'")),
+        "weights": (1, 1, 1, 1),
     },
     "energetic": {
         "label": "역동적 숏폼",
         "pattern": r"신나|트렌디|틱톡|숏폼|릴스|역동적인\s*(느낌|분위기)",
+        "concept": ("Chewy in a Snap", "순식간에 쫀득"),
         "genre": ("High-energy short-form ad", "역동적인 숏폼 광고"),
-        "keywords": ("photorealistic, bold contrast, vivid saturated colors, fast rhythmic editing, dynamic motion blur",
-                     "사실적, 강한 대비, 선명한 색, 빠르고 리듬감 있는 편집, 역동적인 모션 블러"),
+        "quality": ("4K photorealistic", "4K 실사"),
+        "keywords": ("bold contrast, vivid colors, dynamic motion blur, real food physics",
+                     "강한 대비, 선명한 색, 역동적인 모션 블러, 실제 같은 음식 물리"),
+        "pace": ("fast rhythmic cuts on the beat, whip transitions, speed ramps", "비트에 맞춘 빠른 컷, 휩 전환, 스피드 램프"),
         "camera": ("fast cuts timed to the beat, about one cut every 1-2 seconds", "비트에 맞춘 빠른 컷, 1~2초마다 한 번씩 전환"),
         "grade": ("punchy saturated colors, crisp highlights", "쨍한 색감, 또렷한 하이라이트"),
         "lighting": 2,
         "music": ("upbeat electronic beat with bass drops and whoosh transitions", "신나는 전자음 비트, 베이스 드롭과 휙 전환음"),
         "avoid": ("no slow drifting shots", "느리게 흘러가는 샷 없음"),
+        "beats": (("Hook", "훅"), ("Build-up", "빌드업"), ("Drop", "드롭"), ("Payoff", "마무리 한 방")),
+        "actions": (("a rice cake drops into frame and bounces, flour bursting outward", "찹쌀떡이 화면에 떨어져 통통 튀고, 가루가 사방으로 터짐"),
+                    ("rice cakes and flour burst upward in slow motion and swirl around the camera",
+                     "찹쌀떡과 쌀가루가 슬로모션으로 위로 터져 오르며 카메라 주위를 소용돌이침"),
+                    ("everything snaps into place and the rice cakes land perfectly still", "모든 것이 제자리를 찾고 찹쌀떡이 완벽하게 멈춰 내려앉음")),
         "shots": (("fast snap zoom-in", "빠른 스냅 줌인"),
                   (("whip pan transition on the beat", "비트에 맞춘 휩 팬 전환"),
-                   ("speed ramp from slow to fast", "느렸다 빨라지는 스피드 램프"),
                    ("quick dutch-angle close-up", "빠른 사선 앵글 클로즈업")),
+                  ("speed ramp from slow to fast", "느렸다 빨라지는 스피드 램프"),
                   ("punchy push-in hero shot ending on a freeze frame", "강하게 다가가 멈추는 히어로 샷")),
-        "sfx": (("bass hit", "묵직한 베이스 타격음"), ("whoosh", "휙 소리"), ("final beat drop", "마지막 비트 드롭")),
-        "weights": (0.7, 0.8, 1.3),
+        "sfx": (("bass hit", "묵직한 베이스 타격음"), ("whoosh", "휙 소리"), ("bass drop with a burst of flour", "가루가 터지는 베이스 드롭"),
+                ("final beat drop", "마지막 비트 드롭")),
+        "weights": (0.7, 0.8, 1, 1.3),
     },
     "retro": {
         "label": "레트로",
         "pattern": r"레트로|옛날|캠코더|빈티지|추억",
+        "concept": ("A Sweet Memory", "달콤한 추억"),
         "genre": ("Early-2000s home video", "2000년대 초 홈비디오"),
+        "quality": ("authentic early-2000s camcorder footage", "2000년대 초 캠코더 실제 영상 느낌"),
         "keywords": ("consumer MiniDV camcorder look, slight color fading, soft focus, light video noise",
                      "MiniDV 캠코더 느낌, 살짝 바랜 색, 부드러운 초점, 약한 영상 노이즈"),
+        "pace": ("simple in-camera cuts, slightly abrupt like a home video", "홈비디오처럼 살짝 툭툭 끊기는 단순한 컷"),
         "camera": ("handheld camcorder, autofocus hunting, small exposure shifts, no polished cinematography",
                    "캠코더 핸드헬드, 초점이 살짝 헤맴, 노출이 조금씩 변함, 매끈한 영화 촬영 없음"),
         "grade": ("faded warm colors, slightly crushed blacks", "바랜 따뜻한 색, 살짝 뭉개진 검정"),
         "lighting": 1,
         "music": ("natural camcorder microphone sound with light hiss", "캠코더 마이크로 담은 자연음, 약한 잡음"),
         "avoid": ("no modern ultra-sharp look", "요즘 같은 초고화질 느낌 없음"),
+        "beats": (("Recording starts", "녹화 시작"), ("Around the table", "식탁 풍경"), ("Shared bite", "함께 한입"),
+                  ("Last frame", "마지막 장면")),
+        "actions": (("the camcorder powers on and the frame wobbles as it finds focus", "캠코더가 켜지고 초점을 찾으며 화면이 살짝 흔들림"),
+                    ("someone takes a bite and laughs, the mochi stretching", "누군가 한입 먹고 웃으며 떡이 늘어남"),
+                    ("the rice cakes on a plate as the exposure settles", "노출이 맞춰지며 접시 위 찹쌀떡이 보임")),
         "shots": (("handheld camcorder shot, autofocus hunting", "캠코더 핸드헬드, 초점이 살짝 헤맴"),
-                  (("casual zoom with the camcorder zoom rocker", "캠코더 줌 버튼으로 당기는 줌"),
-                   ("slightly shaky medium shot", "살짝 흔들리는 미디엄 샷")),
+                  (("casual zoom with the camcorder zoom rocker", "캠코더 줌 버튼으로 당기는 줌"),),
+                  ("slightly shaky medium shot", "살짝 흔들리는 미디엄 샷"),
                   ("close-up as the exposure slowly settles", "노출이 천천히 맞춰지는 클로즈업")),
         "sfx": (("camcorder click", "캠코더 녹화 버튼 소리"), ("muffled room sound", "먹먹한 실내 소리"),
-                ("someone laughing behind the camera", "카메라 뒤 웃음소리")),
-        "weights": (1, 1, 1),
+                ("someone laughing behind the camera", "카메라 뒤 웃음소리"), ("tape stopping click", "녹화가 끝나는 딸깍 소리")),
+        "weights": (1, 1, 1, 1),
+    },
+    "fantasy": {
+        "label": "판타지 변신",
+        "pattern": r"판타지|변신|마법|환상",
+        "concept": ("A Bite of Fantasy", "한입의 판타지"),
+        "genre": ("Surreal fantasy food film", "초현실 판타지 푸드 영상"),
+        "quality": ("4K hyper-cinematic", "4K 하이퍼 시네마틱"),
+        "keywords": ("photorealistic food textures blended with a dreamlike world, volumetric light, soft bloom, "
+                     "pastel pink and lavender glow",
+                     "꿈같은 세계와 어우러진 실사 음식 질감, 볼류메트릭 라이트, 부드러운 블룸, 파스텔 핑크·라벤더 빛"),
+        "pace": ("begins calm and real, then flows into seamless magical transitions", "차분하고 현실적으로 시작해 매끄러운 마법 같은 전환으로 흐름"),
+        "camera": ("starts grounded and real, then glides forward like a cinematic drone", "현실적으로 시작해 시네마틱 드론처럼 앞으로 미끄러지는 카메라"),
+        "grade": ("dreamy pastel tones with warm magical highlights", "꿈결 같은 파스텔 색감, 따뜻하고 신비로운 하이라이트"),
+        "lighting": 2,
+        "music": ("dreamy orchestral swell with soft chimes", "꿈결 같은 오케스트라 고조와 부드러운 차임"),
+        "avoid": ("no dark or scary imagery", "어둡거나 무서운 이미지 없음"),
+        "beats": (("Reality", "현실"), ("Into the dream", "꿈으로"), ("Reality breaks", "현실이 깨지는 순간"),
+                  ("Fantasy hero", "판타지 히어로")),
+        "actions": (("crumbs of rice flour fall in slow motion, everything still grounded and real",
+                     "쌀가루 부스러기가 슬로모션으로 떨어지고, 아직은 모든 것이 현실적임"),
+                    ("at the first bite the room melts into a world of rice-flour clouds and rivers of sweet red bean",
+                     "첫입을 무는 순간 방이 녹아내리며 쌀가루 구름과 달콤한 팥 강이 흐르는 세계로 변함"),
+                    ("the rice cake glows softly at the center of the endless sweet landscape",
+                     "끝없이 펼쳐진 달콤한 풍경 한가운데에서 찹쌀떡이 은은하게 빛남")),
+        "shots": (("macro cinematic close-up, shallow depth of field", "매크로 시네마틱 클로즈업, 얕은 심도"),
+                  (("slow push-in as the light begins to refract", "빛이 굴절되기 시작하며 천천히 다가가기"),),
+                  ("drone-like forward glide through the fantasy world", "판타지 세계를 드론처럼 앞으로 미끄러지는 샷"),
+                  ("slow pull-back revealing the endless dessert landscape", "끝없는 디저트 풍경을 보여 주며 천천히 빠지기")),
+        "sfx": (("soft room tone and a gentle squish", "조용한 실내 소리와 말랑한 소리"), ("rising magical shimmer", "점점 커지는 신비로운 반짝임"),
+                ("a soft whoosh as reality turns into chimes", "현실이 차임 소리로 바뀌는 부드러운 휙 소리"),
+                ("warm twinkling chime", "따뜻하게 반짝이는 차임")),
+        "weights": (1, 1, 1.3, 1.4),
+    },
+    "miniature": {
+        "label": "미니어처 월드",
+        "pattern": r"미니어처|디오라마|작은\s*사람|소인",
+        "concept": ("The Little Mochi Workshop", "작은 찹쌀떡 공방"),
+        "genre": ("Cinematic miniature world film", "시네마틱 미니어처 월드 영상"),
+        "quality": ("4K ultra-detailed", "4K 초정밀"),
+        "keywords": ("tilt-shift miniature diorama, tiny people around giant rice cakes, intricate tiny props, cozy and whimsical realism",
+                     "틸트시프트 미니어처 디오라마, 거대한 찹쌀떡 주변의 작은 사람들, 정교한 작은 소품, 아늑하고 기발한 사실감"),
+        "pace": ("calm flowing pacing with gentle tracking transitions", "차분하게 흐르는 리듬, 부드러운 트래킹 전환"),
+        "camera": ("slow cinematic dolly and gentle tracking at miniature scale, shallow depth of field",
+                   "미니어처 눈높이의 느린 시네마틱 돌리와 부드러운 트래킹, 얕은 심도"),
+        "grade": ("soft pastel pink, cream and peach tones", "부드러운 파스텔 핑크·크림·피치 색감"),
+        "lighting": 1,
+        "music": ("cozy lo-fi cafe music with soft piano", "아늑한 로파이 카페 음악과 부드러운 피아노"),
+        "avoid": ("no giant human hands in frame, no chaotic crowds", "화면 속 거대한 사람 손·북적이는 군중 없음"),
+        "beats": (("Arrival", "도착"), ("Tiny makers", "작은 장인들"), ("The finishing touch", "마무리 손길"),
+                  ("The finished world", "완성된 세계")),
+        "actions": (("tiny people walk toward a giant rice cake as warm little lights glow", "작은 사람들이 거대한 찹쌀떡 쪽으로 걸어가고 작은 불빛이 따뜻하게 빛남"),
+                    ("a tiny crane lowers the last rice cake into place as flour drifts down like snow",
+                     "작은 크레인이 마지막 찹쌀떡을 내려놓고 쌀가루가 눈처럼 내림"),
+                    ("the tiny crowd cheers around the finished rice cakes", "완성된 찹쌀떡 주위에서 작은 사람들이 환호함")),
+        "shots": (("wide establishing shot of the miniature world, slow dolly-in", "미니어처 세계를 보여 주는 와이드 샷, 천천히 다가가기"),
+                  (("cozy tracking shot between tiny workers", "작은 일꾼들 사이를 지나는 아늑한 트래킹"),
+                   ("macro close-up on tiny hands and textures", "작은 손과 질감을 담은 매크로 클로즈업")),
+                  ("slow crane-up shot", "천천히 올라가는 크레인 샷"),
+                  ("slow pull-back wide shot of the whole miniature world", "미니어처 세계 전체를 보여 주며 천천히 빠지는 와이드 샷")),
+        "sfx": (("tiny footsteps and soft chatter", "작은 발소리와 말소리"), ("little tools tapping", "작은 도구 두드리는 소리"),
+                ("crane whirr and a soft thud", "크레인 소리와 부드럽게 내려놓는 소리"), ("tiny cheering and a warm chime", "작은 환호와 따뜻한 차임")),
+        "weights": (1, 1, 1.1, 1.3),
+    },
+    "asmr": {
+        "label": "ASMR 클로즈업",
+        "pattern": r"ASMR|asmr|소리\s*(위주|중심)|먹방",
+        "concept": ("The Sound of Chewy", "쫀득함의 소리"),
+        "genre": ("Food ASMR close-up film", "음식 ASMR 클로즈업 영상"),
+        "quality": ("4K photorealistic", "4K 실사"),
+        "keywords": ("extreme macro, real food physics, crisp textures, dark matte background, soft directional light",
+                     "초접사, 실제 같은 음식 물리, 또렷한 질감, 어두운 무광 배경, 부드러운 방향성 조명"),
+        "pace": ("slow patient pacing that lets every sound breathe", "소리 하나하나가 살아나도록 느긋한 리듬"),
+        "camera": ("locked-off or ultra-slow macro moves, the product fills the frame", "고정 또는 아주 느린 매크로 움직임, 제품이 화면을 채움"),
+        "grade": ("natural rich tones, gentle contrast", "자연스럽고 풍부한 색, 은은한 대비"),
+        "lighting": 0,
+        "music": ("no music; only crisp close-miked real food sounds", "음악 없음, 가까이서 녹음한 실제 음식 소리만"),
+        "avoid": ("no background music, no fast cuts", "배경음악·빠른 컷 없음"),
+        "beats": (("First touch", "첫 닿음"), ("Texture", "질감"), ("The pull", "늘어나는 순간"), ("Final bite", "마지막 한입")),
+        "actions": (("a fingertip gently presses the soft surface, which slowly springs back", "손끝이 말랑한 표면을 살짝 누르고 천천히 돌아옴"),
+                    ("the rice cake is slowly pulled apart, chewy strands stretching and the filling revealed",
+                     "찹쌀떡을 천천히 갈라 쫀득하게 늘어나며 속이 드러남"),
+                    ("a clean bite mark shows the soft cross-section as the flour settles", "깔끔한 한입 자국에 부드러운 단면이 보이고 가루가 가라앉음")),
+        "shots": (("locked-off extreme macro", "고정된 초접사"),
+                  (("ultra-slow macro slide", "아주 느린 매크로 슬라이드"),),
+                  ("slow-motion extreme macro", "슬로모션 초접사"),
+                  ("static macro hero shot", "고정된 매크로 히어로 샷")),
+        "sfx": (("soft powdery tap", "가루가 톡 닿는 소리"), ("gentle squish and sticky stretch", "말랑하게 눌리고 쫀득하게 늘어나는 소리"),
+                ("slow sticky pull and soft tear", "천천히 늘어나다 부드럽게 끊어지는 소리"), ("a soft chewy bite", "쫀득하게 씹는 소리")),
+        "weights": (1, 1, 1.3, 1.3),
     },
 }
 DEFAULT_STYLE = "premium"
@@ -249,7 +410,7 @@ def _setting(text):
     }
 
 
-STYLE_ORDER = ("retro", "vlog", "energetic", "premium", "warm")  # 단어가 겹치면 앞의 분위기를 고릅니다.
+STYLE_ORDER = ("retro", "vlog", "asmr", "miniature", "fantasy", "energetic", "premium", "warm")  # 단어가 겹치면 앞의 분위기를 고릅니다.
 
 
 def _find_style(text, revise=False):
@@ -267,8 +428,7 @@ def _weighted_ends(duration, count, style=None):
     weights = STYLES.get(style, {}).get("weights")
     if not weights or count < 2:
         return _even_ends(duration, count)
-    first, middle, last = weights
-    parts = [first, *[middle] * (count - 2), last]
+    parts = [weights[_slot(i, count)] for i in range(count)]
     total, acc, ends = sum(parts), 0, []
     for part in parts:
         acc += part
@@ -280,19 +440,34 @@ def _weighted_ends(duration, count, style=None):
     return ends
 
 
-def _shot(style, index, count):
-    """컷 자리(첫·가운데·마지막)에 맞는 화면·카메라 지시 (영어, 한국어)."""
-    first, middles, last = style["shots"]
-    if index == 0:
-        return first
+INTRO, DETAIL, CLIMAX, HERO = range(4)  # 컷 자리
+
+
+def _slot(index, count):
+    """컷 자리: 첫 컷은 소개, 마지막은 히어로, 끝에서 두 번째는 클라이맥스(3컷 이상), 나머지는 디테일."""
     if index == count - 1:
-        return last
-    return middles[(index - 1) % len(middles)]
+        return HERO
+    if index == 0:
+        return INTRO
+    return CLIMAX if index == count - 2 else DETAIL
+
+
+def _shot(style, index, count):
+    """컷 자리에 맞는 화면·카메라 지시 (영어, 한국어). 디테일 컷은 차례로 돌아가며 씁니다."""
+    intro, details, climax, hero = style["shots"]
+    return (intro, details[(index - 1) % len(details)], climax, hero)[_slot(index, count)]
+
+
+def _action(style, index, count):
+    """컷 자리에 맞는 움직임·물리·공기 중 요소. 디테일 컷은 찹쌀떡 질감 단어 모음(TEXTURES)에서 차례로."""
+    slot = _slot(index, count)
+    if slot == DETAIL:
+        return TEXTURES[(index - 1) % len(TEXTURES)]
+    return style["actions"][(INTRO, CLIMAX, HERO).index(slot)]
 
 
 def _sfx(style, index, count):
-    first, middle, last = style["sfx"]
-    return first if index == 0 else last if index == count - 1 else middle
+    return style["sfx"][_slot(index, count)]
 
 
 def _retime(scenes, duration, style=None):
@@ -386,8 +561,15 @@ RATIO_WORDS = {"9:16": ("vertical 9:16", "세로 9:16"), "16:9": ("horizontal 16
 
 
 def _prompt_lines(doc, lang):
-    """7단 구조 프롬프트 줄들. lang 0=영어(Higgsfield용), 1=한국어 보기.
-    컷마다 화면·카메라 지시와 효과음은 저장하지 않고, 분위기와 컷 자리(첫·가운데·마지막)로 매번 만듭니다."""
+    """프롬프트 줄들. lang 0=영어(Higgsfield용), 1=한국어 보기. 두 언어는 줄 수가 같고 한 줄씩 짝입니다.
+    순서: 콘셉트 → 스타일 → 편집 리듬 → 제품 고정 → 배경·분위기 → 구간별 컷 → 카메라 → 조명·색감 → 연속성 → 소리 → 금지.
+    컷마다 구간 이름·카메라·움직임·효과음은 저장하지 않고, 분위기와 컷 자리(소개·디테일·클라이맥스·히어로)로 매번 만듭니다.
+    영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다. 한국어도 똑같이 줄입니다."""
+    compact = len("\n".join(_lines(doc, 0, False))) > PROMPT_LIMIT
+    return _lines(doc, lang, compact)
+
+
+def _lines(doc, lang, compact):
     style = _style_of(doc)
     product = doc.get("product") or "찹쌀떡"
     look = PRODUCT_LOOK.get(product, PRODUCT_LOOK["찹쌀떡"])[lang]
@@ -400,36 +582,46 @@ def _prompt_lines(doc, lang):
 
     shots = []
     for i, scene in enumerate(doc["scenes"]):
-        line = f"{scene['time']} — {_shot(style, i, count)[lang]}: {scene['ko' if lang else 'en']}."
-        if doc["sound"]:
+        shot, what = _shot(style, i, count)[lang], scene["ko" if lang else "en"]
+        if compact and _slot(i, count) == DETAIL:
+            shots.append(f"{scene['time']} — {shot}; {what}.")
+            continue
+        beat = style["beats"][_slot(i, count)][lang]
+        line = f"{scene['time']} — {beat}: {shot}; {what}; {_action(style, i, count)[lang]}."
+        if doc["sound"] and (i == 0 or _sfx(style, i, count) != _sfx(style, i - 1, count)):  # 앞 컷과 같은 효과음은 생략
             line += f" {'효과음' if lang else 'SFX'}: {_sfx(style, i, count)[lang]}."
         shots.append(line)
 
+    continuity = CONTINUITY[lang] + (f"; {PHOTO_MATCH[lang]}." if has_photo else ".")
     if lang:
-        lock = f"제품: 한정선 {product} — {look}. 모든 컷에서 제품 모양·색·크기·속을 똑같이 유지"
-        lock += ", 첨부한 제품 사진과 똑같이." if has_photo else "."
-        sound = f"소리: {style['music'][1]}, 컷마다 적은 효과음." if doc["sound"] else "소리: 무음, 음악·효과음 없음."
-        labels = ("초", "스타일", "배경", "분위기", "컷 구성:", "카메라", "조명·색감", "금지")
+        head = f"'{style['concept'][1]}' — 한정선 {style['genre'][1]}, {doc['duration']}초, {ratio}, {style['quality'][1]}."
+        lock = f"제품: 한정선 {product} — {look}."
+        sound = (f"소리: {style['music'][1]}, 컷마다 적은 효과음, {MUSIC_AVOID[1]}." if doc["sound"]
+                 else "소리: 무음, 음악·효과음 없음.")
+        labels = ("스타일", "편집", "배경", "분위기", "컷 구성:", "카메라", "조명·색감", "금지")
     else:
+        head = (f"'{style['concept'][0]}' — Hanjungsun {style['genre'][0]}, {doc['duration']} seconds, {ratio}, "
+                f"{style['quality'][0]}.")
         name = PRODUCT_EN.get(product, "Korean rice cake mochi")
-        lock = f"Product: {name} by Hanjungsun — {look}. Keep the product's shape, color, size and filling identical in every shot"
-        lock += ", exactly matching the attached product photo." if has_photo else "."
-        sound = (f"Sound: {style['music'][0]}, plus the sound effects noted per shot." if doc["sound"]
+        lock = f"Product: {name} by Hanjungsun — {look}."
+        sound = (f"Sound: {style['music'][0]}, plus the sound effects noted per shot, {MUSIC_AVOID[0]}." if doc["sound"]
                  else "Sound: silent, no music, no sound effects.")
-        labels = (" seconds", "Style", "Setting", "Mood", "Shots:", "Camera", "Lighting and color", "Avoid")
-    sec, style_l, setting_l, mood_l, shots_l, camera_l, light_l, avoid_l = labels
+        labels = ("Style", "Editing", "Setting", "Mood", "Shots:", "Camera", "Lighting and color", "Avoid")
+    style_l, edit_l, setting_l, mood_l, shots_l, camera_l, light_l, avoid_l = labels
     return [
-        f"{style['genre'][lang]}, {doc['duration']}{sec}, {ratio}.",
+        head,
         f"{style_l}: {style['keywords'][lang]}.",
+        f"{edit_l}: {style['pace'][lang]}.",
         lock,
         f"{setting_l}: {ko(BACKGROUND_KO, doc['background'])}. {mood_l}: {ko(MOOD_KO, doc['mood'])}.",
         shots_l,
         *shots,
         f"{camera_l}: {ko(CAMERA_KO, doc['camera'])}; {style['camera'][lang]}.",
         f"{light_l}: {ko(LIGHTING_KO, doc['lighting'])}; {style['grade'][lang]}.",
+        continuity,
         *[f"{extra}." for extra in doc["extras"]],
         sound,
-        f"{avoid_l}: {COMMON_AVOID[lang]}, {style['avoid'][lang]}.",
+        f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}'}, {style['avoid'][lang]}.",
     ]
 
 
@@ -455,12 +647,14 @@ def build_prompt_ko(doc):
 # 모르는 한국어가 남으면 영어를 바꾸지 않고 untranslated에 적습니다(영상 모델에 한국어를 보내지 않음).
 KO_LABELS = (("조명·색감:", "Lighting and color:"), ("컷 구성:", "Shots:"), ("스타일:", "Style:"), ("배경:", "Setting:"),
              ("분위기:", "Mood:"), ("카메라:", "Camera:"), ("금지:", "Avoid:"), ("효과음:", "SFX:"), ("소리:", "Sound:"),
-             ("제품:", "Product:"))
+             ("제품:", "Product:"), ("편집:", "Editing:"))
 KO_FIXED = (
     ("모든 컷에서 제품 모양·색·크기·속을 똑같이 유지", "Keep the product's shape, color, size and filling identical in every shot"),
     ("첨부한 제품 사진과 똑같이", "exactly matching the attached product photo"),
     ("컷마다 적은 효과음", "plus the sound effects noted per shot"),
     ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
+    CONTINUITY[::-1], PHOTO_MATCH[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
+    ("한정선", "Hanjungsun"),
 )
 HANGUL = re.compile(r"[가-힣ㄱ-ㆎ]")
 
@@ -471,11 +665,11 @@ def _ko_phrases(doc):
     for table in (CAMERA_KO, LIGHTING_KO, MOOD_KO, BACKGROUND_KO):
         pairs += [(ko, en) for en, ko in table.items()]
     for style in STYLES.values():
-        for key in ("genre", "keywords", "camera", "grade", "music", "avoid"):
+        for key in ("concept", "genre", "quality", "keywords", "pace", "camera", "grade", "music", "avoid"):
             pairs.append(style[key][::-1])
-        first, middles, last = style["shots"]
-        pairs += [shot[::-1] for shot in (first, *middles, last)]
-        pairs += [sfx[::-1] for sfx in style["sfx"]]
+        intro, details, climax, hero = style["shots"]
+        pairs += [shot[::-1] for shot in (intro, *details, climax, hero)]
+        pairs += [pair[::-1] for key in ("sfx", "beats", "actions") for pair in style[key]]
     pairs += [(ko, en) for en, ko in RATIO_WORDS.values()]
     pairs.append(COMMON_AVOID[::-1])
     for name, en in PRODUCT_EN.items():
