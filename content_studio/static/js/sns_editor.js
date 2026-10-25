@@ -4,6 +4,7 @@
 import {
   FONT_GROUPS, LOCAL_PREFIX, fontFamily, getLocalFonts, loadFont, loadFontsFor, loadLocalFonts, localFontsSupported,
 } from "./sns_fonts.js";
+import { openRemoveBg } from "./sns_image.js";
 
 export const SIZES = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080] };
 const LOCAL_ACTION = "__local__";  // 글꼴 목록의 "내 PC 글꼴 불러오기…"
@@ -11,8 +12,6 @@ const LINE = 1.2;     // 줄 간격 (글자 크기의 배수)
 const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
 const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
-const REMOVE_BG_API = "/content_studio/media/api/remove-bg";
-const NOBG_SRC_RE = /^\/content_studio\/media\/remove-bg\/result\/[0-9a-f]{32}\.png$/;  // 배경 제거 결과 주소
 const REVIEW_API = "/content_studio/media/api/review";
 const BRIEF_API = "/content_studio/media/api/design-brief";
 const ASSISTANT_API = "/content_studio/media/api/design-assistant";
@@ -580,40 +579,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
     });
   }
 
-  // 고른 사진의 배경을 지워 같은 자리에 넣습니다. 원래 사진은 위쪽 되돌리기로 돌아갑니다.
-  // 이미 배경을 지운 사진이면 원본으로 가장자리를 다듬어 다시 처리합니다. (1~2분 걸려 몇 초째인지 보여 줍니다)
-  let removing = false;
-  async function removeBg(item) {
-    if (removing) return;
-    removing = true;
-    const refine = NOBG_SRC_RE.test(item.src);
-    let sec = 0;
-    const tick = () => {
-      status.textContent = `${refine ? "가장자리 다듬는" : "배경 제거"} 중… ${sec}초 ⏳ (1~2분 걸릴 수 있어요. 끝날 때까지 다른 곳은 고치지 말아 주세요)`;
-    };
-    tick();
-    const timer = setInterval(() => { sec += 1; tick(); }, 1000);
-    try {
-      const form = new FormData();
-      form.append("src", item.src);
-      form.append("alpha_matting", refine ? "1" : "0");
-      const res = await fetch(REMOVE_BG_API, { method: "POST", body: form });
-      const data = await res.json().catch(() => ({ ok: false }));
-      if (!data.ok) throw new Error(data.error || "배경을 제거하지 못했습니다. 다른 사진으로 다시 시도해 주세요.");
-      if (!wrap.isConnected || find(item.id) !== item) return;  // 기다리는 동안 다른 곳을 고쳐 화면이 바뀐 경우
-      item.src = data.result_url;
-      status.textContent = `완료! 🎉 (${sec}초 걸림) 경계가 거칠면 [가장자리 다듬기]를 눌러 보세요.`;
-      draw();
-      updateBar();
-      save();
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      clearInterval(timer);
-      removing = false;
-    }
-  }
-
   async function addItem(value) {
     let item;
     if (value === "text") {
@@ -741,7 +706,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
     const item = find(selectedId);
     const tools = [];
     if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
-    tools.push(addSelect());
+    tools.push(addSelect(), button("✂️ 배경 제거", openRemoveBg));  // 기존 배경 제거 창(sns_image.js)을 엽니다.
 
     if (!item) {
       tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
@@ -780,12 +745,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
         if (!src) return;
         item.src = src;
         draw();
-        updateBar();
         save();
       }));
-      if (item.src) {
-        tools.push(button(NOBG_SRC_RE.test(item.src) ? "✂️ 가장자리 다듬기" : "✂️ 배경 제거", () => removeBg(item)));
-      }
     } else if (item.type === "sticker") {
       tools.push(field("이모지", selectBox("", EMOJIS.map((emoji) => [emoji, emoji]), item.emoji,
         (value) => { item.emoji = value; draw(); save(); })));
