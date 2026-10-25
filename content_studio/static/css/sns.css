@@ -226,6 +226,15 @@
 .studio-page .studio-video-input { width: 100%; font-family: var(--font-vi); }
 /* 영어 프롬프트: 읽기 전용이지만 Higgsfield로 보내는 문장이라 글자는 진하게 */
 .studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--ink); }
+/* 영어 프롬프트 상자: 한국어 칸(16줄)과 같은 높이, 줄마다 나눠 그려 한국어에서 누른 줄·표현을 강조 */
+.studio-page .studio-video-prompt-view { position: relative; height: calc(16 * var(--line-height) * var(--fs-min) + 2 * var(--space-4)); overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.studio-page .studio-video-prompt-line.is-line { background: var(--primary-soft); }
+.studio-page .studio-video-mark { background: var(--gold); color: var(--ink); font-weight: 600; }
+/* ③ 제품 사진 (필수) */
+.studio-page .studio-video-generate h4 { margin: var(--space-4) 0; font-size: var(--fs-min); font-weight: 600; }
+.studio-page .studio-video-photo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.studio-page .studio-video-photo-thumb { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); }
+.studio-page .studio-video-photo .studio-hint { margin: 0; }
 .studio-page .studio-video-prompt-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .studio-page .studio-video-copy { padding: var(--space-1) var(--space-4); font-size: var(--fs-min); }
 .studio-page .studio-video-untranslated { margin-top: var(--space-4); padding: var(--space-4) var(--space-5); background: var(--badge-red-bg); color: var(--badge-red-ink); font-size: var(--fs-min); }

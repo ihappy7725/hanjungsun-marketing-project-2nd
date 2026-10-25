@@ -10,6 +10,7 @@
 """
 import copy
 import difflib
+import json
 import math
 import re
 
@@ -613,16 +614,23 @@ def _lines(doc, lang, compact):
         f"{style_l}: {style['keywords'][lang]}.",
         f"{edit_l}: {style['pace'][lang]}.",
         lock,
-        f"{setting_l}: {ko(BACKGROUND_KO, doc['background'])}. {mood_l}: {ko(MOOD_KO, doc['mood'])}.",
+        f"{setting_l}: {doc.get('background_ko') if lang and doc.get('background_ko') else ko(BACKGROUND_KO, doc['background'])}. "
+        f"{mood_l}: {doc.get('mood_ko') if lang and doc.get('mood_ko') else ko(MOOD_KO, doc['mood'])}.",
         shots_l,
         *shots,
         f"{camera_l}: {ko(CAMERA_KO, doc['camera'])}; {style['camera'][lang]}.",
         f"{light_l}: {ko(LIGHTING_KO, doc['lighting'])}; {style['grade'][lang]}.",
         continuity,
-        *[f"{extra}." for extra in doc["extras"]],
+        *[f"{_extra(doc, i, lang)}." for i in range(len(doc["extras"]))],
         sound,
         f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}'}, {style['avoid'][lang]}.",
     ]
+
+
+def _extra(doc, index, lang):
+    """추가 문장(extras)은 영어로 저장하고, AI가 함께 준 한국어(extras_ko)가 있으면 한국어 보기에 씁니다."""
+    extras_ko = doc.get("extras_ko") or []
+    return extras_ko[index] if lang and index < len(extras_ko) and extras_ko[index] else doc["extras"][index]
 
 
 def build_prompt(doc):
@@ -675,9 +683,24 @@ def _ko_phrases(doc):
     for name, en in PRODUCT_EN.items():
         pairs.append((f"한정선 {name}", f"{en} by Hanjungsun"))
         pairs.append(PRODUCT_LOOK.get(name, ("", ""))[::-1])
+    pairs += [(doc.get("background_ko") or "", doc.get("background") or ""), (doc.get("mood_ko") or "", doc.get("mood") or "")]
+    pairs += [(_extra(doc, i, 1), doc["extras"][i]) for i in range(len(doc.get("extras") or []))]
     scenes = [TEXTURE_SCENE, BITE_SCENE, *EXTRA_SCENES, *doc.get("scenes", [])]
     pairs += [(scene["ko"], scene["en"]) for scene in scenes if scene.get("ko") and scene.get("en")]
     return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: len(pair[0]), reverse=True)
+
+
+def phrase_pairs(doc):
+    """화면 강조용 (한국어, 영어) 표현: 지금 한국어·영어 프롬프트에 둘 다 들어 있는 것만. 한국어 칸에서 누른 표현을 영어 칸에서 찾습니다.
+    DB에는 저장하지 않고 화면에 보낼 때만 붙입니다(routes_sns.py _design_state)."""
+    ko, en = doc.get("prompt_ko") or "", doc.get("prompt") or ""
+    pairs = [*_ko_phrases(doc), *KO_LABELS]
+    # 쉼표 목록(스타일 키워드 등)은 한국어·영어 항목 수가 같으면 항목끼리도 짝지어 단어 단위로 강조합니다.
+    for k, e in list(pairs):
+        ks, es = k.split(", "), e.split(", ")
+        if 1 < len(ks) == len(es):
+            pairs += list(zip(ks, es))
+    return [[k, e] for k, e in dict.fromkeys(pairs) if k and e and k in ko and e in en]
 
 
 def _ko_line_to_en(line, phrases):
@@ -764,6 +787,7 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         "scenes": _retime(scenes, duration, style),
         "style": style,
         "product": product,
+        "event": event,
         "camera": CAMERAS[2] if re.search(r"빠르|역동", text) else CAMERAS[1],
         "lighting": LIGHTINGS[STYLES[style]["lighting"]],
         "mood": setting["mood"],
@@ -887,3 +911,117 @@ def revise_draft(doc, text):
         new["reviewed"] = False
         refresh_prompts(new)
     return new, video_changes + caption_changes
+
+
+# ---------- AI(OpenAI)로 요청 이해하기 ----------
+# 단어 규칙(revise_draft)이 못 알아듣는 자유로운 요청("발렌타인 느낌으로, 장미꽃과 스위트하게")을 AI가 영상 문서의 칸으로 바꿉니다.
+# AI는 칸만 고치고, 프롬프트 문장은 지금처럼 _prompt_lines가 만듭니다(구조·길이 한도 유지). 호출은 routes_sns.py _call_ai.
+AI_TEXT_LIMIT = 200  # 칸 하나의 최대 글자 수
+
+AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드 '한정선'의 숏폼 광고 영상 기획자입니다.
+사용자의 요청을 읽고 아래 영상 문서(JSON)를 고쳐 주세요. 요청에 없는 칸은 그대로 두세요.
+
+규칙
+- style은 다음 중 하나: {styles}
+- duration은 5~30 정수, ratio는 "9:16" | "16:9" | "1:1", sound는 true/false
+- camera는 다음 중 하나: {cameras}
+- lighting은 다음 중 하나: {lightings}
+- background·mood는 영어, background_ko·mood_ko는 같은 뜻의 한국어
+- scenes는 1~{max_scenes}개. 각 장면은 ko(한국어 장면 설명), en(같은 뜻의 영어 화면 묘사, 20단어 이내), caption(베트남어 자막, 40자 이내, 없으면 "")
+- 장면 수는 영상 길이(초)보다 많을 수 없습니다. 첫 장면은 시작, 마지막 장면은 제품이 돋보이는 마무리로 둡니다.
+- extras는 추가로 지킬 영어 문장 0~3개, extras_ko는 같은 순서의 한국어
+- 화면에 글자·로고를 그리라는 묘사는 넣지 마세요. 글은 caption(자막)으로만 넣습니다.
+- 제품({product})과 그 모양은 바꾸지 마세요. 과장된 효능·건강 표현은 쓰지 마세요.
+- event는 관련 기념일 이름(한국어, 없으면 기존 값 그대로)
+- changes는 바꾼 내용을 한국어 짧은 구절로 나열합니다(예: "배경을 장미 꽃잎 테이블로"). 요청을 이해하지 못했거나 바꿀 것이 없으면 []
+
+다음 JSON 형식으로만 답하세요:
+{{"changes": ["..."], "doc": {{"style": "...", "duration": 10, "ratio": "9:16", "sound": false, "camera": "...", "lighting": "...",
+  "background": "...", "background_ko": "...", "mood": "...", "mood_ko": "...", "event": "...",
+  "extras": ["..."], "extras_ko": ["..."], "scenes": [{{"ko": "...", "en": "...", "caption": "..."}}]}}}}
+"""
+
+AI_FIELDS = ("style", "duration", "ratio", "sound", "camera", "lighting", "background", "background_ko", "mood", "mood_ko",
+             "event", "extras", "extras_ko", "scenes")
+
+
+def ai_messages(doc, text):
+    """AI에 보낼 메시지. 지금 문서에서 AI가 고칠 수 있는 칸만 보냅니다."""
+    current = {key: doc.get(key) for key in AI_FIELDS}
+    current["scenes"] = [{k: scene.get(k, "") for k in ("ko", "en", "caption")} for scene in doc["scenes"]]
+    instructions = AI_INSTRUCTIONS.format(
+        styles=", ".join(f"{key}({style['label']})" for key, style in STYLES.items()),
+        cameras=" | ".join(CAMERAS), lightings=" | ".join(LIGHTINGS),
+        max_scenes=MAX_MANUAL_SCENES, product=doc.get("product") or "찹쌀떡",
+    )
+    return [
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": f"지금 영상 문서:\n{json.dumps(current, ensure_ascii=False)}\n\n요청: {text}"},
+    ]
+
+
+def _ai_text(value, english=False):
+    """AI가 준 글 한 칸 검사. 문자열이 아니거나 너무 길거나, 영어 칸에 한글이 있으면 None."""
+    if not isinstance(value, str) or not value.strip() or len(value) > AI_TEXT_LIMIT:
+        return None
+    return None if english and HANGUL.search(value) else value.strip()
+
+
+def apply_ai(doc, data):
+    """AI 응답 → (새 문서, 바꾼 것 목록). 형식이 틀리면 None을 돌려주고, 부른 쪽은 단어 규칙(revise_draft)을 씁니다.
+    영상(자막 외)이 바뀌면 다시 검토가 필요합니다(reviewed=False). AI가 고친 문서는 시연(demo)이 아닙니다.
+    줄여도 프롬프트가 PROMPT_LIMIT을 넘으면(장면 묘사가 너무 긺) 쓰지 않습니다."""
+    if not isinstance(data, dict) or not isinstance(data.get("doc"), dict) or not isinstance(data.get("changes"), list):
+        return None
+    got, new = data["doc"], copy.deepcopy(doc)
+    changes = [str(item)[:60] for item in data["changes"] if isinstance(item, str) and item.strip()][:8]
+    if not changes:
+        return doc, []
+
+    new["style"] = got.get("style") if got.get("style") in STYLES else doc.get("style", DEFAULT_STYLE)
+    new["duration"] = _duration(got.get("duration"), doc["duration"])
+    new["ratio"] = _pick(got.get("ratio"), RATIOS, doc["ratio"])
+    new["sound"] = got["sound"] if isinstance(got.get("sound"), bool) else doc["sound"]
+    new["camera"] = _pick(got.get("camera"), CAMERAS, doc["camera"])
+    new["lighting"] = _pick(got.get("lighting"), LIGHTINGS, doc["lighting"])
+    for key in ("background", "mood"):
+        english, korean = _ai_text(got.get(key), english=True), _ai_text(got.get(f"{key}_ko"))
+        if english and korean:
+            new[key], new[f"{key}_ko"] = english, korean
+    if isinstance(got.get("event"), str) and len(got["event"]) <= 30:
+        new["event"] = got["event"].strip() or None
+
+    extras, extras_ko = got.get("extras"), got.get("extras_ko")
+    if isinstance(extras, list) and isinstance(extras_ko, list) and len(extras) == len(extras_ko) <= 3:
+        pairs = [(_ai_text(en, english=True), _ai_text(ko)) for en, ko in zip(extras, extras_ko)]
+        if all(en and ko for en, ko in pairs):
+            new["extras"], new["extras_ko"] = [en for en, _ in pairs], [ko for _, ko in pairs]
+
+    scenes = got.get("scenes")
+    if not isinstance(scenes, list) or not 1 <= len(scenes) <= min(new["duration"], MAX_MANUAL_SCENES):
+        return None
+    clean = []
+    for scene in scenes:
+        if not isinstance(scene, dict):
+            return None
+        ko, en, caption = _ai_text(scene.get("ko")), _ai_text(scene.get("en"), english=True), scene.get("caption") or ""
+        if not ko or not en or not isinstance(caption, str) or len(caption) > 80:
+            return None
+        clean.append({"ko": ko, "en": en, "caption": caption.strip()})
+    _apply_ends(clean, _weighted_ends(new["duration"], len(clean), new["style"]))
+    new["scenes"] = clean
+
+    # 자막만 바뀌었는지 보려고 자막을 뺀 영상 칸끼리 비교합니다.
+    def video_part(item):
+        part = {key: item.get(key) for key in AI_FIELDS if key != "scenes"}
+        part["scenes"] = [(s["ko"], s["en"], s["time"]) for s in item["scenes"]]
+        return part
+
+    if video_part(new) != video_part(doc):
+        new["custom"] = new["custom_ko"] = ""
+        new["reviewed"] = False
+    new["demo"] = False
+    new["summary"] = " · ".join(filter(None, [f"{new['duration']}초 {new['ratio']}", new.get("product"), new.get("event"),
+                                              STYLES[new["style"]]["label"]]))
+    refresh_prompts(new)
+    return (new, changes) if len(new["prompt"]) <= PROMPT_LIMIT else None
