@@ -3,6 +3,7 @@
 
 const DAY = 86400000;
 const DAY_SLOTS = 4; // 달력 한 칸에 보여 주는 최대 개수(기간 막대 포함)
+const KIND_ORDER = ['local', 'campaign', 'schedule', 'creator', 'task']; // 날짜 칸 표시 순서
 export const TASK_STATES = { todo: '예정', doing: '진행 중', blocked: '보류', done: '완료', cancelled: '취소' };
 const CAMPAIGN_STATES = { preparing: '준비', active: '진행', done: '완료', blocked: '보류', cancelled: '취소', archived: '보관' };
 const TABS = { market_analysis: '현지 시장 분석', content_studio: '콘텐츠 스튜디오', influencer_marketing: '인플루언서 마케팅', kpi: 'KPI' };
@@ -242,11 +243,13 @@ function initialize() {
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart);
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
-        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, calc(var(--home-chip-h) + 2px)) ` : ''}1fr">`;
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--home-day-head) ${laneCount ? `repeat(${laneCount}, calc(var(--home-chip-h) + 2px)) ` : ''}1fr">`;
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           // 이어지는 일정은 기간 막대로만 보여 주고 날짜 칩에서는 뺍니다. 같은 일정이 두 번 나오지 않게 합니다.
-          const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
+          // 공휴일·축제 같은 현지 일정을 맨 위에 둡니다. 그날의 성격을 먼저 읽게 하기 위함입니다.
+          const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end))
+            .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
           // 하루에 보이는 것은 기간 막대까지 더해 DAY_SLOTS개까지입니다. 업무가 많아도 달력 높이가 변하지 않습니다.
           const room = Math.max(0, DAY_SLOTS - segments.filter(s => s.start <= day && s.end >= day).length);
           let shown = Math.min(dayEvents.length, room);
@@ -320,7 +323,7 @@ function initialize() {
     $('#campaign-select').innerHTML = store.campaigns.length ? store.campaigns.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('') : '<option value="">이벤트 없음</option>';
     $('#campaign-title').textContent = c?.name || '이벤트를 준비해보세요';
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
-    ['#clone-campaign', '#replan-campaign', '#campaign-select'].forEach(sel => { $(sel).disabled = !c; });
+    ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     $('#retrospective').hidden = !c;
     if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
     $('#campaign-summary').innerHTML = `<div class="home-campaign-meta">${badge(CAMPAIGN_STATES[c.status] || c.status)} &nbsp; ${esc(c.target_date)} · ${dday(c.target_date, today)}<p>${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</p></div>`;
@@ -500,6 +503,16 @@ function initialize() {
   }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
+    if (button.hasAttribute('data-cancel-delete')) dialog.close();
+    if (button.dataset.confirmDelete) {
+      const next = structuredClone(store), target = button.dataset.confirmDelete;
+      next.campaigns = next.campaigns.filter(c => c.id !== target);
+      next.tasks = next.tasks.filter(t => t.campaign_id !== target);
+      next.schedules = (next.schedules || []).filter(s => s.campaign_id !== target);
+      next.links = (next.links || []).filter(l => l.campaign_id !== target);
+      if (next.preferences.selected === target) next.preferences.selected = next.campaigns[0]?.id || '';
+      if (save(next)) { dialog.close(); render(); toast('이벤트를 삭제했습니다.'); }
+    }
     if (button.dataset.today) {
       const next = structuredClone(store), task = next.tasks.find(item => item.id === button.dataset.today);
       if (task) { task.due_date = today; task.fixed = true; if (save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
@@ -510,7 +523,21 @@ function initialize() {
     if (button.dataset.slot) { const [day] = button.dataset.slot.split(' '); selectedDate = day; renderCalendar(); renderTasks(); }
     if (button.dataset.task) editTask(button.dataset.task);
     if (button.dataset.local) showLocalEvent(button.dataset.local);
-    if (button.dataset.create) { const e = localEvents().find(item => item.event_id === button.dataset.create); if (e) { if (dialog.open) dialog.close(); planner('create', e); } }
+    if (button.dataset.create) {
+      const e = localEvents().find(item => item.event_id === button.dataset.create);
+      if (e) {
+        // 같은 현지 일정으로 이벤트를 두 번 만들면 준비 업무가 통째로 겹쳐 보입니다.
+        const already = store.campaigns.find(c => c.event_id && c.event_id === e.event_id);
+        if (already) {
+          if (dialog.open) dialog.close();
+          changeCampaign(already.id);
+          toast(`이미 "${already.name}" 이벤트가 있습니다. 그 이벤트를 열었습니다.`);
+          return;
+        }
+        if (dialog.open) dialog.close();
+        planner('create', e);
+      }
+    }
     if (button.dataset.select) changeCampaign(button.dataset.select);
   });
   root.addEventListener('change', event => {
@@ -525,8 +552,15 @@ function initialize() {
     $('#calendar-panel').hidden = name !== 'calendar';
     $('#campaign-panel').hidden = name !== 'campaign';
   }
+  function removeCampaign() {
+    const c = selected();
+    if (!c) return;
+    const count = store.tasks.filter(t => t.campaign_id === c.id).length;
+    openDialog('이벤트 삭제', `<p>"${esc(c.name)}" 이벤트와 그 준비 업무 ${count}건을 지웁니다.</p><p class="home-muted">되돌릴 수 없습니다. 현지 일정 자료와 뉴스는 지워지지 않습니다.</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-delete="${esc(c.id)}" type="button">삭제</button></div>`);
+  }
   function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (save(next)) render(); }
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
+  $('#delete-campaign').onclick = removeCampaign;
   $('#to-campaign').onclick = () => showPanel('campaign');
   $('#to-calendar').onclick = () => showPanel('calendar');
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
