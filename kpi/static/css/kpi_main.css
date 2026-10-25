@@ -10,7 +10,7 @@
    공통 변수(--pink 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
 .kpi-page { --kpi-pink: #e89bb1; }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
-.kpi-page .kpi-head h1 { margin: 0; line-height: var(--line-height-heading); font-weight: var(--title-weight); }
+.kpi-page .kpi-head h1 { margin: 0; font-size: var(--fs-display); line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
 .kpi-page .kpi-head-side { display: flex; align-items: center; gap: var(--space-4); }
 /* 기준월 · 기본 순서로 · 새로고침: 같은 높이·너비의 테두리 박스 */
@@ -60,12 +60,14 @@
 .kpi-page .kpi-status.is-warn { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 
 /* ---------- 상단 KPI 4칸 (굵게) ---------- */
-.kpi-page .kpi-scorecards { margin: var(--space-4) 0 var(--space-5); }
+/* 요약 카드와 본문 블록 사이는 기본 간격 + 0.3cm */
+.kpi-page .kpi-scorecards { margin: var(--space-4) 0 calc(var(--space-5) + 0.3cm); }
 /* 요약 4칸은 얇게: 위아래 여백과 숫자 줄 높이를 줄입니다. */
 .kpi-page .kpi-scorecards .kpi { padding: var(--space-3) var(--space-6); }
 .kpi-page .kpi-scorecards .label { align-items: center; gap: var(--space-4); color: var(--ink); font-weight: 600; }
 .kpi-page .kpi-label-text { display: inline-flex; align-items: center; gap: var(--space-2); }
-.kpi-page .kpi-scorecards .value { font-size: var(--fs-h1); font-weight: 700; line-height: var(--line-height-heading); white-space: nowrap; }
+/* 숫자는 'KPI' 제목과 같은 명조 제목 글꼴 */
+.kpi-page .kpi-scorecards .value { font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); line-height: var(--line-height-heading); white-space: nowrap; }
 .kpi-page .kpi-sub { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sub .kpi-up { color: var(--green); font-weight: 600; }
 .kpi-page .kpi-sub .kpi-down { color: var(--badge-red-ink); font-weight: 600; }
@@ -288,7 +290,8 @@
 .kpi-page .kpi-table td:first-child,
 .kpi-page .kpi-table th:first-child,
 .kpi-page .kpi-table .is-text { text-align: left; }
-.kpi-page .kpi-table .is-center { text-align: center; }
+/* ROAS '상태' 열: 배지 폭만큼만 차지하고 제목은 가운데(배지는 오른쪽 정렬 그대로) */
+.kpi-page .kpi-table th.kpi-col-status { width: 1%; text-align: center; white-space: nowrap; }
 .kpi-page .kpi-table tfoot td { background: var(--paper); font-weight: 600; }
 .kpi-page .kpi-detail.table-wrap,
 .kpi-page .kpi-review-wrap { margin-top: var(--space-5); }
@@ -408,6 +411,24 @@
 .kpi-page .kpi-review-vi { margin: 0; font-family: var(--font-vi); line-height: var(--line-height); }
 .kpi-page .kpi-review-ko + .kpi-review-vi { margin-top: var(--space-2); color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-review-empty { color: var(--muted); font-size: var(--fs-min); }
+/* 리뷰 페이지 넘김: ‹ 1 … 4 5 [6] 7 8 … 23 › */
+.kpi-page .kpi-pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-2); margin-top: var(--space-5); }
+.kpi-page .kpi-pager[hidden] { display: none; }
+.kpi-page .kpi-pager button {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  cursor: pointer;
+}
+.kpi-page .kpi-pager button:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+.kpi-page .kpi-pager button.is-on { border-color: var(--brown); background: var(--brown); color: var(--on-dark); font-weight: 600; }
+.kpi-page .kpi-pager button:disabled { cursor: not-allowed; opacity: .4; }
+.kpi-page .kpi-pager-gap { padding: 0 var(--space-1); color: var(--muted); }
 
 /* ---------- 블록 순서 바꾸기 (위젯) ---------- */
 .kpi-page .kpi-move-tools { display: inline-flex; gap: var(--space-1); }

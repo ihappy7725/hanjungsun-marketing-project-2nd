@@ -11,8 +11,14 @@ const API = {
 };
 const charts = {};
 // 화면 선택 상태: ROAS 통화(기본 원화), 리뷰 언어(기본 한국어), 감성 필터(기본 전체)
-// surveyVoc: QR 설문 응답자 감성·불만 키워드 집계(서버 계산) — VOC 도넛·키워드에 리뷰와 합산
-const view = { currency: "KRW", summary: null, reviewLang: "ko", reviewFilter: "all", reviews: [], surveyVoc: null };
+// surveyVoc: QR 설문 의견 감성·키워드 집계(서버 계산) — VOC 도넛·키워드에 리뷰와 합산
+// surveyComments: 설문 주관식 의견(응답자 1명당 1줄) — 리뷰 목록에 공개 리뷰 뒤로 이어 붙임
+const view = {
+  currency: "KRW", summary: null,
+  reviewLang: "ko", reviewFilter: "all", reviewPage: 1, reviews: [],
+  surveyVoc: null, surveyComments: [],
+};
+const REVIEW_PAGE_SIZE = 10;
 
 const $ = (name) => root.querySelector(`[data-kpi="${name}"]`);
 const setText = (name, text) => {
@@ -32,7 +38,7 @@ const pct = (n) => (n === null || n === undefined ? "—" : `${n.toFixed(1)}%`);
 const signedKrw = (n) => `${n >= 0 ? "+" : "−"}${num(Math.abs(n))}원`;
 
 const SENTIMENT_LABEL = { Positive: "긍정", Neutral: "중립", Negative: "부정" };
-const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok", Zalo_OA: "Zalo QR" };
+const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok", Zalo_OA: "Zalo QR", Zalo_Survey: "Zalo 설문" };
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
 // ---------- 디자인 변수 ----------
@@ -77,17 +83,14 @@ function setStatus(name, text, status, title = "") {
   node.title = node.hidden ? "" : title;
 }
 
-// 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬, .is-center가 있는 열은 가운데 정렬합니다.
+// 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬합니다.
 function fillRows(name, rows) {
   const body = $(name);
-  const heads = [...(body.closest("table")?.querySelectorAll("thead th") || [])];
-  const colsWith = (cls) => new Set(heads.flatMap((th, i) => (th.classList.contains(cls) ? [i] : [])));
-  const textCols = colsWith("is-text");
-  const centerCols = colsWith("is-center");
+  const heads = body.closest("table")?.querySelectorAll("thead th") || [];
+  const textCols = new Set([...heads].flatMap((th, i) => (th.classList.contains("is-text") ? [i] : [])));
   body.replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c, i) => {
     const td = c instanceof Node ? el("td", {}, [c]) : el("td", { text: c });
     if (textCols.has(i)) td.classList.add("is-text");
-    if (centerCols.has(i)) td.classList.add("is-center");
     return td;
   }))));
 }
@@ -534,7 +537,7 @@ function renderVoc(stats, reviews, source) {
     plugins: [barValueLabels],
   });
 
-  view.reviews = reviews;
+  view.reviews = [...reviews, ...view.surveyComments];
   renderReviewList();
 
   setStatus("voc-source", source.text, source.status, source.title || "");
@@ -542,17 +545,21 @@ function renderVoc(stats, reviews, source) {
   setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: ${sampleTitle}건 · 범위: 베트남`);
 }
 
-// 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운
+// 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운 · 10건씩 페이지 넘김
 function renderReviewList() {
   const tone = { Positive: "green", Negative: "red" };
   const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
   const label = view.reviewFilter === "all" ? "전체" : SENTIMENT_LABEL[view.reviewFilter];
-  $("review-count").textContent = `${label} ${num(list.length)}건`;
+  const pages = Math.max(Math.ceil(list.length / REVIEW_PAGE_SIZE), 1);
+  view.reviewPage = Math.min(Math.max(view.reviewPage, 1), pages);
+  $("review-count").textContent = `${label} ${num(list.length)}건 · ${view.reviewPage}/${pages}쪽`;
+  renderReviewPager(pages);
   if (!list.length) {
     $("review-list").replaceChildren(el("li", { className: "kpi-review-empty", text: `${label} 리뷰가 없습니다.` }));
     return;
   }
-  $("review-list").replaceChildren(...list.map((r) => {
+  const start = (view.reviewPage - 1) * REVIEW_PAGE_SIZE;
+  $("review-list").replaceChildren(...list.slice(start, start + REVIEW_PAGE_SIZE).map((r) => {
     const head = el("div", { className: "kpi-review-head" }, [
       el("span", { text: PLATFORM_LABEL[r.platform] || r.platform }),
       r.sentiment ? badge(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : badge("미분류"),
@@ -574,14 +581,49 @@ function setSegment(action, attr, value) {
   });
 }
 
+// 페이지 버튼: ‹ 1 … 4 5 [6] 7 8 … 23 › (현재 쪽 앞뒤 2쪽 + 처음·끝)
+function renderReviewPager(pages) {
+  const cur = view.reviewPage;
+  const pageButton = (page, text, { disabled = false, current = false, label = "" } = {}) => {
+    const btn = el("button", { text, className: current ? "is-on" : "" });
+    btn.type = "button";
+    btn.dataset.kpiAction = "review-page";
+    btn.dataset.page = String(page);
+    btn.disabled = disabled;
+    if (current) btn.setAttribute("aria-current", "page");
+    if (label) btn.setAttribute("aria-label", label);
+    return btn;
+  };
+  const shown = [...new Set([1, pages, ...[-2, -1, 0, 1, 2].map((d) => cur + d)])]
+    .filter((p) => p >= 1 && p <= pages)
+    .sort((a, b) => a - b);
+  const items = [pageButton(cur - 1, "‹", { disabled: cur <= 1, label: "이전 쪽" })];
+  shown.forEach((p, i) => {
+    if (i && p - shown[i - 1] > 1) items.push(el("span", { text: "…", className: "kpi-pager-gap" }));
+    items.push(pageButton(p, String(p), { current: p === cur }));
+  });
+  items.push(pageButton(cur + 1, "›", { disabled: cur >= pages, label: "다음 쪽" }));
+  $("review-pager").replaceChildren(...items);
+  $("review-pager").hidden = pages <= 1;
+}
+
+function setReviewPage(page) {
+  view.reviewPage = page;
+  renderReviewList();
+  $("review-list").scrollIntoView({ block: "nearest" });
+}
+
+// 언어·감성을 바꾸면 1쪽부터 다시 봅니다.
 function setReviewLang(lang) {
   view.reviewLang = lang;
+  view.reviewPage = 1;
   $("review-lang").value = lang;
   renderReviewList();
 }
 
 function setReviewFilter(sentiment) {
   view.reviewFilter = sentiment;
+  view.reviewPage = 1;
   $("review-filter").value = sentiment;
   renderReviewList();
 }
@@ -810,6 +852,7 @@ async function loadVoc() {
   try {
     const data = await getJson(API.voc);
     vocReviews = data.reviews;
+    view.surveyComments = data.survey_comments || [];
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
     else renderVoc(data, vocReviews, { text: "시연 분류", status: "demo", meta: "시연 리뷰·시연 분류" });
@@ -938,6 +981,8 @@ root.addEventListener("click", (event) => {
     analyzeVoc(target);
   } else if (action === "currency") {
     setCurrency(target.dataset.cur);
+  } else if (action === "review-page") {
+    setReviewPage(Number(target.dataset.page));
   } else if (action === "move") {
     movePanel(target.closest(".kpi-panel"), Number(target.dataset.dir));
   } else if (action === "reset-order") {

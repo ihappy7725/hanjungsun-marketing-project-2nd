@@ -9,7 +9,6 @@ import datetime
 import email.utils
 import json
 import os
-import random
 import time
 import urllib.error
 import urllib.request
@@ -47,6 +46,8 @@ DEMO_CHANNELS = [
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
 DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_clicks": 1_540, "pamphlet_sessions": 1_180}
 GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
+# 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
+SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
 DEMO_CREATORS = [
     {"creator": "@danang.foodie", "platform": "TikTok", "clicks": 3_120, "conversions": 248},
@@ -114,6 +115,117 @@ DEMO_REVIEWS = [
      "raw_text_vn": "Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",
      "translated_kr": "매장에서 받았을 때 상자 한쪽이 찌그러져 있었어요.. 포장 조금만 더 꼼꼼히 해 주시면 좋겠어요.",
      "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    # Shopee 판매 페이지 리뷰
+    {"review_id": "demo_voc_14", "platform": "Shopee_VN",
+     "raw_text_vn": "Mua vị khoai môn, béo bùi mà không ngấy. Rất ngon!",
+     "translated_kr": "토란 맛 샀는데 고소하면서도 안 느끼해요. 진짜 맛있어요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_15", "platform": "Shopee_VN",
+     "raw_text_vn": "Hộp có đá khô, mang đi xa vẫn lạnh, bánh không bị chảy.",
+     "translated_kr": "드라이아이스를 넣어 주셔서 멀리 들고 가도 차갑고 하나도 안 녹았어요.",
+     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_16", "platform": "Shopee_VN",
+     "raw_text_vn": "Túi giữ lạnh hơi mỏng, trời 35 độ cầm 30 phút là bánh mềm.",
+     "translated_kr": "보냉백이 좀 얇아요. 35도 날씨에 30분 들고 다녔더니 떡이 물러졌어요ㅠ",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_17", "platform": "Shopee_VN",
+     "raw_text_vn": "Bánh ngon nhưng mua 6 cái hơn 300 nghìn thì hơi xót.",
+     "translated_kr": "맛은 있는데 6개에 30만 동 넘으니까 좀 아깝긴 하네요..",
+     "sentiment": "Neutral", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_18", "platform": "Shopee_VN",
+     "raw_text_vn": "Vỏ mochi dẻo, nhân kem phô mai mặn ngọt rất cuốn.",
+     "translated_kr": "떡이 쫀득하고 크림치즈 소가 단짠이라 계속 들어가요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_19", "platform": "Shopee_VN",
+     "raw_text_vn": "Đặt làm quà sinh nhật cho mẹ, mẹ khen hộp đẹp và bánh ngon.",
+     "translated_kr": "엄마 생신 선물로 샀는데 상자도 예쁘고 맛있다고 좋아하셨어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_20", "platform": "Shopee_VN",
+     "raw_text_vn": "Vị dâu lần này hơi chua, không ngọt như lần trước.",
+     "translated_kr": "이번 딸기 맛은 좀 시더라고요. 지난번만큼 달지 않았어요..",
+     "sentiment": "Negative", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_21", "platform": "Shopee_VN",
+     "raw_text_vn": "Hạn sử dụng ghi rõ, có hướng dẫn bảo quản bằng tiếng Việt, rất tiện.",
+     "translated_kr": "유통기한이 잘 적혀 있고 베트남어 보관 안내도 있어서 편했어요.",
+     "sentiment": "Positive", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_22", "platform": "Shopee_VN",
+     "raw_text_vn": "Ăn ổn, nhưng mình thích bánh truyền thống của Việt Nam hơn.",
+     "translated_kr": "먹을 만은 한데 저는 베트남 전통 떡이 더 입에 맞네요.",
+     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_23", "platform": "Shopee_VN",
+     "raw_text_vn": "Mua combo 2 hộp được giảm giá, quá hời.",
+     "translated_kr": "두 박스 묶음으로 사니까 할인돼서 완전 이득이었어요.",
+     "sentiment": "Positive", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_24", "platform": "Shopee_VN",
+     "raw_text_vn": "Giá tăng so với tháng trước mà hộp lại ít bánh hơn.",
+     "translated_kr": "지난달보다 가격은 올랐는데 개수는 줄었어요..",
+     "sentiment": "Negative", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_25", "platform": "Shopee_VN",
+     "raw_text_vn": "Con mình 5 tuổi rất thích vị chuối, ngày nào cũng đòi.",
+     "translated_kr": "다섯 살 아이가 바나나 맛을 너무 좋아해서 매일 달라고 해요ㅋㅋ",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    # Instagram 게시물 댓글
+    {"review_id": "demo_voc_26", "platform": "Instagram",
+     "raw_text_vn": "Hộp quà màu pastel lên hình rất xinh, chụp story ai cũng hỏi mua ở đâu.",
+     "translated_kr": "파스텔 톤 선물 상자가 사진이 너무 예쁘게 나와서 스토리 올렸더니 다들 어디서 샀냐고 물어봐요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_27", "platform": "Instagram",
+     "raw_text_vn": "Lần đầu ăn mochi Hàn Quốc, nhân đậu đỏ không quá ngọt, rất thích.",
+     "translated_kr": "한국 찹쌀떡 처음 먹어 봤는데 팥소가 너무 달지 않아서 좋았어요.",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_28", "platform": "Instagram",
+     "raw_text_vn": "Hộp đẹp nhưng hơi to, mang theo không tiện lắm.",
+     "translated_kr": "상자는 예쁜데 좀 커서 들고 다니기엔 불편했어요.",
+     "sentiment": "Neutral", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_29", "platform": "Instagram",
+     "raw_text_vn": "Cửa hàng ở Quận 1 đông quá, xếp hàng gần 20 phút.",
+     "translated_kr": "1군 매장 사람이 너무 많아서 20분 가까이 줄 섰어요.",
+     "sentiment": "Negative", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_30", "platform": "Instagram",
+     "raw_text_vn": "Bánh gói từng cái riêng, mang đi làm ăn rất tiện.",
+     "translated_kr": "하나씩 개별 포장이라 회사에 가져가서 먹기 편해요.",
+     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_31", "platform": "Instagram",
+     "raw_text_vn": "Mua làm quà Trung thu thay bánh nướng, khách hàng rất thích.",
+     "translated_kr": "추석(쭝투) 선물로 월병 대신 드렸는데 거래처분들이 정말 좋아하셨어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_32", "platform": "Instagram",
+     "raw_text_vn": "Bánh ngon, chỉ mong có thêm nhiều vị với giá mềm hơn.",
+     "translated_kr": "맛있어요. 다만 맛 종류가 더 많아지고 가격이 조금 내려가면 좋겠어요.",
+     "sentiment": "Neutral", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_33", "platform": "Instagram",
+     "raw_text_vn": "Nhân viên cửa hàng giới thiệu từng vị rất dễ thương.",
+     "translated_kr": "매장 직원분이 맛마다 하나하나 친절하게 설명해 주셔서 좋았어요.",
+     "sentiment": "Positive", "keyword_tag": "기타"},
+    # TikTok 영상 댓글
+    {"review_id": "demo_voc_34", "platform": "TikTok",
+     "raw_text_vn": "Xem review trên TikTok nên mua thử, ăn đúng là ngon thật.",
+     "translated_kr": "틱톡 리뷰 보고 사 봤는데 진짜 맛있네요.",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_35", "platform": "TikTok",
+     "raw_text_vn": "Mở hộp ra thấy bánh bị dính vào nhau, nhìn không đẹp.",
+     "translated_kr": "상자를 열어 보니 떡끼리 달라붙어 있어서 모양이 별로였어요.",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_36", "platform": "TikTok",
+     "raw_text_vn": "Vị xoài siêu thơm, ăn lạnh như kem luôn.",
+     "translated_kr": "망고 맛 진짜 향긋하고 차갑게 먹으니까 아이스크림 같아요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_37", "platform": "TikTok",
+     "raw_text_vn": "Bánh để được mấy ngày vậy shop? Mình mua nhiều sợ ăn không kịp.",
+     "translated_kr": "며칠까지 보관할 수 있나요? 많이 샀는데 다 못 먹을까 봐 걱정이에요.",
+     "sentiment": "Neutral", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_38", "platform": "TikTok",
+     "raw_text_vn": "Giá trên TikTok Shop với ở cửa hàng khác nhau, hơi khó hiểu.",
+     "translated_kr": "틱톡샵 가격이랑 매장 가격이 달라서 좀 헷갈려요.",
+     "sentiment": "Negative", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_39", "platform": "TikTok",
+     "raw_text_vn": "Mua tặng bạn gái dịp 20/10, bạn ấy rất vui.",
+     "translated_kr": "10월 20일 여성의 날에 여자친구 선물로 줬는데 엄청 좋아했어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_40", "platform": "TikTok",
+     "raw_text_vn": "Vị gốc ngon, còn vị sầu riêng thì tùy người.",
+     "translated_kr": "기본 맛은 맛있고 두리안 맛은 호불호가 있을 것 같아요.",
+     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
 ]
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
@@ -644,44 +756,38 @@ def _voc_stats(reviews):
     }
 
 
-# 설문 문항 → VOC 키워드 (재구매 의향은 토픽이 아니라서 키워드에서 뺍니다)
-SURVEY_KEYWORD = {"맛": "당도/맛", "식감": "당도/맛", "포장/보냉": "포장/보냉", "가격": "가격", "매장 응대": "기타"}
-SURVEY_LOW_SCORE = 2  # 이 점수 이하로 답한 문항을 불만 키워드로 셉니다.
+def _read_survey_comments(path=SURVEY_COMMENTS_CSV):
+    """QR 설문 주관식 한 줄 의견(응답자 1명당 1줄)을 읽습니다. '#'로 시작하는 줄은 설명입니다.
 
-
-def _survey_respondents(survey, seed=186):
-    """문항별 분포(인원 수)를 그대로 지키면서 응답자 한 명 한 명의 답안으로 나눕니다.
-
-    시연 데이터에는 응답자별 원본이 없으므로, 만족한 사람은 여러 문항에 높게 답하는 경향을
-    흉내 내도록 '전체 만족도 순위 + 약간의 흔들림'으로 점수를 배정합니다. 시드가 고정이라 결과는 매번 같습니다.
-    실연동 시에는 설문 도구 응답 CSV의 응답자별 행을 그대로 씁니다.
+    시연 데이터는 응답자의 문항 점수와 맞게 작성했고(scores 열), 감성은 6문항 평균
+    4점 이상 Positive / 3점 이상 Neutral / 3점 미만 Negative 입니다. 파일이 없으면 빈 목록.
     """
-    rng = random.Random(seed)
-    n = min(sum(s["dist"]) for s in survey)
-    people = [{} for _ in range(n)]
-    for s in survey:
-        scores = sorted(i + 1 for i, c in enumerate(s["dist"]) for _ in range(c))[:n]
-        order = sorted(range(n), key=lambda k: k + rng.uniform(-45, 45))
-        for pos, k in enumerate(order):
-            people[k][s["item"]] = scores[pos]
-    return people
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = [line for line in f if not line.startswith("#")]
+    rows = []
+    for row in csv.DictReader(lines):
+        rows.append({
+            "review_id": row["review_id"],
+            "platform": row["platform"],
+            "raw_text_vn": row["raw_text_vn"],
+            "translated_kr": row["translated_kr"],
+            "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
+            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else "기타",
+        })
+    return rows
 
 
-def _survey_voc(survey):
-    """설문 응답자를 VOC 감성·키워드 집계에 더할 수 있게 셉니다.
-
-    감성: 응답자 평균 4점 이상 긍정 / 3점 이상 중립 / 3점 미만 부정
-    키워드: 2점 이하로 답한 문항의 토픽 (한 사람이 같은 토픽을 여러 번 세지 않음)
-    """
+def _survey_voc(comments):
+    """설문 의견을 VOC 감성 도넛·키워드에 더할 수 있게 셉니다."""
     sentiment_counts = {s: 0 for s in SENTIMENTS}
     keyword_counts = {}
-    people = _survey_respondents(survey)
-    for p in people:
-        avg = sum(p.values()) / len(p)
-        sentiment_counts["Positive" if avg >= 4 else "Neutral" if avg >= 3 else "Negative"] += 1
-        for tag in {SURVEY_KEYWORD[item] for item, score in p.items() if score <= SURVEY_LOW_SCORE and item in SURVEY_KEYWORD}:
-            keyword_counts[tag] = keyword_counts.get(tag, 0) + 1
-    return {"respondents": len(people), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
+    for c in comments:
+        if c["sentiment"] in sentiment_counts:
+            sentiment_counts[c["sentiment"]] += 1
+        keyword_counts[c["keyword_tag"]] = keyword_counts.get(c["keyword_tag"], 0) + 1
+    return {"respondents": len(comments), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
 
 
 def _survey_block(survey):
@@ -702,7 +808,7 @@ def _survey_block(survey):
     return {
         "items": items,
         "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
-        "voc": _survey_voc(survey),  # VOC 감성 도넛·키워드에 더하는 응답자 집계
+        "voc": _survey_voc(_read_survey_comments()),  # VOC 감성 도넛·키워드에 더하는 설문 의견 집계
     }
 
 
@@ -840,6 +946,8 @@ def api_voc():
         "is_demo": True,
         "reviews": DEMO_REVIEWS,
         **_voc_stats(DEMO_REVIEWS),
+        # 설문 의견은 AI 정제 대상이 아니라 데이터의 한국어를 그대로 씁니다(리뷰 목록에 함께 표시).
+        "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
         "ai": _voc_ai_cache["result"],
         # 키가 있으면 화면이 처음 열릴 때 AI 정제를 한 번 자동 실행합니다(결과는 서버 메모리에 보관).
