@@ -6,6 +6,9 @@
 /* ---------- 머리 (여백을 줄여 KPI를 위로) ---------- */
 /* 공통 본문 위 여백(platform_core)은 그대로 두고 KPI 화면만 위로 당깁니다. */
 .kpi-page { margin-top: 0; }
+/* KPI 전용 색: base.css에 분홍이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
+   공통 변수(--pink 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
+.kpi-page { --kpi-pink: #e89bb1; }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
 .kpi-page .kpi-head h1 { margin: 0; line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
@@ -97,19 +100,32 @@
 .kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
 
 /* ---------- 2×2 블록 ---------- */
-/* 블록마다 자기 내용만큼만 높이를 가집니다(빈 공간 없이). */
+/* 4개 블록은 예산 블록(기본 화면) 높이에 맞춥니다. JS가 예산 블록 높이를 재서 --kpi-block-h로 넣습니다. */
 .kpi-page .kpi-board {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: var(--space-5);
 }
-/* 블록 높이는 내용에 맞춰 정해집니다(글자·차트가 잘리지 않게). */
 .kpi-page .kpi-panel {
   display: flex;
   flex-direction: column;
   padding: var(--space-6) var(--space-7) var(--space-5);
 }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) { height: var(--kpi-block-h); }
+/* 같은 높이 안에 들어가지 않는 내용은 블록 안에서 스크롤합니다(글자가 잘리지 않게). */
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-panel-body { overflow-y: auto; }
+/* 남는 높이는 그래프가 채웁니다(ROAS 막대 · VOC 도넛/키워드). */
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-chart-fill { flex: 1 1 0; height: auto; min-height: 110px; }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-voc { flex: 1 1 0; min-height: 110px; }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-voc .kpi-chart { height: 100%; }
+/* GA4 기본 화면: 지표 3칸과 Top 5 막대를 촘촘하게 해서 같은 높이 안에 5개가 모두 보이게 합니다. */
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-metrics > div { gap: 0; padding: var(--space-3) var(--space-4); }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-metrics strong { font-size: var(--fs-subheading); line-height: var(--line-height-heading); }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-top { margin-top: 0; }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-top .kpi-detail-title { margin: var(--space-3) 0 var(--space-2); }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-bars { gap: var(--space-1); }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-metrics .kpi-sub-text { display: none; }  /* 세션 수 등 보조 설명은 확대 화면에서 */
 .kpi-page .kpi-panel .panelhead { margin-bottom: var(--space-4); }
 .kpi-page .kpi-panel .panelhead h2 { display: flex; align-items: center; gap: var(--space-2); }
 .kpi-page .kpi-tools { display: flex; align-items: center; gap: var(--space-3); }
@@ -275,7 +291,9 @@
   background: var(--paper);
   font-size: var(--fs-min);
   line-height: var(--line-height);
+  white-space: pre-line;  /* 'AI 요약' 제목과 문장마다 줄을 나눔 */
 }
+.kpi-page .kpi-ai-summary:empty { display: none; }  /* 요약이 없으면 빈 회색 줄을 남기지 않음 */
 .kpi-page .kpi-detail-title { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-5) 0 var(--space-3); font-size: var(--fs-min); font-weight: 600; }
 
 /* ---------- VOC ---------- */
@@ -292,10 +310,19 @@
 }
 .kpi-page .kpi-qr b { font-family: var(--font-serif); font-weight: 700; }
 .kpi-page .kpi-qr .kpi-arrow { color: var(--muted); }
-.kpi-page .kpi-survey { display: grid; gap: var(--space-3); max-width: 420px; margin: 0; font-size: var(--fs-min); }
-.kpi-page .kpi-survey div { display: grid; grid-template-columns: 44px 1fr 34px; align-items: center; gap: var(--space-4); }
-.kpi-page .kpi-survey dd { margin: 0; }
-.kpi-page .kpi-survey .progress { margin: 0; height: 5px; }
+/* QR 설문(확대 화면): 문항별 1~5점 응답 인원 비중 막대 */
+.kpi-page .kpi-survey-table td:nth-child(2) { width: 45%; min-width: 180px; }
+.kpi-page .kpi-survey-bar { display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--progress-bg); }
+.kpi-page .kpi-survey-bar span { display: block; height: 100%; }
+.kpi-page .kpi-survey-bar span + span { box-shadow: inset 1px 0 0 var(--page-bg); }
+.kpi-page .kpi-s1 { background: var(--kpi-pink); }
+.kpi-page .kpi-s2 { background: var(--orange); }
+.kpi-page .kpi-s3 { background: var(--beige); }
+.kpi-page .kpi-s4 { background: var(--celadon); }
+.kpi-page .kpi-s5 { background: var(--teal); }
+.kpi-page .kpi-survey-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-bottom: var(--space-3); color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-survey-legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
+.kpi-page .kpi-survey-legend i { width: 10px; height: 10px; border-radius: 2px; }
 
 /* ---------- GA4 ---------- */
 .kpi-page .kpi-toggle { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--fs-min); white-space: nowrap; }
@@ -350,11 +377,13 @@
 .kpi-page .kpi-roas-totals dd { margin: 0; font-family: var(--font-serif); font-weight: 700; }
 
 /* ---------- VOC 리뷰 보기 ---------- */
-.kpi-page .kpi-review-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-top: var(--space-5); }
-.kpi-page .kpi-review-count { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-review-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
+.kpi-page .kpi-review-count { color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
+/* 언어 · 감성 드롭다운 (블록 머리 버튼과 같은 28px) */
+.kpi-page .kpi-select-label { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-select { height: 28px; min-height: 28px; padding: 0 var(--space-4); color: var(--ink); cursor: pointer; }
 .kpi-page .kpi-review-list { display: grid; gap: var(--space-3); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .kpi-page .kpi-review-list li { padding: var(--space-4) var(--space-5); border: 1px solid var(--line-soft); background: var(--white); }
-.kpi-page .kpi-panel:not(.is-expanded) .kpi-review-list li:nth-child(n + 4) { display: none; }
 .kpi-page .kpi-review-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-2); color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-review-ko { margin: 0; line-height: var(--line-height); }
 .kpi-page .kpi-review-vi { margin: 0; font-family: var(--font-vi); line-height: var(--line-height); }
@@ -389,7 +418,6 @@
   .kpi-page .kpi-scorecards .kpi:nth-child(2) { border-right: 0; }
   .kpi-page .kpi-scorecards .kpi:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
   .kpi-page .kpi-board { grid-template-columns: 1fr; }
-  .kpi-page .kpi-panel { min-height: 0; }
 }
 @media (max-width: 650px) {
   .kpi-page .kpi-head { flex-direction: column; align-items: flex-start; }

@@ -192,7 +192,7 @@
         </div>
       </div>
       <div class="kpi-panel-body">
-        <div class="kpi-chart kpi-chart-bar">
+        <div class="kpi-chart kpi-chart-bar kpi-chart-fill">
           <canvas data-kpi-chart="roas" aria-label="채널별 ROAS 막대 차트" role="img"></canvas>
         </div>
         <p class="kpi-note kpi-one-line" data-kpi="roas-advice"></p>
@@ -212,7 +212,7 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC 감성 · 이슈 키워드 {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
+          <h2>VOC {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
         <div class="kpi-tools">
 
@@ -234,26 +234,43 @@
         </div>
         <div class="kpi-qr" data-kpi="qr-strip"></div>
 
-        <!-- 리뷰 보기: 언어·감성 선택 (기본: AI가 다듬은 한국어, 전체). 기본 화면은 3건, 확대하면 전체 -->
-        <div class="kpi-review-tools">
-          <div class="kpi-seg" role="group" aria-label="리뷰 언어">
-            <button type="button" class="is-on" data-kpi-action="review-lang" data-lang="ko" aria-pressed="true">한국어</button>
-            <button type="button" data-kpi-action="review-lang" data-lang="vi" aria-pressed="false">베트남어</button>
-            <button type="button" data-kpi-action="review-lang" data-lang="both" aria-pressed="false">둘 다</button>
-          </div>
-          <div class="kpi-seg" role="group" aria-label="감성 필터">
-            <button type="button" class="is-on" data-kpi-action="review-filter" data-sentiment="all" aria-pressed="true">전체</button>
-            <button type="button" data-kpi-action="review-filter" data-sentiment="Positive" aria-pressed="false">긍정</button>
-            <button type="button" data-kpi-action="review-filter" data-sentiment="Neutral" aria-pressed="false">중립</button>
-            <button type="button" data-kpi-action="review-filter" data-sentiment="Negative" aria-pressed="false">부정</button>
-          </div>
-          <span class="kpi-review-count" data-kpi="review-count"></span>
-        </div>
-        <ul class="kpi-review-list" data-kpi="review-list"></ul>
-
+        <!-- 기본 화면은 QR 줄까지. 설문 결과와 리뷰 목록은 확대 화면에서 봅니다. -->
         <div class="kpi-detail">
-          <p class="kpi-detail-title">팜플렛 QR 설문 만족도</p>
-          <dl class="kpi-survey" data-kpi="survey-list"></dl>
+          <p class="kpi-detail-title">
+            팜플렛 QR 설문 만족도 <span class="kpi-review-count" data-kpi="survey-count"></span>
+          </p>
+          <div class="kpi-survey-legend" aria-hidden="true">
+            <span><i class="kpi-s1"></i>1점</span><span><i class="kpi-s2"></i>2점</span><span><i class="kpi-s3"></i>3점</span><span><i class="kpi-s4"></i>4점</span><span><i class="kpi-s5"></i>5점</span>
+          </div>
+          <div class="table-wrap">
+            <table class="kpi-table kpi-survey-table">
+              <thead><tr><th class="is-text">문항</th><th class="is-text">점수 분포</th><th>평균</th><th>긍정(4~5점)</th><th>응답</th></tr></thead>
+              <tbody data-kpi="survey-rows"></tbody>
+            </table>
+          </div>
+          <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 긍정 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
+
+          <!-- 리뷰 보기: 언어·감성 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
+          <p class="kpi-detail-title">리뷰</p>
+          <div class="kpi-review-tools">
+            <label class="kpi-select-label">언어
+              <select class="kpi-select" data-kpi-action="review-lang" data-kpi="review-lang">
+                <option value="ko" selected>한국어</option>
+                <option value="vi">베트남어</option>
+                <option value="both">둘 다</option>
+              </select>
+            </label>
+            <label class="kpi-select-label">감성
+              <select class="kpi-select" data-kpi-action="review-filter" data-kpi="review-filter">
+                <option value="all" selected>전체</option>
+                <option value="Positive">긍정</option>
+                <option value="Neutral">중립</option>
+                <option value="Negative">부정</option>
+              </select>
+            </label>
+            <span class="kpi-review-count" data-kpi="review-count"></span>
+          </div>
+          <ul class="kpi-review-list" data-kpi="review-list"></ul>
         </div>
       </div>
       <p class="kpi-meta" data-kpi="voc-meta"></p>

@@ -117,10 +117,15 @@ DEMO_REVIEWS = [
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
 DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_responses": 186}
+# 응답자 186명이 문항마다 1~5점 중 하나를 고른 인원 수(dist = [1점, 2점, 3점, 4점, 5점]).
+# 평균·긍정 비율은 이 분포에서 계산합니다(_survey_block).
 DEMO_SURVEY = [
-    {"item": "맛", "score": 4.5},
-    {"item": "포장", "score": 3.6},
-    {"item": "매장 응대", "score": 3.8},
+    {"item": "맛", "dist": [2, 3, 12, 55, 114]},
+    {"item": "식감", "dist": [3, 5, 18, 68, 92]},
+    {"item": "포장/보냉", "dist": [6, 14, 41, 72, 53]},
+    {"item": "가격", "dist": [9, 21, 58, 61, 37]},
+    {"item": "매장 응대", "dist": [4, 9, 38, 79, 56]},
+    {"item": "재구매 의향", "dist": [5, 8, 27, 63, 83]},
 ]
 
 FX_STALE_DAYS = 7  # 환율 기준일이 이보다 오래되면 화면에 주의 표시
@@ -638,6 +643,27 @@ def _voc_stats(reviews):
     }
 
 
+def _survey_block(survey):
+    """문항별 점수 분포(1~5점 인원)로 응답 수·평균·긍정(4~5점) 비율을 계산합니다."""
+    items = []
+    for s in survey:
+        dist = s["dist"]
+        n = sum(dist)
+        score_sum = sum((i + 1) * c for i, c in enumerate(dist))
+        items.append({
+            "item": s["item"],
+            "dist": dist,
+            "responses": n,
+            "avg": round(score_sum / n, 2) if n else None,
+            "top2_percent": _pct(dist[3] + dist[4], n),
+        })
+    scored = [x["avg"] for x in items if x["avg"] is not None]
+    return {
+        "items": items,
+        "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
+    }
+
+
 def _qr_block():
     q = DEMO_QR
     return {
@@ -645,7 +671,7 @@ def _qr_block():
         "scan_rate_percent": _pct(q["qr_scans"], q["pamphlets"]),
         "follow_rate_percent": _pct(q["zalo_follows"], q["qr_scans"]),
         "response_rate_percent": _pct(q["survey_responses"], q["qr_scans"]),
-        "survey": DEMO_SURVEY,
+        "survey": _survey_block(DEMO_SURVEY),
     }
 
 
@@ -659,14 +685,16 @@ _voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
 아래 JSON 배열은 베트남어 고객 리뷰입니다. 각 리뷰를 한국어로 자연스럽게 번역하고,
-감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어 한 문장으로 요약하세요.
+감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어로 짧게 요약하세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
 - keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
 - review_id는 입력 값을 그대로 사용
 - translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
   (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
-- summary_kr는 보고서 문체 한 문장, 과장하지 말고 리뷰에 있는 내용만 근거로 요약
+- summary_kr는 짧은 평서문 2문장 이하. 첫 문장은 가장 많이 나온 긍정 요인, 둘째 문장은 가장 많이 나온 불만 요인
+  각 문장은 40자 이내, "~입니다/~습니다"로 끝내고 쉼표로 여러 내용을 잇지 말 것
+  수식어·추측·과장 없이 리뷰에 있는 내용만 근거로 작성 (예: "맛과 식감에 대한 만족이 가장 많습니다. 포장 상태와 가격에 대한 불만이 있습니다.")
 
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],

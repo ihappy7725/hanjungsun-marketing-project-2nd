@@ -35,9 +35,13 @@ const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "T
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
 // ---------- 디자인 변수 ----------
-const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-// 차트 색: 공통 톤(남색·청록·갈색·살구) 안에서 서로 잘 구분되는 진한 색을 씁니다. (base.css 변수만 사용)
+// .kpi-page에서 읽어야 KPI 안에서만 정의한 변수(--kpi-pink)까지 함께 읽힙니다.
+const cssVar = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+// 차트 색: 공통 톤(남색·청록·갈색·살구) 안에서 서로 잘 구분되는 진한 색을 씁니다. (base.css 변수 + KPI 전용 분홍)
 const palette = () => ({
+  ink: cssVar("--ink"),         // 예산: 플랫폼 광고비(검정)
+  pink: cssVar("--kpi-pink"),   // 예산: 인플루언서 예상(분홍, kpi_main.css에서 정의)
+  ivory: cssVar("--beige"),     // 예산: 잔여 가용 예산(아이보리)
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
@@ -155,11 +159,12 @@ function renderBudget(data) {
   const b = data.budget;
   const p = palette();
   const remaining = Math.max(b.remaining_krw, 0);
+  // 예산 색: 검정 · 녹색 · 분홍 · 아이보리
   const parts = [
-    ["플랫폼 광고비", b.platform_krw, p.strong],
-    ["인플루언서 집행", b.influencer_paid_krw, p.mid],
-    ["인플루언서 예상", b.influencer_expected_krw, p.low],
-    ["잔여 가용 예산", remaining, p.lineStrong],
+    ["플랫폼 광고비", b.platform_krw, p.ink],
+    ["인플루언서 집행", b.influencer_paid_krw, p.good],
+    ["인플루언서 예상", b.influencer_expected_krw, p.pink],
+    ["잔여 가용 예산", remaining, p.ivory],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
   setText("remaining-pct", pct(b.remaining_percent));
@@ -463,10 +468,17 @@ function renderVoc(stats, reviews, source) {
   doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.good, p.soft, p.low], { cutout: "58%", legend: true });
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
+    // 리뷰 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
     charts.sentiment.options.onClick = (_e, els) => {
       if (!els.length) return;
       const key = keys.at(els[0].index);
-      setReviewFilter(view.reviewFilter === key ? "all" : key);
+      const panel = root.querySelector('[data-kpi-panel="voc"]');
+      if (!panel.classList.contains("is-expanded")) {
+        setExpanded(panel);
+        setReviewFilter(key);
+      } else {
+        setReviewFilter(view.reviewFilter === key ? "all" : key);
+      }
     };
     charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
   }
@@ -496,7 +508,7 @@ function renderVoc(stats, reviews, source) {
   setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: 리뷰 ${num(stats.sample_size ?? reviews.length)}건 · 범위: 베트남`);
 }
 
-// 리뷰 목록: 언어(한국어 / 베트남어 / 둘 다) · 감성 필터. 기본 화면은 3건, 확대하면 전체(CSS).
+// 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운
 function renderReviewList() {
   const tone = { Positive: "green", Negative: "red" };
   const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
@@ -530,13 +542,13 @@ function setSegment(action, attr, value) {
 
 function setReviewLang(lang) {
   view.reviewLang = lang;
-  setSegment("review-lang", "lang", lang);
+  $("review-lang").value = lang;
   renderReviewList();
 }
 
 function setReviewFilter(sentiment) {
   view.reviewFilter = sentiment;
-  setSegment("review-filter", "sentiment", sentiment);
+  $("review-filter").value = sentiment;
   renderReviewList();
 }
 
@@ -550,13 +562,21 @@ function renderQr(qr) {
     step("Zalo 친구 추가", num(qr.zalo_follows)),
     arrow(),
     step("설문 응답", `${num(qr.survey_responses)} (${pct(qr.response_rate_percent)})`),
+    ...(qr.survey.overall_avg != null ? [el("span", { text: "·", className: "kpi-arrow" }), step("만족도 평균", `${qr.survey.overall_avg.toFixed(1)} / 5`)] : []),
   );
   strip.title = `배포 팜플렛 ${num(qr.pamphlets)}장 · 스캔율 ${pct(qr.scan_rate_percent)} · 친구 추가율 ${pct(qr.follow_rate_percent)}`;
 
-  $("survey-list").replaceChildren(...qr.survey.map((s) => {
-    const bar = el("div", { className: "progress" }, [el("span")]);
-    bar.firstChild.style.width = `${(s.score / 5) * 100}%`;
-    return el("div", {}, [el("dt", { text: s.item }), el("dd", {}, [bar]), el("dd", { text: s.score.toFixed(1) })]);
+  // 확대 화면: 문항별 1~5점 분포 막대 · 평균 · 긍정(4~5점) 비율 · 응답 수
+  const items = qr.survey.items;
+  $("survey-count").textContent = `응답 ${num(qr.survey_responses)}건 · ${items.length}문항`;
+  fillRows("survey-rows", items.map((s) => {
+    const bar = el("span", { className: "kpi-survey-bar" }, s.dist.map((count, i) => {
+      const seg = el("span", { className: `kpi-s${i + 1}` });
+      seg.style.width = `${s.responses ? (count / s.responses) * 100 : 0}%`;
+      seg.title = `${i + 1}점 ${num(count)}명 (${pct(s.responses ? (count / s.responses) * 100 : 0)})`;
+      return seg;
+    }));
+    return [s.item, bar, s.avg == null ? "—" : s.avg.toFixed(2), pct(s.top2_percent), `${num(s.responses)}명`];
   }));
 }
 
@@ -569,7 +589,9 @@ function showVocAi(demoReviews, ai) {
     title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
     meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전) · 원문은 시연 리뷰`,
   });
-  setText("voc-summary", ai.summary_kr ? `AI 요약(검수 전): ${ai.summary_kr}` : "AI 요약이 비어 있습니다.");
+  // 문장마다 줄을 나눠 짧게 읽히도록 표시합니다.
+  const summary = (ai.summary_kr || "").trim().replace(/([.!?。])\s+/g, "$1\n");
+  setText("voc-summary", summary ? `AI 요약(검수 전)\n${summary}` : "AI 요약이 비어 있습니다.");
 }
 
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
@@ -685,10 +707,28 @@ function resizeCharts() {
   requestAnimationFrame(() => Object.values(charts).forEach((c) => c.resize()));
 }
 
+// 4개 블록 높이를 예산 블록(기본 화면) 높이에 맞춥니다. 넘치는 내용은 블록 안에서 스크롤합니다.
+function syncBlockHeight() {
+  const board = $("board");
+  const budget = board.querySelector('[data-kpi-panel="budget"]');
+  if (!budget || budget.classList.contains("is-expanded")) return;
+  board.classList.remove("is-synced");
+  board.style.setProperty("--kpi-block-h", `${Math.ceil(budget.getBoundingClientRect().height)}px`);
+  board.classList.add("is-synced");
+  resizeCharts();
+}
+
+let syncFrame = 0;
+window.addEventListener("resize", () => {
+  cancelAnimationFrame(syncFrame);
+  syncFrame = requestAnimationFrame(syncBlockHeight);
+});
+
 function setExpanded(panel) {
   root.querySelectorAll(".kpi-panel.is-expanded").forEach((p) => p.classList.remove("is-expanded"));
   if (panel) panel.classList.add("is-expanded");
   root.querySelector(".kpi-backdrop").hidden = !panel;
+  if (!panel) syncBlockHeight();
   root.querySelectorAll(".kpi-expand").forEach((btn) => {
     const open = btn.closest(".kpi-panel") === panel;
     btn.setAttribute("aria-label", open ? "원래 크기로" : "블록 확대");
@@ -721,6 +761,7 @@ async function loadSummary() {
     renderBudget(data);
     renderRoas(data);
     renderGa4(data);
+    syncBlockHeight();
   } catch (err) {
     root.querySelector(".kpi-legend-note").hidden = false;
     root.querySelector(".kpi-legend-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
@@ -859,10 +900,6 @@ root.addEventListener("click", (event) => {
     analyzeVoc(target);
   } else if (action === "currency") {
     setCurrency(target.dataset.cur);
-  } else if (action === "review-lang") {
-    setReviewLang(target.dataset.lang);
-  } else if (action === "review-filter") {
-    setReviewFilter(target.dataset.sentiment);
   } else if (action === "move") {
     movePanel(target.closest(".kpi-panel"), Number(target.dataset.dir));
   } else if (action === "reset-order") {
@@ -879,6 +916,8 @@ root.addEventListener("click", (event) => {
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
   if (event.target.matches('[data-kpi="sim-form"] [name="kind"]')) setSimKind(event.target.value);
+  if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
+  if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);
 });
 
 root.addEventListener("submit", (event) => {
@@ -893,6 +932,7 @@ document.addEventListener("keydown", (event) => {
 
 chartNotice();
 loadOrder();
+document.fonts?.ready.then(syncBlockHeight);  // 글꼴이 늦게 적용되면 예산 블록 높이가 바뀌므로 다시 맞춤
 setGa4Visible(true);
 loadSummary();
 loadVoc();
