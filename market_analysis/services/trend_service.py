@@ -223,11 +223,26 @@ def parse_regions(raw, region_labels):
     return rows
 
 
-def combine_regions(by_category):
-    """카테고리별 지역 관심도(각 0~100) -> 지역별 평균으로 매긴 종합 순위.
+def category_weights(sections):
+    """카테고리 관심도 영역의 최근 12주 평균(4개 카테고리를 같은 요청에서 비교한 값) -> 카테고리별 검색 규모."""
+    return {item["id"]: item.get("recent_average") for item in sections.get("categories", {}).get("items", [])}
 
-    모든 카테고리에 값이 있는 지역만 순위를 매깁니다. 빠진 카테고리를 0으로 채우지 않습니다.
+
+def combine_regions(by_category, weights=None):
+    """카테고리별 지역 관심도(각 1위 지역 = 100) -> 검색 규모 가중 평균으로 매긴 종합 순위.
+
+    지역 점수 = Σ(카테고리 지역 지수 × 카테고리 검색 규모 비중)이고, 1위 지역 = 100으로 다시 맞춥니다.
+    검색 규모가 모든 카테고리에 양수로 있지 않으면 같은 비중(단순 평균)으로 계산하고 method="equal"로 알립니다.
+    모든 카테고리에 값이 있는 지역만 순위를 매기며, 빠진 카테고리를 0으로 채우지 않습니다.
+    반환: (rows, {"method": "weighted" | "equal", "weights": {카테고리 id: 비중 %}})
     """
+    ids = [category["id"] for category in by_category]
+    sizes = [(weights or {}).get(cid) for cid in ids]
+    if ids and all(isinstance(size, (int, float)) and size > 0 for size in sizes):
+        method, shares = "weighted", {cid: size / sum(sizes) for cid, size in zip(ids, sizes)}
+    else:
+        method, shares = "equal", {cid: 1 / len(ids) for cid in ids} if ids else {}
+
     regions = {}
     for category in by_category:
         for row in category["items"]:
@@ -237,18 +252,23 @@ def combine_regions(by_category):
     ranked, rest = [], []
     for region in regions.values():
         complete = len(region["categories"]) == len(by_category)
-        region["interest"] = round1(mean(region["categories"].values())) if complete else None
-        if complete and region["interest"] > 0:
+        score = sum(value * shares[cid] for cid, value in region["categories"].items()) if complete else None
+        if complete and score > 0:
+            region["score"] = score
             region["data_status"] = "normal"
             ranked.append(region)
         else:
+            region["interest"] = None
             region["data_status"] = "insufficient"
             region["rank"] = None
             rest.append(region)
-    ranked.sort(key=lambda row: -row["interest"])
+    ranked.sort(key=lambda row: -row["score"])
+    top = ranked[0]["score"] if ranked else None
     for rank, row in enumerate(ranked, start=1):
         row["rank"] = rank
-    return ranked + rest
+        row["interest"] = round1(row.pop("score") / top * 100)
+    meta = {"method": method, "weights": {cid: round1(share * 100) for cid, share in shares.items()}}
+    return ranked + rest, meta
 
 
 def rising_products(category, related, limit=MAX_RISING_PRODUCTS):
@@ -431,7 +451,10 @@ class TrendCollectionService:
                 "fruit_source_url": trends_url(fruit_queries[:MAX_PER_REQUEST], period, geo)}
 
     def _collect_regions(self, country_code, config, now):
-        """카테고리마다 대표 검색어로 지역 관심도를 받아 평균합니다. 하나라도 실패하면 영역 전체를 실패로 둡니다."""
+        """카테고리마다 대표 검색어로 지역 관심도를 받습니다. 하나라도 실패하면 영역 전체를 실패로 둡니다.
+
+        종합 순위는 화면에 보낼 때 최신 카테고리 검색 규모로 다시 계산합니다(_regions). 여기 items는 수집 시점 기록입니다.
+        """
         period = config["recent_period"]
         by_category = []
         for category in config["categories"]:
@@ -444,7 +467,9 @@ class TrendCollectionService:
                 "source_url": trends_url([query], period, config["geo"]),
                 "items": parse_regions(raw, config.get("region_labels", {})),
             })
-        return {"by_category": by_category, "items": combine_regions(by_category)}
+        stored = (self.repository.get_latest(country_code) or {}).get("sections", {})
+        items, meta = combine_regions(by_category, category_weights(stored))
+        return {"by_category": by_category, "items": items, "combine": meta}
 
     def _collect_related(self, country_code, config, now):
         """카테고리 하나가 실패해도 나머지는 저장합니다. 모두 실패하면 이전 정상 데이터를 유지합니다.
@@ -499,7 +524,7 @@ class TrendService:
         categories = self._categories(config, sections, labels)
         fruit_flavors = self._fruit_flavors(config, sections)
         seasonality = self._seasonality(config, sections)
-        regions = self._regions(sections, config.get("region_labels", {}))
+        regions, regions_meta = self._regions(sections, config.get("region_labels", {}))
         ads = self._ads(country_code)
 
         section_status = {}
@@ -542,6 +567,7 @@ class TrendService:
             "fruit_anchor": sections.get("fruit_flavors", {}).get("anchor"),
             "seasonality": seasonality,
             "regions": regions,
+            "regions_meta": regions_meta,
             "regions_by_category": self._regions_by_category(sections, config.get("region_labels", {})),
             "ad_creative_trends": ads,
             "source": {"search": SOURCE_SEARCH, "ads": SOURCE_ADS},
@@ -657,15 +683,22 @@ class TrendService:
 
     @staticmethod
     def _regions(sections, region_labels):
+        """지역 종합 순위와 계산 방식. 카테고리별 수집본이 있으면 최신 카테고리 검색 규모로 다시 가중 평균합니다."""
         section = sections.get("regions", {})
+        by_category = section.get("by_category")
+        if by_category:
+            rows, meta = combine_regions(by_category, category_weights(sections))
+            meta["weights_checked_at"] = sections.get("categories", {}).get("checked_at")
+        else:  # 이전 형식(검색어 하나 기준) 수집본
+            rows, meta = section.get("items", []), {"method": "single"}
         return [{
             **row,
             "name": region_labels.get(row.get("geo")) or row.get("name"),
-            "combined": bool(section.get("by_category")),  # False면 이전 형식(검색어 하나 기준) 수집본
+            "combined": bool(by_category),
             "query": section.get("query"),
             "checked_at": section.get("checked_at"),
             "source_url": section.get("source_url"),
-        } for row in section.get("items", [])]
+        } for row in rows], meta
 
     @staticmethod
     def _regions_by_category(sections, region_labels):

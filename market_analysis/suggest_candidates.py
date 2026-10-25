@@ -1,6 +1,6 @@
 """카테고리별 상품 후보 검색어 제안 (월 1회 권장).
 
-    python suggest_candidates.py           # 제안만 생성 (SerpApi 약 8~16회). 설정은 바꾸지 않음
+    python suggest_candidates.py           # 제안만 생성 (SerpApi 약 8~24회). 설정은 바꾸지 않음
     python suggest_candidates.py --apply   # 담당자 확인 후, 마지막 제안을 설정 파일에 반영 (호출 없음)
 
 반영 후 python collect_trends.py --sections rankings 로 순위를 다시 수집합니다.

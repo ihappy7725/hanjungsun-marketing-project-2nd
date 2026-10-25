@@ -143,13 +143,30 @@ class CalculationTests(unittest.TestCase):
             {"id": "a", "items": [region("R1", 100), region("R2", 20), region("R3", 0), region("R4", 50)]},
             {"id": "b", "items": [region("R1", 40), region("R2", 80), region("R3", 0)]},
         ]
-        rows = {row["geo"]: row for row in combine_regions(by_category)}
-        self.assertEqual((rows["R1"]["interest"], rows["R1"]["rank"]), (70, 1))
-        self.assertEqual((rows["R2"]["interest"], rows["R2"]["rank"]), (50, 2))
+        result, meta = combine_regions(by_category)  # 검색 규모가 없으면 같은 비중
+        rows = {row["geo"]: row for row in result}
+        self.assertEqual(meta, {"method": "equal", "weights": {"a": 50, "b": 50}})
+        # 평균 R1 70, R2 50 -> 1위 = 100으로 맞춤
+        self.assertEqual((rows["R1"]["interest"], rows["R1"]["rank"]), (100, 1))
+        self.assertEqual((rows["R2"]["interest"], rows["R2"]["rank"]), (71.4, 2))
         self.assertEqual((rows["R3"]["rank"], rows["R3"]["data_status"]), (None, "insufficient"))
         # 한 카테고리에 값이 없으면 0으로 채우지 않고 순위에서 뺍니다.
         self.assertEqual((rows["R4"]["interest"], rows["R4"]["rank"], rows["R4"]["data_status"]), (None, None, "insufficient"))
         self.assertEqual(rows["R4"]["categories"], {"a": 50})
+
+    def test_regions_combined_weighted_by_category_search_size(self):
+        def region(geo, value):
+            return {"geo": geo, "name": geo, "location": geo, "interest": value}
+        by_category = [
+            {"id": "big", "items": [region("R1", 100), region("R2", 20)]},
+            {"id": "small", "items": [region("R1", 10), region("R2", 100)]},
+        ]
+        # 단순 평균이면 R2(60)가 R1(55)보다 앞서지만, 검색 규모가 3배인 big을 더 반영하면 R1이 1위
+        result, meta = combine_regions(by_category, {"big": 30, "small": 10})
+        self.assertEqual(meta, {"method": "weighted", "weights": {"big": 75, "small": 25}})
+        self.assertEqual([(row["geo"], row["interest"]) for row in result], [("R1", 100), ("R2", 51.6)])
+        # 검색 규모가 하나라도 없으면 같은 비중으로 계산하고 그 사실을 알립니다.
+        self.assertEqual(combine_regions(by_category, {"big": 30})[1]["method"], "equal")
 
     def test_regions_by_category_for_selected_category(self):
         item = {"geo": "VN-49", "name": "Vĩnh Long", "location": "Vĩnh Long", "interest": 80, "rank": 1}

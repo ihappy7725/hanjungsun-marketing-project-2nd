@@ -67,7 +67,7 @@ function renderNotices() {
 }
 
 function renderPicker() {
-  $("category-picker").innerHTML = `<span class="picker-label">카테고리 선택 · 상품 순위와 지역 관심도에 적용</span>`
+  $("category-picker").innerHTML = `<span class="picker-label">카테고리 선택 · 상품 순위에 적용</span>`
     + dashboard.categories.map((category) => `
     <button type="button" data-id="${esc(category.id)}" aria-pressed="${category.id === selectedId}">${esc(category.label)}</button>`).join("");
   $("category-picker").querySelectorAll("button").forEach((button) => {
@@ -81,7 +81,6 @@ function selectCategory(id) {
     item.setAttribute("aria-pressed", String(item.dataset.id === id)));
   renderSelected();
   renderCategoryTrend();
-  renderRegions();
 }
 
 function selectedCategory() {
@@ -105,15 +104,20 @@ function renderRanking(category) {
     $("ranking").innerHTML = emptyState(`${category.label} 상품 검색어 데이터가 아직 없습니다.`);
     return;
   }
-  // 순위가 매겨진 상품만 보여 주고, 관심도 5 미만·데이터 부족 상품은 개수만 알립니다.
+  // 순위(관심도 5 이상)가 5개 미만이면 순위에서 뺀 상품을 관심도 높은 순으로 "참고" 줄에 채웁니다.
+  // 참고 줄은 순위 번호·전년 대비를 붙이지 않아 실제 순위처럼 보이지 않게 합니다.
   const ranked = category.ranking.filter((row) => row.rank !== null).sort((a, b) => a.rank - b.rank).slice(0, RANK_LIMIT);
-  const excluded = category.ranking.filter((row) => row.rank === null).length;
+  const unranked = category.ranking.filter((row) => row.rank === null)
+    .sort((a, b) => (b.recent_average ?? -1) - (a.recent_average ?? -1));
+  const reference = unranked.slice(0, RANK_LIMIT - ranked.length);
+  const excluded = unranked.length - reference.length;
   const footnote = `<p class="source">확인일 ${day(category.ranking[0].checked_at)} · 같은 기준 검색어로 맞춘 상대 관심도 · 급상승 = 전년 동기 대비 +50% 이상${
-    excluded ? ` · 관심도 5 미만·데이터 부족 ${excluded}개 제외` : ""}</p>`;
-  if (!ranked.length) {
+    reference.length ? " · 참고 = 관심도 5 미만이거나 데이터가 부족해 순위에서 뺀 상품" : ""}${excluded ? ` · 그 외 ${excluded}개 제외` : ""}</p>`;
+  if (!ranked.length && !reference.length) {
     $("ranking").innerHTML = emptyState(`${category.label} 상품 중 순위를 매길 만큼 관심도가 있는 검색어가 없습니다.`) + footnote + risingRow(category);
     return;
   }
+  const referenceLabel = (row) => (row.recent_average !== null && row.recent_average < 5 ? "참고 · 검색 적음" : "참고 · 데이터 부족");
   $("ranking").innerHTML = `
     <div class="table-wrap"><table class="trend-table">
       <caption class="visually-hidden">${esc(category.label)} 상품 관심도 상위 ${RANK_LIMIT}개</caption>
@@ -125,9 +129,15 @@ function renderRanking(category) {
           <td><strong>${esc(row.name)}</strong> ${rankBadges(row)}<small lang="vi">${esc(row.query)}</small></td>
           <td class="num">${num(row.recent_average)}</td>
           <td class="num">${yoy(row) + shortTerm(row)}</td>
+        </tr>`).join("")}${reference.map((row) => `
+        <tr class="is-reference">
+          <td class="rank">·</td>
+          <td><strong>${esc(row.name)}</strong> <span class="ref-badge">${referenceLabel(row)}</span><small lang="vi">${esc(row.query)}</small></td>
+          <td class="num">${num(row.recent_average)}</td>
+          <td class="num">-</td>
         </tr>`).join("")}</tbody>
     </table></div>
-    ${ranked.length < RANK_LIMIT ? `<p class="inline-warn">관심도 기준(5) 이상인 상품이 ${ranked.length}개라 ${ranked.length}개만 표시합니다.</p>` : ""}
+    ${ranked.length + reference.length < RANK_LIMIT ? `<p class="inline-warn">비교한 상품 후보가 ${ranked.length + reference.length}개라 ${ranked.length + reference.length}개만 표시합니다.</p>` : ""}
     ${risingRow(category)}
     ${footnote}
     ${category.ranking_source_url ? `<a class="source-link" href="${esc(category.ranking_source_url)}" target="_blank" rel="noopener">Google Trends에서 비교 조건 확인 ↗</a>` : ""}`;
@@ -172,7 +182,7 @@ function renderCategoryTrend() {
       <li><button type="button" class="spark-row ${category.id === selectedId ? "selected" : ""}" data-id="${esc(category.id)}"
           aria-pressed="${category.id === selectedId}"
           title="최근 12주 평균 ${num(category.recent_average)} · 1년 전 같은 12주 평균 ${num(category.year_ago_average)} · 최근 4주 vs 직전 4주 ${rate(category.short_change_rate)}">
-        <span class="spark-label"><strong>${esc(category.label)}</strong><small lang="vi">${esc(category.representative_query)}</small></span>
+        <span class="spark-label"><strong>${esc(category.label)}</strong></span>
         ${sparkline(lastYear)}
         <span class="spark-value">${num(category.recent_average)}</span>
         <span class="spark-rate">${category.data_status === "insufficient" ? badge("insufficient")
@@ -296,26 +306,11 @@ function fruitCalendar(tab) {
     ${monthBars({ ...fruit, label: fruit.name }, "90 이상인 달(최대 2개) · 과일마다 가장 높은 달 = 100이라 과일끼리 인기 비교는 아님")}`;
 }
 
-// "category" = 상단에서 선택한 카테고리 기준, "combined" = 카테고리 종합
-let regionView = "category";
-
+// 지역 카드는 카테고리 종합(디저트 전체)만 보여 줍니다. 카테고리별 지역 데이터(regions_by_category)는 응답에 남아 있습니다.
 function renderRegions() {
-  if (!dashboard.regions.length) {
+  const rows = dashboard.regions;
+  if (!rows.length) {
     $("regions").innerHTML = emptyState("지역별 관심도 데이터가 아직 없습니다.", `${COLLECT_HINT} --sections regions`);
-    return;
-  }
-  const category = selectedCategory();
-  const tabs = `<div class="rank-tabs region-tabs" role="group" aria-label="지역 관심도 기준">${
-    [["category", category?.label ?? "선택 카테고리"], ["combined", "종합"]].map(([id, label]) =>
-      `<button type="button" data-view="${id}" aria-pressed="${id === regionView}">${esc(label)}</button>`).join("")}</div>`;
-  const bindTabs = () => $("regions").querySelectorAll(".region-tabs button").forEach((button) => {
-    button.addEventListener("click", () => { regionView = button.dataset.view; renderRegions(); });
-  });
-
-  const rows = regionView === "combined" ? dashboard.regions : (dashboard.regions_by_category || {})[category?.id] || [];
-  if (!rows.length) {  // 다른 카테고리나 종합 값으로 대신 채우지 않습니다.
-    $("regions").innerHTML = tabs + emptyState(`${category?.label ?? "선택한 카테고리"}의 지역별 관심도는 아직 수집 전입니다.`, `${COLLECT_HINT} --sections regions`);
-    bindTabs();
     return;
   }
   const labels = Object.fromEntries(dashboard.categories.map((item) => [item.id, item.label]));
@@ -323,10 +318,14 @@ function renderRegions() {
     .map(([id, value]) => `${esc(labels[id] || id)} ${num(value)}`).join(" · ");
   const checked = `상위 10개 지역 · 확인일 ${day(rows[0].checked_at)}`;
   let note;
-  if (regionView === "category") {
-    note = `<p class="source">${esc(category.label)} 대표 검색어 <span lang="vi">${esc(rows[0].query)}</span> 기준 · ${checked}</p>`;
-  } else if (rows[0].combined) {
-    note = `<p class="source">종합 = 카테고리 ${Object.keys(rows[0].categories || {}).length}개 대표 검색어의 지역 관심도 평균 · ${checked}</p>`;
+  if (rows[0].combined) {
+    // 검색 규모 가중 평균(추정치). 카테고리 검색 규모가 없으면 서버가 같은 비중으로 계산하고 method="equal"로 알려 줍니다.
+    const meta = dashboard.regions_meta || {};
+    const weights = Object.entries(meta.weights || {}).map(([id, pct]) => `${esc(labels[id] || id)} ${num(pct)}%`).join(" · ");
+    note = meta.method === "weighted"
+      ? `<p class="source">추정 종합 = 카테고리별 지역 관심도를 검색 규모로 가중 평균 · 1위 지역 = 100 · 비중 ${weights}
+          (카테고리 관심도 확인일 ${day(meta.weights_checked_at)}) · ${checked}</p>`
+      : `<p class="source">종합 = 카테고리별 지역 관심도 단순 평균(카테고리 검색 규모 데이터 없음) · 1위 지역 = 100 · ${checked}</p>`;
   } else {
     note = `<p class="source">이전 수집본: 대표 검색어 <span lang="vi">${esc(rows[0].query)}</span> 하나 기준 · 카테고리 종합 전 · ${checked}</p>`;
   }
@@ -336,8 +335,7 @@ function renderRegions() {
     sub: (row) => (row.name !== row.location ? row.location : ""),
     value: (row) => row.interest,
     extra: (row) => (row.data_status === "insufficient" ? badge(row.data_status) : "") + breakdown(row),
-  }), note, renderRegions, tabs);
-  bindTabs();
+  }), note, renderRegions);
 }
 
 
