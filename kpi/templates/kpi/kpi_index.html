@@ -122,22 +122,49 @@
             <div class="kpi-sim-forms">
               <form class="kpi-sim-form" data-kind="influencer" aria-label="인플루언서 집행 예정 추가">
                 <p class="kpi-sim-form-title">인플루언서</p>
-                <label class="field">인플루언서 · 단가
-                  <select name="influencer" data-kpi="sim-influencer"></select>
-                </label>
-                <div class="kpi-sim-row" data-kpi="sim-inf-custom" hidden>
+                <!-- 인플루언서 → 플랫폼 → 광고 유형 → 단가 순서로 고릅니다(앞에서 고른 값에 맞는 항목만 표시). -->
+                <div class="kpi-sim-grid">
+                  <label class="field">인플루언서
+                    <select name="influencer" data-kpi="sim-influencer"></select>
+                  </label>
+                  <label class="field kpi-sim-pick">플랫폼
+                    <select name="platform" data-kpi="sim-inf-platform"></select>
+                  </label>
+                  <label class="field kpi-sim-pick">광고 유형
+                    <select name="format" data-kpi="sim-inf-format"></select>
+                  </label>
+                  <label class="field kpi-sim-pick">단가
+                    <select name="price" data-kpi="sim-inf-price"></select>
+                    <small class="kpi-sim-krw" data-kpi="sim-inf-krw"></small>
+                  </label>
+                </div>
+                <!-- 직접 입력: 목록에 없는 인플루언서 -->
+                <div class="kpi-sim-grid" data-kpi="sim-inf-custom" hidden>
                   <label class="field">이름
                     <input type="text" name="name" maxlength="40" placeholder="예: @hanoi.eats">
                   </label>
-                  <label class="field">금액
-                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 15,000,000" data-kpi-money>
-                  </label>
-                  <label class="field kpi-sim-unit">단위
-                    <select name="unit">
-                      <option value="VND">VND</option>
-                      <option value="KRW">원</option>
+                  <label class="field">플랫폼
+                    <select name="cplatform">
+                      <option value="TikTok">TikTok</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="YouTube">YouTube</option>
+                      <option value="기타">기타</option>
                     </select>
                   </label>
+                  <label class="field">광고 유형
+                    <input type="text" name="cformat" maxlength="40" placeholder="예: 숏폼 1편">
+                  </label>
+                  <div class="kpi-sim-row">
+                    <label class="field">금액
+                      <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 15,000,000" data-kpi-money>
+                    </label>
+                    <label class="field kpi-sim-unit">단위
+                      <select name="unit">
+                        <option value="VND">VND</option>
+                        <option value="KRW">원</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
                 <button type="submit" class="btn dark">인플루언서 추가</button>
               </form>

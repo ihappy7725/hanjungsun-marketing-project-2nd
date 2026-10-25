@@ -722,15 +722,16 @@ function renderSimOptions() {
     opt.value = CUSTOM;
     return opt;
   };
+  // 인플루언서 이름만(중복 없이). 플랫폼 · 광고 유형 · 단가는 고른 값에 따라 다음 칸에서 고릅니다.
   $("sim-influencer").replaceChildren(
-    ...inf.options.map((o) => {
-      const krw = Math.round((o.amount_vnd * d.base_rate) / 100);
-      const opt = el("option", { text: `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (약 ${krwMan(krw)})` });
-      opt.value = o.id;
+    ...[...new Set(inf.options.map((o) => o.influencer))].map((name) => {
+      const opt = el("option", { text: name });
+      opt.value = name;
       return opt;
     }),
-    customOption("직접 입력 (목록에 없는 인플루언서)"),
+    customOption("직접 입력"),
   );
+  updateInfPlatforms();
   $("sim-channel").replaceChildren(
     ...d.ad_channels.map((ch) => {
       const opt = el("option", { text: `${d.channels.find((c) => c.channel === ch)?.label || ch} (현재 ROAS ${pct(simRoas(ch))})` });
@@ -743,9 +744,46 @@ function renderSimOptions() {
   setText("sim-source", `인플루언서 후보: ${inf.note}${inf.status === "demo" ? " · 시연" : ""} · 환산: 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND`);
 }
 
-// '직접 입력'을 고르면 이름·금액 칸을 보여 줍니다.
+// 인플루언서 → 플랫폼 → 광고 유형 → 단가: 앞에서 고른 값에 맞는 항목만 다음 칸에 채웁니다.
+function fillSelect(name, values, label = (v) => v) {
+  const select = $(name);
+  const prev = select.value;
+  select.replaceChildren(...values.map((v) => {
+    const opt = el("option", { text: label(v) });
+    opt.value = typeof v === "object" ? v.id : v;
+    return opt;
+  }));
+  if ([...select.options].some((o) => o.value === prev)) select.value = prev;
+}
+
+function infQuotes(filter = {}) {
+  return (sim.data?.influencers.options || []).filter((o) => Object.entries(filter).every(([k, v]) => o[k] === v));
+}
+
+function updateInfPlatforms() {
+  const influencer = $("sim-influencer").value;
+  fillSelect("sim-inf-platform", [...new Set(infQuotes({ influencer }).map((o) => o.platform))]);
+  updateInfFormats();
+}
+
+function updateInfFormats() {
+  const filter = { influencer: $("sim-influencer").value, platform: $("sim-inf-platform").value };
+  fillSelect("sim-inf-format", [...new Set(infQuotes(filter).map((o) => o.content_format))]);
+  updateInfPrices();
+}
+
+function updateInfPrices() {
+  const filter = { influencer: $("sim-influencer").value, platform: $("sim-inf-platform").value, content_format: $("sim-inf-format").value };
+  fillSelect("sim-inf-price", infQuotes(filter), (o) => `${o.price_type_label} ${num(o.amount_vnd)} VND`);
+  const o = infQuotes().find((x) => x.id === $("sim-inf-price").value);
+  $("sim-inf-krw").textContent = o ? `약 ${krwMan(toKrw(o.amount_vnd, "VND"))} (기준 환율 환산)` : "";
+}
+
+// '직접 입력'을 고르면 이름·플랫폼·광고 유형·금액 칸을 보여 줍니다.
 function toggleSimCustom() {
-  $("sim-inf-custom").hidden = $("sim-influencer").value !== CUSTOM;
+  const custom = $("sim-influencer").value === CUSTOM;
+  root.querySelectorAll(".kpi-sim-pick").forEach((label) => { label.hidden = custom; });
+  $("sim-inf-custom").hidden = !custom;
   $("sim-ad-custom").hidden = $("sim-channel").value !== CUSTOM;
 }
 
@@ -811,10 +849,10 @@ function addSimItem(form) {
   showError("sim-error", "");
   let item;
   if (kind === "influencer" && f.influencer.value !== CUSTOM) {
-    const o = d.influencers.options.find((x) => x.id === f.influencer.value);
+    const o = d.influencers.options.find((x) => x.id === f.price.value);
     if (!o) return showError("sim-error", "인플루언서 단가를 선택해 주세요.");
     const cost = toKrw(o.amount_vnd, "VND");
-    item = { label: `${o.influencer} (${o.price_type_label})`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
+    item = { label: `${o.influencer} · ${o.platform} ${o.content_format} (${o.price_type_label})`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
   } else {
     const custom = kind === "influencer" || f.channel.value === CUSTOM;
     const name = custom ? f.name.value.trim() : "";
@@ -823,7 +861,9 @@ function addSimItem(form) {
     if (!amount) return showError("sim-error", "금액을 0보다 큰 숫자로 입력해 주세요.");
     const cost = toKrw(amount, f.unit.value);
     if (kind === "influencer") {
-      item = { label: `${name} (직접 입력)`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
+      const format = f.cformat.value.trim();
+      item = { label: `${name} · ${f.cplatform.value}${format ? ` ${format}` : ""} (직접 입력)`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
+      f.cformat.value = "";
     } else {
       const label = custom ? name : d.channels.find((c) => c.channel === f.channel.value)?.label || f.channel.value;
       // 새 채널은 현재 ROAS가 없어 예상 매출을 계산하지 않습니다.
@@ -1049,6 +1089,9 @@ root.addEventListener("click", (event) => {
 
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
+  if (event.target.matches('[data-kpi="sim-influencer"]')) updateInfPlatforms();
+  if (event.target.matches('[data-kpi="sim-inf-platform"]')) updateInfFormats();
+  if (event.target.matches('[data-kpi="sim-inf-format"], [data-kpi="sim-inf-price"]')) updateInfPrices();
   if (event.target.matches('[data-kpi="sim-influencer"], [data-kpi="sim-channel"]')) toggleSimCustom();
   if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
   if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);

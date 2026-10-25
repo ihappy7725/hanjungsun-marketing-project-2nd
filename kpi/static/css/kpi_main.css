@@ -235,6 +235,9 @@
 .kpi-page .kpi-sim-form .field input,
 .kpi-page .kpi-sim-form .field select { padding: var(--space-4); }
 .kpi-page .kpi-sim-form [hidden] { display: none; }
+/* 인플루언서 칸: 인플루언서 · 플랫폼 / 광고 유형 · 단가를 2×2로 */
+.kpi-page .kpi-sim-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-4); }
+.kpi-page .kpi-sim-krw { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sim-row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
 .kpi-page .kpi-sim-row .field { flex: 1; min-width: 120px; }
 .kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 96px; min-width: 96px; }
