@@ -19,6 +19,9 @@ const TEMPLATE = [
 export function validDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 }
+export function validTime(value) {
+  return typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
 export function addDays(value, offset) { return new Date(Date.parse(value) + Number(offset) * DAY).toISOString().slice(0, 10); }
 export function dayDiff(a, b) { return Math.round((Date.parse(a) - Date.parse(b)) / DAY); }
 export function dday(target, today) { const n = dayDiff(target, today); return n === 0 ? 'D-Day' : n > 0 ? `D-${n}` : `D+${-n}`; }
@@ -94,6 +97,7 @@ function initialize() {
   if (!root) return;
   const $ = selector => root.querySelector(selector);
   let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
+  const TIMELINE_FROM = 7, TIMELINE_TO = 21, TIMEZONE_LABEL = 'KST';
   let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
   let mode = 'demo', store, loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
   const key = () => `hjs-home-browser-v1-${mode}`;
@@ -162,7 +166,7 @@ function initialize() {
     return (signals?.collaborations.items || []).filter(c => (mode === 'demo' || c.is_demo !== true) && c.status !== 'declined' && (scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id) || !c.event_id));
   }
   function calendarEvents() {
-    const events = inScope().filter(t => t.due_date && t.status !== 'cancelled').map(t => ({ date: t.due_date, end: t.due_date, title: t.title, kind: 'task', id: t.id, done: t.status === 'done' }));
+    const events = inScope().filter(t => t.due_date && t.status !== 'cancelled').map(t => ({ date: t.due_date, end: t.due_date, title: t.title, kind: 'task', id: t.id, done: t.status === 'done', time: validTime(t.due_time) ? t.due_time : '' }));
     store.campaigns.filter(c => scope === 'all' || c.id === selected()?.id).forEach(c => events.push({ date: c.target_date, end: c.target_date, title: c.name, kind: 'campaign', id: c.id }));
     localEvents().forEach(e => events.push({ date: e.start, end: e.end, title: e.name, kind: 'local', id: e.event_id }));
     store.schedules.filter(s => validDate(s.date) && (scope === 'all' || s.campaign_id === selected()?.id)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
@@ -212,6 +216,23 @@ function initialize() {
     } else if (view === 'week') { start = addDays(cursor, -((new Date(cursor).getUTCDay() + 6) % 7)); end = addDays(start, 6); }
     else { start = `${cursor.slice(0, 7)}-01`; const next = new Date(start); next.setUTCMonth(next.getUTCMonth() + 1); end = addDays(next.toISOString().slice(0, 10), -1); }
     $('#calendar-period').textContent = view === 'week' ? `${shortDate(start)} – ${shortDate(end)}` : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
+    if (view === 'week') {
+      // 구글 캘린더처럼 요일 7칸 x 시간대 행으로 그립니다. 시간이 없는 항목은 위쪽 종일 칸에 둡니다.
+      const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+      const header = days.map(day => `<button class="home-tl-head${day === today ? ' is-today' : ''}" data-date="${day}" aria-pressed="${day === selectedDate}"><span class="home-tl-weekday">${['월', '화', '수', '목', '금', '토', '일'][(new Date(day).getUTCDay() + 6) % 7]}</span><span class="home-tl-daynum">${Number(day.slice(8))}</span></button>`).join('');
+      const allDay = days.map(day => `<div class="home-tl-allday-cell">${at(day).filter(e => !e.time).map(e => `<button class="home-event ${e.kind}${e.done ? ' done' : ''}" data-open="${esc(e.kind)}:${esc(e.id)}">${esc(e.title)}</button>`).join('')}</div>`).join('');
+      let grid = '';
+      for (let hour = TIMELINE_FROM; hour <= TIMELINE_TO; hour++) {
+        const label = `${String(hour).padStart(2, '0')}:00`;
+        grid += `<div class="home-tl-hour">${label}</div>`;
+        grid += days.map(day => {
+          const slot = at(day).filter(e => e.time && Number(e.time.slice(0, 2)) === hour);
+          return `<button class="home-tl-cell${day === today ? ' is-today' : ''}" data-slot="${day} ${label}" aria-label="${day} ${label} 업무 추가">${slot.map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}">${esc(e.time)} ${esc(e.title)}</span>`).join('')}</button>`;
+        }).join('');
+      }
+      $('#calendar-body').innerHTML = `<div class="home-timeline"><div class="home-tl-corner">${TIMEZONE_LABEL}</div>${header}<div class="home-tl-corner home-tl-allday-label">종일</div>${allDay}<div class="home-tl-scroll"><div class="home-tl-grid">${grid}</div></div></div>`;
+      return;
+    }
     if (view === 'list') {
       const rows = events.filter(e => e.date <= end && e.end >= start).sort((a, b) => a.date.localeCompare(b.date));
       $('#calendar-body').innerHTML = rows.length ? rows.map(e => `<div class="home-agenda-row"><div><span class="home-muted">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}</span><br>${esc(e.title)} ${e.done ? badge('완료') : ''}</div>${eventAction(e)}</div>`).join('') : empty('이달에 등록된 일정이 없습니다.');
@@ -220,7 +241,7 @@ function initialize() {
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart);
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
-        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(48px, 1fr)">`;
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(38px, 1fr)">`;
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
@@ -306,12 +327,11 @@ function initialize() {
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
     $('#news-list').innerHTML = news.map(n => {
+      // 화면에는 원문으로 가는 링크 하나만 둡니다. 교차 출처와 확인 범위는 자료 파일에 그대로 보관합니다.
       const sources = Array.isArray(n.sources) ? n.sources : [];
-      const evidence = sources.length ? sources.map((source, i) => {
-        const url = safeUrl(source.url);
-        return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">출처 ${i + 1} · ${esc(source.publisher)} ↗</a>` : esc(source.publisher);
-      }).join('<br>') : `${esc(n.source || '출처 미제공')}${safeUrl(n.url) ? ` <a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener noreferrer">원문 ↗</a>` : ''}`;
-      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span>${n.is_demo ? "" : `<p>${esc(n.summary)}</p>`}${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}${n.is_demo ? "" : `<p class="home-signal-meta">${evidence}</p>`}${n.verification_notes ? `<p class="home-signal-meta">확인 범위: ${esc(n.verification_notes)}</p>` : ''}</article>`;
+      const link = safeUrl(n.url) || safeUrl(sources[0]?.url);
+      const evidence = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : esc(n.source || '출처 미제공');
+      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span>${n.is_demo ? "" : `<p>${esc(n.summary)}</p>`}${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}${n.is_demo ? "" : `<p class="home-signal-meta">${evidence}</p>`}</article>`;
     }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
   }
   function render() {
@@ -343,12 +363,13 @@ function initialize() {
   function options(values, selectedValue) { return Object.entries(values).map(([value, label]) => `<option value="${esc(value)}" ${value === selectedValue ? 'selected' : ''}>${esc(label)}</option>`).join(''); }
   function editTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId); if (!t) return;
-    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
+    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
     $('#task-form').onsubmit = event => {
       event.preventDefault(); const f = new FormData(event.currentTarget), title = f.get('title').trim(), start = f.get('start_date'), due = f.get('due_date');
       if (!title || (start && !due) || (start && start > due)) { $('#task-error').hidden = false; $('#task-error').textContent = '업무명을 입력하고, 마감일이 시작일보다 빠르지 않은지 확인해주세요.'; return; }
       const next = structuredClone(store), target = next.tasks.find(item => item.id === taskId), campaign = next.campaigns.find(c => c.id === f.get('campaign_id'));
-      Object.assign(target, { title, start_date: start, due_date: due, campaign_id: campaign.id, status: f.get('status'), importance: f.get('importance'), related_tab: f.get('related_tab'), memo: f.get('memo'), fixed: f.has('fixed') || !due, offset: due ? dayDiff(due, campaign.target_date) : 0, completed_at: f.get('status') === 'done' ? t.completed_at || new Date().toISOString() : '' });
+      const time = f.get('due_time');
+      Object.assign(target, { title, start_date: start, due_date: due, due_time: validTime(time) ? time : '', campaign_id: campaign.id, status: f.get('status'), importance: f.get('importance'), related_tab: f.get('related_tab'), memo: f.get('memo'), fixed: f.has('fixed') || !due, offset: due ? dayDiff(due, campaign.target_date) : 0, completed_at: f.get('status') === 'done' ? t.completed_at || new Date().toISOString() : '' });
       if (save(next)) { dialog.close(); render(); toast('업무를 저장했습니다.'); }
     };
   }
@@ -458,6 +479,7 @@ function initialize() {
     if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
     if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
     if (button.dataset.move) moveTask(button.dataset.move);
+    if (button.dataset.slot) { const [day] = button.dataset.slot.split(' '); selectedDate = day; renderCalendar(); renderTasks(); }
     if (button.dataset.task) editTask(button.dataset.task);
     if (button.dataset.local) showLocalEvent(button.dataset.local);
     if (button.dataset.create) { const e = localEvents().find(item => item.event_id === button.dataset.create); if (e) { if (dialog.open) dialog.close(); planner('create', e); } }
@@ -490,8 +512,15 @@ function initialize() {
     refreshSignals();
   };
   function changeDate(value) { if (!validDate(value)) return; today = value; selectedDate = value; cursor = value; updateRange(); refreshSignals(); }
-  $('#reference-date').onchange = event => changeDate(event.target.value);
-  $('#reset-date').onclick = () => changeDate(kstToday());
+  function tickClocks() {
+    // 두 도시의 현재 시각을 함께 보여 줍니다. 업무 기준일은 한국 시간 기준입니다.
+    const fmt = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+    const kst = $('#clock-kst'), ict = $('#clock-ict');
+    if (kst) kst.textContent = fmt('Asia/Seoul');
+    if (ict) ict.textContent = fmt('Asia/Ho_Chi_Minh');
+  }
+  tickClocks();
+  setInterval(tickClocks, 30000);
   function moveCalendar(direction) {
     if (view === 'week') cursor = addDays(cursor, direction * 7);
     else { const d = new Date(`${cursor.slice(0, 7)}-01`); d.setUTCMonth(d.getUTCMonth() + direction); cursor = d.toISOString().slice(0, 10); }

@@ -10,7 +10,7 @@
 <div class="home-page" data-signals-url="{{ url_for('home.signals') }}">
   <header class="home-heading">
     <div><div class="home-title"><h1 id="campaign-title">이벤트를 준비해보세요</h1><span id="campaign-dday" class="home-dday" hidden></span></div>
-      <label class="home-date">업무 기준 · 한국 UTC+9 <input id="reference-date" type="date" required aria-label="업무 기준일"><button class="home-text-btn" id="reset-date" type="button">실제 오늘</button></label>
+      <div class="home-clocks" aria-label="현재 시각"><span class="home-clock"><b id="clock-kst">--:--</b> <span class="home-clock-zone">한국 (기준)</span></span><span class="home-clock"><b id="clock-ict">--:--</b> <span class="home-clock-zone">베트남</span></span><input id="reference-date" type="hidden"></div>
     </div>
     <div class="home-controls">
       <label>데이터 <select id="data-mode"><option value="demo">기본 보기</option><option value="work">내 업무</option></select></label>
