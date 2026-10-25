@@ -64,17 +64,21 @@ def _run(args, timeout=90):
 
 
 # ---------- 요청 내용 ----------
-def video_args(doc, start_image=None):
-    """영상 문서 → Kling 4.0 요청. 미리보기 이미지가 있으면 첫 장면으로 씁니다(image-to-video).
+def video_args(doc, start_image=None, photo=None):
+    """영상 문서 → Kling 4.0 요청. photo: 서버에 올린 제품 사진 경로(CLI가 직접 올림)를 참고 사진으로 보냅니다.
+    미리보기 이미지가 있으면 첫 장면으로(image-to-video), 없으면 제품 사진 참고(reference-to-video).
     Kling 4.0에는 소리 옵션이 없어, 소리는 프롬프트 문장으로만 전달됩니다."""
     args = [VIDEO_MODEL, "--prompt", doc.get("custom") or doc["prompt"], "--duration", str(doc["duration"]),
             "--resolution", VIDEO_RESOLUTION]
+    refs = ["--image-references", photo] if photo else []
     if start_image:
-        return args + ["--mode", "image-to-video", "--start-image", start_image]
+        return args + ["--mode", "image-to-video", "--start-image", start_image, *refs]
+    if photo:
+        return args + ["--mode", "reference-to-video", "--aspect_ratio", doc["ratio"], *refs]
     return args + ["--mode", "text-to-video", "--aspect_ratio", doc["ratio"]]
 
 
-def image_prompt(doc):
+def image_prompt(doc, photo=False):
     """미리보기 이미지(영상 첫 장면) 프롬프트: 첫 컷 + 제품 고정 문장 + 분위기·조명. 글자는 넣지 않습니다."""
     style = STYLES.get(doc.get("style")) or STYLES["premium"]
     look = PRODUCT_LOOK.get(doc.get("product"), (None,))[0]
@@ -82,6 +86,7 @@ def image_prompt(doc):
     parts = [
         f"Photorealistic still frame, the opening shot of a {style['genre'][0]}: {first}.",
         f"The product: {look}." if look else "",
+        "The product must look exactly like the attached product photo." if photo else "",
         f"Style: {style['keywords'][0]}.",
         f"Setting: {doc.get('background', '')}, {doc.get('mood', '')} mood, {doc.get('lighting', '')}.",
         COMMON_AVOID[0] + ".",
@@ -89,8 +94,10 @@ def image_prompt(doc):
     return " ".join(part for part in parts if part)
 
 
-def image_args(doc):
-    return [IMAGE_MODEL, "--prompt", image_prompt(doc), "--aspect_ratio", IMAGE_RATIOS.get(doc["ratio"], "9:16")]
+def image_args(doc, photo=None):
+    """미리보기 이미지 요청. photo(제품 사진 경로)가 있으면 참고 사진으로 보냅니다."""
+    args = [IMAGE_MODEL, "--prompt", image_prompt(doc, bool(photo)), "--aspect_ratio", IMAGE_RATIOS.get(doc["ratio"], "9:16")]
+    return args + ["--image-references", photo] if photo else args
 
 
 # ---------- 무료 확인 ----------
