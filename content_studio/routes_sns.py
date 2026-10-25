@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-from flask import current_app, g, jsonify, render_template, request
+from flask import current_app, g, jsonify, render_template, request, url_for
 
 from platform_core.extensions import db
 
@@ -21,7 +21,8 @@ from . import higgsfield
 from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import PRODUCTS, get_product
-from .videos import ai_messages, apply_ai, make_draft, normalize_scenes, phrase_pairs, refresh_prompts, revise_draft
+from .videos import (ai_messages, apply_ai, make_draft, normalize_scenes, phrase_pairs, refresh_prompts, revise_draft,
+                     video_title)
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
@@ -49,10 +50,12 @@ def _get_chat(chat_id):
 
 
 def _chat_info(chat):
+    # 영상은 요청 문장(chat.title) 대신 짧은 주제("발렌타인데이 - 망고스틴 찹쌀떡")를 보여 줍니다. DB 제목은 그대로 둡니다.
+    doc = chat.design.doc if chat.kind == "video" and chat.design else None
     return {
         "id": chat.id,
         "kind": chat.kind,
-        "title": chat.title,
+        "title": video_title(doc, chat.event_id) if doc else chat.title,
         "product_id": chat.product_id,
         "event_id": chat.event_id,
         "updated_at": chat.updated_at.isoformat(),
@@ -199,6 +202,9 @@ def post_message():
                 product=product["name_ko"],
                 event=body.get("event"),
             )
+            # 필수 제품 사진 칸에 그 제품의 단면 사진을 미리 넣습니다(화면에서 바꿀 수 있음).
+            doc["image"] = _product_photo(product)
+            refresh_prompts(doc)
             ai = _call_ai(kind, text, doc)
             if ai:
                 doc = ai[0]
@@ -437,24 +443,39 @@ def _target():
 
 # 제품 사진: 희주 업로드 API(/media/api/upload)로 올린 파일. 문서 image = {file_id, url}. 영상·미리보기를 만들 때 필수입니다.
 PHOTO_URL = re.compile(r"^/content_studio/media/uploads/([0-9a-f]{32})\.(jpg|png|webp)$")
+# 제품 사진(products.py images, static/images/sns/). 새 영상 초안의 제품 사진 칸 기본값입니다.
+PRODUCT_PHOTO_URL = re.compile(r"^/content_studio/static/images/sns/(product_[a-z0-9_]+\.(?:jpg|png|webp))$")
 PHOTO_REQUIRED = "제품 사진을 먼저 올려 주세요."
 
 
 def _clean_photo(image):
-    """저장 전 검사: None이거나 서버가 만든 업로드 주소만. 맞으면 {file_id, url}, 틀리면 False."""
+    """저장 전 검사: None이거나 서버가 만든 업로드 주소·제품 사진 주소만. 맞으면 {file_id, url}, 틀리면 False."""
     if not image:
         return None
-    match = PHOTO_URL.match(image.get("url", "")) if isinstance(image, dict) else None
-    return {"file_id": match.group(1), "url": image["url"]} if match else False
+    url = image.get("url", "") if isinstance(image, dict) else ""
+    if match := PHOTO_URL.match(url):
+        return {"file_id": match.group(1), "url": url}
+    if PRODUCT_PHOTO_URL.match(url):
+        return {"file_id": None, "url": url}
+    return False
 
 
 def _photo_path(doc):
     """문서의 제품 사진 → 서버의 파일 경로(Higgsfield CLI가 직접 올림). 없거나 파일이 사라졌으면 None."""
-    match = PHOTO_URL.match((doc.get("image") or {}).get("url", "")) if isinstance(doc.get("image"), dict) else None
-    if not match:
+    url = (doc.get("image") or {}).get("url", "") if isinstance(doc.get("image"), dict) else ""
+    if match := PHOTO_URL.match(url):
+        path = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio", f"{match.group(1)}.{match.group(2)}")
+    elif match := PRODUCT_PHOTO_URL.match(url):
+        path = os.path.join(bp.static_folder, "images", "sns", match.group(1))
+    else:
         return None
-    path = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio", f"{match.group(1)}.{match.group(2)}")
     return path if os.path.isfile(path) else None
+
+
+def _product_photo(product):
+    """제품의 단면 사진 → 문서 image 값. 사진이 없으면 None."""
+    name = (product.get("images") or {}).get("cut") or product.get("image")
+    return {"file_id": None, "url": url_for("content_studio.static", filename=f"images/sns/{name}")} if name else None
 
 
 def _gen_args(doc, target):

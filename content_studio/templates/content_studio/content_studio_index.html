@@ -58,6 +58,13 @@
           <button type="button" class="btn" data-role="history-toggle">☰ 이전 작업</button>
         </div>
         <div class="studio-settings">
+          {# 영상 제품 고르기 (products.py). 비우면 입력 문장에서 찾습니다. sns.js가 영상 탭에서만 보여 줍니다. #}
+          <label class="studio-product">
+            <select data-role="set-product" aria-label="제품">
+              <option value="">제품 고르기</option>
+              {% for product in products %}<option value="{{ product.id }}">{{ product.name_ko }}</option>{% endfor %}
+            </select>
+          </label>
           <div class="studio-seg" data-role="set-ratio">
             <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">4:5</button>
             <button type="button" class="btn" data-value="9:16">9:16</button>

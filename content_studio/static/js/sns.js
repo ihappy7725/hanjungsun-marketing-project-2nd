@@ -25,15 +25,22 @@ const DEMO_EVENTS = [
   { name: "베트남 스승의 날", date: "2026-11-20", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
   { name: "크리스마스", date: "2026-12-25", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
 ];
-const DEMO_SEASON = { name: "감", note: "이번 달 제철", concept: "제철 감의 달콤함을 찹쌀떡과 함께 소개해 보세요" };
+// 대표 메뉴 홍보 카드: 실제 메뉴(products.py). 기념일이 없을 때도 늘 만들 수 있는 기본 콘텐츠입니다.
+const DEMO_STAPLE = {
+  product_id: "mango_yogurt", name: "망고 요거트 찹쌀떡", note: "대표 메뉴",
+  concept: "상큼한 망고와 부드러운 요거트가 어우러진 대표 메뉴를 소개해 보세요",
+};
 const DEMO_NEW_MENU = {
-  name: "망고스틴 찹쌀떡", note: "신메뉴", concept: "새콤달콤 망고스틴을 쫀득하게 감싼 첫 맛을 보여 주세요",
+  product_id: "honey_red_dragonfruit", name: "꿀 레드용과 찹쌀떡", note: "신메뉴",
+  concept: "꿀을 머금은 레드용과의 새콤달콤한 첫맛을 보여 주세요",
 };
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
 const WORK_KINDS = ["video", "poster", "cardnews"];  // 작업 화면이 연결된 탭
 const DESIGN_KINDS = ["poster", "cardnews"];          // 희주 편집기(sns_editor.js)로 그리는 탭
 const MAX_RECS = 6;
+const VIDEO_CARD_SCENES = 4;  // "내 영상" 카드에 보이는 장면 줄 수
+const VIDEO_RECS = 4;
 
 // ---------- 화면 요소 ----------
 const page = document.querySelector(".studio-page");
@@ -92,13 +99,16 @@ function galleryCard(item) {
   card.type = "button";
 
   if (kind === "video") {
+    // 영상: 미리보기 높이는 모두 같고(sns.css .is-video) 가로만 비율대로. 장면은 4줄까지, 나머지는 "외 n컷".
+    card.classList.add("is-video");
     const box = thumb(item, el("span", "badge", `${item.duration}초${item.status ? ` · ${item.status}` : ""}`));
     const list = el("ul", "studio-scenes");
-    for (const scene of item.scenes) {
+    for (const scene of item.scenes.slice(0, VIDEO_CARD_SCENES)) {
       const li = el("li");
       li.append(el("b", "", scene.time), scene.ko);
       list.append(li);
     }
+    if (item.scenes.length > VIDEO_CARD_SCENES) list.append(el("li", "", `외 ${item.scenes.length - VIDEO_CARD_SCENES}컷`));
     box.append(list);
     card.append(box);
   } else {
@@ -169,7 +179,7 @@ async function loadGallery() {
 }
 
 // ---------- 첫 화면 · 추천 ----------
-// 영상 탭은 2장만: 신메뉴 출시 1 + 가장 가까운 기념일 1. 포스터·카드뉴스는 기념일·제철·신메뉴 모두.
+// 세 탭 모두 4장: 기념일·대표 메뉴·신메뉴 (영상 탭은 신메뉴 출시를 맨 앞에).
 function recommendations() {
   const label = KIND_LABELS[kind];
   const recs = [];
@@ -189,22 +199,25 @@ function recommendations() {
     type: "new",
     mark: "NEW",
     title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
+    product_id: DEMO_NEW_MENU.product_id,
     note: DEMO_NEW_MENU.note,
     concept: DEMO_NEW_MENU.concept,
   };
-  if (kind === "video") return [launch, ...recs.slice(0, 1)];
   recs.push({
-    type: "season",
-    mark: "제철",
-    title: `제철 ${DEMO_SEASON.name} × 찹쌀떡 ${label}`,
-    note: DEMO_SEASON.note,
-    concept: DEMO_SEASON.concept,
+    type: "season",  // 표시 색(초록)은 예전 제철 카드 스타일을 그대로 씁니다.
+    mark: "대표",
+    title: `${DEMO_STAPLE.name} 대표 메뉴 ${label}`,  // 제품을 정해서 보내므로 누르면 묻지 않고 바로 초안
+    product_id: DEMO_STAPLE.product_id,
+    note: DEMO_STAPLE.note,
+    concept: DEMO_STAPLE.concept,
   });
+  // 영상 탭: 신메뉴 출시 → 기념일 → 대표 메뉴 순서로 4개
+  if (kind === "video") return [launch, ...recs].slice(0, VIDEO_RECS);
   recs.push(launch);
   return recs.slice(0, MAX_RECS);
 }
 
-// 추천 카드: 왼쪽 큰 표시(D-26 · 제철 · NEW)로 이유를 먼저 보여주고, 오른쪽에 제목 · 날짜 · 한 줄 컨셉.
+// 추천 카드: 왼쪽 큰 표시(D-26 · 대표 · NEW)로 이유를 먼저 보여주고, 오른쪽에 제목 · 날짜 · 한 줄 컨셉.
 function recCard(rec) {
   const card = el("button", `studio-rec is-${rec.type}`);
   card.type = "button";
@@ -219,7 +232,7 @@ function recCard(rec) {
   card.addEventListener("click", () => {
     if (!WORK_KINDS.includes(kind)) return notify(`"${rec.title}" 요청으로 바로 만들기는 다음 단계에서 연결됩니다.`);
     startNew();
-    send(rec.title, { event: rec.event });
+    send(rec.title, { event: rec.event, ...(rec.product_id && { product_id: rec.product_id }) });
   });
   return card;
 }
@@ -269,7 +282,8 @@ function enableRailScroll(rail) {
 
 // ---------- 작업 화면 ----------
 const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false };
-const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
+// product_id: 영상 설정 줄의 [제품] 고르기(비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다)
+const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_id: "" };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -352,6 +366,10 @@ function renderWork() {
   }
   $("set-duration").closest("label").hidden = kind !== "video";
   $("set-sound").hidden = kind !== "video";
+  // 제품 고르기: 영상만, 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
+  $("set-product").closest("label").hidden = kind !== "video";
+  $("set-product").value = doc ? (PRODUCTS.find((item) => item.name_ko === doc.product)?.id || "") : settings.product_id;
+  $("set-product").disabled = Boolean(doc);
   $("set-duration").value = current.duration;
   $("set-sound").textContent = current.sound ? "소리 켬" : "소리 끔";
   $("set-sound").classList.toggle("dark", current.sound);
@@ -402,7 +420,7 @@ function feedback(type, text) {
   $("chat-choices").replaceChildren();
 }
 
-// 제품을 되물으면 답의 "(찹쌀떡 / 망고스틴 찹쌀떡)" 목록으로 고르기 버튼을 만듭니다.
+// 제품을 되물으면 답의 "(망고 요거트 찹쌀떡 / …)" 목록으로 고르기 버튼을 만듭니다.
 function showProductChoices(reply) {
   const names = (reply.match(/\(([^)]+)\)/)?.[1] || "").split(" / ").filter(Boolean);
   $("chat-choices").replaceChildren(...names.map((name) => {
@@ -506,6 +524,7 @@ function bindWork() {
   for (const button of $("set-ratio").children) {
     button.addEventListener("click", () => changeSetting("ratio", button.dataset.value, phrases[button.dataset.value]));
   }
+  $("set-product").addEventListener("change", (event) => { settings.product_id = event.target.value; });
   $("set-duration").addEventListener("change", (event) => {
     const value = Math.min(30, Math.max(5, Math.round(Number(event.target.value)) || 5));
     event.target.value = value;

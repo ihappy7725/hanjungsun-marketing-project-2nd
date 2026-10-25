@@ -37,6 +37,10 @@
 }
 .studio-page .studio-card:hover { border-color: var(--line-strong); }
 .studio-page .studio-card:has([data-ratio="16:9"]) { flex-basis: 400px; }
+/* 내 영상: 미리보기 높이를 모두 같게 하고 가로만 영상 비율대로 (9:16은 좁게, 16:9는 넓게) */
+.studio-page .studio-card.is-video { flex: 0 0 auto; overflow: hidden; }
+.studio-page .studio-card.is-video .studio-thumb { height: 340px; width: auto; }
+.studio-page .studio-card.is-video .studio-card-body { width: 0; min-width: 100%; }
 .studio-page .studio-card-body { padding: var(--space-4) var(--space-5) var(--space-5); }
 .studio-page .studio-card-title { margin: 0; overflow: hidden; font-size: var(--fs-body); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 
@@ -144,6 +148,7 @@
 
 .studio-page .studio-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
 .studio-page .studio-settings { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.studio-page .studio-product select { min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); }
 .studio-page .studio-seg { display: flex; }
 .studio-page .studio-seg .btn + .btn { margin-left: calc(-1 * var(--space-1)); }
 .studio-page .btn:disabled { opacity: .45; cursor: default; }
