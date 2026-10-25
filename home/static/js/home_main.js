@@ -261,7 +261,7 @@ function initialize() {
           let shown = Math.min(dayEvents.length, room);
           if (dayEvents.length > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
           const rest = dayEvents.length - shown;
-          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}${e.campaignId ? ' is-anchor' : ''}" title="${esc(e.title)}${e.campaignId ? ' · 이벤트 기준일' : ''}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
+          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}${e.campaignId ? ' · 이벤트 기준일' : ''}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
           html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
           // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
           if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
@@ -668,7 +668,8 @@ function initialize() {
     // 한국어·영어 화면은 번역을 켜 둡니다. 베트남어 화면은 원문을 그대로 봅니다.
     translateOn = saved === null ? true : saved === 'on';
     button.hidden = false;
-    button.textContent = translateTarget === 'ko' ? '자동 번역' : 'Auto-translate';
+    button.textContent = translateTarget === 'ko' ? '자동 번역' : 'Auto-translate';
+
     button.title = translateTarget === 'ko' ? '기사 제목을 한국어로 번역합니다' : 'Translate headlines into English';
     button.setAttribute('aria-pressed', String(translateOn));
     button.onclick = () => {
