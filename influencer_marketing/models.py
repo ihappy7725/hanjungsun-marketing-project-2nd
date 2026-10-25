@@ -23,6 +23,7 @@ class Influencer(db.Model):
     name = db.Column(db.String(120), nullable=False)
     handle = db.Column(db.String(120), default="")
     category = db.Column(db.String(40), default="")
+    segment = db.Column(db.String(60), default="", index=True)  # 타깃 그룹 (예: 한국(인) · 다낭 여행 유튜버). 비어 있으면 미분류
     city = db.Column(db.String(40), default="")
     email = db.Column(db.String(200), default="")
     zalo = db.Column(db.String(80), default="")
@@ -43,7 +44,7 @@ class Influencer(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id, "name": self.name, "handle": self.handle or "", "category": self.category or "",
+            "id": self.id, "name": self.name, "handle": self.handle or "", "category": self.category or "", "segment": self.segment or "",
             "city": self.city or "", "email": self.email or "", "zalo": self.zalo or "", "manager": self.manager or "",
             "pf": self.channels or {}, "metricsDate": self.metrics_date or "", "metricsSource": self.metrics_source or "",
             "status": self.status or "candidate", "eventId": self.event_id or "", "sentAt": self.sent_at or "",
@@ -121,7 +122,7 @@ class Setting(db.Model):
 
 # ---------------------------------------------------------------- 저장 함수
 INF_FIELDS = {
-    "name": "name", "handle": "handle", "category": "category", "city": "city", "email": "email", "zalo": "zalo",
+    "name": "name", "handle": "handle", "category": "category", "segment": "segment", "city": "city", "email": "email", "zalo": "zalo",
     "manager": "manager", "pf": "channels", "metricsDate": "metrics_date", "metricsSource": "metrics_source",
     "status": "status", "eventId": "event_id", "sentAt": "sent_at", "confirmedShoot": "confirmed_shoot",
     "postDate": "post_date", "notes": "notes", "resp": "reply", "example": "is_demo",

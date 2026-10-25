@@ -57,37 +57,40 @@ DEFAULT_SETTINGS = {
 
 # ---------------------------------------------------------------- 시연 데이터 (실제 인물 아님)
 DEMO_INFLUENCERS = [
-    {"id": "demo_inf_a", "name": "크리에이터 A", "handle": "@vd_banhngot_a", "category": "디저트·먹방", "city": "호치민",
+    {"id": "demo_inf_a", "name": "크리에이터 A", "handle": "@vd_banhngot_a", "category": "디저트·먹방", "segment": disc.SEGMENT_NAMES[1], "city": "호치민",
      "email": "creator.a@example.com", "pf": {"tt": {"f": 182000, "v": 46000, "url": ""}, "fb": {"f": 95000, "v": 12000, "url": ""}},
      "metricsDate": "2026-10-15", "metricsSource": "인플루언서 제출", "status": "confirmed", "sentAt": "2026-10-08T09:00:00",
      "confirmedShoot": "2026-11-05", "postDate": "2026-11-12", "notes": "샘플 30개 발송 예정", "eventId": "",
      "resp": {"avail": "yes", "neg": ["2026-10-24"], "shoot": ["2026-11-05", "2026-11-07"], "post": "2026-11-12", "fee": 18000000,
               "cur": "VND", "formats": ["TikTok 영상"], "note": "팥 앙금 맛 위주로 시식 영상 희망", "review": False, "ambig": [],
               "raw": "", "via": "form", "at": "2026-10-14T10:00:00"}},
-    {"id": "demo_inf_b", "name": "크리에이터 B", "handle": "@vd_anvat_b", "category": "맛집 리뷰", "city": "하노이",
+    {"id": "demo_inf_b", "name": "크리에이터 B", "handle": "@vd_anvat_b", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "하노이",
      "email": "creator.b@example.com", "pf": {"tt": {"f": 42000, "v": 15000, "url": ""}, "ig": {"f": 18000, "v": 4200, "url": ""}},
      "metricsDate": "2026-10-16", "metricsSource": "직접 확인", "status": "replied", "sentAt": "2026-10-09T09:00:00", "eventId": "",
      "resp": {"avail": "cond", "neg": ["2026-10-28"], "shoot": ["2026-11-10", "2026-11-12"], "post": "", "fee": 6500000, "cur": "VND",
               "formats": ["TikTok 영상", "Instagram Reels"], "note": "영상 2차 활용은 3개월까지만 가능하다는 조건", "review": True,
               "ambig": ["10/11 표기가 일/월인지 확인 필요"], "raw": "1) B - có thể nếu chỉ dùng lại video trong 3 tháng\n2) 28/10\n3) 10/11 hoặc 12/11\n5) 6,5 triệu",
               "via": "rule", "at": "2026-10-17T15:00:00"}},
-    {"id": "demo_inf_c", "name": "크리에이터 C", "handle": "@vd_meva_be_c", "category": "가족·육아", "city": "다낭",
+    {"id": "demo_inf_c", "name": "크리에이터 C", "handle": "@vd_meva_be_c", "category": "가족·육아", "segment": disc.SEGMENT_NAMES[3], "city": "다낭",
      "email": "creator.c@example.com", "manager": "시연 매니지먼트",
      "pf": {"fb": {"f": 310000, "v": 38000, "url": ""}, "yt": {"f": 120000, "v": 21000, "url": ""}},
      "metricsDate": "2026-10-10", "metricsSource": "에이전시 자료", "status": "sent", "sentAt": "2026-10-12T09:00:00", "notes": "매니저 경유 연락", "eventId": ""},
-    {"id": "demo_inf_d", "name": "크리에이터 D", "handle": "@vd_kfood_d", "category": "K-컬처", "city": "호치민",
+    {"id": "demo_inf_d", "name": "크리에이터 D", "handle": "@vd_kfood_d", "category": "K-컬처", "segment": disc.SEGMENT_NAMES[2], "city": "호치민",
      "email": "creator.d@example.com", "pf": {"yt": {"f": 640000, "v": 150000, "url": ""}, "tt": {"f": 520000, "v": 210000, "url": ""}},
      "metricsDate": "2026-10-18", "metricsSource": "YouTube API", "status": "negotiating", "sentAt": "2026-10-07T09:00:00", "notes": "단가 협상 중", "eventId": "",
      "resp": {"avail": "yes", "neg": ["2026-10-27"], "shoot": ["2026-11-05", "2026-11-14"], "post": "2026-11-20", "fee": 2600, "cur": "USD",
               "formats": ["YouTube 영상", "YouTube Shorts"], "note": "", "review": False, "ambig": [], "raw": "", "via": "manual", "at": "2026-10-15T11:00:00"}},
-    {"id": "demo_inf_e", "name": "크리에이터 E", "handle": "@vd_songdep_e", "category": "라이프스타일", "city": "하노이",
+    {"id": "demo_inf_e", "name": "크리에이터 E", "handle": "@vd_songdep_e", "category": "라이프스타일", "segment": disc.SEGMENT_NAMES[3], "city": "하노이",
      "email": "creator.e@example.com", "pf": {"ig": {"f": 26000, "v": 7000, "url": ""}, "tt": {"f": 9000, "v": 3500, "url": ""}},
      "metricsDate": "2026-08-20", "metricsSource": "직접 확인", "status": "candidate", "eventId": ""},
-    {"id": "demo_inf_f", "name": "크리에이터 F", "handle": "@vd_review_f", "category": "맛집 리뷰", "city": "호치민",
+    {"id": "demo_inf_f", "name": "크리에이터 F", "handle": "@vd_review_f", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "호치민",
      "email": "creator.f@example.com", "pf": {"tt": {"f": 75000, "v": 9000, "url": ""}}, "metricsDate": "2026-10-11",
      "metricsSource": "TikTok One", "status": "declined", "sentAt": "2026-10-08T09:00:00", "eventId": "",
      "resp": {"avail": "no", "neg": [], "shoot": [], "post": "", "fee": None, "cur": "VND", "formats": [], "note": "12월까지 일정이 차 있음",
               "review": False, "ambig": [], "raw": "", "via": "manual", "at": "2026-10-13T09:00:00"}},
+    {"id": "demo_inf_g", "name": "크리에이터 G", "handle": "@vd_danang_trip_g", "category": "여행", "segment": disc.SEGMENT_NAMES[4], "city": "다낭",
+     "email": "creator.g@example.com", "pf": {"yt": {"f": 86000, "v": 24000, "url": ""}}, "metricsDate": "2026-10-20",
+     "metricsSource": "직접 확인", "status": "candidate", "notes": "한국인 2030 대상 다낭 여행 브이로그", "eventId": ""},
 ]
 DEMO_QUOTES = [
     {"id": "demo_q_1", "infId": "demo_inf_a", "name": "크리에이터 A", "platform": "tt", "format": "TikTok 영상", "layer": "contract",
@@ -355,6 +358,9 @@ def clean_influencer(data, existing=None):
     for k in ("handle", "email", "zalo", "manager", "notes", "eventId", "metricsSource"):
         if k in data:
             out[k] = str(data.get(k) or "").strip()
+    if "segment" in data:
+        out["segment"] = disc.segment_name(data.get("segment"))  # 모르는 값은 미분류(빈 값)
+    out.setdefault("segment", "")
     for k, allowed in (("category", CATEGORIES), ("city", CITIES)):
         if data.get(k):
             out[k] = data[k] if data[k] in allowed else allowed[-1]
@@ -466,7 +472,8 @@ def index():
         "today": today_str(),
         "consts": {"tiers": TIERS, "categories": CATEGORIES, "cities": CITIES, "sources": METRIC_SOURCES,
                    "formats": CONTENT_FORMATS, "sourceTypes": disc.SOURCE_TYPES, "confidence": disc.CONFIDENCE_LABEL,
-                   "discoveryCategories": list(disc.CATEGORY_KEYWORDS)},
+                   "discoveryCategories": list(disc.CATEGORY_KEYWORDS), "segments": disc.SEGMENTS,
+                   "segmentUnset": disc.SEGMENT_UNSET},
     }
     return render_template("influencer_marketing/influencer_index.html", boot=boot)
 
@@ -669,7 +676,7 @@ INF_HEAD = ["ID", "이름", "핸들", "분야", "지역", "이메일", "Zalo", "
             "TikTok 팔로워", "TikTok 조회수 중앙값", "TikTok 주소", "Facebook 팔로워", "Facebook 조회수 중앙값", "Facebook 주소",
             "YouTube 구독자", "YouTube 조회수 중앙값", "YouTube 주소", "Instagram 팔로워", "Instagram 조회수 중앙값", "Instagram 주소",
             "규모", "상태", "연결 기념일 ID", "제안 발송일", "협업 가능 여부", "협의 가능일", "촬영 가능일", "확정 촬영일", "게시 예정일",
-            "희망 비용", "통화", "지표 기준일", "지표 출처", "메모", "시연 데이터"]
+            "희망 비용", "통화", "지표 기준일", "지표 출처", "메모", "시연 데이터", "타깃 그룹"]
 CSV_COLS = {"tt": ("TikTok 팔로워", "TikTok 조회수 중앙값", "TikTok 주소"), "fb": ("Facebook 팔로워", "Facebook 조회수 중앙값", "Facebook 주소"),
             "yt": ("YouTube 구독자", "YouTube 조회수 중앙값", "YouTube 주소"), "ig": ("Instagram 팔로워", "Instagram 조회수 중앙값", "Instagram 주소")}
 
@@ -711,7 +718,7 @@ def export_influencers():
                      i.get("eventId"), (i.get("sentAt") or "")[:10], {"yes": "가능", "cond": "조건부", "no": "불가"}.get(r.get("avail"), ""),
                      " ".join(r.get("neg") or []), " ".join(r.get("shoot") or []), i.get("confirmedShoot"), i.get("postDate") or r.get("post"),
                      r.get("fee") or "", (r.get("cur") or "VND") if r.get("fee") else "", i.get("metricsDate"), i.get("metricsSource"),
-                     i.get("notes"), "Y" if i.get("example") else ""])
+                     i.get("notes"), "Y" if i.get("example") else "", i.get("segment") or ""])
     return _csv_response(f"influencer_list_{_stamp()}.csv", INF_HEAD, rows)
 
 
@@ -768,10 +775,13 @@ def api_import_csv():
             if row.get(fc) or row.get(vc) or row.get(uc):
                 pf[key] = {"f": re.sub(r"[^\d.]", "", row.get(fc, "")), "v": re.sub(r"[^\d.]", "", row.get(vc, "")), "url": row.get(uc, "")}
         data = {"name": row["이름"], "handle": row.get("핸들", ""), "category": row.get("분야", ""), "city": row.get("지역", ""),
+                "segment": row.get("타깃 그룹", ""),
                 "email": row.get("이메일", ""), "zalo": row.get("Zalo", ""), "manager": row.get("매니지먼트", ""),
                 "eventId": row.get("연결 기념일 ID", ""), "metricsDate": row.get("지표 기준일", ""), "notes": row.get("메모", ""),
                 "metricsSource": row.get("지표 출처") if row.get("지표 출처") in METRIC_SOURCES else METRIC_SOURCES[0]}
         data = {k: v for k, v in data.items() if v not in ("", None)}  # 빈 칸은 기존 값을 지우지 않음
+        if "segment" in data and not disc.segment_name(data["segment"]):
+            data.pop("segment")  # 모르는 타깃 그룹 이름은 기존 값을 바꾸지 않음
         if pf:
             data["pf"] = pf
         if status_by_name.get(row.get("상태", "")):
@@ -1000,7 +1010,7 @@ def _record_from_input(r):
            "er": _num(r.get("er")), "vn_audience": _num(r.get("vn_audience")), "country": str(r.get("country") or "")[:40],
            "language": str(r.get("language") or "")[:20], "provider": str(r.get("provider") or "")[:60], "source_type": st,
            "collected_on": _date(r.get("collected_on")) or today_str(), "category": r.get("category") or "",
-           "notes": str(r.get("notes") or "")[:300], "account_key": k}
+           "notes": str(r.get("notes") or "")[:300], "account_key": k, "segment": disc.segment_name(r.get("segment"))}
     for fld in ("er", "vn_audience"):
         if rec[fld] is not None and rec[fld] > 100:
             raise InputError("참여율·시청자 비중은 0~100(%) 사이여야 해요")
@@ -1031,7 +1041,8 @@ def api_discovery_register():
         if src_name not in METRIC_SOURCES:
             src_name = "직접 확인"
         data = {"name": rec["name"], "handle": "@" + rec["handle"].lstrip("@"), "status": "candidate",
-                "category": rec["category"] if rec["category"] in CATEGORIES else "",
+                "segment": rec["segment"],
+                "category": rec["category"] if rec["category"] in CATEGORIES else next((x["category"] for x in disc.SEGMENTS if x["name"] == rec["segment"]), ""),
                 "pf": {rec["platform"]: disc.to_channel(rec)}, "metricsDate": rec["collected_on"], "metricsSource": src_name,
                 "notes": ("발굴: " + (rec["provider"] or disc.SOURCE_TYPES[rec["source_type"]]["label"]) + (" · " + rec["notes"] if rec["notes"] else ""))[:500],
                 "eventId": str(d.get("eventId") or "")}
@@ -1053,7 +1064,7 @@ def api_snapshots(influencer_id):
 
 
 DISC_HEAD = ["플랫폼", "계정 주소 또는 핸들", "이름", "팔로워", "조회수 중앙값", "평균 조회수", "참여율(%)", "베트남 시청자 비중(%)",
-             "콘텐츠 언어", "활동 국가", "출처", "수집일", "분야", "메모"]
+             "콘텐츠 언어", "활동 국가", "출처", "수집일", "분야", "메모", "타깃 그룹"]
 MAX_UPLOAD_READ = 5 * 1024 * 1024 + 1  # 5MB 초과 여부만 알면 되므로 그 이상은 읽지 않음
 DISC_SOURCE = {"직접 확인": "manual", "TikTok One 화면 확인": "manual", "인플루언서 제출": "submitted", "에이전시 자료": "submitted"}
 
@@ -1061,7 +1072,7 @@ DISC_SOURCE = {"직접 확인": "manual", "TikTok One 화면 확인": "manual", 
 @bp.get("/export/discovery_template.csv")
 def export_discovery_template():
     sample = ["TikTok", "https://www.tiktok.com/@example_account", "(예시) 계정 이름", "120000", "35000", "", "6.5", "72", "vi",
-              "Vietnam", "TikTok One 화면 확인", today_str(), "디저트·먹방", "이 줄은 예시예요. 지우고 쓰세요"]
+              "Vietnam", "TikTok One 화면 확인", today_str(), "디저트·먹방", "이 줄은 예시예요. 지우고 쓰세요", disc.SEGMENT_NAMES[1]]
     return _csv_response("influencer_discovery_template.csv", DISC_HEAD, [sample])
 
 
@@ -1122,7 +1133,7 @@ def api_discovery_ranking():
     try:
         rows, meta = disc.build_ranking(str(d.get("kind") or ""), d.get("size") or 50,
                                         d.get("platform") if d.get("platform") in PLATFORM_NAME else "tt", str(d.get("keyword") or "")[:80],
-                                        food_only=d.get("food_only", True) is not False)
+                                        food_only=d.get("food_only", True) is not False, region=str(d.get("region") or "VN"))
     except ext.ApiError as e:
         return _error(str(e))
     except (TypeError, ValueError):

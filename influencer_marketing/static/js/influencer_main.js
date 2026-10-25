@@ -26,7 +26,7 @@
     quotes: new Map(BOOT.quotes.map(q => [q.id, q])),
     settings: BOOT.settings,
     tab: BOOT.eventFilter ? 'list' : 'overview',
-    flt: { q: '', cat: '', pf: '', tier: '', st: '', ev: BOOT.eventFilter || '', sort: 'updated', dir: -1 },
+    flt: { q: '', seg: '', cat: '', pf: '', tier: '', st: '', ev: BOOT.eventFilter || '', sort: 'updated', dir: -1 },
     mail: { sel: null, lang: 'vi', checked: new Set() },
     resp: { id: '', draft: null }, cal: null, calSel: null,
   };
@@ -146,7 +146,8 @@
       <div class="im-grid-side"><div class="im-stack">
         <div class="im-panel"><h2>진행 단계 <small>인플루언서별 현재 상태</small></h2><div id="ovPipe"></div></div>
         <div class="im-panel"><h2>다음 할 일 <small>회신 확인 · 회신 지연 · 촬영일 확정 · 촬영 임박 · 지표 갱신</small></h2><div id="ovTodo"></div></div></div>
-      <div class="im-stack"><div class="im-panel"><h2>대표 플랫폼 <small>팔로워가 가장 많은 채널 기준</small></h2><div id="ovPf"></div></div>
+      <div class="im-stack"><div class="im-panel"><h2>타깃 그룹별 분포 <small>누구를 겨냥한 채널인지</small></h2><div id="ovSeg"></div></div>
+        <div class="im-panel"><h2>대표 플랫폼 <small>팔로워가 가장 많은 채널 기준</small></h2><div id="ovPf"></div></div>
         <div class="im-panel"><h2>규모별 분포 <small>최대 팔로워 기준</small></h2><div id="ovTier"></div></div>
         <div class="im-panel"><h2>14일 안의 일정</h2><div id="ovSoon"></div></div></div></div>`;
     },
@@ -161,7 +162,7 @@
         $('#ovAdd', v).onclick = () => openEditor(null);
         $('#ovFind', v).onclick = () => show('discover');
         const sd = $('#ovSeed', v); if (sd) sd.onclick = async () => { try { replaceAll(await api('POST', 'api/demo/seed')); toast('시연 데이터를 넣었어요'); } catch (e) { toast(e.message); } };
-        ['#ovTodo', '#ovPf', '#ovTier', '#ovSoon'].forEach(id => { $(id, v).innerHTML = '<p class="im-muted" style="margin:0">데이터 없음</p>'; });
+        ['#ovTodo', '#ovSeg', '#ovPf', '#ovTier', '#ovSoon'].forEach(id => { $(id, v).innerHTML = '<p class="im-muted" style="margin:0">데이터 없음</p>'; });
         return;
       }
       const cnt = {}; STATUS.forEach(([k]) => { cnt[k] = 0; }); L.forEach(i => { cnt[i.status || 'candidate']++; });
@@ -170,6 +171,8 @@
       const T = tasks(L), tagFor = { late: ['회신 지연', 'st-declined'], review: ['확인', 'st-replied'], pick: ['일정', 'st-sent'], soon: ['촬영', 'st-confirmed'], stale: ['지표', ''] };
       $('#ovTodo', v).innerHTML = T.length ? `<ul class="im-todo">${T.slice(0, 8).map(x => `<li><span class="im-chip ${tagFor[x.k][1]}">${tagFor[x.k][0]}</span><div class="im-grow"><b>${esc(x.i.name)}</b> · ${esc(x.txt)}<div class="im-muted im-small">${esc(x.act)}</div></div><button type="button" class="im-btn is-ghost is-sm" data-open="${esc(x.i.id)}">열기</button></li>`).join('')}</ul>${T.length > 8 ? `<p class="im-muted im-small" style="margin:8px 0 0">외 ${T.length - 8}건</p>` : ''}` : '<div class="im-empty">지금 처리할 일이 없어요</div>';
       $$('[data-open]', v).forEach(b => { b.onclick = () => openEditor(b.dataset.open); });
+      const segNames = [...(C.segments || []).map(x => x.name), '미분류'], sc = {}; segNames.forEach(n => { sc[n] = 0; }); L.forEach(i => { sc[i.segment && sc[i.segment] !== undefined ? i.segment : '미분류']++; }); const sm = Math.max(1, ...Object.values(sc));
+      $('#ovSeg', v).innerHTML = `<div class="im-bars">${segNames.map(n => `<div class="im-bar"><span style="white-space:normal">${esc(n)}</span><div class="im-track"><div class="im-fill" style="width:${sc[n] / sm * 100}%"></div></div><span class="im-num">${sc[n]}명</span></div>`).join('')}</div>`;
       const pc = {}; PF.forEach(p => { pc[p.k] = 0; }); L.forEach(i => { const m = mainPf(i); if (m) pc[m.k]++; }); const pm = Math.max(1, ...Object.values(pc));
       $('#ovPf', v).innerHTML = `<div class="im-bars">${PF.map(p => `<div class="im-bar"><span class="im-pf pf-${p.k}"><i></i>${p.n}</span><div class="im-track"><div class="im-fill" style="width:${pc[p.k] / pm * 100}%;background:var(--im-${p.k})"></div></div><span class="im-num">${pc[p.k]}명</span></div>`).join('')}</div>`;
       const tc = {}; TIERS.forEach(x => { tc[x.k] = 0; }); L.forEach(i => { if (maxF(i)) tc[tierOf(maxF(i)).k]++; }); const tm = Math.max(1, ...Object.values(tc));
@@ -186,6 +189,7 @@
       const f = S.flt;
       v.innerHTML = `<div class="im-filters">
         <label class="im-field">검색<input type="search" id="fq" placeholder="이름, 핸들, 메모" value="${esc(f.q)}"></label>
+        <label class="im-field">타깃 그룹<select id="fseg"><option value="">전체</option>${(C.segments || []).map(x => `<option ${f.seg === x.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}<option value="__none" ${f.seg === '__none' ? 'selected' : ''}>미분류</option></select></label>
         <label class="im-field">분야<select id="fcat"><option value="">전체</option>${C.categories.map(c => `<option ${f.cat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
         <label class="im-field">대표 플랫폼<select id="fpf"><option value="">전체</option>${PF.map(p => `<option value="${p.k}" ${f.pf === p.k ? 'selected' : ''}>${p.n}</option>`).join('')}</select></label>
         <label class="im-field">규모<select id="ftier"><option value="">전체</option>${TIERS.map(t => `<option value="${t.k}" ${f.tier === t.k ? 'selected' : ''}>${t.n} (${t.label})</option>`).join('')}</select></label>
@@ -225,7 +229,7 @@
         } catch (e) { m.textContent = e.message; } finally { b.disabled = false; }
       };
       const on = (id, k) => { $('#' + id, v).oninput = e => { S.flt[k] = e.target.value; if (k === 'ev') renderBanners(); this.update(v); }; };
-      on('fq', 'q'); on('fcat', 'cat'); on('fpf', 'pf'); on('ftier', 'tier'); on('fst', 'st'); on('fev', 'ev');
+      on('fq', 'q'); on('fseg', 'seg'); on('fcat', 'cat'); on('fpf', 'pf'); on('ftier', 'tier'); on('fst', 'st'); on('fev', 'ev');
       $('#addInf', v).onclick = () => openEditor(null);
       $('#csvIn', v).onchange = async e => {
         const file = e.target.files[0]; e.target.value = ''; if (!file) return;
@@ -239,21 +243,22 @@
       $('#fev', v).innerHTML = `<option value="">전체</option>${[...ids].map(id => `<option value="${esc(id)}" ${f.ev === id ? 'selected' : ''}>${esc(eventName(id))}</option>`).join('')}`;
       let L = infList(); const q = f.q.trim().toLowerCase();
       if (q) L = L.filter(i => [i.name, i.handle, i.notes, i.email, i.city].join(' ').toLowerCase().includes(q));
+      if (f.seg) L = L.filter(i => f.seg === '__none' ? !i.segment : i.segment === f.seg);
       if (f.cat) L = L.filter(i => i.category === f.cat); if (f.pf) L = L.filter(i => mainPf(i)?.k === f.pf);
       if (f.tier) L = L.filter(i => maxF(i) && tierOf(maxF(i)).k === f.tier); if (f.st) L = L.filter(i => (i.status || 'candidate') === f.st);
       if (f.ev) L = L.filter(i => i.eventId === f.ev);
       const key = { name: i => i.name || '', tt: i => +(i.pf?.tt?.f || 0), fb: i => +(i.pf?.fb?.f || 0), yt: i => +(i.pf?.yt?.f || 0), ig: i => +(i.pf?.ig?.f || 0), views: i => mainPf(i)?.v || 0, status: i => STATUS.findIndex(s => s[0] === (i.status || 'candidate')), updated: i => i.updatedAt || '' }[f.sort];
       L.sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * f.dir; });
-      const cols = [['name', '인플루언서', 1], ['cat', '분야'], ['tt', 'TikTok', 1, 'r'], ['fb', 'Facebook', 1, 'r'], ['yt', 'YouTube', 1, 'r'], ['ig', 'Instagram', 1, 'r'], ['views', '대표 채널 조회수', 1, 'r'], ['tier', '규모'], ['status', '상태', 1], ['date', '지표 기준일']];
+      const cols = [['name', '인플루언서', 1], ['seg', '타깃 그룹'], ['cat', '분야'], ['tt', 'TikTok', 1, 'r'], ['fb', 'Facebook', 1, 'r'], ['yt', 'YouTube', 1, 'r'], ['ig', 'Instagram', 1, 'r'], ['views', '대표 채널 조회수', 1, 'r'], ['tier', '규모'], ['status', '상태', 1], ['date', '지표 기준일']];
       $('#lhead', v).innerHTML = cols.map(([k, n, s, r]) => `<th class="${r || ''} ${s ? 'im-sortable' : ''}" ${s ? `data-s="${k}"` : ''}>${n}${f.sort === k ? (f.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
       $$('#lhead th[data-s]', v).forEach(th => { th.onclick = () => { if (f.sort === th.dataset.s) f.dir *= -1; else { f.sort = th.dataset.s; f.dir = th.dataset.s === 'name' ? 1 : -1; } this.update(v); }; });
       const cell = (i, k) => { const p = (i.pf || {})[k]; if (!p || !+p.f) return '<td class="r im-faint">–</td>'; return `<td class="r im-num" ${mainPf(i)?.k === k ? 'style="font-weight:600"' : ''}>${short(p.f)}</td>`; };
       $('#lbody', v).innerHTML = L.length ? L.map(i => { const m = mainPf(i), tr = maxF(i) ? tierOf(maxF(i)) : null; return `<tr class="is-click" data-id="${esc(i.id)}">
           <td><div class="im-nm">${esc(i.name)}</div><div class="im-sub">${esc(i.handle || '')}${i.city ? ' · ' + esc(i.city) : ''}</div></td>
-          <td>${esc(i.category || '–')}</td>${PF.map(p => cell(i, p.k)).join('')}
+          <td>${i.segment ? esc(i.segment) : '<span class="im-faint">미분류</span>'}</td><td>${esc(i.category || '–')}</td>${PF.map(p => cell(i, p.k)).join('')}
           <td class="r im-num">${m && m.v ? short(m.v) + ` <span class="im-pf pf-${m.k}"><i></i></span>` : '<span class="im-faint">–</span>'}</td>
           <td>${tr ? tr.n : '–'}</td><td>${statusChip(i.status || 'candidate')}</td><td class="im-num im-muted">${esc(i.metricsDate || '–')} ${m && (i.pf[m.k] || {}).conf ? confChip(i.pf[m.k].conf) : ''}</td></tr>`; }).join('')
-        : `<tr><td colspan="10"><div class="im-empty" style="border:0">${S.inf.size ? '조건에 맞는 인플루언서가 없어요' : '등록된 인플루언서가 없어요. + 추가 또는 CSV 가져오기로 시작하세요.'}</div></td></tr>`;
+        : `<tr><td colspan="11"><div class="im-empty" style="border:0">${S.inf.size ? '조건에 맞는 인플루언서가 없어요' : '등록된 인플루언서가 없어요. + 추가 또는 CSV 가져오기로 시작하세요.'}</div></td></tr>`;
       $$('#lbody tr[data-id]', v).forEach(tr => { tr.onclick = () => openEditor(tr.dataset.id); });
       $('#lcount', v).textContent = `${L.length}명 표시 · 전체 ${S.inf.size}명 · 조회수는 광고가 아닌 최근 게시물 10~20개의 조회수 중앙값`;
     },
@@ -274,6 +279,7 @@
     <div class="im-body">
       <div class="im-fgrid"><label class="im-field">이름 *<input type="text" id="eName" value="${esc(o.name)}"></label>
         <label class="im-field">대표 핸들<input type="text" id="eHandle" value="${esc(o.handle)}" placeholder="@handle"></label>
+        <label class="im-field">타깃 그룹<select id="eSeg"><option value="">미분류</option>${(C.segments || []).map(x => `<option ${o.segment === x.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
         <label class="im-field">분야<select id="eCat">${C.categories.map(c => `<option ${o.category === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
         <label class="im-field">활동 지역<select id="eCity">${C.cities.map(c => `<option ${o.city === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
         <label class="im-field">이메일<input type="email" id="eEmail" value="${esc(o.email)}"></label>
@@ -353,7 +359,7 @@
         delete x._api;
         if (fv || vv || u || x.avg != null || x.er != null) pf[p.k] = { ...x, f: fv ? +fv : null, v: vv ? +vv : null, url: u };
       });
-      const body = { ...(isNew ? {} : { id: o.id }), name, handle: g('eHandle').trim(), category: g('eCat'), city: g('eCity'), email: g('eEmail').trim(), zalo: g('eZalo').trim(), manager: g('eMgr').trim(),
+      const body = { ...(isNew ? {} : { id: o.id }), name, handle: g('eHandle').trim(), segment: g('eSeg'), category: g('eCat'), city: g('eCity'), email: g('eEmail').trim(), zalo: g('eZalo').trim(), manager: g('eMgr').trim(),
         eventId: g('eEv').trim(), metricsDate: g('eMDate'), metricsSource: g('eMSrc'), status: g('eSt'), confirmedShoot: g('eConf'), postDate: g('ePost'), notes: g('eNotes'), pf,
         sentAt: sd ? ((o.sentAt || '').slice(0, 10) === sd ? o.sentAt : sd + 'T09:00:00') : '' };
       const btn = $('#eSave'); btn.disabled = true;
@@ -740,15 +746,20 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
   const optFold = (n, inner) => `<details class="im-optfold"><summary>선택 연동 서비스 보기 <span class="im-muted im-small">(${n}개 · 키 미설정, 있으면 쓰는 유료 API)</span></summary><div class="im-optfold-body">${inner}</div></details>`;
   const DISC_CATS = C.discoveryCategories || ['Food', 'Dessert', 'Mukbang', 'Korean Food', 'Lifestyle'];
   const TTO_LINKS = [['TikTok One 열기', 'https://ads.tiktok.com/creative'], ['크리에이터 검색 공식 안내', 'https://ads.tiktok.com/help/article/how-to-find-creators-in-tiktok-one']];
-  S.disc = S.disc || { platform: 'tt', provider: '', cats: ['Dessert', 'Korean Food'], rows: [], sel: new Set(), meta: null, source: '' };
+  S.disc = S.disc || { platform: 'tt', provider: '', cats: ['Dessert', 'Korean Food'], rows: [], sel: new Set(), meta: null, source: '', segment: '' };
+  const SEGS = C.segments || [];
+  const segOf = name => SEGS.find(x => x.name === name);
   VIEWS.discover = {
     mount(v) {
       const D = S.disc;
       v.innerHTML = `<div class="im-grid-side"><div class="im-stack">
+        <div class="im-panel"><h2>타깃 그룹으로 찾기 <small>누르면 아래 검색 조건이 그 그룹에 맞게 바뀌고, 등록할 때 이 그룹으로 저장돼요</small></h2>
+          <div class="im-seg" id="dSegs">${SEGS.map(x => `<button type="button" data-seg="${esc(x.name)}" aria-pressed="${D.segment === x.name}">${esc(x.name)}</button>`).join('')}<button type="button" data-seg="" aria-pressed="false">선택 해제</button></div>
+          <p class="im-muted im-small" id="dSegMsg" style="margin:8px 0 0">${D.segment ? `선택: <b>${esc(D.segment)}</b>` : '그룹을 고르지 않으면 등록할 때 미분류로 저장돼요'}</p></div>
         <div class="im-panel"><h2>검색 조건 <small>API가 없어도 아래 'TikTok One 연계'로 같은 조건을 쓸 수 있어요</small></h2>
           <div class="im-fgrid">
             <label class="im-field">플랫폼<select id="dPf">${[['tt', 'TikTok'], ['ig', 'Instagram'], ['yt', 'YouTube']].map(([k, n]) => `<option value="${k}" ${D.platform === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-            <label class="im-field">국가/지역<select id="dCountry"><option value="Vietnam">베트남</option><option value="">제한 없음</option></select></label>
+            <label class="im-field">국가/지역<select id="dCountry"><option value="Vietnam">베트남</option><option value="Korea">한국</option><option value="">제한 없음</option></select></label>
             <label class="im-field">콘텐츠 언어<select id="dLang"><option value="vi">베트남어</option><option value="">제한 없음</option><option value="en">영어</option><option value="ko">한국어</option></select></label>
             <label class="im-field">최소 팔로워<input type="number" min="0" id="dMinF" value="10000"></label>
             <label class="im-field">최대 팔로워<input type="number" min="0" id="dMaxF" value="500000"></label>
@@ -769,7 +780,8 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
             <label class="im-field is-wide">순위 종류<select id="rkKind"></select></label>
             <label class="im-field" id="rkPfWrap" hidden>플랫폼<select id="rkPf"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option></select></label>
             <label class="im-field">개수<select id="rkSize"><option value="30">Top 30</option><option value="50" selected>Top 50</option><option value="100">Top 100</option></select></label>
-            <label class="im-field is-wide" id="rkKwWrap" hidden>키워드<input type="text" id="rkKw" placeholder="예: mukbang"></label>
+            <label class="im-field is-wide" id="rkKwWrap" hidden>키워드<input type="text" id="rkKw" placeholder="예: mukbang 또는 다낭 여행"></label>
+            <label class="im-field" id="rkRegionWrap" hidden>검색 지역<select id="rkRegion"><option value="VN">베트남·베트남어</option><option value="KR">한국·한국어</option></select></label>
             <label class="im-field is-wide" id="rkFoodWrap" style="flex-direction:row;align-items:center;gap:8px" hidden><input type="checkbox" id="rkFood" checked>식품 관련만 보기 <span class="im-muted im-small">(게임·음악·스포츠·뉴스 제외 + 제목·태그에 음식 단어 포함)</span></label></div>
           <div id="rkKwChips" hidden>${kwChips('rkKw')}</div>
           <p class="im-muted im-small" id="rkInfo" style="margin:8px 0 0"></p>
@@ -784,6 +796,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
         <div class="im-panel"><h2>후보 직접 입력 <small>TikTok One·인플루언서 자료에서 확인한 값</small></h2>
           <div class="im-fgrid">
             <label class="im-field">플랫폼<select id="mPf"><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option><option value="fb">Facebook</option></select></label>
+            <label class="im-field is-wide">타깃 그룹<select id="mSeg"><option value="">미분류</option>${SEGS.map(x => `<option ${D.segment === x.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
             <label class="im-field">출처<select id="mSrc"><option value="manual|TikTok One (화면 확인)">TikTok One 화면 확인</option><option value="manual|직접 확인">채널에서 직접 확인</option><option value="submitted|인플루언서 제출">인플루언서 제출 자료</option><option value="submitted|에이전시 자료">에이전시 자료</option><option value="official_api|YouTube API">YouTube API (자동 채우기)</option><option value="saas|Phyllo">Phyllo (자동 채우기)</option></select></label>
             <label class="im-field is-wide">계정 주소 또는 @핸들 *<input type="text" id="mRef" placeholder="https://www.tiktok.com/@아이디"></label>
             <label class="im-field">이름<input type="text" id="mName"></label>
@@ -807,12 +820,13 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <div id="dCsvRep" style="margin-top:10px"></div></div>
         </div></div>`;
       $('#dPf', v).onchange = e => { D.platform = e.target.value; this.providers(v); this.crit(v); };
+      $$('#dSegs button', v).forEach(b => { b.onclick = () => this.applySegment(v, b.dataset.seg); });
       ['dCountry', 'dLang', 'dMinF', 'dMaxF', 'dMinV', 'dMinEr', 'dMinVn'].forEach(id => { $('#' + id, v).oninput = () => this.crit(v); });
       $$('#dCats button', v).forEach(b => { b.onclick = () => { const c = b.dataset.c; D.cats = D.cats.includes(c) ? D.cats.filter(x => x !== c) : [...D.cats, c]; b.setAttribute('aria-pressed', D.cats.includes(c)); this.crit(v); }; });
       $('#dCopy', v).onclick = () => copyText($('#dCrit', v).textContent, '검색 기준', $('#dCrit', v));
       $('#dGo', v).onclick = () => this.search(v);
       $('#dReg', v).onclick = () => this.register(v, D.rows.filter((r, i) => D.sel.has(i)));
-      const manual = () => { const [st, prov] = $('#mSrc', v).value.split('|'); return { platform: $('#mPf', v).value, url: $('#mRef', v).value.trim(), name: $('#mName', v).value.trim(), followers: $('#mF', v).value, median_views: $('#mV', v).value, avg_views: $('#mAvg', v).value, er: $('#mEr', v).value, vn_audience: $('#mVn', v).value, collected_on: $('#mAt', v).value, category: $('#mCat', v).value, source_type: st, provider: prov, country: $('#dCountry', v).value, language: $('#dLang', v).value }; };
+      const manual = () => { const [st, prov] = $('#mSrc', v).value.split('|'); return { platform: $('#mPf', v).value, url: $('#mRef', v).value.trim(), name: $('#mName', v).value.trim(), followers: $('#mF', v).value, median_views: $('#mV', v).value, avg_views: $('#mAvg', v).value, er: $('#mEr', v).value, vn_audience: $('#mVn', v).value, collected_on: $('#mAt', v).value, category: $('#mCat', v).value, source_type: st, provider: prov, country: $('#dCountry', v).value, language: $('#dLang', v).value, segment: $('#mSeg', v).value }; };
       const mMsg = (t, bad) => { const m = $('#mMsg', v); m.textContent = t; m.style.color = bad ? 'var(--im-bad)' : 'var(--im-ok)'; };
       $('#mFill', v).onclick = async () => { const pf = $('#mPf', v).value, ref = $('#mRef', v).value.trim();
         if (!ref) { mMsg('계정 주소를 먼저 넣어 주세요', true); return; }
@@ -841,7 +855,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       $('#rkKind', v).innerHTML = d.kinds.map(k => `<option value="${k.key}" ${k.configured ? '' : 'disabled'}>${esc(k.label)}${k.configured ? '' : ' (키 없음)'}</option>`).join('');
       const firstOk = d.kinds.find(k => k.configured); if (firstOk) $('#rkKind', v).value = firstOk.key;
       const sync = () => { const k = R.kinds.find(x => x.key === $('#rkKind', v).value) || {};
-        $('#rkKwWrap', v).hidden = $('#rkKwChips', v).hidden = !k.needs_keyword; $('#rkPfWrap', v).hidden = (k.platforms || []).length < 2;
+        $('#rkKwWrap', v).hidden = $('#rkKwChips', v).hidden = $('#rkRegionWrap', v).hidden = !k.needs_keyword; $('#rkPfWrap', v).hidden = (k.platforms || []).length < 2;
         $('#rkFoodWrap', v).hidden = !(k.key || '').startsWith('yt_popular');
         $('#rkInfo', v).textContent = k.key ? `집계 기준: ${k.basis} · 비용: ${k.cost}` : '';
         $('#rkGo', v).disabled = !k.configured; if (!k.configured) $('#rkMsg', v).textContent = 'YouTube 키가 있어야 순위를 가져올 수 있어요. 키가 없을 때는 위의 직접 입력·파일 가져오기를 쓰세요'; };
@@ -854,7 +868,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     async rankFetch(v) {
       const R = S.disc.rank, b = $('#rkGo', v), kind = $('#rkKind', v).value;
       b.disabled = true; $('#rkMsg', v).textContent = '가져오는 중…';
-      try { const r = await api('POST', 'api/discovery/ranking', { kind, size: +$('#rkSize', v).value, platform: $('#rkPf', v).value, keyword: $('#rkKw', v).value.trim(), food_only: $('#rkFood', v).checked });
+      try { const r = await api('POST', 'api/discovery/ranking', { kind, size: +$('#rkSize', v).value, platform: $('#rkPf', v).value, keyword: $('#rkKw', v).value.trim(), food_only: $('#rkFood', v).checked, region: $('#rkRegion', v).value });
         R.rows = r.rows; R.meta = r.meta; R.sel = new Set(); $('#rkMsg', v).textContent = `${r.rows.length}개를 가져왔어요`; this.rankRender(v); }
       catch (e) { $('#rkMsg', v).textContent = e.message; }
       finally { b.disabled = false; }
@@ -885,7 +899,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     async rankRegister(v) {
       const R = S.disc.rank, recs = R.rows.filter((r, i) => R.sel.has(i));
       if (!recs.length) { toast('등록할 계정을 고르세요'); return; }
-      try { const r = await api('POST', 'api/discovery/register', { records: recs, eventId: S.flt.ev || '' }); replaceAll(r);
+      try { const r = await api('POST', 'api/discovery/register', { records: recs.map(x => ({ ...x, segment: x.segment || S.disc.segment || '' })), eventId: S.flt.ev || '' }); replaceAll(r);
         const made = new Map(r.created.map(x => [x.account_key, x.name]));
         R.rows.forEach(row => { if (row.account_key && made.has(row.account_key)) { row.duplicate = true; row.duplicate_of = { name: made.get(row.account_key) }; } });
         R.sel = new Set(); this.rankRender(v);
@@ -915,10 +929,24 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       const n = id => { const x = $('#' + id, v).value; return x === '' ? null : +x; };
       return { country: $('#dCountry', v).value, language: $('#dLang', v).value, min_followers: n('dMinF'), max_followers: n('dMaxF'), min_views: n('dMinV'), min_er: n('dMinEr'), min_vn_audience: n('dMinVn'), categories: S.disc.cats, keyword: $('#dKw', v).value.trim() };
     },
+    applySegment(v, name) {
+      const D = S.disc, sg = segOf(name);
+      D.segment = sg ? sg.name : '';
+      $$('#dSegs button', v).forEach(x => x.setAttribute('aria-pressed', !!sg && x.dataset.seg === sg.name));
+      $('#dSegMsg', v).innerHTML = sg ? `선택: <b>${esc(sg.name)}</b> · 플랫폼 ${esc({ tt: 'TikTok', ig: 'Instagram', yt: 'YouTube' }[sg.platform])}, ${sg.country === 'Korea' ? '한국·한국어' : '베트남·베트남어'}, 검색어 "${esc(sg.keyword)}"로 바꿨어요. 등록하면 이 그룹으로 저장돼요` : '그룹을 고르지 않으면 등록할 때 미분류로 저장돼요';
+      if (sg) {
+        D.platform = sg.platform; $('#dPf', v).value = sg.platform; $('#dCountry', v).value = sg.country; $('#dLang', v).value = sg.language;
+        $('#dKw', v).value = sg.keyword; D.cats = [...sg.cats]; $$('#dCats button', v).forEach(b => b.setAttribute('aria-pressed', D.cats.includes(b.dataset.c)));
+        const rk = $('#rkKw', v); if (rk) rk.value = sg.keyword; const rr = $('#rkRegion', v); if (rr) rr.value = sg.country === 'Korea' ? 'KR' : 'VN';
+      }
+      const ms = $('#mSeg', v); if (ms) ms.value = D.segment;
+      this.providers(v); this.crit(v);
+    },
     crit(v) {
       const f = this.filters(v), pn = { tt: 'TikTok', ig: 'Instagram', yt: 'YouTube' }[S.disc.platform];
       $('#dCrit', v).textContent = [`[${pn} 크리에이터 검색 기준 · 한정선 찹쌀떡 베트남]`,
-        `국가/지역: ${f.country || '제한 없음'} (Creator location: Vietnam)`, `카테고리: ${(f.categories || []).join(', ') || '전체'}`,
+        `타깃 그룹: ${S.disc.segment || '-'}`,
+        `국가/지역: ${f.country || '제한 없음'}${f.country ? ` (Creator location: ${f.country})` : ''}`, `카테고리: ${(f.categories || []).join(', ') || '전체'}`,
         `팔로워: ${f.min_followers ? grp(f.min_followers) : '-'} ~ ${f.max_followers ? grp(f.max_followers) : '-'}`,
         `조회수 중앙값(Median views) 최소: ${f.min_views ? grp(f.min_views) : '-'}`, `참여율 최소: ${f.min_er != null ? f.min_er + '%' : '-'}`,
         `베트남 시청자 비중 최소: ${f.min_vn_audience != null ? f.min_vn_audience + '%' : '-'}`, `콘텐츠 언어: ${f.language || '제한 없음'}`,
@@ -986,7 +1014,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     async register(v, recs, msgFn) {
       if (!recs.length) { toast('등록할 후보를 고르세요'); return; }
       try {
-        const r = await api('POST', 'api/discovery/register', { records: recs, eventId: S.flt.ev || '' });
+        const r = await api('POST', 'api/discovery/register', { records: recs.map(x => ({ ...x, segment: x.segment || S.disc.segment || '' })), eventId: S.flt.ev || '' });
         replaceAll(r);
         const txt = `등록 ${r.created.length}명${r.skipped.length ? ` · 중복으로 건너뜀 ${r.skipped.length}명(${r.skipped.map(x => x.existing).join(', ')})` : ''}${r.errors.length ? ` · 오류 ${r.errors.length}명(${r.errors.map(x => x.error).join(', ')})` : ''}`;
         if (msgFn) msgFn(txt, !r.created.length); else $('#dRegMsg', v).textContent = txt;
