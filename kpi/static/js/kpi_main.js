@@ -559,7 +559,9 @@ function renderVoc(stats, reviews, source) {
 
 // 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운 · 10건씩 페이지 넘김
 function renderReviewList() {
-  const tone = { Positive: "green", Negative: "kpi-badge-bad" };  // 불만은 빨강 바탕으로 가장 눈에 띄게
+  // 만족도는 박스 없이 작은 글씨로: 만족 녹색 · 보통 회색 · 불만 붉은색
+  const mood = (text, tone) => el("span", { text, className: `kpi-mood kpi-mood-${tone}` });
+  const tone = { Positive: "good", Neutral: "mid", Negative: "bad" };
   const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
   const label = view.reviewFilter === "all" ? "전체" : SENTIMENT_LABEL[view.reviewFilter];
   const pages = Math.max(Math.ceil(list.length / REVIEW_PAGE_SIZE), 1);
@@ -574,7 +576,7 @@ function renderReviewList() {
   $("review-list").replaceChildren(...list.slice(start, start + REVIEW_PAGE_SIZE).map((r) => {
     const head = el("div", { className: "kpi-review-head" }, [
       el("span", { text: PLATFORM_LABEL[r.platform] || r.platform }),
-      r.sentiment ? badge(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : badge("미분류"),
+      r.sentiment ? mood(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : mood("미분류", "mid"),
       el("span", { text: r.keyword_tag || "" }),
     ]);
     const ko = el("p", { className: "kpi-review-ko", text: r.translated_kr || r.raw_text_vn });
@@ -961,17 +963,6 @@ function loadOrder() {
   } catch { /* 저장 값이 없거나 깨졌으면 기본 순서 */ }
 }
 
-function movePanel(panel, dir) {
-  const panels = boardPanels();
-  const to = panels.indexOf(panel) + dir;
-  if (to < 0 || to >= panels.length) return;
-  if (dir < 0) panels.at(to).before(panel);
-  else panels.at(to).after(panel);
-  saveOrder();
-  resizeCharts();
-  panel.querySelector(`[data-kpi-action="move"][data-dir="${dir}"]`)?.focus();
-}
-
 root.addEventListener("dragstart", (event) => {
   const handle = event.target.closest?.(".kpi-drag");
   if (!handle) return;
@@ -1045,8 +1036,6 @@ root.addEventListener("click", (event) => {
     setCurrency(target.dataset.cur);
   } else if (action === "review-page") {
     setReviewPage(Number(target.dataset.page));
-  } else if (action === "move") {
-    movePanel(target.closest(".kpi-panel"), Number(target.dataset.dir));
   } else if (action === "reset-order") {
     applyOrder(DEFAULT_ORDER);
     saveOrder();

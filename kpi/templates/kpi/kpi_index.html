@@ -10,15 +10,9 @@
 <button type="button" class="kpi-info" aria-label="계산식 보기" data-tip="{{ tip }}">i</button>
 {%- endmacro %}
 
-{# 블록 순서 바꾸기: 손잡이를 끌거나 ← → 버튼으로 옮깁니다. 순서는 각자 브라우저에만 저장됩니다. #}
+{# 블록 순서 바꾸기: 손잡이를 끌어서 옮깁니다. 순서는 각자 브라우저에만 저장됩니다([기본 순서로]로 되돌림). #}
 {% macro move_tools() -%}
 <span class="kpi-move-tools">
-  <button type="button" class="kpi-icon-btn" data-kpi-action="move" data-dir="-1" aria-label="앞으로 옮기기" title="앞으로">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-  </button>
-  <button type="button" class="kpi-icon-btn" data-kpi-action="move" data-dir="1" aria-label="뒤로 옮기기" title="뒤로">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-  </button>
   <span class="kpi-icon-btn kpi-drag" draggable="true" role="button" tabindex="-1" aria-label="끌어서 순서 바꾸기" title="끌어서 순서 바꾸기">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg>
   </span>

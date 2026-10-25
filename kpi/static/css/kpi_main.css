@@ -8,11 +8,14 @@
 .kpi-page { margin-top: 0; }
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
-.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #c0392b; }  /* 붉은색: 손익분기 미달·예산 초과 경고 */
+.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; }  /* 붉은색(차분한 벽돌빛): 손익분기 미달·예산 초과 경고·불만 */
 /* 조치가 필요한 문구(⚠ 손익분기 미달 → 예산 조정 검토, 예산 초과) */
 .kpi-page .kpi-warn { color: var(--kpi-red); font-weight: 700; }
-/* 리뷰 '불만' 배지: 빨강 바탕 + 흰 글씨 */
-.kpi-page .badge.kpi-badge-bad { background: var(--kpi-red); color: var(--on-dark); }
+/* 리뷰 만족도: 박스 없이 작은 글씨(만족 녹색 · 보통 회색 · 불만 붉은색) */
+.kpi-page .kpi-mood { font-size: var(--fs-table); font-weight: 600; }
+.kpi-page .kpi-mood-good { color: var(--teal); }
+.kpi-page .kpi-mood-mid { color: var(--muted); }
+.kpi-page .kpi-mood-bad { color: var(--kpi-red); }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
 .kpi-page .kpi-head h1 { margin: 0; font-size: var(--fs-display); line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
