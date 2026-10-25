@@ -48,10 +48,10 @@
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
-      "last_reviewed_at": "2026-10-23",
-      "finding": "이전 조사에서 확인한 공식 구체 일정은 2026년 행사에 관한 자료였음.",
-      "missing_evidence": "2027년 개최일을 확정할 공식 발표 미확보. 미개최나 발표 부재를 단정하지 않음.",
-      "next_check": "DIFF 주최 측·다낭시·시 관광정보 포털의 2027년 발표 확인",
+      "last_reviewed_at": "2026-10-25",
+      "finding": "2026-10-25 재조사에서도 2027년 개최 일정 발표를 찾지 못했다. 최근 회차 패턴은 2025년 05-31~07-12 개최, 2026년 6개 경연 밤에 개막 05-30이며, 관람석 가격은 2026년 3월에 공표되었다. 이 패턴은 통상 5월 말 개막 7월 중순 종료를 시사하나 2027년 공식 발표가 아니므로 날짜 근거로 쓰지 않는다.",
+      "missing_evidence": "2027년 개최 여부와 일정을 확정할 주최 측·다낭시 공식 발표를 확보하지 못했다. 과거 회차 패턴은 예측이며 미개최나 일정 변경 가능성을 배제하지 않는다.",
+      "next_check": "공식 발표는 통상 연초에 나오므로 2027년 1~3월에 다낭시 포털과 주최 측 공지를 확인한다. 관람석 가격 공표 시점(2026년은 3월)도 함께 본다. 발표가 없다는 검색 결과를 미개최 확정으로 해석하지 않는다.",
       "source_urls": [
         "https://danangfantasticity.com/en/tin-tuc/top-su-kien-va-le-hoi-noi-bat-nhat-tai-da-nang-tu-nay-den-dau-nam-2027"
       ]
@@ -278,6 +278,24 @@
         "independence_notes": "정부 법령 포털과 정부 전자신문은 모두 정부 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Thanh Niên 소속 기자(Thu Hằng)의 보도로, 정부 포털 기사 재게시가 아닙니다. 다만 베트남 언론 일반과 같이 국가 계열 매체입니다.",
         "latest_notice_result": "2026-10-25 검색 기준 최신 관련 문서는 Thông báo 524/TB-VPCP(2026-10-13)이며 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
       }
+    },
+    {
+      "candidate_id": "vn_spring_holidays_2027",
+      "name": "2027년 봄 공휴일 연휴 · 흥 왕 기일·통일절·노동절",
+      "type": "holiday",
+      "year": 2027,
+      "verification_status": "insufficient_evidence",
+      "registration_status": "on_hold",
+      "start_date": null,
+      "end_date": null,
+      "last_reviewed_at": "2026-10-25",
+      "finding": "2026-10-25 조사에서 2027년 흥 왕 기일·통일절(4월 30일)·노동절(5월 1일)의 휴무 방안 공지를 찾지 못했다. 정부사무처 공문 10065/VPCP-KGVX(2026-10-02)는 2026년 문화의 날과 2027년 설·국경일만 다루었고 봄 공휴일은 포함하지 않았다. 2026년의 경우 내무부가 공문 3383/BNV-CVL(2026-04-10)로 노동법 규정대로 쉬며 대체 근무일 교환은 하지 않는다고 밝혔다.",
+      "missing_evidence": "2027년 봄 공휴일의 연속 휴무 일수와 대체 근무일 교환 여부를 확인할 공지가 없다. 흥 왕 기일은 음력 3월 10일 기준이라 양력 날짜도 별도 확인이 필요하다. 2026년에 교환이 없었다는 사실이 2027년을 보장하지 않는다.",
+      "next_check": "내무부 공지와 정부사무처 공문을 확인한다. 2026년 전체 일정은 2025년 10월에, 봄 공휴일 세부 안내는 2026년 4월에 나왔으므로 두 시점을 모두 본다. 법정 공휴일 자체와 공공부문 연속 휴무 기간을 구분해 기록한다.",
+      "source_urls": [
+        "https://nhandan.vn/ocop/bo-noi-vu-khong-co-chu-truong-hoan-doi-ngay-nghi-dip-gio-to-hung-vuong-va-nghi-le-304-va-15-post952992.html",
+        "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf"
+      ]
     }
   ]
 }
