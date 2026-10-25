@@ -994,8 +994,14 @@ HOME 쪽 최신 결정이 팀 전체 README보다 새로운 항목이다. 팀 RE
 
 - 화면·API: 캘린더(월·주·목록), 디데이 업무와 간트, 오늘 할 일, 현지 기회,
   인플루언서 협업 요약, 현지 뉴스(검색 + 확인된 규제·공지)가 동작한다.
-- 외부 연동: Calendarific(일정 수집, 수동), 구글 뉴스 RSS + VnExpress 영문 RSS(뉴스 검색),
+- 외부 연동: Calendarific(법정 공휴일), 구글 뉴스 RSS + VnExpress 영문 RSS(뉴스 검색),
   DeepL(제목 번역)이 붙어 있다. 세 가지 모두 실패해도 화면이 멈추지 않는다.
+- 법정 공휴일 자동 표시: 2026~2036년을 `home/data/holiday_cache.json`에 보관해 두어
+  먼 미래 연도에도 달력이 비지 않는다. 모든 항목은 **미확정**으로 점선 표시한다.
+  법은 날짜만 정하고 실제 연휴 기간(대체휴일·보상근무일)은 해마다 정부 공문으로 정해지기 때문이다.
+  사람이 공문을 확인해 `events.json`에 등록하면 같은 날의 자동 표시는 자동으로 빠진다.
+  연도를 더 받으려면 `flask --app app home holidays-sync --from 2037 --to 2040`을 쓴다.
+  이미 받은 연도는 다시 부르지 않으므로 무료 한도를 아낀다.
 - 자료: `home/data/events.json` 5건, `news.json` 3건, `event_candidates.json` 7건(보류).
 - 관리 명령: `flask --app app home <명령>` 과 `python -B -m home.<모듈>` 둘 다 동작한다.
 

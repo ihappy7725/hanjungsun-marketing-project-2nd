@@ -255,3 +255,5 @@
 .home-page .home-tl-allday-cell .home-event { height: auto; min-height: var(--home-chip-h); padding: 2px var(--space-2); border-radius: 999px; border-left-width: 4px; white-space: normal; line-height: 1.35; cursor: pointer; }
 .home-page .home-tl-cell .home-event { border-radius: 999px; padding: 0 var(--space-2); }
 .home-page .home-tl-head { border-radius: var(--radius) var(--radius) 0 0; }
+.home-page .home-event.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
+.home-page .home-period-bar.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }

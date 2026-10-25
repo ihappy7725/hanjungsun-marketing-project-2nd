@@ -73,3 +73,19 @@ def news_register(news_id, confirm):
     """승인 대기 뉴스를 화면에 노출합니다. 기본은 미리보기입니다."""
     from .news_import import register
     _run(register, news_id, confirm)
+
+
+@bp.cli.command("holidays-sync")
+@click.option("--from", "first", type=int, required=True)
+@click.option("--to", "last", type=int, required=True)
+def holidays_sync(first, last):
+    """법정 공휴일을 연도별로 받아 보관합니다. 이미 받은 연도는 다시 부르지 않습니다."""
+    from .holiday_feed import sync
+    if last < first or last - first > 20:
+        raise SystemExit("연도 범위를 확인해주세요. 한 번에 20년까지입니다.")
+
+    def run():
+        added = sync(range(first, last + 1))
+        print("새로 받은 연도: " + (", ".join(str(year) for year in added) if added else "없음 (이미 보관됨)"))
+
+    _run(run)

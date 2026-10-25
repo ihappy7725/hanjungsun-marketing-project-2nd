@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from flask import jsonify, render_template, request
 
 from . import bp
+from .holiday_feed import provisional
 from .news_search import SearchError, preset_labels, search
 from .translate import TARGETS, available, translate_titles
 
@@ -27,8 +28,11 @@ def _load_events(start, end):
     """
     document = json.loads(_EVENTS_PATH.read_text(encoding="utf-8"))
     rows = _validate_event_document(document)
+    picked = [row for row in rows if row["start_date"] <= end.isoformat() and row["end_date"] >= start.isoformat()]
+    # 보관해 둔 법정 공휴일을 함께 보여 줍니다. 미확정 표시가 붙으며 등록 일정과 겹치면 빠집니다.
+    picked += provisional(start, end, rows)
     return sorted(
-        (row for row in rows if row["start_date"] <= end.isoformat() and row["end_date"] >= start.isoformat()),
+        picked,
         key=lambda row: (row["start_date"], row["event_id"]),
     )
 
