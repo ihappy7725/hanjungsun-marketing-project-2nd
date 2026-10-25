@@ -13,16 +13,19 @@
       <div class="home-clocks" aria-label="현재 시각"><span class="home-clock"><b id="clock-kst">--:--</b> <span class="home-clock-zone">한국 (기준)</span></span><span class="home-clock"><b id="clock-ict">--:--</b> <span class="home-clock-zone">베트남</span></span><input id="reference-date" type="hidden"></div>
     </div>
     <div class="home-controls">
-      <label>데이터 <select id="data-mode"><option value="demo">예시 데이터 (DEMO)</option><option value="work">내 업무</option></select></label>
-      <label>표시 범위 <select id="scope"><option value="all">전체 이벤트</option><option value="current">현재 이벤트</option></select></label>
-      <details class="home-datatools">
-        <summary class="btn">기록 관리</summary>
-        <div class="home-datatools-menu">
+      <label><span>데이터</span><select id="data-mode"><option value="demo">예시 데이터 (DEMO)</option><option value="work">내 업무</option></select></label>
+      <label><span>표시 범위</span><select id="scope"><option value="all">전체 이벤트</option><option value="current">현재 이벤트</option></select></label>
+      <label><span>기록 관리</span><select id="record-action">
+        <option value="">작업 선택</option>
+        <option value="export-store">내보내기</option>
+        <option value="import-store">가져오기</option>
+        <option value="migrate-store">서버로 옮기기</option>
+      </select></label>
+      <div hidden>
           <button class="btn" id="export-store" type="button" title="이벤트·업무 기록을 파일로 내려받습니다">내보내기</button>
           <button class="btn" id="import-store" type="button" title="내 업무 백업은 기존 기록을 덮어쓰지 않고 비교한 뒤 옮깁니다">가져오기</button>
           <button class="btn" id="migrate-store" type="button" title="먼저 내보내기로 받은 내 업무 백업 파일을 선택해주세요">서버로 옮기기</button>
-        </div>
-      </details>
+      </div>
       <input id="import-file" type="file" accept="application/json,.json" hidden>
       <input id="migration-file" type="file" accept="application/json,.json" hidden>
     </div>
@@ -32,17 +35,17 @@
     <div class="home-main-column">
       <section class="home-card home-mainpanel" aria-label="캘린더와 디데이 업무 관리">
         <div class="home-paneltabs" role="tablist" aria-label="화면 전환">
-          <button class="home-paneltab" id="tab-calendar" type="button" role="tab" aria-selected="true">캘린더</button>
-          <button class="home-paneltab" id="tab-campaign" type="button" role="tab" aria-selected="false">이벤트 기획</button>
+          <button class="home-paneltab" id="tab-calendar" type="button" role="tab" aria-selected="true" aria-controls="calendar-panel" tabindex="0"><span class="home-tab-index" aria-hidden="true">01</span>캘린더</button>
+          <button class="home-paneltab" id="tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="campaign-panel" tabindex="-1"><span class="home-tab-index" aria-hidden="true">02</span>이벤트 기획</button>
         </div>
-        <div id="calendar-panel" aria-label="통합 마케팅 캘린더">
+        <div id="calendar-panel" role="tabpanel" aria-labelledby="tab-calendar">
           <div class="home-calendar-toolbar">
           <div class="home-inline"><button class="home-icon-btn" id="calendar-prev" aria-label="이전 기간">‹</button><h2 id="calendar-period"></h2><button class="home-icon-btn" id="calendar-next" aria-label="다음 기간">›</button></div>
           <div class="home-inline"><button class="btn" id="calendar-today">오늘</button><div class="home-segment" aria-label="캘린더 보기"><button data-view="month">월</button><button data-view="week">주</button><button data-view="list">목록</button></div></div>
           </div>
           <div id="calendar-body" class="home-calendar-body"></div>
         </div>
-        <div id="campaign-panel" aria-labelledby="planner-title" hidden>
+        <div id="campaign-panel" role="tabpanel" aria-labelledby="tab-campaign" hidden>
           <div class="home-panel-head"><div><h2 id="planner-title">이벤트 기획</h2></div><div class="home-inline"><button class="btn dark" id="new-campaign" type="button">+ 새 이벤트</button><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><span class="home-btn-sep" aria-hidden="true"></span><button class="btn home-btn-quiet" id="replan-campaign">수정</button><button class="btn home-btn-quiet" id="clone-campaign">복제</button><button class="btn home-btn-quiet" id="delete-campaign" type="button">삭제</button></div></div>
           <div class="home-campaign-bar">
             <label class="home-field home-campaign-pick">현재 이벤트<select id="campaign-select"></select></label>

@@ -132,8 +132,8 @@ async function initialize() {
   const workData = value => ({ version: 1, campaigns: value.campaigns, tasks: value.tasks, schedules: value.schedules, links: value.links });
   function storageControls(busy) {
     storageBusy = busy;
-    for (const selector of ['#data-mode', '#export-store', '#import-store', '#migrate-store', '#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign']) {
-      const control = $(selector); if (control) control.disabled = busy;
+    for (const selector of ['#data-mode', '#record-action', '#export-store', '#import-store', '#migrate-store', '#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign']) {
+      const control = $(selector); if (control) control.disabled = busy || (selector === '#record-action' && migrationBusy);
     }
     root.setAttribute('aria-busy', String(busy));
   }
@@ -657,6 +657,8 @@ async function initialize() {
     // 탭은 지금 보고 있는 화면을 표시합니다. 다음에 들어올 때 같은 화면으로 엽니다.
     $('#tab-calendar').setAttribute('aria-selected', String(name === 'calendar'));
     $('#tab-campaign').setAttribute('aria-selected', String(name === 'campaign'));
+    $('#tab-calendar').tabIndex = name === 'calendar' ? 0 : -1;
+    $('#tab-campaign').tabIndex = name === 'campaign' ? 0 : -1;
     try { localStorage.setItem(PANEL_KEY, name); } catch { /* 저장 못 해도 동작합니다 */ }
   }
   function removeCampaign() {
@@ -687,6 +689,7 @@ async function initialize() {
     migrationBusy = busy;
     $('#migrate-store').disabled = busy;
     $('#data-mode').disabled = busy;
+    $('#record-action').disabled = busy || storageBusy;
   }
   function downloadMigrationReceipt() {
     if (!lastMigrationReceipt) return;
@@ -771,9 +774,26 @@ async function initialize() {
   $('#import-store').onclick = () => mode === 'work' ? startMigration() : $('#import-file').click();
   $('#import-file').onchange = event => { readImport(event.target.files[0]); event.target.value = ''; };
   $('#migrate-store').onclick = startMigration;
+  $('#record-action').onchange = event => {
+    const action = event.currentTarget.value;
+    event.currentTarget.value = '';
+    if (!['export-store', 'import-store', 'migrate-store'].includes(action) || storageBusy || migrationBusy) return;
+    const button = $(`#${action}`);
+    if (!button.disabled) button.click();
+  };
   $('#migration-file').onchange = event => { readMigration(event.target.files[0]); event.target.value = ''; };
   $('#tab-campaign').onclick = () => showPanel('campaign');
   $('#tab-calendar').onclick = () => showPanel('calendar');
+  $('.home-paneltabs').addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const tabs = [$('#tab-calendar'), $('#tab-campaign')];
+    const current = tabs.indexOf(event.target);
+    if (current < 0) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    showPanel(next === 0 ? 'calendar' : 'campaign');
+    tabs[next].focus();
+  });
   try {
     const saved = localStorage.getItem(PANEL_KEY);
     if (saved === 'campaign' || saved === 'calendar') showPanel(saved);
