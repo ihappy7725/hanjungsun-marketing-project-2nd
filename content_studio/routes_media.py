@@ -86,9 +86,18 @@ def remove_bg():
     alpha_matting = request.form.get("alpha_matting") in ("1", "true", "on")
     folder = _upload_dir()
     upload = request.files.get("image")
+    # 편집기에서 고른 사진의 주소(src). 올린 사진·제품 사진·배경 제거 결과만 받습니다.
+    src = request.form.get("src", "")
+    path = None
+    if src and not upload:
+        path = _photo_path(src)
+        if not path:
+            return _error("이 사진은 배경을 제거할 수 없습니다. [사진 바꾸기]로 다시 올려 주세요.")
+        if not os.path.isfile(path):
+            return _error("사진 파일을 찾을 수 없습니다. [사진 바꾸기]로 다시 올려 주세요.", 404)
 
-    if upload:
-        img, message = _open_image(upload.stream)
+    if upload or path:
+        img, message = _open_image(upload.stream if upload else path)
         if message:
             return _error(message)
         file_id = uuid.uuid4().hex
@@ -118,6 +127,18 @@ def remove_bg():
         "width": result.width,
         "height": result.height,
     })
+
+
+def _photo_path(src):
+    """편집기 문서 속 사진 주소 → 서버 파일 경로. 모르는 주소면 None.
+    배경 제거 결과를 주면 그 원본(_src.png)을 돌려줘, 가장자리 다듬기로 다시 처리할 수 있게 합니다."""
+    if match := STATIC_IMAGE_RE.match(src):
+        return os.path.join(bp.static_folder, "images", "sns", match[1])
+    if match := UPLOAD_SRC_RE.match(src):
+        return os.path.join(_upload_dir(), match[1])
+    if match := NOBG_SRC_RE.match(src):
+        return os.path.join(_upload_dir(), f"{match[1]}_src.png")
+    return None
 
 
 @bp.route("/media/remove-bg/result/<file_id>.png")
