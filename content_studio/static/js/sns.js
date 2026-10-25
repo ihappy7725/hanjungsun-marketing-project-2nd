@@ -19,11 +19,11 @@ const DEMO_GALLERY = {
   ],
   video: [
     {
-      id: "v1", title: "한입 먹는 순간", updated: "10월 22일", ratio: "9:16", tone: "hero", duration: 5, status: "시연",
+      id: "v1", title: "한입 먹는 순간", updated: "10월 22일", ratio: "9:16", tone: "hero", duration: 5, status: "",
       scenes: [{ time: "0-2s", ko: "찹쌀떡 클로즈업" }, { time: "2-4s", ko: "반으로 가르기" }, { time: "4-5s", ko: "로고" }],
     },
     {
-      id: "v2", title: "다낭 매장 분위기", updated: "10월 16일", ratio: "16:9", tone: "green", duration: 10, status: "시연",
+      id: "v2", title: "다낭 매장 분위기", updated: "10월 16일", ratio: "16:9", tone: "green", duration: 10, status: "",
       scenes: [{ time: "0-3s", ko: "매장 외관" }, { time: "3-6s", ko: "진열대" }, { time: "6-10s", ko: "손님 미소" }],
     },
   ],
@@ -120,7 +120,7 @@ function galleryCard(item) {
 
   card.addEventListener("click", () => {
     if (item.chatId) openChat(item.chatId);
-    else notify(`"${item.title}"은(는) 시연 카드입니다. 실제 작업은 [새로 만들기]나 추천으로 만들어 보세요.`);
+    else notify(`[새로 만들기]나 추천을 선택해 작업을 시작하세요.`);
   });
   return card;
 }
@@ -143,13 +143,13 @@ async function loadGallery() {
       updated: shortDate(item.updated_at),
       ratio: item.ratio,
       duration: item.duration,
-      status: item.video_url ? "완성" : item.demo ? "시연" : "",
+      status: item.video_url ? "완성" : "",
       tone: "hero",
       scenes: item.scenes,
     })));
   } catch (error) {
     renderGallery(DEMO_GALLERY.video);
-    notify(`내 영상을 불러오지 못해 시연 카드를 보여줍니다. (${error.message})`);
+    notify(`내 영상을 불러오지 못했습니다. (${error.message})`);
   }
 }
 

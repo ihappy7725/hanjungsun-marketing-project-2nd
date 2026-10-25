@@ -71,7 +71,6 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
 
   // ---------- ① 장면 구성 ----------
   const status = el("div", "studio-video-status");
-  if (doc.demo) status.append(el("span", "demo", "시연 · 자막 원어민 검수 전"));
   status.append(el("span", doc.reviewed ? "badge season" : "badge dday", doc.reviewed ? "검토 완료" : "검토 필요"));
   status.append(el("span", "badge", `분위기 · ${STYLE_LABELS[doc.style] || STYLE_LABELS.premium}`));
   status.append(el("span", "studio-hint", doc.summary));

@@ -39,11 +39,11 @@ const pct = (value) =>
 
 const mean = (values) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
 
-function panel({ eyebrow, title, body, head = "", wide = false }) {
+function panel({ title, body, head = "", wide = false }) {
   return `
     <article class="panel${wide ? " ma-wide" : ""}">
       <div class="panelhead">
-        <div><p class="eyebrow">${esc(eyebrow)}</p><h2>${esc(title)}</h2></div>
+        <div><h2>${esc(title)}</h2></div>
         ${head}
       </div>
       ${body}
@@ -53,20 +53,12 @@ function panel({ eyebrow, title, body, head = "", wide = false }) {
 function sourceLine({ source, asOf, asOfLabel = "기준일", region }) {
   return `
     <p class="footnote ma-source">
-      <span class="badge green">실제 데이터</span>
       출처 ${esc(source)} · ${esc(asOfLabel)} ${esc(asOf || "—")} · 지역 ${esc(region || "표시 없음")}
     </p>`;
 }
 
-function empty(files, note = "") {
-  const list = [].concat(files).map((f) => `<code>${esc(f)}</code>`).join("");
-  return `
-    <div class="ma-empty">
-      <span class="badge">수집 전</span>
-      <p>데이터 없음 · 아래 파일을 넣으면 표시됩니다.</p>
-      <div class="ma-files">${list}</div>
-      ${note ? `<p class="ma-empty-note">${esc(note)}</p>` : ""}
-    </div>`;
+function empty() {
+  return '<div class="ma-empty">등록된 데이터가 없습니다.</div>';
 }
 
 function bars(rows, { max = 100, highlight = () => false, onKey = null, active = null } = {}) {
@@ -167,17 +159,17 @@ function renderTrend() {
   view.innerHTML = `
     ${summary}
     <div class="grid">
-      ${panel({ eyebrow: "CATEGORY INTEREST", title: "카테고리 관심도 추이", head: periodButtons, body: categoryBody() })}
-      ${panel({ eyebrow: "RISING SEARCHES", title: "급상승 검색 키워드", head: risingSelect(), body: risingBody() })}
+      ${panel({ title: "카테고리 관심도 추이", head: periodButtons, body: categoryBody() })}
+      ${panel({ title: "급상승 검색 키워드", head: risingSelect(), body: risingBody() })}
     </div>
     <div class="grid section-space">
-      ${panel({ eyebrow: "SEASONALITY", title: "월별 검색 계절성", body: seasonalityBody() })}
-      ${panel({ eyebrow: "FRUIT FLAVOR", title: "현지 과일 맛 트렌드", body: fruitBody() })}
+      ${panel({ title: "월별 검색 계절성", body: seasonalityBody() })}
+      ${panel({ title: "현지 과일 맛 트렌드", body: fruitBody() })}
     </div>
     <div class="section-space">
-      ${panel({ eyebrow: "REGIONAL INTEREST", title: "지역별 관심도", head: geoButtons(), body: geoBody(), wide: true })}
+      ${panel({ title: "지역별 관심도", head: geoButtons(), body: geoBody(), wide: true })}
     </div>
-    <p class="statusline">관심도는 Google Trends 상대 지수(0~100)이며 실제 검색 횟수가 아닙니다. 저장 위치: <code>${esc(t.folder)}/</code></p>`;
+    <p class="statusline">관심도는 Google Trends 상대 지수(0~100)이며 실제 검색 횟수가 아닙니다.</p>`;
 }
 
 function categoryBody() {
@@ -307,9 +299,9 @@ function renderCompetitor() {
   const view = page.querySelector('[data-view="competitor"]');
   if (!c.items.length) {
     view.innerHTML = panel({
-      eyebrow: "COMPETITOR PRODUCTS", title: "경쟁 제품", wide: true,
+      title: "경쟁 제품", wide: true,
       body: empty(c.file, "Shopee · Lazada · TikTok Shop 판매량순 상위 20~30개를 월 1회 조사해 이 파일에 한 줄씩 적습니다. 엑셀에서는 'CSV UTF-8'로 저장합니다."),
-    }) + `<p class="statusline">열 이름: <code>${esc(c.columns.join(", "))}</code></p>`;
+    }) + ``;
     return;
   }
 
@@ -337,7 +329,7 @@ function renderCompetitor() {
     </div>
     <div class="ma-segments">${segmentButtons}</div>
     ${panel({
-      eyebrow: "COMPETITOR PRODUCTS", title: "경쟁 제품 목록", wide: true,
+      title: "경쟁 제품 목록", wide: true,
       head: `
         <div class="ma-toolbar">
           <input type="search" data-search placeholder="브랜드 · 제품 검색" value="${esc(state.search)}" aria-label="검색">
@@ -387,7 +379,7 @@ function openDetail(index) {
   const history = i.history.filter((h) => h.monthly_sales !== null);
   const maxSales = Math.max(...history.map((h) => h.monthly_sales), 1);
   page.querySelector('[data-ma="detail-body"]').innerHTML = `
-    <p class="eyebrow">${i.is_core ? "★ 핵심 경쟁사" : "COMPETITOR"}</p>
+    ${i.is_core ? '<p class="ma-core">핵심 경쟁사</p>' : ""}
     <h2>${esc(i.brand)} <small lang="vi">${esc(i.product)}</small></h2>
     <dl class="ma-info">${info.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v || "—")}</dd></div>`).join("")}</dl>
     <h3>마케팅 기법</h3>
@@ -461,21 +453,21 @@ function renderCulture() {
   view.innerHTML = `
     ${status}
     <div class="grid">
-      ${panel({ eyebrow: "COUNTRY PROFILE", title: "기본 정보", body: basicBody })}
-      ${panel({ eyebrow: "CULTURAL CAUTIONS", title: "문화적 금기 · 주의사항", body: cautionBody })}
+      ${panel({ title: "기본 정보", body: basicBody })}
+      ${panel({ title: "문화적 금기 · 주의사항", body: cautionBody })}
     </div>
     <div class="grid section-space">
-      ${panel({ eyebrow: "COLOR SYMBOLISM", title: "컬러 상징 · 패키징 색", body: (rec.colors?.length || rec.avoid_colors?.length)
+      ${panel({ title: "컬러 상징 · 패키징 색", body: (rec.colors?.length || rec.avoid_colors?.length)
         ? `<h3>권장</h3>${listOrEmpty(rec.colors, gFile)}<h3>주의</h3>${listOrEmpty(rec.avoid_colors, gFile)}`
         : empty(gFile, "recommended.colors · avoid_colors 항목을 채웁니다.") })}
-      ${panel({ eyebrow: "SYMBOLS & NUMBERS", title: "상징물 · 숫자", body: (rec.motifs?.length || numberBody)
+      ${panel({ title: "상징물 · 숫자", body: (rec.motifs?.length || numberBody)
         ? `${rec.motifs?.length ? `<h3>상징물</h3>${listOrEmpty(rec.motifs, gFile)}` : ""}${numberBody}`
         : empty(gFile, "recommended.motifs · numbers 항목을 채웁니다.") })}
     </div>
     <div class="ma-three section-space">
-      ${panel({ eyebrow: "PACKAGING", title: "선호 패키징", body: noSource("출처 있는 참고 자료(KOTRA 등)로 작성한 뒤 연결합니다.") })}
-      ${panel({ eyebrow: "CLIMATE & LOGISTICS", title: "기후 · 유통 환경", body: noSource("기후·배송 환경 자료를 출처와 함께 작성한 뒤 연결합니다.") })}
-      ${panel({ eyebrow: "FUNCTIONAL PACKAGING", title: "기후 맞춤형 기능성 포장", body: noSource("포장 기술 자료를 출처와 함께 작성한 뒤 연결합니다.") })}
+      ${panel({ title: "선호 패키징", body: noSource("출처 있는 참고 자료(KOTRA 등)로 작성한 뒤 연결합니다.") })}
+      ${panel({ title: "기후 · 유통 환경", body: noSource("기후·배송 환경 자료를 출처와 함께 작성한 뒤 연결합니다.") })}
+      ${panel({ title: "기후 맞춤형 기능성 포장", body: noSource("포장 기술 자료를 출처와 함께 작성한 뒤 연결합니다.") })}
     </div>
     <p class="statusline">연휴 · 기념일 · 과일 시즌 캘린더는 HOME에서 표시합니다.</p>`;
 }
@@ -485,21 +477,20 @@ function renderCulture() {
 function renderInsight() {
   const view = page.querySelector('[data-view="insight"]');
   view.innerHTML = `
-    <p class="empty-note">AI 인사이트는 준비 중입니다. AI 제공사 · 키 이름 · 입력 항목이 팀에서 확정되면 연결합니다. (README 6 · 10장)</p>
+    <p class="empty-note">AI 인사이트 준비 중</p>
     ${panel({
-      eyebrow: "DATA READINESS", title: "AI에 넘길 데이터 준비 상태", wide: true,
+      title: "데이터 현황", wide: true,
       body: `
         <div class="table-wrap"><table>
-          <thead><tr><th>데이터</th><th>상태</th><th>준비</th><th>저장 위치</th></tr></thead>
+          <thead><tr><th>데이터</th><th>상태</th><th>준비</th></tr></thead>
           <tbody>${data.readiness.map((r) => `
             <tr>
               <td><strong>${esc(r.label)}</strong></td>
               <td><span class="badge ${r.ready ? "green" : ""}">${r.ready ? "준비됨" : "수집 전"}</span></td>
               <td>${r.total === null ? `${r.ready}개` : `${r.ready} / ${r.total}`}</td>
-              <td><code>${esc(r.where)}</code></td>
             </tr>`).join("")}</tbody>
         </table></div>
-        <p class="statusline">AI는 위 실제 데이터만 근거로 사용하도록 서버(routes.py)에서 모아 넘길 예정입니다.</p>`,
+`,
     })}`;
 }
 

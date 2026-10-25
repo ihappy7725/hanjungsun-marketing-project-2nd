@@ -14,7 +14,11 @@ const charts = {};
 const $ = (name) => root.querySelector(`[data-kpi="${name}"]`);
 const setText = (name, text) => {
   const el = $(name);
-  if (el) el.textContent = text;
+  if (el) {
+    const description = /시연|데모|가상|\bdemo\b/i.test(String(text ?? ""));
+    el.textContent = description ? "" : text;
+    el.hidden = description || !String(text ?? "").trim();
+  }
 };
 
 // ---------- 숫자 표시 ----------
@@ -36,7 +40,7 @@ const palette = () => ({
   lineStrong: cssVar("--line-strong"),
   gold: cssVar("--gold"),
   green: cssVar("--green"),
-  brown: cssVar("--brown"),
+  brown: cssVar("--muted"),
   red: cssVar("--badge-red-ink"),
   font: cssVar("--font-body"),
 });
@@ -57,9 +61,10 @@ function badge(text, tone) {
 function setStatus(name, text, status, title = "") {
   const node = $(name);
   if (!node) return;
-  node.textContent = text;
+  node.hidden = status === "demo" || status === "public_demo";
+  node.textContent = node.hidden ? "" : text;
   node.className = `kpi-status ${STATUS_CLASS[status] || ""}`;
-  node.title = title;
+  node.title = node.hidden ? "" : title;
 }
 
 // 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬합니다.
@@ -81,7 +86,7 @@ function drawChart(key, config) {
   charts[key]?.destroy();
   const p = palette();
   window.Chart.defaults.font.family = p.font;
-  window.Chart.defaults.font.size = 11;
+  window.Chart.defaults.font.size = parseFloat(cssVar("--fs-table"));
   window.Chart.defaults.color = p.muted;
   charts[key] = new window.Chart(canvas, config);
 }
@@ -137,7 +142,7 @@ function renderScorecards(data) {
     el("span", { text: `환차${fx.gain_loss_krw >= 0 ? "익" : "손"} ${signedKrw(fx.gain_loss_krw)}`, className: tone }),
     document.createTextNode(` · 기준 ${fx.base_rate.toFixed(2)}원 · ${fx.as_of || ""}`),
   );
-  gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${tip} · 금액은 시연 매출·지출 기준`;
+  gainEl.title = `매출 ${signedKrw(fx.revenue_gain_krw)} / 지출 ${signedKrw(fx.spend_loss_krw)} · ${tip}`;
 }
 
 // ---------- 예산 ----------
@@ -175,7 +180,7 @@ function renderBudget(data) {
         ? "인플루언서 탭 단가 데이터: 아직 없음 — 협찬비는 시연 값으로 표시합니다."
         : `인플루언서 탭 단가 ${link.total}건 연동(견적 ${link.counts.quote} · 계약 ${link.counts.contract}). 예산 반영 기준은 확정 전이라 협찬비는 시연 값입니다.`,
   );
-  setText("budget-meta", `출처: 시연 값 · 기간: ${data.campaign_month} · 범위: 베트남 전체 캠페인 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
+  setText("budget-meta", `출처: 시연 값 · 기간: ${data.campaign_month} · 범위: 베트남 전체 이벤트 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
 
   // 확대 시: 채널별 집행액과 총 예산 대비 비중
   const rate = data.fx.base_rate;
@@ -347,7 +352,6 @@ const ga4View = { status: "demo", note: "", meta: "출처: —" };
 function setGa4Visible(show) {
   $("ga4-panel").hidden = !show;
   $("creator-panel").hidden = show;
-  setText("ga4-eyebrow", show ? "GA4 TRAFFIC" : "CREATOR CONVERSION");
   setText("ga4-title", show ? "GA4 트래픽 · 전환" : "크리에이터별 클릭 · 전환 Top 5");
   if (show) {
     setStatus("ga4-badge", ga4View.status === "public_demo" ? "공개 데모" : "시연", ga4View.status, ga4View.note);
@@ -404,7 +408,6 @@ function renderQr(qr) {
   const step = (label, value) => el("span", {}, [document.createTextNode(`${label} `), el("b", { text: value })]);
   const arrow = () => el("span", { text: "→", className: "kpi-arrow" });
   strip.replaceChildren(
-    el("span", { text: "시연", className: "kpi-status is-demo" }),
     step("팜플렛 QR 스캔", num(qr.qr_scans)),
     arrow(),
     step("Zalo 친구 추가", num(qr.zalo_follows)),
@@ -581,6 +584,7 @@ async function loadSummary() {
     renderRoas(data);
     renderGa4(data);
   } catch (err) {
+    root.querySelector(".kpi-legend-note").hidden = false;
     root.querySelector(".kpi-legend-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
   }
 }
@@ -605,7 +609,7 @@ async function analyzeVoc(button) {
     const data = await getJson(API.analyze, { method: "POST" });
     showVocAi(vocReviews, data.ai);
   } catch (err) {
-    showError("voc-error", `${err.message} 시연 분류를 그대로 보여 줍니다.`);
+    showError("voc-error", `${err.message}`);
   } finally {
     button.disabled = false;
     button.textContent = "AI로 분석";

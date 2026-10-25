@@ -428,7 +428,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
   function updateBar() {
     const item = find(selectedId);
     const tools = [];
-    if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
     tools.push(addSelect());
 
     if (!item) {

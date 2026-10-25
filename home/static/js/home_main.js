@@ -12,9 +12,9 @@ const TEMPLATE = [
   ['draft', -14, '홍보 소재 초안 준비', 'content_studio'],
   ['review', -7, '광고 문구·소재 최종 검토', 'content_studio'],
   ['schedule', -3, '협업·채널 게시 일정 확정', 'influencer_marketing'],
-  ['launch', 0, '캠페인 공개·링크 확인', 'content_studio'],
+  ['launch', 0, '이벤트 공개·링크 확인', 'content_studio'],
   ['reaction', 3, '초기 반응 확인', 'kpi'],
-  ['retrospective', 7, '캠페인 회고·개선점 기록', 'kpi'],
+  ['retrospective', 7, '이벤트 회고·개선점 기록', 'kpi'],
 ];
 export function validDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
@@ -74,7 +74,7 @@ function safeUrl(value, fallback = '') {
 function tabLink(tab) { return Object.hasOwn(TABS, tab) ? `/${tab}/` : '/home/'; }
 
 function demoStore(today) {
-  const campaign = { id: id(), name: '스승의 날 선물 캠페인', target_date: addDays(today, 28), template: 'launch', status: 'active', product: '과일찹쌀떡 선물세트', audience: '다낭 선물 구매 고객', channel: 'Instagram · TikTok', event_id: 'demo_gift_day', review: '' };
+  const campaign = { id: id(), name: '스승의 날 선물 이벤트', target_date: addDays(today, 28), template: 'launch', status: 'active', product: '과일찹쌀떡 선물세트', audience: '다낭 선물 구매 고객', channel: 'Instagram · TikTok', event_id: 'demo_gift_day', review: '' };
   const tasks = TEMPLATE.map(([key, offset, title, related_tab], i) => ({ id: id(), campaign_id: campaign.id, key, offset, title, related_tab, due_date: addDays(campaign.target_date, offset), start_date: '', fixed: false, status: i < 2 ? 'done' : i === 4 ? 'blocked' : 'todo', importance: 'normal', memo: '', completed_at: '' }));
   const extras = [[-1, '소재 A 문구 확인'], [3, '게시물 링크 점검'], [3, '협업 피드백 정리'], [7, '선물 포장 사진 준비']];
   extras.forEach(([days, title]) => tasks.push({ id: id(), campaign_id: campaign.id, key: '', offset: days - 28, title, related_tab: 'content_studio', due_date: addDays(today, days), start_date: '', fixed: false, status: 'todo', importance: 'normal', memo: '', completed_at: '' }));
@@ -128,7 +128,7 @@ function initialize() {
   }
   const selected = () => store.campaigns.find(c => c.id === store.preferences.selected) || store.campaigns[0];
   const inScope = () => store.tasks.filter(t => scope === 'all' || t.campaign_id === selected()?.id);
-  const campaignName = campaignId => store.campaigns.find(c => c.id === campaignId)?.name || '캠페인 없음';
+  const campaignName = campaignId => store.campaigns.find(c => c.id === campaignId)?.name || '이벤트 없음';
   function range() { return { start: $('#range-start').value, end: $('#range-end').value }; }
   function updateRange() {
     const preset = store.preferences.preset || '45'; $('#range-preset').value = preset;
@@ -139,7 +139,7 @@ function initialize() {
     const anchor = store.demo_anchor || today;
     return {
       events: { state: 'ok', items: [
-        { event_id: 'demo_gift_day', name: '선물 캠페인 기념일', date: addDays(anchor, 28), type: 'anniversary', region: '다낭', source_name: '가상 기념일 · 운영 일정 아님', is_demo: true },
+        { event_id: 'demo_gift_day', name: '선물 이벤트 기념일', date: addDays(anchor, 28), type: 'anniversary', region: '다낭', source_name: '가상 기념일 · 운영 일정 아님', is_demo: true },
         { event_id: 'demo_fruit_season', name: '열대과일 시즌 기획', start_date: addDays(anchor, 7), end_date: addDays(anchor, 18), type: 'fruit_season', region: '다낭', source_name: '가상 시즌 · 실제 제철 정보 아님', is_demo: true },
         { event_id: 'demo_local_holiday', name: '지역 행사 준비', date: addDays(anchor, 42), type: 'anniversary', region: '다낭', source_name: '가상 행사', is_demo: true },
       ] },
@@ -172,6 +172,7 @@ function initialize() {
     return events;
   }
   function eventSources(e) {
+    if (e.is_demo) return "";
     const sources = Array.isArray(e.sources) ? e.sources : [];
     if (sources.length) return sources.map((source, i) => {
       const url = safeUrl(source.url);
@@ -191,13 +192,13 @@ function initialize() {
   function showLocalEvent(eventId) {
     const e = localEvents().find(item => item.event_id === eventId);
     if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
-    openDialog(e.name, `${e.is_demo ? badge('DEMO · 예시 데이터') : badge('출처 확인 자료')}<p>${esc(e.official_name || e.name)}</p>${eventSummary(e)}<p>${esc(e.description || '')}</p>${e.original_period ? `<p class="home-muted">원문 기간: ${esc(e.original_period)}</p>` : ''}${e.schedule_nature ? `<p class="home-muted">일정 성격: ${esc(e.schedule_nature)}</p>` : ''}${e.verification_notes ? `<p class="home-muted">검증 범위: ${esc(e.verification_notes)}</p>` : ''}<div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 역산 캠페인 생성</button></div>`);
+    openDialog(e.name, `${e.is_demo ? '' : badge('출처 확인 자료')}<p>${esc(e.official_name || e.name)}</p>${eventSummary(e)}<p>${esc(e.description || '')}</p>${e.original_period ? `<p class="home-muted">원문 기간: ${esc(e.original_period)}</p>` : ''}${e.schedule_nature ? `<p class="home-muted">일정 성격: ${esc(e.schedule_nature)}</p>` : ''}${e.verification_notes ? `<p class="home-muted">검증 범위: ${esc(e.verification_notes)}</p>` : ''}<div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></div>`);
   }
   function eventAction(e) {
     if (e.kind === 'task') return `<button class="btn" data-task="${esc(e.id)}">열기</button>`;
     if (e.kind === 'creator') return `<a class="btn" href="${esc(safeUrl(e.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(e.id)}`))}">협업 보기 ↗</a>`;
     if (e.kind === 'local') return `<button class="btn" data-local="${esc(e.id)}">일정 상세</button>`;
-    if (e.kind === 'campaign') return `<button class="btn" data-select="${esc(e.id)}">캠페인 보기</button>`;
+    if (e.kind === 'campaign') return `<button class="btn" data-select="${esc(e.id)}">이벤트 보기</button>`;
     return '';
   }
   function renderCalendar() {
@@ -219,7 +220,7 @@ function initialize() {
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart);
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
-        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:28px ${laneCount ? `repeat(${laneCount}, minmax(26px, auto)) ` : ''}minmax(48px, 1fr)">`;
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(48px, 1fr)">`;
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
@@ -234,13 +235,13 @@ function initialize() {
     }
   }
   function renderTasks() {
-    // 진척도는 현재 선택한 캠페인의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
+    // 진척도는 현재 선택한 이벤트의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
     const campaign = selected(), campaignTasks = campaign ? store.tasks.filter(t => t.campaign_id === campaign.id) : [];
     const p = progress(campaignTasks);
     $('#progress-campaign').textContent = campaign ? campaign.name : '';
     $('#task-progress').innerHTML = campaign
-      ? `<div class="home-progress-line"><div><strong class="home-progress-number">${p.percent}%</strong> <span class="home-muted">완료</span></div><span class="home-muted">${p.done}/${p.total} 업무 완료</span></div><div class="home-progress-track" role="progressbar" aria-label="캠페인 업무 완료율" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${p.percent}%"></span></div>`
-      : empty('캠페인을 만들면 업무 진척이 표시됩니다.');
+      ? `<div class="home-progress-line"><div><strong class="home-progress-number">${p.percent}%</strong> <span class="home-muted">완료</span></div><span class="home-muted">${p.done}/${p.total} 업무 완료</span></div><div class="home-progress-track" role="progressbar" aria-label="이벤트 업무 완료율" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${p.percent}%"></span></div>`
+      : empty('이벤트를 만들면 업무 진척이 표시됩니다.');
 
     const isToday = selectedDate === today;
     $('#tasks-title').textContent = isToday ? '오늘의 해야 할 일' : `${selectedDate} 해야 할 일`;
@@ -255,7 +256,7 @@ function initialize() {
   function moveTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId);
     if (!t) { toast('업무를 찾지 못했습니다.'); return; }
-    openDialog('업무 이월', `<form id="move-form"><p class="home-muted">${esc(t.title)}</p><label class="home-field">옮길 날짜<input name="due_date" type="date" required value="${esc(t.due_date || today)}"></label><p class="home-muted">마감일만 바뀝니다. 캠페인 목표일과 다른 업무는 그대로입니다.</p><p id="move-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn dark" type="submit">이월</button></div></form>`);
+    openDialog('업무 이월', `<form id="move-form"><p class="home-muted">${esc(t.title)}</p><label class="home-field">옮길 날짜<input name="due_date" type="date" required value="${esc(t.due_date || today)}"></label><p class="home-muted">마감일만 바뀝니다. 이벤트 날짜과 다른 업무는 그대로입니다.</p><p id="move-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn dark" type="submit">이월</button></div></form>`);
     $('#move-form').onsubmit = event => {
       event.preventDefault();
       const value = new FormData(event.currentTarget).get('due_date');
@@ -269,12 +270,12 @@ function initialize() {
   }
   function renderCampaign() {
     const c = selected();
-    $('#campaign-select').innerHTML = store.campaigns.length ? store.campaigns.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('') : '<option value="">캠페인 없음</option>';
-    $('#campaign-title').textContent = c?.name || '캠페인을 준비해보세요';
+    $('#campaign-select').innerHTML = store.campaigns.length ? store.campaigns.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('') : '<option value="">이벤트 없음</option>';
+    $('#campaign-title').textContent = c?.name || '이벤트를 준비해보세요';
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select'].forEach(sel => { $(sel).disabled = !c; });
     $('#retrospective').hidden = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('새 캠페인에서 이름과 목표일을 직접 입력하거나, 현지 기회의 일정을 골라 역산 캠페인을 만들 수 있습니다.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
+    if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
     $('#campaign-summary').innerHTML = `<div class="home-campaign-meta">${badge(CAMPAIGN_STATES[c.status] || c.status)} &nbsp; ${esc(c.target_date)} · ${dday(c.target_date, today)}<p>${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</p></div>`;
     const tasks = store.tasks.filter(t => t.campaign_id === c.id), next = ordered(tasks.filter(unfinished), today)[0];
     $('#next-task').innerHTML = next ? `<button class="home-next" data-task="${esc(next.id)}"><span><span class="home-muted">다음 할 일</span> &nbsp; ${esc(next.title)} →</span><span class="home-muted">${esc(next.due_date || '날짜 없음')}</span></button>` : empty('남은 업무가 없습니다.');
@@ -292,12 +293,12 @@ function initialize() {
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
-    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}${e.is_demo ? badge('DEMO · 예시 데이터') : ''}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 역산 캠페인 생성</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
+    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
     const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
     const rows = creators().filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
     $('#collaboration-list').innerHTML = rows.map(c => {
       const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
-      return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div>${c.is_demo ? badge('DEMO · 예시 데이터') : ''}<p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
+      return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div><p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
     }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.'));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
@@ -308,12 +309,11 @@ function initialize() {
         const url = safeUrl(source.url);
         return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">출처 ${i + 1} · ${esc(source.publisher)} ↗</a>` : esc(source.publisher);
       }).join('<br>') : `${esc(n.source || '출처 미제공')}${safeUrl(n.url) ? ` <a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener noreferrer">원문 ↗</a>` : ''}`;
-      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span><p>${esc(n.summary)}</p>${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}<p class="home-signal-meta">${evidence}</p>${n.verification_notes ? `<p class="home-signal-meta">확인 범위: ${esc(n.verification_notes)}</p>` : ''}</article>`;
+      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span>${n.is_demo ? "" : `<p>${esc(n.summary)}</p>`}${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}${n.is_demo ? "" : `<p class="home-signal-meta">${evidence}</p>`}${n.verification_notes ? `<p class="home-signal-meta">확인 범위: ${esc(n.verification_notes)}</p>` : ''}</article>`;
     }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
   }
   function render() {
     $('#reference-date').value = today;
-    $('#mode-note').textContent = mode === 'demo' ? 'DEMO · 예시 데이터 — 가상 캠페인·현지 일정·협업·뉴스입니다. 예시 변경은 내 업무에 영향을 주지 않습니다.' : '내 업무 — 이 브라우저에 저장합니다. 다른 기기·팀원과 공유되지 않습니다. 원본 자료가 없는 항목은 빈 상태로 표시합니다.';
     renderCampaign(); renderCalendar(); renderTasks(); renderSignals();
   }
   async function refreshSignals() {
@@ -341,7 +341,7 @@ function initialize() {
   function options(values, selectedValue) { return Object.entries(values).map(([value, label]) => `<option value="${esc(value)}" ${value === selectedValue ? 'selected' : ''}>${esc(label)}</option>`).join(''); }
   function editTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId); if (!t) return;
-    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">캠페인<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 목표일을 바꿔도 이 업무 날짜 고정</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
+    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
     $('#task-form').onsubmit = event => {
       event.preventDefault(); const f = new FormData(event.currentTarget), title = f.get('title').trim(), start = f.get('start_date'), due = f.get('due_date');
       if (!title || (start && !due) || (start && start > due)) { $('#task-error').hidden = false; $('#task-error').textContent = '업무명을 입력하고, 마감일이 시작일보다 빠르지 않은지 확인해주세요.'; return; }
@@ -351,40 +351,104 @@ function initialize() {
     };
   }
   function planner(kind, opportunity) {
-    const original = kind === 'create' ? null : selected(); if (kind !== 'create' && !original) return;
-    let rows = original ? store.tasks.filter(t => t.campaign_id === original.id) : TEMPLATE.map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
-    const target = original?.target_date || opportunity?.start || '', initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
-    openDialog(kind === 'create' ? '역산 캠페인 생성' : kind === 'clone' ? '캠페인 복제' : '설정·재계획', `<form id="plan-form"><label class="home-field">캠페인명<input name="name" required maxlength="160" value="${esc(initialName)}"></label><div class="home-form-grid"><label class="home-field">목표일<input type="date" name="target_date" required value="${target}"></label><label class="home-field">템플릿<select name="template" ${original ? 'disabled' : ''}>${options({ launch: '첫 진출 · 9개 업무', anniversary: '기념일 · 8개 업무' }, original?.template || 'launch')}</select></label><label class="home-field">제품<input name="product" maxlength="160" value="${esc(original?.product)}"></label><label class="home-field">타깃<input name="audience" maxlength="160" value="${esc(original?.audience)}"></label><label class="home-field">채널<input name="channel" maxlength="160" value="${esc(original?.channel)}"></label></div><p class="home-muted">목표일 전은 음수, 이후는 양수입니다. 주말을 포함한 달력일로 계산합니다.${kind === 'replan' ? ' 완료·취소·날짜 고정 업무는 보존합니다.' : ''}</p><div id="template-rows"></div><p id="plan-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button type="submit" class="btn">일정 미리보기</button></div><div id="plan-preview"></div></form>`);
-    const renderRows = () => { $('#template-rows').innerHTML = rows.map((t, i) => `<div class="home-template-row"><input aria-label="업무 ${i + 1} 이름" data-row-title="${i}" value="${esc(t.title)}" maxlength="160" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}><input aria-label="업무 ${i + 1} 상대 일수" data-row-offset="${i}" type="number" min="-3650" max="3650" value="${Number(t.offset) || 0}" required ${kind === 'replan' && (!unfinished(t) || t.fixed) ? 'disabled' : ''}></div>`).join(''); };
-    renderRows();
+    const original = kind === 'create' ? null : selected();
+    if (kind !== 'create' && !original) return;
+    const initialTemplate = original?.template || (opportunity ? 'anniversary' : 'launch');
+    const templateRows = type => TEMPLATE.filter((_, i) => type === 'launch' || i > 0)
+      .map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
+    let rows = original ? structuredClone(store.tasks.filter(t => t.campaign_id === original.id)) : templateRows(initialTemplate);
+    const target = original?.target_date || opportunity?.start || '';
+    const initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
+    openDialog(kind === 'create' ? '이벤트 기획' : kind === 'clone' ? '이벤트 복제' : '이벤트 수정', `<form id="plan-form">
+      <label class="home-field">이벤트 이름<input name="name" required maxlength="160" placeholder="예: 신메뉴 출시, 스승의 날 선물 행사" value="${esc(initialName)}"></label>
+      <div class="home-form-grid">
+        <label class="home-field">이벤트 날짜<input type="date" name="target_date" required value="${target}"></label>
+        <label class="home-field">이벤트 유형<select name="template" ${original ? 'disabled' : ''}>${options({ launch: '신규 출시', anniversary: '기념일 행사' }, initialTemplate)}</select></label>
+      </div>
+      <div id="plan-preview" aria-live="polite"></div>
+      <details><summary>기획 상세 (선택)</summary><div class="home-form-grid">
+        <label class="home-field">제품<input name="product" maxlength="160" value="${esc(original?.product)}"></label>
+        <label class="home-field">대상 고객<input name="audience" maxlength="160" value="${esc(original?.audience)}"></label>
+        <label class="home-field">채널<input name="channel" maxlength="160" value="${esc(original?.channel)}"></label>
+      </div></details>
+      <details><summary>업무 조정 (선택)</summary><div id="template-rows"></div></details>
+      <p id="plan-error" class="home-error" role="alert" hidden></p>
+      <div class="home-form-actions"><button type="submit" class="btn dark" id="confirm-plan">${kind === 'replan' ? '변경사항 저장' : '캘린더에 추가'}</button></div>
+    </form>`);
     const form = $('#plan-form');
-    form.elements.template.onchange = () => { rows = TEMPLATE.filter((_, i) => form.elements.template.value === 'launch' || i > 0).map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab })); renderRows(); };
-    form.addEventListener('input', () => { $('#plan-preview').innerHTML = ''; });
-    form.addEventListener('change', () => { $('#plan-preview').innerHTML = ''; });
-    form.onsubmit = event => {
-      event.preventDefault(); const f = new FormData(form), newTarget = f.get('target_date'), name = f.get('name').trim();
-      const edits = rows.map((t, i) => ({ ...t, title: form.querySelector(`[data-row-title="${i}"]`).value.trim(), offset: Number(form.querySelector(`[data-row-offset="${i}"]`).value) }));
-      if (!validDate(newTarget) || !name || edits.some(t => !t.title || !Number.isInteger(t.offset))) return;
-      const projected = kind === 'replan' ? replanTasks(rows, newTarget, edits) : kind === 'clone' ? cloneTasks(edits, 'preview', newTarget, original.target_date, id) : edits.map(t => ({ ...t, due_date: addDays(newTarget, t.offset), status: 'todo' }));
-      if (projected.some(t => t.due_date && !validDate(t.due_date))) { $('#plan-error').hidden = false; $('#plan-error').textContent = '계산 날짜가 지원 범위를 벗어났습니다.'; return; }
-      $('#plan-error').hidden = true;
-      $('#plan-preview').innerHTML = `<div class="home-preview"><p>아직 저장되지 않았습니다. ${projected.length}개 업무</p>${projected.map(t => `<div class="home-preview-row"><span>${esc(t.title)}${kind === 'replan' && (!unfinished(t) || t.fixed) ? ' · 보존' : ''}</span><span>${esc(t.due_date || '날짜 없음')} ${t.due_date && t.due_date < today && unfinished(t) ? badge('지난 마감', true) : ''}</span></div>`).join('')}<div class="home-form-actions"><button class="btn dark" type="button" id="confirm-plan">확정하고 캘린더에 반영</button></div></div>`;
-      $('#confirm-plan').onclick = event => {
-        event.currentTarget.disabled = true;
-        const next = structuredClone(store);
-        if (kind === 'replan') {
-          Object.assign(next.campaigns.find(c => c.id === original.id), { name, target_date: newTarget, product: f.get('product'), audience: f.get('audience'), channel: f.get('channel') });
-          const changed = replanTasks(next.tasks.filter(t => t.campaign_id === original.id), newTarget, edits);
-          next.tasks = next.tasks.map(t => changed.find(item => item.id === t.id) || t);
-        } else {
-          const campaignId = id();
-          next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity?.event_id || '', status: 'preparing', review: '' });
-          const tasks = kind === 'clone' ? cloneTasks(edits, campaignId, newTarget, original.target_date, id) : edits.map(t => ({ ...t, id: id(), campaign_id: campaignId, due_date: addDays(newTarget, t.offset), start_date: '', fixed: false, status: 'todo', importance: 'normal', memo: '', completed_at: '' }));
-          next.tasks.push(...tasks); next.preferences.selected = campaignId;
+    const error = message => { $('#plan-error').textContent = message; $('#plan-error').hidden = !message; };
+    const project = () => {
+      const date = form.elements.target_date.value;
+      if (!validDate(date)) return null;
+      let result;
+      try {
+        result = kind === 'replan' ? replanTasks(rows, date, rows)
+          : kind === 'clone' ? cloneTasks(rows, 'preview', date, original.target_date, id)
+            : rows.map(t => ({ ...t, due_date: addDays(date, t.offset), status: 'todo' }));
+      } catch { return null; }
+      return result.every(t => !t.due_date || validDate(t.due_date)) ? result : null;
+    };
+    const preview = () => {
+      const tasks = project();
+      $('#plan-preview').innerHTML = tasks
+        ? `<div class="home-preview"><p>${tasks.length}개 준비 업무</p>${[...tasks].sort((a, b) => (a.due_date || '9999').localeCompare(b.due_date || '9999')).map(t => `<div class="home-preview-row"><span>${esc(t.title)}${kind === 'replan' && (!unfinished(t) || t.fixed) ? ' · 유지' : ''}</span><span>${esc(t.due_date || '날짜 없음')}${t.due_date && t.due_date < today && unfinished(t) ? ` ${badge('지난 일정', true)}` : ''}</span></div>`).join('')}</div>`
+        : empty('이벤트 날짜를 선택하세요.');
+    };
+    const renderRows = () => {
+      const tasks = project();
+      $('#template-rows').innerHTML = rows.map((t, i) => {
+        const locked = kind === 'replan' && (!unfinished(t) || t.fixed);
+        return `<div class="home-template-row"><input aria-label="업무 ${i + 1} 이름" data-row-title="${i}" value="${esc(t.title)}" maxlength="160" required ${locked ? 'disabled' : ''}><input aria-label="업무 ${i + 1} 날짜" data-row-date="${i}" type="date" value="${tasks?.[i]?.due_date || ''}" ${locked || !tasks ? 'disabled' : ''}></div>`;
+      }).join('');
+    };
+    renderRows(); preview();
+    form.elements.template.onchange = () => { rows = templateRows(form.elements.template.value); renderRows(); preview(); error(''); };
+    form.elements.target_date.addEventListener('input', () => { renderRows(); preview(); error(''); });
+    form.addEventListener('input', event => {
+      if (event.target.hasAttribute('data-row-title')) {
+        rows[Number(event.target.dataset.rowTitle)].title = event.target.value;
+        preview();
+      }
+      if (event.target.hasAttribute('data-row-date')) {
+        const date = event.target.value, targetDate = form.elements.target_date.value;
+        if (validDate(date) && validDate(targetDate)) {
+          const task = rows[Number(event.target.dataset.rowDate)];
+          task.offset = dayDiff(date, targetDate);
+          // A cloned fixed task uses its original date when shifting the plan.
+          if (kind === 'clone' && task.fixed) {
+            const shifted = addDays(date, dayDiff(original.target_date, targetDate));
+            if (task.start_date && task.due_date) task.start_date = addDays(task.start_date, dayDiff(shifted, task.due_date));
+            task.due_date = shifted;
+          }
+          preview(); error('');
         }
-        if (save(next)) { dialog.close(); render(); toast(kind === 'replan' ? '일정을 반영했습니다.' : '새 캠페인을 저장했습니다.'); }
-        else event.currentTarget.disabled = false;
-      };
+      }
+    });
+    form.onsubmit = event => {
+      event.preventDefault();
+      const f = new FormData(form), newTarget = f.get('target_date'), name = f.get('name').trim();
+      if (!name || !validDate(newTarget) || rows.some(t => !t.title.trim())) { error('이벤트 이름과 날짜, 업무명을 확인하세요.'); return; }
+      if ([...form.querySelectorAll('[data-row-date]:not(:disabled)')].some(input => !validDate(input.value))) { error('업무 날짜를 확인하세요.'); return; }
+      const projected = project();
+      if (!projected) { error('업무 날짜를 계산할 수 없습니다. 이벤트 날짜를 확인하세요.'); return; }
+      const button = $('#confirm-plan'); button.disabled = true;
+      const next = structuredClone(store);
+      if (kind === 'replan') {
+        Object.assign(next.campaigns.find(c => c.id === original.id), { name, target_date: newTarget, product: f.get('product'), audience: f.get('audience'), channel: f.get('channel') });
+        // Apply edits against the stored dates to preserve duration, completion and fixed tasks.
+        const changed = replanTasks(next.tasks.filter(t => t.campaign_id === original.id), newTarget, rows);
+        next.tasks = next.tasks.map(t => changed.find(item => item.id === t.id) || t);
+      } else {
+        const campaignId = id();
+        next.campaigns.push({ id: campaignId, name, target_date: newTarget, template: original?.template || f.get('template'), product: f.get('product'), audience: f.get('audience'), channel: f.get('channel'), event_id: kind === 'clone' ? '' : opportunity?.event_id || '', status: 'preparing', review: '' });
+        const tasks = kind === 'clone' ? cloneTasks(rows, campaignId, newTarget, original.target_date, id)
+          : projected.map(t => ({ ...t, title: t.title.trim(), id: id(), campaign_id: campaignId, start_date: '', fixed: false, importance: 'normal', memo: '', completed_at: '' }));
+        next.tasks.push(...tasks); next.preferences.selected = campaignId;
+      }
+      if (save(next)) {
+        cursor = newTarget; selectedDate = newTarget;
+        dialog.close(); render(); toast(kind === 'replan' ? '이벤트 일정을 수정했습니다.' : '준비 업무를 캘린더에 추가했습니다.');
+      } else button.disabled = false;
     };
   }
   root.addEventListener('click', event => {
@@ -443,7 +507,7 @@ function initialize() {
     event.preventDefault(); const c = selected(); if (!c) return;
     const next = structuredClone(store), campaign = next.campaigns.find(item => item.id === c.id), f = new FormData(event.currentTarget);
     campaign.review = f.get('review'); campaign.status = f.get('status');
-    if (save(next)) { render(); toast('회고와 캠페인 상태를 저장했습니다.'); }
+    if (save(next)) { render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
   };
   addEventListener('storage', event => { if (event.key === key() || event.key === null) { locked = true; showError('다른 창에서 기록이 변경되었습니다. 새로고침 후 계속해주세요.'); } });
   load(); updateRange(); refreshSignals();

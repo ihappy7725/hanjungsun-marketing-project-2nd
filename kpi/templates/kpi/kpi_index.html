@@ -20,9 +20,7 @@
 <div class="kpi-page">
   <header class="pagehead kpi-head">
     <div>
-      <p class="eyebrow">PERFORMANCE & BUDGET</p>
       <h1>KPI</h1>
-      <p>베트남 광고비·매출·예산과 현지 고객 반응을 한 화면에서 확인합니다.</p>
     </div>
     <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
@@ -30,21 +28,13 @@
     </div>
   </header>
 
-  <p class="kpi-legend">
-    <span>데이터 상태</span>
-    <span class="kpi-status is-live">실제 API</span>
-    <span class="kpi-status is-fallback">대체 출처</span>
-    <span class="kpi-status is-public">공개 데모</span>
-    <span class="kpi-status is-demo">시연</span>
-    <span class="kpi-legend-note">범위: 베트남(다낭 우선) · 공식은 확정 전 안(README 9장) · ⓘ에서 계산식 확인</span>
-  </p>
+  <p class="kpi-legend-note" role="status" hidden></p>
 
   <!-- 상단: 핵심 KPI 요약 -->
   <section class="kpis kpi-scorecards" aria-label="핵심 KPI 요약">
     <div class="kpi">
       <div class="label">
         <span class="kpi-label-text">총 집행 광고비 {{ info("광고비 합계(VND) × 기준 환율 ÷ 100\n기준 환율: 예산 편성 시점 100 VND당 KRW") }}</span>
-        <span class="kpi-status is-demo">시연</span>
       </div>
       <div class="value" data-kpi="spend-krw">—</div>
       <div class="kpi-sub" data-kpi="spend-vnd">—</div>
@@ -52,15 +42,13 @@
     <div class="kpi">
       <div class="label">
         <span class="kpi-label-text">종합 ROAS {{ info("ROAS(%) = 광고로 발생한 매출액 ÷ 투입 광고비 × 100\n손익분기 기준선 300%") }}</span>
-        <span class="kpi-status is-demo">시연</span>
       </div>
       <div class="value" data-kpi="roas">—</div>
       <div class="kpi-sub" data-kpi="roas-sub">손익분기 기준 300%</div>
     </div>
     <div class="kpi">
       <div class="label">
-        <span class="kpi-label-text">누적 매출액 {{ info("원화 환산 매출(KRW) = 현지 매출액(VND) × 환율(100 VND당 KRW) ÷ 100\n매출은 시연 값, 환율은 아래 환율 칸의 출처") }}</span>
-        <span class="kpi-status is-demo">시연</span>
+        <span class="kpi-label-text">누적 매출액 {{ info("원화 환산 매출(KRW) = 현지 매출액(VND) × 환율(100 VND당 KRW) ÷ 100") }}</span>
       </div>
       <div class="value" data-kpi="revenue-krw">—</div>
       <div class="kpi-sub" data-kpi="revenue-vnd">—</div>
@@ -80,11 +68,9 @@
     <section class="panel kpi-panel" data-kpi-panel="budget">
       <div class="panelhead">
         <div>
-          <p class="eyebrow">BUDGET TRACKING</p>
           <h2>마케팅 예산 트래킹 {{ info("예산 소진율(%) = (플랫폼 광고 집행비 + 인플루언서 협찬 집행비) ÷ 총 배정 예산 × 100\n잔여 가용 예산 = 총 배정 예산 − (실제 지출 확정액 + 인플루언서 예상 지출액)") }}</h2>
         </div>
         <div class="kpi-tools">
-          <span class="kpi-status is-demo">시연</span>
           <button type="button" class="btn kpi-btn-small kpi-compact-only" data-kpi-action="simulate">집행 시뮬레이션</button>
           {{ expand_button() }}
         </div>
@@ -108,7 +94,7 @@
           <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
           <p class="kpi-note">원화 예산과 비교하려고 VND 지출을 편성 시점 기준 환율로 환산합니다(확정 전 안).</p>
 
-          <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중 <span class="kpi-status is-demo">시연</span></p>
+          <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중</p>
           <div class="table-wrap">
             <table class="kpi-table">
               <thead><tr><th class="is-text">채널</th><th>집행액(VND)</th><th>집행액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
@@ -170,17 +156,15 @@
           </section>
         </div>
       </div>
-      <p class="kpi-meta" data-kpi="budget-meta">출처: 시연 값 · 범위: 베트남 전체 캠페인</p>
+      <p class="kpi-meta" data-kpi="budget-meta"></p>
     </section>
 
     <section class="panel kpi-panel" data-kpi-panel="roas">
       <div class="panelhead">
         <div>
-          <p class="eyebrow">ROAS BY CHANNEL</p>
           <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%") }}</h2>
         </div>
         <div class="kpi-tools">
-          <span class="kpi-status is-demo">시연</span>
           {{ expand_button() }}
         </div>
       </div>
@@ -198,23 +182,22 @@
           </table>
         </div>
       </div>
-      <p class="kpi-meta" data-kpi="roas-meta">출처: 시연 값(정산 CSV 업로드 예정) · 범위: 베트남</p>
+      <p class="kpi-meta" data-kpi="roas-meta"></p>
     </section>
 
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <p class="eyebrow">VOICE OF CUSTOMER</p>
           <h2>VOC 감성 · 이슈 키워드 {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
         <div class="kpi-tools">
-          <span class="kpi-status is-demo" data-kpi="voc-source">시연 분류</span>
+
           <button type="button" class="btn dark kpi-btn-small" data-kpi-action="voc-analyze">AI로 분석</button>
           {{ expand_button() }}
         </div>
       </div>
       <div class="kpi-panel-body">
-        <p class="kpi-ai-summary" data-kpi="voc-summary">시연 리뷰에 미리 붙인 분류입니다. [AI로 분석]을 누르면 베트남어 원문을 OpenAI가 다시 번역·분류합니다.</p>
+        <p class="kpi-ai-summary" data-kpi="voc-summary"></p>
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">
           <div class="kpi-chart kpi-chart-small">
@@ -226,7 +209,7 @@
         </div>
         <div class="kpi-qr" data-kpi="qr-strip"></div>
         <div class="kpi-detail">
-          <p class="kpi-detail-title">팜플렛 QR 설문 만족도 <span class="kpi-status is-demo">시연</span></p>
+          <p class="kpi-detail-title">팜플렛 QR 설문 만족도</p>
           <dl class="kpi-survey" data-kpi="survey-list"></dl>
           <div class="table-wrap kpi-review-wrap">
             <table class="kpi-table">
@@ -236,17 +219,16 @@
           </div>
         </div>
       </div>
-      <p class="kpi-meta" data-kpi="voc-meta">출처: 시연 리뷰 · 범위: 베트남</p>
+      <p class="kpi-meta" data-kpi="voc-meta"></p>
     </section>
 
     <section class="panel kpi-panel" data-kpi-panel="ga4">
       <div class="panelhead">
         <div>
-          <p class="eyebrow" data-kpi="ga4-eyebrow">GA4 TRAFFIC</p>
           <h2><span data-kpi="ga4-title">GA4 트래픽 · 전환</span> {{ info("유효 참여율 = 참여 세션(10초 이상 등) ÷ 전체 세션 × 100\n쇼피 구매처 이동 클릭률 = 쇼피 이동 클릭 ÷ 전체 세션 × 100\n팜플렛 QR 유입 = utm_source=pamphlet 세션") }}</h2>
         </div>
         <div class="kpi-tools">
-          <span class="kpi-status is-demo" data-kpi="ga4-badge">시연</span>
+
           <label class="kpi-toggle">
             <input type="checkbox" data-kpi-action="ga4-toggle" checked>
             <span>GA4</span>
@@ -263,12 +245,12 @@
               <span class="kpi-sub-text" data-kpi="ga4-engagement-sub"></span>
             </div>
             <div>
-              <span class="kpi-metric-label">쇼피 이동 클릭률 <span class="kpi-status is-demo">시연</span></span>
+              <span class="kpi-metric-label">쇼피 이동 클릭률</span>
               <strong data-kpi="ga4-ctr">—</strong>
               <span class="kpi-sub-text" data-kpi="ga4-ctr-sub"></span>
             </div>
             <div>
-              <span class="kpi-metric-label">팜플렛 QR 유입 <span class="kpi-status is-demo">시연</span></span>
+              <span class="kpi-metric-label">팜플렛 QR 유입</span>
               <strong data-kpi="ga4-pamphlet">—</strong>
               <span class="kpi-sub-text">utm_source=pamphlet 세션</span>
             </div>
@@ -278,7 +260,7 @@
             <p class="kpi-note" data-kpi="ga4-note"></p>
             <div data-kpi="ga4-channel-section">
               <p class="kpi-detail-title">
-                유입 채널별 세션 · 참여율 <span class="kpi-status" data-kpi="ga4-channel-badge">공개 데모</span>
+                유입 채널별 세션 · 참여율
                 {{ info("채널 참여율 = 채널의 참여 세션 ÷ 채널 세션 × 100\n막대: 채널별 참여율 / 점선: 전체 참여율\n어느 유입 경로의 방문자가 실제로 읽고 가는지 비교합니다.") }}
               </p>
               <div class="kpi-chart kpi-chart-wide">
@@ -308,7 +290,6 @@
               <tfoot><tr data-kpi="creator-total"></tr></tfoot>
             </table>
           </div>
-          <p class="kpi-note">크리에이터별 클릭·전환은 인플루언서 탭 공개 함수에 아직 없는 항목이라 시연 값입니다.</p>
         </div>
       </div>
       <p class="kpi-meta" data-kpi="ga4-meta">출처: — </p>
