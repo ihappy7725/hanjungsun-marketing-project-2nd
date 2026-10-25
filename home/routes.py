@@ -12,6 +12,7 @@ from flask import jsonify, render_template, request
 
 from . import bp
 from .news_search import SearchError, preset_labels, search
+from .translate import TARGETS, available, translate_titles
 
 _EVENTS_PATH = Path(__file__).parent / "data" / "events.json"
 _NEWS_PATH = Path(__file__).parent / "data" / "news.json"
@@ -209,7 +210,7 @@ def signals():
 @bp.get("/api/news/presets")
 def news_presets():
     """검색 버튼에 쓸 한국어 라벨만 전달합니다. 현지어 검색어는 서버에만 둡니다."""
-    return jsonify(items=preset_labels())
+    return jsonify(items=preset_labels(), translation=available(), targets=sorted(TARGETS))
 
 
 @bp.get("/api/news/search")
@@ -227,5 +228,12 @@ def news_search():
     except Exception:
         # 예외 내용에는 외부 응답이 들어갈 수 있어 응답에 내보내지 않습니다.
         return jsonify(error="지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.", items=[]), 502
-    return jsonify(items=items, unavailable=failed,
+    # 제목만 번역합니다. 번역된 제목인지 원문인지 화면에서 구분할 수 있게 함께 담습니다.
+    translated, failed_translation = translate_titles([item["title"] for item in items],
+                                                      request.args.get("target", "").strip())
+    for item, title in zip(items, translated):
+        item["title_original"] = item["title"]
+        item["title"] = title
+        item["translated"] = title != item["title_original"]
+    return jsonify(items=items, unavailable=failed, translation_failed=failed_translation,
                    notice="검증하지 않은 검색 결과입니다. 원문을 열어 직접 확인해주세요.")

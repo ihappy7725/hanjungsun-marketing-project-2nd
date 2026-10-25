@@ -40,7 +40,10 @@
       <section class="home-card home-news" aria-labelledby="news-title">
         <div class="home-panel-head"><div><h2 id="news-title">현지 뉴스</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">현지 시장 분석 ↗</a></div>
         <form id="news-search-form" class="home-news-search" role="search" data-presets-url="{{ url_for('home.news_presets') }}" data-search-url="{{ url_for('home.news_search') }}">
-          <div id="news-presets" class="home-news-presets"></div>
+          <div class="home-news-toolbar">
+            <div id="news-presets" class="home-news-presets"></div>
+            <button class="btn" id="news-translate" type="button" aria-pressed="false" hidden>자동 번역</button>
+          </div>
           <div class="home-news-query">
             <label class="home-muted" for="news-query">직접 검색</label>
             <input id="news-query" name="q" type="search" maxlength="60" autocomplete="off" placeholder="예: quà tặng Tết">

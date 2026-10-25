@@ -617,13 +617,17 @@ function initialize() {
     box.textContent = message || '';
     box.hidden = !message;
   }
-  let searchNumber = 0;
+  let searchNumber = 0, lastSearch = null, translateOn = false, translateTarget = '';
+  const TRANSLATE_KEY = 'hjs-home-news-translate';
   async function searchNews(params) {
     const token = ++searchNumber;
     newsError('');
     $('#news-search-list').innerHTML = empty('검색 중입니다.');
     try {
-      const response = await fetch(`${newsForm.dataset.searchUrl}?${new URLSearchParams(params)}`);
+      lastSearch = params;
+      const query = { ...params };
+      if (translateOn && translateTarget) query.target = translateTarget;
+      const response = await fetch(`${newsForm.dataset.searchUrl}?${new URLSearchParams(query)}`);
       const data = await response.json().catch(() => ({}));
       if (token !== searchNumber) return;
       if (!response.ok || !Array.isArray(data.items)) throw new Error(data.error || '');
@@ -631,11 +635,15 @@ function initialize() {
         const url = safeUrl(n.url);
         const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)} ↗</a>` : esc(n.title);
         const via = n.source_label && n.source_label !== n.publisher ? ` · ${esc(n.source_label)}` : '';
-        return `<article class="home-news-result">${title}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
+        const origin = n.translated ? `<p class="home-news-origin">원문: ${esc(n.title_original)}</p>` : '';
+        return `<article class="home-news-result">${title}${origin}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
       }).join('') || empty('검색 결과가 없습니다. 다른 검색어로 찾아봐주세요.');
       // 한 출처가 빠졌을 때 조용히 넘어가지 않고 어디가 빠졌는지 알립니다.
       if (Array.isArray(data.unavailable) && data.unavailable.length) {
         newsError(`${data.unavailable.join(' · ')} 출처를 불러오지 못했습니다. 아래 결과에는 빠져 있습니다.`);
+      } else if (data.translation_failed) {
+        // 번역하지 못했을 때 번역된 것처럼 보이지 않도록 원문임을 알립니다.
+        newsError('지금은 번역하지 못해 원문 제목을 그대로 보여줍니다.');
       }
     } catch (error) {
       // 불러오지 못한 경우 빈 목록을 결과처럼 보여 주지 않고 실패를 그대로 알립니다.
@@ -643,6 +651,26 @@ function initialize() {
       $('#news-search-list').innerHTML = '';
       newsError(error.message || '지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
     }
+  }
+  function setupTranslate(data) {
+    // 키가 없는 환경에서는 버튼을 숨기고 원문만 보여 줍니다.
+    const button = $('#news-translate'), uiLang = document.documentElement.dataset.uiLang || 'ko';
+    const targets = Array.isArray(data.targets) ? data.targets : [];
+    translateTarget = targets.includes(uiLang) ? uiLang : '';
+    if (!data.translation || !translateTarget) { button.hidden = true; translateOn = false; return; }
+    let saved = null;
+    try { saved = localStorage.getItem(TRANSLATE_KEY); } catch { saved = null; }
+    // 한국어·영어 화면은 번역을 켜 둡니다. 베트남어 화면은 원문을 그대로 봅니다.
+    translateOn = saved === null ? true : saved === 'on';
+    button.hidden = false;
+    button.textContent = translateTarget === 'ko' ? '한국어로 자동 번역' : 'Auto-translate';
+    button.setAttribute('aria-pressed', String(translateOn));
+    button.onclick = () => {
+      translateOn = !translateOn;
+      button.setAttribute('aria-pressed', String(translateOn));
+      try { localStorage.setItem(TRANSLATE_KEY, translateOn ? 'on' : 'off'); } catch { /* 저장 못 해도 동작합니다 */ }
+      if (lastSearch) searchNews(lastSearch);
+    };
   }
   // 뉴스 검색 화면이 없으면 이 기능만 건너뜁니다. 한 기능의 실패가 달력·업무까지 멈추지 않게 합니다.
   if (newsForm) {
@@ -658,6 +686,7 @@ function initialize() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !Array.isArray(data.items)) throw new Error('');
         $('#news-presets').innerHTML = data.items.map(p => `<button type="button" class="btn" data-preset="${esc(p.key)}">${esc(p.label)}</button>`).join('');
+        setupTranslate(data);
       } catch {
         newsError('검색 항목을 불러오지 못했습니다. 직접 검색은 그대로 쓸 수 있습니다.');
       }
