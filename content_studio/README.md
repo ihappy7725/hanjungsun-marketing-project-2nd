@@ -428,6 +428,7 @@ content_studio/
 | `POST /media/api/remove-bg` · `GET /media/remove-bg/result/<id>.png` | 배경 제거 · 결과 받기 (5-5) | 희주 |
 | `POST /media/api/storyboard` · `POST /media/api/review` | 숏폼 콘티 · 광고 표현 검수 | 희주 |
 | `GET /media/api/figma/designs` | Figma 플러그인용 디자인 목록 (읽기 전용, 플러그인용 CORS) | 희주 |
+| `GET /media/api/figma/designs/<id>` | Figma 플러그인용 디자인 하나의 요소 JSON (읽기 전용, 플러그인용 CORS) | 희주 |
 | `POST /media/api/figma/designs/<id>/link` | Figma 플러그인이 가져온 프레임 주소를 `external_figma`에 새 버전으로 저장 (플러그인용 CORS, 쓰기는 이것 하나) | 희주 |
 | `GET /media/api/figma/image?src=` | Figma 플러그인용 디자인 속 이미지 (읽기 전용, 플러그인용 CORS) | 희주 |
 
