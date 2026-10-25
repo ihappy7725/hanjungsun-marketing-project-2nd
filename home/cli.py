@@ -2,7 +2,8 @@
 
 flask --app app home <명령> 형태로 실행합니다. (PM1 요청)
 기존 python -B -m home.<모듈> 방식도 그대로 동작합니다.
-실제 동작은 event_import.py·news_import.py에 있고 여기서는 호출만 합니다.
+자료 명령은 기존 event_import.py·news_import.py를 재사용합니다.
+DB 준비 명령은 HOME 테이블에만 적용하고, 실제 변경은 --apply를 명시할 때만 실행합니다.
 """
 import click
 
@@ -89,3 +90,50 @@ def holidays_sync(first, last):
         print("새로 받은 연도: " + (", ".join(str(year) for year in added) if added else "없음 (이미 보관됨)"))
 
     _run(run)
+
+
+@bp.cli.command("tasks-add-category")
+@click.option("--apply", is_flag=True, help="승인 후 HOME 업무에 종류 칸을 실제 추가합니다")
+def tasks_add_category(apply):
+    """기존 업무를 지우지 않고 category 칸만 추가합니다. 기본은 확인만 합니다."""
+    from sqlalchemy.exc import SQLAlchemyError
+    from platform_core.extensions import db
+
+    if db.engine.dialect.name != "sqlite":
+        raise click.ClickException("이 명령은 현재 공통 앱의 SQLite DB에서만 사용할 수 있습니다.")
+    try:
+        with db.engine.connect() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE" if apply else "BEGIN")
+            columns = connection.exec_driver_sql("PRAGMA table_info(home_tasks)").mappings().all()
+            if not columns:
+                raise click.ClickException("HOME 업무 테이블이 없습니다. DB 준비 절차를 먼저 확인해주세요.")
+            category = next((column for column in columns if column["name"] == "category"), None)
+            if category:
+                if (category["type"].upper() != "VARCHAR(20)" or category["notnull"] != 1
+                        or category["dflt_value"] != "''"):
+                    raise click.ClickException("이미 있는 종류 칸의 구조가 예상과 다릅니다. 변경하지 않고 멈춥니다.")
+                invalid = connection.exec_driver_sql(
+                    "SELECT COUNT(*) FROM home_tasks WHERE category IS NULL OR "
+                    "category NOT IN ('', 'research', 'content', 'collaboration', 'meeting', 'other')"
+                ).scalar_one()
+                if invalid:
+                    raise click.ClickException("이미 있는 업무 종류에 확인이 필요한 값이 있습니다. 변경하지 않았습니다.")
+                click.echo("종류 칸이 이미 준비되어 있습니다. 기록과 구조는 변경하지 않았습니다.")
+                return
+            if not apply:
+                click.echo("업무 종류 칸 추가가 필요합니다. 아직 변경하지 않았습니다. 승인 후 --apply로 실행하세요.")
+                return
+            count_before = connection.exec_driver_sql("SELECT COUNT(*) FROM home_tasks").scalar_one()
+            connection.exec_driver_sql(
+                "ALTER TABLE home_tasks ADD COLUMN category VARCHAR(20) NOT NULL DEFAULT '' "
+                "CONSTRAINT ck_home_tasks_category "
+                "CHECK (category IN ('', 'research', 'content', 'collaboration', 'meeting', 'other'))"
+            )
+            count_after = connection.exec_driver_sql("SELECT COUNT(*) FROM home_tasks").scalar_one()
+            after = connection.exec_driver_sql("PRAGMA table_info(home_tasks)").mappings().all()
+            if count_before != count_after or [dict(c) for c in after if c["name"] != "category"] != [dict(c) for c in columns]:
+                raise click.ClickException("기존 기록 수나 저장 칸이 달라져 작업 전체를 취소했습니다.")
+            connection.commit()
+            click.echo("HOME 업무에 종류 칸을 추가했습니다. 기존 업무는 모두 미지정이며 나머지 기록은 그대로입니다.")
+    except SQLAlchemyError:
+        raise click.ClickException("종류 칸을 추가하지 못했습니다. 이번 작업은 취소했으며 상세 DB 내용은 표시하지 않습니다.") from None

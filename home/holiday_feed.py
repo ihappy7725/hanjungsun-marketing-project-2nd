@@ -5,6 +5,7 @@
 실제로 며칠 쉬는지(대체휴일·보상근무일)는 해마다 정부 공문으로 따로 정해집니다.
 그래서 모든 항목은 provisional=True, verification_status="unverified"로 표시합니다.
 확정 자료는 사람이 원문을 확인해 events.json에 등록하며, 등록된 날짜가 우선합니다.
+문화의 날은 국회 결의의 연례 날짜를 별도 근거로 보완합니다. 제공업체의 조회 실패를 대체한 값이 아닙니다.
 
 조회에 실패하면 그 연도를 비워 둡니다. 빈 값이나 만들어 낸 날짜로 대체하지 않습니다.
 """
@@ -35,6 +36,37 @@ STATUTORY = {
 SOURCE_NAME = "Calendarific 공휴일 자료 (법정일 기준 · 연휴 기간 미확정)"
 MIN_YEAR = 2020
 MAX_AHEAD = 12
+
+
+def _culture_day(year):
+    """2026-07-01 시행된 결의의 연례 법정일만 표시합니다. 연휴 기간은 추정하지 않습니다."""
+    day = date(year, 11, 24).isoformat()
+    return {
+        "event_id": "auto_vn_culture_day_%s" % year,
+        "name": "베트남 문화의 날 (연휴 기간 미확정)",
+        "official_name": "Ngày Văn hóa Việt Nam",
+        "start_date": day,
+        "end_date": day,
+        "type": "holiday",
+        "region": "베트남 전국",
+        "applies_to": "국회 결의가 정한 연례 유급휴일. 실제 연속 휴무와 사업장 운영은 별도 확인이 필요합니다.",
+        "date_precision": "day",
+        "is_demo": False,
+        "provisional": True,
+        "verification_status": "unverified",
+        "registration_status": "auto",
+        "source_name": "베트남 국회 결의 28/2026/QH16 (법정일 기준 · 연휴 기간 미확정)",
+        "sources": [{
+            "publisher": "베트남 국회 · 정부 법령 포털",
+            "title": "Nghị quyết số 28/2026/QH16 về phát triển văn hóa Việt Nam",
+            "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/nq28phattrienvanhoa.pdf",
+            "role": "primary",
+            "supports": "제2조 제1항: 매년 11월 24일 문화의 날 유급휴일. 제13조: 2026년 7월 1일 시행.",
+        }],
+        "schedule_nature": "법정일은 매년 11월 24일. 연속 휴무 기간은 별도 확인",
+        "description": "국회 결의로 정한 법정일을 표시합니다. 앞뒤 날짜를 붙여 연휴로 계산하지 않습니다.",
+        "verification_notes": "11월 24일은 결의 제2조의 연례 법정일입니다. 이 자동 표시는 해당 연도의 연휴·대체휴일 확정 자료가 아닙니다. 담당자가 원문을 확인해 등록한 일정이 있으면 그 자료를 우선합니다.",
+    }
 
 
 def _key():
@@ -176,9 +208,13 @@ def provisional(start, end, registered):
     rows = []
     for year in range(start.year, end.year + 1):
         stored = document["years"].get(str(year))
-        if not isinstance(stored, dict) or not isinstance(stored.get("days"), list):
-            continue
-        for event in _events(year, stored["days"]):
+        events = _events(year, stored["days"]) if isinstance(stored, dict) and isinstance(stored.get("days"), list) else []
+        # 시행 전 연도로 소급하지 않고, 캐시에 같은 날이 있으면 중복으로 추가하지 않습니다.
+        if year >= 2026:
+            culture_day = _culture_day(year)
+            if not any(event["start_date"] <= culture_day["start_date"] <= event["end_date"] for event in events):
+                events.append(culture_day)
+        for event in events:
             if event["start_date"] > end.isoformat() or event["end_date"] < start.isoformat():
                 continue
             # 사람이 확인해 등록한 날짜가 있으면 그쪽만 보여 줍니다. 같은 날이 두 번 나오지 않게 합니다.
@@ -189,4 +225,4 @@ def provisional(start, end, registered):
             if any(day in taken for day in span):
                 continue
             rows.append(event)
-    return rows
+    return sorted(rows, key=lambda event: (event["start_date"], event["event_id"]))

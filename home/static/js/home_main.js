@@ -5,6 +5,7 @@ const DAY = 86400000;
 const DAY_SLOTS = 4; // 달력 한 칸에 보여 주는 최대 개수(기간 막대 포함)
 const KIND_ORDER = ['local', 'campaign', 'schedule', 'creator', 'task']; // 날짜 칸 표시 순서
 export const TASK_STATES = { todo: '예정', doing: '진행 중', blocked: '보류', done: '완료', cancelled: '취소' };
+export const TASK_CATEGORIES = { '': '미지정', research: '조사', content: '콘텐츠', collaboration: '협업', meeting: '회의', other: '기타' };
 const CAMPAIGN_STATES = { preparing: '준비', active: '진행', done: '완료', blocked: '보류', cancelled: '취소', archived: '보관' };
 const TABS = { market_analysis: '현지 시장 분석', content_studio: '콘텐츠 스튜디오', influencer_marketing: '인플루언서 마케팅', kpi: 'KPI' };
 const TEMPLATE = [
@@ -86,49 +87,127 @@ function demoStore(today) {
   return { version: 1, campaigns: [campaign], tasks, schedules: [], links: [], preferences: { selected: campaign.id, preset: '45' }, demo_anchor: today };
 }
 function blankStore() { return { version: 1, campaigns: [], tasks: [], schedules: [], links: [], preferences: { selected: '', preset: '45' } }; }
+export async function migrationRequest(url, payload, fetcher = fetch) {
+  let response;
+  try {
+    response = await fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin', cache: 'no-store', body: JSON.stringify(payload) });
+  } catch {
+    throw new Error('서버 응답을 확인하지 못했습니다. 저장 요청을 보낸 뒤라면 먼저 파일을 다시 검사해주세요. 같은 기록은 중복으로 추가되지 않습니다.');
+  }
+  let result;
+  try { result = await response.json(); }
+  catch { throw new Error('서버 응답을 읽지 못했습니다. 옮기기 성공 여부를 확인하려면 파일을 다시 검사해주세요.'); }
+  if (!response.ok) throw new Error(result.error || '서버에서 처리하지 못했습니다. 파일을 다시 검사해주세요.');
+  return result;
+}
 function validStore(s) {
   return s && s.version === 1 && Array.isArray(s.campaigns) && Array.isArray(s.tasks) && Array.isArray(s.schedules) && Array.isArray(s.links) && s.preferences &&
     s.campaigns.every(c => typeof c.id === 'string' && typeof c.name === 'string' && validDate(c.target_date)) &&
-    s.tasks.every(t => typeof t.id === 'string' && typeof t.title === 'string' && Object.hasOwn(TASK_STATES, t.status) && (!t.due_date || validDate(t.due_date)) && (!t.start_date || validDate(t.start_date))) &&
+    s.tasks.every(t => typeof t.id === 'string' && typeof t.title === 'string' && Object.hasOwn(TASK_STATES, t.status) && (t.category === undefined || (typeof t.category === 'string' && Object.hasOwn(TASK_CATEGORIES, t.category))) && (!t.due_date || validDate(t.due_date)) && (!t.start_date || validDate(t.start_date))) &&
     new Set(s.tasks.map(t => t.id)).size === s.tasks.length && new Set(s.campaigns.map(c => c.id)).size === s.campaigns.length;
 }
 
 if (typeof document !== 'undefined') initialize();
-function initialize() {
+async function initialize() {
   const root = document.querySelector('.home-page');
   if (!root) return;
   const $ = selector => root.querySelector(selector);
   let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
   const TIMELINE_FROM = 7, TIMELINE_TO = 21, TIMEZONE_LABEL = 'KST';
   let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
-  let mode = 'demo', store, loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
+  let mode = 'work', store = blankStore(), loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
+  let serverToken = null, serverBaseline = null, storageBusy = false;
+  let taskCategoriesAvailable = false;
+  const categoriesEnabled = () => mode === 'demo' || taskCategoriesAvailable;
+  const taskCategoryText = task => categoriesEnabled() ? ` · 종류: ${esc(TASK_CATEGORIES[task.category || ''])}` : '';
+  const preferencesKey = 'hjs-home-server-work-preferences-v1';
   const key = () => `hjs-home-browser-v1-${mode}`;
   const showError = message => { $('#storage-error').hidden = !message; $('#storage-error').textContent = message; };
   function toast(message) { clearTimeout(toastTimer); $('#home-toast').textContent = message; $('#home-toast').hidden = false; toastTimer = setTimeout(() => { $('#home-toast').hidden = true; }, 2800); }
   try {
     const preference = localStorage.getItem('hjs-home-browser-mode');
-    const work = localStorage.getItem('hjs-home-browser-v1-work');
-    mode = ['demo', 'work'].includes(preference) ? preference : work && JSON.parse(work).campaigns?.length ? 'work' : 'demo';
+    mode = ['demo', 'work'].includes(preference) ? preference : 'work';
   } catch { /* 저장소 접근 실패는 load에서 사용자에게 알립니다. */ }
-  function load() {
-    locked = false; showError('');
-    try {
-      loadedRaw = localStorage.getItem(key());
-      store = loadedRaw === null ? (mode === 'demo' ? demoStore(today) : blankStore()) : JSON.parse(loadedRaw);
-      if (!validStore(store)) throw new Error('invalid');
-      if (loadedRaw === null) { localStorage.setItem(key(), JSON.stringify(store)); loadedRaw = localStorage.getItem(key()); }
-    } catch {
-      locked = true; store = blankStore();
-      showError('브라우저 저장소를 읽거나 초기화하지 못했습니다. 기존 기록 보호를 위해 편집을 중지했습니다. 저장소 설정과 다른 창을 확인해주세요.');
+  const workData = value => ({ version: 1, campaigns: value.campaigns, tasks: value.tasks, schedules: value.schedules, links: value.links });
+  function storageControls(busy) {
+    storageBusy = busy;
+    for (const selector of ['#data-mode', '#export-store', '#import-store', '#migrate-store', '#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign']) {
+      const control = $(selector); if (control) control.disabled = busy;
     }
-    $('#data-mode').value = mode;
+    root.setAttribute('aria-busy', String(busy));
   }
-  // 저장 경계: DB 적용 시 이 함수와 load를 HOME API 호출로 교체합니다.
-  function save(next) {
+  async function workRequest(method, payload) {
+    let response;
+    try {
+      response = await fetch(root.dataset.workStoreUrl, { method, credentials: 'same-origin', cache: 'no-store',
+        ...(payload ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) } : {}) });
+    } catch { throw new Error('서버 응답을 확인하지 못했습니다. 저장 요청을 보냈다면 새로고침해 저장 여부를 확인해주세요.'); }
+    let result;
+    try { result = await response.json(); }
+    catch { throw new Error('서버 응답을 읽지 못했습니다. 새로고침해 기록을 확인해주세요.'); }
+    if (!response.ok) throw new Error(result.error || '서버에서 처리하지 못했습니다. 새로고침해주세요.');
+    if (typeof result.token !== 'string' || !validStore({ ...result.data, preferences: {} })) throw new Error('서버 기록의 형식을 확인하지 못했습니다. 편집을 멈췄습니다.');
+    return result;
+  }
+  function rememberPreferences(value) {
+    try { localStorage.setItem(preferencesKey, JSON.stringify(value)); }
+    catch { toast('업무 저장과 별개로 화면 선택 설정을 브라우저에 보관하지 못했습니다.'); }
+  }
+  async function load() {
+    locked = true; showError(''); storageControls(true);
+    serverToken = null; serverBaseline = null; store = blankStore();
+    taskCategoriesAvailable = false;
+    try {
+      if (mode === 'work') {
+        let preferences = blankStore().preferences;
+        try {
+          const saved = localStorage.getItem(preferencesKey);
+          const previous = saved === null ? JSON.parse(localStorage.getItem('hjs-home-browser-v1-work') || 'null')?.preferences : JSON.parse(saved);
+          if (previous && typeof previous === 'object' && !Array.isArray(previous)) preferences = { ...preferences, ...previous };
+        } catch { /* 업무 원본은 서버에서만 읽습니다. 화면 설정을 못 읽어도 업무 조회는 계속합니다. */ }
+        const result = await workRequest('GET');
+        store = { ...result.data, preferences }; serverToken = result.token;
+        taskCategoriesAvailable = result.task_categories_enabled === true;
+        serverBaseline = JSON.stringify(workData(store));
+      } else {
+        loadedRaw = localStorage.getItem(key());
+        store = loadedRaw === null ? demoStore(today) : JSON.parse(loadedRaw);
+        if (loadedRaw === null) { localStorage.setItem(key(), JSON.stringify(store)); loadedRaw = localStorage.getItem(key()); }
+      }
+      if (!validStore(store)) throw new Error('invalid');
+      locked = false;
+    } catch (error) {
+      locked = true; store = blankStore();
+      showError(mode === 'work' ? `서버 기록을 불러오지 못해 편집을 멈췄습니다. ${error.message}` : '예시 브라우저 기록을 읽지 못해 편집을 멈췄습니다. 저장소 설정을 확인해주세요.');
+    } finally { storageControls(false); }
+    $('#data-mode').value = mode;
+    const notice = $('#storage-notice');
+    if (notice) notice.textContent = mode === 'work' ? '내 업무는 서버에 저장됩니다. 화면 선택·조회 기간만 이 브라우저에 보관합니다.' : '예시 데이터 (DEMO)는 이 브라우저에만 저장됩니다.';
+  }
+  async function save(next, deleteCampaignIds = []) {
     if (locked) { toast('저장소를 확인한 뒤 새로고침해주세요.'); return false; }
+    if (storageBusy || migrationBusy) { toast('저장이 끝난 뒤 다시 눌러주세요.'); return false; }
+    if (!validStore(next)) { showError('저장할 기록의 형식이 올바르지 않습니다. 기존 기록은 유지됩니다.'); return false; }
+    if (mode === 'work') {
+      const data = workData(next);
+      if (JSON.stringify(data) === serverBaseline && !deleteCampaignIds.length) {
+        store = next; rememberPreferences(next.preferences); return true;
+      }
+      storageControls(true);
+      try {
+        const result = await workRequest('POST', { token: serverToken, data, delete_campaign_ids: deleteCampaignIds });
+        store = { ...result.data, preferences: next.preferences }; serverToken = result.token;
+        taskCategoriesAvailable = result.task_categories_enabled === true;
+        serverBaseline = JSON.stringify(workData(store)); rememberPreferences(next.preferences); showError('');
+        return true;
+      } catch (error) {
+        locked = true; showError(`저장 성공 여부를 확인하지 못했습니다. ${error.message} 새로고침 전까지 편집을 멈춥니다.`);
+        return false;
+      } finally { storageControls(false); }
+    }
     try {
       if (localStorage.getItem(key()) !== loadedRaw) { locked = true; showError('다른 창에서 기록이 변경되었습니다. 덮어쓰지 않도록 저장을 멈췄습니다. 새로고침해주세요.'); return false; }
-      if (!validStore(next)) throw new Error('invalid');
       const serialized = JSON.stringify(next); localStorage.setItem(key(), serialized); loadedRaw = serialized; store = next; return true;
     } catch { showError('저장하지 못했습니다. 저장 공간과 브라우저 설정을 확인해주세요. 기존 기록은 유지됩니다.'); return false; }
   }
@@ -296,7 +375,7 @@ function initialize() {
       t.due_date === selectedDate || (isToday && unfinished(t) && t.due_date && t.due_date < today))), today);
     $('#task-list').innerHTML = rows.map(t => {
       const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
-      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
+      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
     }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
     renderUndated();
   }
@@ -307,13 +386,13 @@ function initialize() {
     box.hidden = rows.length === 0;
     if (!rows.length) return;
     $('#undated-count').textContent = `날짜 미정 ${rows.length}건`;
-    $('#undated-list').innerHTML = rows.map(t => `<div class="home-undated-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions"><span class="home-muted">${esc(campaignName(t.campaign_id))}</span><button class="home-text-btn" data-today="${esc(t.id)}" title="오늘 날짜로 가져오기">오늘로</button></span></div>`).join('');
+    $('#undated-list').innerHTML = rows.map(t => `<div class="home-undated-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions"><span class="home-muted">${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</span><button class="home-text-btn" data-today="${esc(t.id)}" title="오늘 날짜로 가져오기">오늘로</button></span></div>`).join('');
   }
   function moveTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId);
     if (!t) { toast('업무를 찾지 못했습니다.'); return; }
     openDialog('업무 이월', `<form id="move-form"><p class="home-muted">${esc(t.title)}</p><label class="home-field">옮길 날짜<input name="due_date" type="date" required value="${esc(t.due_date || today)}"></label><p class="home-muted">마감일만 바뀝니다. 이벤트 날짜과 다른 업무는 그대로입니다.</p><p id="move-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn dark" type="submit">이월</button></div></form>`);
-    $('#move-form').onsubmit = event => {
+    $('#move-form').onsubmit = async event => {
       event.preventDefault();
       const value = new FormData(event.currentTarget).get('due_date');
       if (!validDate(value)) { $('#move-error').hidden = false; $('#move-error').textContent = '옮길 날짜를 올바르게 입력해주세요.'; return; }
@@ -321,7 +400,7 @@ function initialize() {
       target.due_date = value;
       if (target.start_date && validDate(target.start_date)) target.start_date = '';
       target.fixed = true;   // 재계획에서 되돌아가지 않도록 날짜 고정으로 표시합니다.
-      if (save(next)) { dialog.close(); render(); toast(`${value}로 이월했습니다.`); }
+      if (await save(next)) { dialog.close(); render(); toast(`${value}로 이월했습니다.`); }
     };
   }
   function renderCampaign() {
@@ -353,7 +432,11 @@ function initialize() {
     const rows = creators().filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
     $('#collaboration-list').innerHTML = rows.map(c => {
       const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
-      return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(needs ? '확인 필요' : c.post_date < today ? '게시일 경과' : '게시 임박', Boolean(needs))}</div><p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
+      // 촬영일만 지났는데 게시일이 지난 것처럼 알리지 않습니다. 날짜가 없으면 경과로 보지 않습니다.
+      const postLate = validDate(c.post_date) && c.post_date < today;
+      const shootLate = validDate(c.shoot_date) && c.shoot_date < today && !['shot', 'posted'].includes(c.status);
+      const state = needs ? '확인 필요' : postLate ? '게시일 경과' : shootLate ? '촬영일 경과' : validDate(c.post_date) ? '게시 임박' : '일정 미정';
+      return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(state, Boolean(needs) || postLate || shootLate)}</div><p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
     }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.'));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
@@ -396,13 +479,15 @@ function initialize() {
   function editTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId); if (!t) return;
     openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
-    $('#task-form').onsubmit = event => {
+    if (categoriesEnabled()) $('#task-form .home-form-grid').insertAdjacentHTML('beforeend', `<label class="home-field">업무 종류<select name="category">${options(TASK_CATEGORIES, t.category || '')}</select></label>`);
+    $('#task-form').onsubmit = async event => {
       event.preventDefault(); const f = new FormData(event.currentTarget), title = f.get('title').trim(), start = f.get('start_date'), due = f.get('due_date');
       if (!title || (start && !due) || (start && start > due)) { $('#task-error').hidden = false; $('#task-error').textContent = '업무명을 입력하고, 마감일이 시작일보다 빠르지 않은지 확인해주세요.'; return; }
       const next = structuredClone(store), target = next.tasks.find(item => item.id === taskId), campaign = next.campaigns.find(c => c.id === f.get('campaign_id'));
       const time = f.get('due_time');
       Object.assign(target, { title, start_date: start, due_date: due, due_time: validTime(time) ? time : '', campaign_id: campaign.id, status: f.get('status'), importance: f.get('importance'), related_tab: f.get('related_tab'), memo: f.get('memo'), fixed: f.has('fixed') || !due, offset: due ? dayDiff(due, campaign.target_date) : 0, completed_at: f.get('status') === 'done' ? t.completed_at || new Date().toISOString() : '' });
-      if (save(next)) { dialog.close(); render(); toast('업무를 저장했습니다.'); }
+      if (categoriesEnabled()) target.category = f.get('category') || '';
+      if (await save(next)) { dialog.close(); render(); toast('업무를 저장했습니다.'); }
     };
   }
   function planner(kind, opportunity) {
@@ -479,7 +564,7 @@ function initialize() {
         }
       }
     });
-    form.onsubmit = event => {
+    form.onsubmit = async event => {
       event.preventDefault();
       const f = new FormData(form), newTarget = f.get('target_date'), name = f.get('name').trim();
       if (!name || !validDate(newTarget) || rows.some(t => !t.title.trim())) { error('이벤트 이름과 날짜, 업무명을 확인하세요.'); return; }
@@ -500,18 +585,18 @@ function initialize() {
           : projected.map(t => ({ ...t, title: t.title.trim(), id: id(), campaign_id: campaignId, start_date: '', fixed: false, importance: 'normal', memo: '', completed_at: '' }));
         next.tasks.push(...tasks); next.preferences.selected = campaignId;
       }
-      if (save(next)) {
+      if (await save(next)) {
         cursor = newTarget; selectedDate = newTarget;
         dialog.close(); render(); toast(kind === 'replan' ? '이벤트 일정을 수정했습니다.' : '준비 업무를 캘린더에 추가했습니다.');
       } else button.disabled = false;
     };
   }
-  root.addEventListener('click', event => {
+  root.addEventListener('click', async event => {
     const button = event.target.closest('button'); if (!button) return;
     if (button.hasAttribute('data-cancel-delete')) { pendingImport = null; dialog.close(); }
     if (button.hasAttribute('data-confirm-import') && pendingImport) {
       const incoming = pendingImport; pendingImport = null;
-      if (save(structuredClone(incoming))) { dialog.close(); render(); toast('기록을 가져왔습니다.'); }
+      if (await save(structuredClone(incoming))) { dialog.close(); render(); toast('기록을 가져왔습니다.'); }
     }
     if (button.dataset.confirmDelete) {
       const next = structuredClone(store), target = button.dataset.confirmDelete;
@@ -520,11 +605,11 @@ function initialize() {
       next.schedules = (next.schedules || []).filter(s => s.campaign_id !== target);
       next.links = (next.links || []).filter(l => l.campaign_id !== target);
       if (next.preferences.selected === target) next.preferences.selected = next.campaigns[0]?.id || '';
-      if (save(next)) { dialog.close(); render(); toast('이벤트를 삭제했습니다.'); }
+      if (await save(next, [target])) { dialog.close(); render(); toast('이벤트를 삭제했습니다.'); }
     }
     if (button.dataset.today) {
       const next = structuredClone(store), task = next.tasks.find(item => item.id === button.dataset.today);
-      if (task) { task.due_date = today; task.fixed = true; if (save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
+      if (task) { task.due_date = today; task.fixed = true; if (await save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
     }
     if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
     if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
@@ -549,11 +634,14 @@ function initialize() {
     }
     if (button.dataset.select) changeCampaign(button.dataset.select);
   });
-  root.addEventListener('change', event => {
+  root.addEventListener('change', async event => {
     if (!event.target.dataset.check) return;
+    if (storageBusy || locked) { render(); toast('저장소를 확인하거나 현재 저장이 끝난 뒤 다시 눌러주세요.'); return; }
     const next = structuredClone(store), task = next.tasks.find(t => t.id === event.target.dataset.check);
-    task.status = event.target.checked ? 'done' : 'todo'; task.completed_at = event.target.checked ? new Date().toISOString() : '';
-    if (save(next)) toast(event.target.checked ? '완료했습니다. 일정과 진척에 반영했습니다.' : '예정 상태로 되돌렸습니다.');
+    if (!task) return;
+    const completed = event.target.checked;
+    task.status = completed ? 'done' : 'todo'; task.completed_at = completed ? new Date().toISOString() : '';
+    if (await save(next)) toast(completed ? '완료했습니다. 일정과 진척에 반영했습니다.' : '예정 상태로 되돌렸습니다.');
     render();
   });
   function showPanel(name) {
@@ -567,9 +655,9 @@ function initialize() {
     const count = store.tasks.filter(t => t.campaign_id === c.id).length;
     openDialog('이벤트 삭제', `<p>"${esc(c.name)}" 이벤트와 그 준비 업무 ${count}건을 지웁니다.</p><p class="home-muted">되돌릴 수 없습니다. 현지 일정 자료와 뉴스는 지워지지 않습니다.</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-delete="${esc(c.id)}" type="button">삭제</button></div>`);
   }
-  // 업무 기록은 이 브라우저에만 있습니다. 파일로 내려받아 두면 기록을 지우거나
-  // 다른 기기로 옮길 때 되살릴 수 있습니다. DB로 옮기기 전 백업 용도이기도 합니다.
+  // 현재 모드에서 읽은 기록을 백업합니다. 내 업무는 서버에서 읽은 기록입니다.
   function exportStore() {
+    if (locked || storageBusy) { toast('기록을 정상적으로 불러온 뒤 내보내기를 해주세요.'); return; }
     try {
       const payload = { app: 'hanjeongseon-home', format: 1, exported_at: new Date().toISOString(),
         mode, counts: { campaigns: store.campaigns.length, tasks: store.tasks.length }, data: store };
@@ -583,8 +671,73 @@ function initialize() {
     } catch { toast('내려받지 못했습니다. 브라우저 다운로드 설정을 확인해주세요.'); }
   }
   let pendingImport = null;
+  let migrationBusy = false;
+  let lastMigrationReceipt = null;
+  function migrationControls(busy) {
+    migrationBusy = busy;
+    $('#migrate-store').disabled = busy;
+    $('#data-mode').disabled = busy;
+  }
+  function downloadMigrationReceipt() {
+    if (!lastMigrationReceipt) return;
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(lastMigrationReceipt, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = `home-migration-result-${today}.json`;
+      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    } catch { toast('결과 파일을 내려받지 못했습니다. 이 창을 닫지 말고 다시 눌러주세요.'); }
+  }
+  async function readMigration(file) {
+    if (!file || migrationBusy || storageBusy) return;
+    if (mode !== 'work') { toast('내 업무로 바꾼 뒤 내 업무 백업 파일을 선택해주세요.'); return; }
+    migrationControls(true);
+    try {
+      if (file.size > 2 * 1024 * 1024) throw new Error('백업 파일은 2 MiB 이하만 선택할 수 있습니다.');
+      let backup;
+      try { backup = JSON.parse(await file.text()); }
+      catch { throw new Error('백업 파일을 읽지 못했습니다. HOME에서 내보낸 JSON 파일을 선택해주세요.'); }
+      if (backup?.mode !== 'work') throw new Error('예시 데이터 (DEMO)는 옮기지 않습니다. 내 업무 백업 파일을 선택해주세요.');
+      const preview = await migrationRequest(root.dataset.migrationPreviewUrl, backup);
+      const labels = { campaigns: '이벤트', tasks: '업무', schedules: '직접 일정', links: '협업 연결' };
+      const rows = Object.entries(labels).map(([kind, label]) => {
+        const counts = preview.counts[kind];
+        return `<div class="home-preview-row"><span>${label}</span><span>새 기록 ${esc(counts.new)} · 같은 기록 ${esc(counts.same)} · 충돌 ${esc(counts.conflict)}</span></div>`;
+      }).join('');
+      const totalNew = Object.values(preview.counts).reduce((sum, counts) => sum + counts.new, 0);
+      openDialog('서버로 옮기기 전 확인', `<p>선택한 백업: <strong>${esc(file.name)}</strong></p><p>백업 시각: ${esc(backup.exported_at)}. 이 파일을 만든 뒤 수정한 내용은 포함되지 않습니다.</p><div class="home-preview">${rows}</div><p>새 기록만 추가하고 같은 기록은 건너뜁니다. 브라우저 원본과 백업 파일은 그대로 남깁니다.</p><p class="home-muted">옮긴 뒤 서버 기록을 다시 불러옵니다. 이후 내 업무 편집은 서버에 저장됩니다.</p><p id="migration-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn" id="migration-cancel" type="button">닫기</button>${preview.can_import && totalNew ? '<button class="btn dark" id="migration-confirm" type="button">확인한 새 기록 옮기기</button>' : ''}</div><p>${preview.can_import ? totalNew ? '검사 결과는 30분 동안 유효합니다.' : '옮길 새 기록이 없습니다. 이미 같은 기록이 저장되어 있습니다.' : '내용이 다른 기록이 있어 옮기기를 멈췄습니다. 기존 기록은 바꾸지 않았습니다.'}</p>`);
+      $('#migration-cancel').onclick = () => dialog.close();
+      const confirm = $('#migration-confirm');
+      if (confirm) confirm.onclick = async () => {
+        if (migrationBusy) return;
+        migrationControls(true); confirm.disabled = true;
+        try {
+          const result = await migrationRequest(root.dataset.migrationCommitUrl, { backup, token: preview.token, confirmed: true });
+          lastMigrationReceipt = result.receipt;
+          await load(); updateRange(); refreshSignals();
+          openDialog('서버로 옮기기 완료', `<p>${esc(result.notice)}</p><p>옮긴 결과 파일을 내려받아 원래 백업 파일과 함께 보관해주세요. 되돌리기가 필요할 때 어떤 기록을 추가했는지 확인할 수 있습니다.</p><p class="home-muted">파일 다운로드가 끝났는지는 브라우저 다운로드 목록에서 확인해주세요.</p><div class="home-form-actions"><button class="btn" id="migration-receipt" type="button">옮긴 결과 파일 받기</button><button class="btn" id="migration-done" type="button">닫기</button></div>`);
+          $('#migration-receipt').onclick = downloadMigrationReceipt;
+          $('#migration-done').onclick = () => dialog.close();
+          toast('서버로 옮겼습니다. 브라우저 원본은 그대로입니다.');
+        } catch (error) {
+          // 재시도 전 새 미리보기를 받도록 합니다. 실패했다고 단정해 재전송하지 않습니다.
+          const message = $('#migration-error');
+          if (message) { message.hidden = false; message.textContent = error.message; }
+          else toast(error.message);
+        } finally { migrationControls(false); }
+      };
+    } catch (error) { toast(error.message); }
+    finally { migrationControls(false); }
+  }
+  function startMigration() {
+    if (migrationBusy || storageBusy) return;
+    if (mode !== 'work') { toast('먼저 데이터 선택을 ‘내 업무’로 바꿔주세요. 예시 데이터 (DEMO)는 옮기지 않습니다.'); return; }
+    openDialog('내 업무 백업 파일 선택', '<p>먼저 상단 ‘내보내기’로 내 업무 백업 파일을 받아두세요. 그 파일을 선택하면 서버 기록과 비교합니다. 파일을 선택하는 것만으로 저장되지는 않습니다.</p><p>브라우저 원본은 그대로 두며, 내용을 덮어쓰지 않습니다.</p><div class="home-form-actions"><button class="btn" id="migration-choose" type="button">백업 파일 선택</button><button class="btn" id="migration-dismiss" type="button">닫기</button></div>');
+    $('#migration-choose').onclick = () => $('#migration-file').click();
+    $('#migration-dismiss').onclick = () => dialog.close();
+  }
   async function readImport(file) {
     if (!file) return;
+    if (mode === 'work') { await readMigration(file); return; }
     try {
       const payload = JSON.parse(await file.text());
       // 다른 프로그램의 파일이나 손상된 파일을 덮어쓰지 않도록 형식을 먼저 확인합니다.
@@ -601,12 +754,14 @@ function initialize() {
       toast(reason[error.message] || '이 파일은 HOME 기록 파일이 아니거나 손상되었습니다. 기존 기록은 그대로 둡니다.');
     }
   }
-  function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (save(next)) render(); }
+  async function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (await save(next)) render(); }
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
   $('#delete-campaign').onclick = removeCampaign;
   $('#export-store').onclick = exportStore;
-  $('#import-store').onclick = () => $('#import-file').click();
+  $('#import-store').onclick = () => mode === 'work' ? startMigration() : $('#import-file').click();
   $('#import-file').onchange = event => { readImport(event.target.files[0]); event.target.value = ''; };
+  $('#migrate-store').onclick = startMigration;
+  $('#migration-file').onchange = event => { readMigration(event.target.files[0]); event.target.value = ''; };
   $('#to-campaign').onclick = () => showPanel('campaign');
   $('#to-calendar').onclick = () => showPanel('calendar');
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
@@ -614,8 +769,11 @@ function initialize() {
   $('#new-campaign').onclick = () => planner('create');
   $('#clone-campaign').onclick = () => planner('clone');
   $('#replan-campaign').onclick = () => planner('replan');
-  $('#data-mode').onchange = event => {
-    mode = event.target.value; load(); updateRange();
+  $('#data-mode').onchange = async event => {
+    if (storageBusy || migrationBusy) { event.target.value = mode; return; }
+    pendingImport = null;
+    if (dialog.open) dialog.close();
+    mode = event.target.value; await load(); updateRange();
     try { localStorage.setItem('hjs-home-browser-mode', mode); } catch { /* load에 저장소 오류 안내가 있습니다. */ }
     refreshSignals();
   };
@@ -641,21 +799,21 @@ function initialize() {
     if (event.target.value !== 'custom') { $('#range-start').value = today; $('#range-end').value = addDays(today, Number(event.target.value)); }
   };
   ['#range-start', '#range-end'].forEach(sel => { $(sel).onchange = () => { $('#range-preset').value = 'custom'; }; });
-  $('#range-form').onsubmit = event => {
+  $('#range-form').onsubmit = async event => {
     event.preventDefault(); const r = range();
     const invalid = !validDate(r.start) || !validDate(r.end) || r.end < r.start || Number(r.end.slice(0, 4)) - Number(r.start.slice(0, 4)) > 5;
     $('#range-error').hidden = !invalid;
     if (invalid) { $('#range-error').textContent = '종료일을 시작일 이후로 지정해주세요. 조회 범위는 최대 5년입니다.'; return; }
     const next = structuredClone(store); Object.assign(next.preferences, { preset: $('#range-preset').value, range_start: r.start, range_end: r.end });
-    if (save(next)) refreshSignals();
+    if (await save(next)) refreshSignals();
   };
-  $('#review-form').onsubmit = event => {
+  $('#review-form').onsubmit = async event => {
     event.preventDefault(); const c = selected(); if (!c) return;
     const next = structuredClone(store), campaign = next.campaigns.find(item => item.id === c.id), f = new FormData(event.currentTarget);
     campaign.review = f.get('review'); campaign.status = f.get('status');
-    if (save(next)) { render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
+    if (await save(next)) { render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
   };
-  addEventListener('storage', event => { if (event.key === key() || event.key === null) { locked = true; showError('다른 창에서 기록이 변경되었습니다. 새로고침 후 계속해주세요.'); } });
+  addEventListener('storage', event => { if (mode === 'demo' && (event.key === key() || event.key === null)) { locked = true; showError('다른 창에서 예시 기록이 변경되었습니다. 새로고침 후 계속해주세요.'); } });
   // 현지 뉴스 검색. 결과는 검증하지 않은 외부 목록이라 요약 없이 제목·언론사·발행일·원문 링크만 보여 줍니다.
   const newsForm = $('#news-search-form');
   function newsError(message) {
@@ -740,5 +898,5 @@ function initialize() {
       }
     })();
   }
-  load(); updateRange(); refreshSignals();
+  await load(); updateRange(); refreshSignals();
 }

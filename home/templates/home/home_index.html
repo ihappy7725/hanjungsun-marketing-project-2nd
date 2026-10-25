@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="home-page" data-signals-url="{{ url_for('home.signals') }}">
+<div class="home-page" data-signals-url="{{ url_for('home.signals') }}" data-work-store-url="{{ url_for('home.work_store') }}" data-migration-preview-url="{{ url_for('home.migration_preview') }}" data-migration-commit-url="{{ url_for('home.migration_commit') }}">
   <header class="home-heading">
     <div><div class="home-title"><h1 id="campaign-title">이벤트를 준비해보세요</h1><span id="campaign-dday" class="home-dday" hidden></span></div>
       <div class="home-clocks" aria-label="현재 시각"><span class="home-clock"><b id="clock-kst">--:--</b> <span class="home-clock-zone">한국 (기준)</span></span><span class="home-clock"><b id="clock-ict">--:--</b> <span class="home-clock-zone">베트남</span></span><input id="reference-date" type="hidden"></div>
@@ -16,8 +16,10 @@
       <label>데이터 <select id="data-mode"><option value="demo">예시 데이터 (DEMO)</option><option value="work">내 업무</option></select></label>
       <label>표시 범위 <select id="scope"><option value="all">전체 이벤트</option><option value="current">현재 이벤트</option></select></label>
       <button class="btn" id="export-store" type="button" title="이벤트·업무 기록을 파일로 내려받습니다">내보내기</button>
-      <button class="btn" id="import-store" type="button" title="내려받은 파일에서 기록을 되살립니다">가져오기</button>
+      <button class="btn" id="import-store" type="button" title="내 업무 백업은 기존 기록을 덮어쓰지 않고 비교한 뒤 옮깁니다">가져오기</button>
       <input id="import-file" type="file" accept="application/json,.json" hidden>
+      <button class="btn" id="migrate-store" type="button" title="먼저 내보내기로 받은 내 업무 백업 파일을 선택해주세요">서버로 옮기기</button>
+      <input id="migration-file" type="file" accept="application/json,.json" hidden>
     </div>
   </header>
   <p id="storage-error" class="home-error" role="alert" hidden></p>
@@ -89,7 +91,7 @@
       </section>
     </div>
   </div>
-  <footer class="home-footer"><span>업무는 이 브라우저에 저장됩니다.</span></footer>
+  <footer class="home-footer"><span id="storage-notice">내 업무는 서버에, 예시 데이터 (DEMO)는 이 브라우저에 저장됩니다.</span></footer>
   <dialog id="home-dialog" aria-labelledby="dialog-title"><div class="home-dialog-head"><h2 id="dialog-title"></h2><button class="home-icon-btn" id="close-dialog" aria-label="창 닫기">×</button></div><div id="dialog-content"></div></dialog>
   <div id="home-toast" class="home-toast" role="status" aria-live="polite" hidden></div>
   <noscript><p class="home-error">HOME의 달력과 업무 관리를 사용하려면 JavaScript를 켜주세요.</p></noscript>
