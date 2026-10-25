@@ -99,7 +99,7 @@
 | AI 배경·연출 이미지 | 📝 | 이미지 생성 API로 배경·제품 연출 이미지를 만듭니다. **실제 제품 사진·가격·로고는 원본 자료를 우선** 씁니다. |
 | 작업 원본 저장·재편집 | ✅ | 요소 JSON을 버전별로 저장하고, 이전 작업에서 다시 엽니다. |
 | SVG 내보내기 | 📝 | 검증 후 단계적으로 추가 (3-6) |
-| Figma 연동 | 📝 | 서버 API 완성(routes_media.py), 플러그인 제작 중 (3-4) — API 3개는 푸시 전 |
+| Figma 연동 | 📝 | 서버 API 완성(routes_media.py), 플러그인 제작 중 (3-4) |
 
 ### 3-4. Figma 연동 방식
 
@@ -413,9 +413,9 @@ content_studio/
 | `POST /media/api/upload` · `GET /media/uploads/<name>` | 사진 올리기 · 보기 | 희주 |
 | `POST /media/api/remove-bg` · `GET /media/remove-bg/result/<id>.png` | 배경 제거 · 결과 받기 (5-5) | 희주 |
 | `POST /media/api/storyboard` · `POST /media/api/review` | 숏폼 콘티 · 광고 표현 검수 | 희주 |
-| `GET /media/api/figma/designs` | Figma 플러그인용 디자인 목록 (읽기 전용, 플러그인용 CORS, 푸시 전) | 희주 |
-| `GET /media/api/figma/designs/<id>` | Figma 플러그인용 디자인 하나의 요소 JSON (읽기 전용, 플러그인용 CORS, 푸시 전) | 희주 |
-| `GET /media/api/figma/image?src=` | Figma 플러그인용 디자인 속 이미지 (읽기 전용, 플러그인용 CORS, 푸시 전) | 희주 |
+| `GET /media/api/figma/designs` | Figma 플러그인용 디자인 목록 (읽기 전용, 플러그인용 CORS) | 희주 |
+| `GET /media/api/figma/designs/<id>` | Figma 플러그인용 디자인 하나의 요소 JSON (읽기 전용, 플러그인용 CORS) | 희주 |
+| `GET /media/api/figma/image?src=` | Figma 플러그인용 디자인 속 이미지 (읽기 전용, 플러그인용 CORS) | 희주 |
 
 ### DB 테이블
 
