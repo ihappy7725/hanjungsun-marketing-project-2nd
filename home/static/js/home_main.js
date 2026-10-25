@@ -93,7 +93,7 @@ function initialize() {
   const root = document.querySelector('.home-page');
   if (!root) return;
   const $ = selector => root.querySelector(selector);
-  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all';
+  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
   let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
   let mode = 'demo', store, loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
   const key = () => `hjs-home-browser-v1-${mode}`;
@@ -247,10 +247,12 @@ function initialize() {
     $('#tasks-title').textContent = isToday ? '오늘의 해야 할 일' : `${selectedDate} 해야 할 일`;
     $('#today-reset').hidden = isToday;
     // 완료한 업무도 목록에 남겨 그날 무엇을 했는지 볼 수 있게 합니다. 취소 업무는 제외합니다.
-    const rows = ordered(inScope().filter(t => t.due_date === selectedDate && t.status !== 'cancelled'), today);
+    // 기준일에는 지난 미완료 업무도 함께 보여 놓치지 않게 합니다. 다른 날짜를 고르면 그날 업무만 봅니다.
+    const rows = ordered(inScope().filter(t => t.status !== 'cancelled' && (
+      t.due_date === selectedDate || (isToday && unfinished(t) && t.due_date && t.due_date < today))), today);
     $('#task-list').innerHTML = rows.map(t => {
       const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
-      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${esc(campaignName(t.campaign_id))}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
+      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
     }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
   }
   function moveTask(taskId) {
@@ -468,8 +470,15 @@ function initialize() {
     if (save(next)) toast(event.target.checked ? '완료했습니다. 일정과 진척에 반영했습니다.' : '예정 상태로 되돌렸습니다.');
     render();
   });
+  function showPanel(name) {
+    panel = name;
+    $('#calendar-panel').hidden = name !== 'calendar';
+    $('#campaign-panel').hidden = name !== 'campaign';
+  }
   function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (save(next)) render(); }
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
+  $('#to-campaign').onclick = () => showPanel('campaign');
+  $('#to-calendar').onclick = () => showPanel('calendar');
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
   $('#scope').onchange = event => { scope = event.target.value; render(); };
   $('#new-campaign').onclick = () => planner('create');
