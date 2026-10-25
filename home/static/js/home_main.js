@@ -169,8 +169,14 @@ function initialize() {
   }
   function calendarEvents() {
     const events = inScope().filter(t => t.due_date && t.status !== 'cancelled').map(t => ({ date: t.due_date, end: t.due_date, title: t.title, kind: 'task', id: t.id, done: t.status === 'done', time: validTime(t.due_time) ? t.due_time : '' }));
-    store.campaigns.filter(c => scope === 'all' || c.id === selected()?.id).forEach(c => events.push({ date: c.target_date, end: c.target_date, title: c.name, kind: 'campaign', id: c.id }));
-    localEvents().forEach(e => events.push({ date: e.start, end: e.end, title: e.name, kind: 'local', id: e.event_id }));
+    const locals = localEvents();
+    locals.forEach(e => events.push({ date: e.start, end: e.end, title: e.name, kind: 'local', id: e.event_id }));
+    // 현지 일정에서 만든 이벤트는 같은 날 같은 이름으로 두 줄이 됩니다. 현지 일정 쪽만 남기고 디데이 표시만 붙입니다.
+    store.campaigns.filter(c => scope === 'all' || c.id === selected()?.id).forEach(c => {
+      const anchor = locals.find(e => e.event_id && e.event_id === c.event_id && e.start <= c.target_date && e.end >= c.target_date);
+      if (anchor) { const row = events.find(e => e.kind === 'local' && e.id === anchor.event_id); if (row) row.campaignId = c.id; return; }
+      events.push({ date: c.target_date, end: c.target_date, title: c.name, kind: 'campaign', id: c.id });
+    });
     store.schedules.filter(s => validDate(s.date) && (scope === 'all' || s.campaign_id === selected()?.id)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
     creators().filter(c => scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id)).forEach(c => ['shoot_date', 'post_date'].forEach(field => {
       if (validDate(c[field])) events.push({ date: c[field], end: c[field], title: `${c.influencer} · ${field === 'post_date' ? '게시' : '촬영'}`, kind: 'creator', id: c.collaboration_id, link: c.link });
@@ -255,7 +261,7 @@ function initialize() {
           let shown = Math.min(dayEvents.length, room);
           if (dayEvents.length > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
           const rest = dayEvents.length - shown;
-          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
+          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}${e.campaignId ? ' is-anchor' : ''}" title="${esc(e.title)}${e.campaignId ? ' · 이벤트 기준일' : ''}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
           html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
           // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
           if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
@@ -325,10 +331,9 @@ function initialize() {
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     $('#retrospective').hidden = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#next-task').innerHTML = ''; $('#gantt').innerHTML = ''; return; }
-    $('#campaign-summary').innerHTML = `<div class="home-campaign-meta">${badge(CAMPAIGN_STATES[c.status] || c.status)} &nbsp; ${esc(c.target_date)} · ${dday(c.target_date, today)}<p>${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</p></div>`;
-    const tasks = store.tasks.filter(t => t.campaign_id === c.id), next = ordered(tasks.filter(unfinished), today)[0];
-    $('#next-task').innerHTML = next ? `<button class="home-next" data-task="${esc(next.id)}"><span><span class="home-muted">다음 할 일</span> &nbsp; ${esc(next.title)} →</span><span class="home-muted">${esc(next.due_date || '날짜 없음')}</span></button>` : empty('남은 업무가 없습니다.');
+    if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }
+    $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><span class="home-campaign-date">${esc(c.target_date)}</span><span class="home-dday">${esc(dday(c.target_date, today))}</span>${[c.product, c.audience, c.channel].filter(Boolean).length ? `<span class="home-muted home-campaign-detail">${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</span>` : ''}`;
+    const tasks = store.tasks.filter(t => t.campaign_id === c.id);
     const dated = [...tasks].filter(t => t.due_date && t.status !== 'cancelled').sort((a, b) => a.due_date.localeCompare(b.due_date));
     if (dated.length) {
       const starts = dated.map((t, i) => t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3)));
@@ -663,7 +668,8 @@ function initialize() {
     // 한국어·영어 화면은 번역을 켜 둡니다. 베트남어 화면은 원문을 그대로 봅니다.
     translateOn = saved === null ? true : saved === 'on';
     button.hidden = false;
-    button.textContent = translateTarget === 'ko' ? '한국어로 자동 번역' : 'Auto-translate';
+    button.textContent = translateTarget === 'ko' ? '자동 번역' : 'Auto-translate';
+    button.title = translateTarget === 'ko' ? '기사 제목을 한국어로 번역합니다' : 'Translate headlines into English';
     button.setAttribute('aria-pressed', String(translateOn));
     button.onclick = () => {
       translateOn = !translateOn;
