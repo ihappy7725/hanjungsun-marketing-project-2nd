@@ -70,6 +70,11 @@ function el(tag, { text, className } = {}, children = []) {
   return node;
 }
 
+// 조치가 필요한 문구: ⚠ + 붉은 굵은 글씨
+function warning(text) {
+  return el("strong", { text: `⚠ ${text}`, className: "kpi-warn" });
+}
+
 function badge(text, tone) {
   return el("span", { text, className: tone ? `badge ${tone}` : "badge" });
 }
@@ -275,12 +280,15 @@ function renderRoas(data) {
     },
   });
 
+  // 손익분기 미달 채널은 ⚠ + 붉은 글씨로 눈에 띄게 표시합니다.
   const best = [...ch].sort((a, b) => b.roas_percent - a.roas_percent)[0];
   const below = ch.filter((c) => c.roas_percent < bep).map((c) => c.label);
-  setText(
-    "roas-advice",
-    `최고 ${best.label} ${pct(best.roas_percent)}` + (below.length ? ` · 손익분기 미달: ${below.join(", ")} → 예산 조정 검토` : ""),
+  const advice = $("roas-advice");
+  advice.replaceChildren(
+    document.createTextNode(`최고 ${best.label} ${pct(best.roas_percent)}`),
+    ...(below.length ? [document.createTextNode(" · "), warning(`손익분기 미달: ${below.join(", ")} → 예산 조정 검토`)] : []),
   );
+  advice.hidden = false;
   renderRoasMoney(data);
 }
 
@@ -688,7 +696,7 @@ function renderSimOptions() {
   const select = $("sim-influencer");
   select.replaceChildren(...inf.options.map((o) => {
     const krw = Math.round((o.amount_vnd * d.base_rate) / 100);
-    const label = `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (≈${krwMan(krw)})`;
+    const label = `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (약 ${krwMan(krw)})`;
     const opt = el("option", { text: label });
     opt.value = o.id;
     return opt;
@@ -725,20 +733,21 @@ function renderSim() {
   afterEl.textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
   afterEl.classList.toggle("is-over", after < 0);
 
-  const used = Math.max(total - now, 0);
-  const bar = root.querySelector(".kpi-sim-bar");
-  bar.classList.toggle("is-over", after < 0);
-  $("sim-bar-used").style.width = `${Math.min((used / total) * 100, 100)}%`;
-  $("sim-bar-planned").style.width = `${Math.min((planned / total) * 100, Math.max(100 - (used / total) * 100, 0))}%`;
-
   const revenue = sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0);
+  if (sim.items.length && after < 0) {
+    const box = $("sim-summary");
+    box.replaceChildren(
+      warning(`예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다.`),
+      document.createTextNode(` (참고 예상 매출 ${krwMan(revenue)}, 현재 ROAS 유지 가정)`),
+    );
+    box.hidden = false;
+    return;
+  }
   setText(
     "sim-summary",
     !sim.items.length
       ? "항목을 추가하면 집행 후 남는 예산을 바로 계산합니다."
-      : after < 0
-        ? `예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다. (참고 예상 매출 ${krwMan(revenue)}, 현재 ROAS 유지 가정)`
-        : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (현재 ROAS 유지 가정)`,
+      : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (현재 ROAS 유지 가정)`,
   );
 }
 

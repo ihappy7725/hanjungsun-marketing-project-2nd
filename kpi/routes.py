@@ -44,7 +44,9 @@ DEMO_CHANNELS = [
 
 # GA4 시연 값. kpi/data/ga4_demo.csv(GA4 공식 데모 계정 내보내기)가 있으면 세션·참여 세션은 그 파일 값을 씁니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
-DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_clicks": 1_540, "pamphlet_sessions": 1_180}
+# 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
+# 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
+DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
 GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
 # 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
 SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
@@ -626,10 +628,10 @@ def _build_ga4():
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
     )
-    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다.
-    ga4["shopee_clicks"] = DEMO_GA4["shopee_clicks"]
-    ga4["shopee_ctr_percent"] = _pct(DEMO_GA4["shopee_clicks"], DEMO_GA4["sessions"])
-    ga4["pamphlet_sessions"] = DEMO_GA4["pamphlet_sessions"]
+    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다(시연 비율 × 같은 세션 수).
+    ga4["shopee_clicks"] = round(ga4["sessions"] * DEMO_GA4["shopee_click_rate"])
+    ga4["shopee_ctr_percent"] = _pct(ga4["shopee_clicks"], ga4["sessions"])
+    ga4["pamphlet_sessions"] = round(ga4["sessions"] * DEMO_GA4["pamphlet_share"])
     return ga4
 
 

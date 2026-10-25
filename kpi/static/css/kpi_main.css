@@ -6,9 +6,11 @@
 /* ---------- 머리 (여백을 줄여 KPI를 위로) ---------- */
 /* 공통 본문 위 여백(platform_core)은 그대로 두고 KPI 화면만 위로 당깁니다. */
 .kpi-page { margin-top: 0; }
-/* KPI 전용 색: base.css에 분홍이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
-   공통 변수(--pink 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
-.kpi-page { --kpi-pink: #e89bb1; }
+/* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
+   공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
+.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #c0392b; }  /* 붉은색: 손익분기 미달·예산 초과 경고 */
+/* 조치가 필요한 문구(⚠ 손익분기 미달 → 예산 조정 검토, 예산 초과) */
+.kpi-page .kpi-warn { color: var(--kpi-red); font-weight: 700; }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
 .kpi-page .kpi-head h1 { margin: 0; font-size: var(--fs-display); line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
@@ -241,12 +243,7 @@
 .kpi-page .kpi-sim-result > div + div { border-left: 1px solid var(--line); }
 .kpi-page .kpi-sim-result span { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sim-result strong { font-family: var(--font-serif); font-size: var(--fs-subheading); font-weight: 700; }
-.kpi-page .kpi-sim-result .is-over { color: var(--badge-red-ink); }
-.kpi-page .kpi-sim-bar { display: flex; height: 8px; margin-top: var(--space-4); background: var(--progress-bg); }
-.kpi-page .kpi-sim-bar span { display: block; height: 100%; transition: width .3s; }
-.kpi-page .kpi-sim-bar-used { background: var(--progress-bar); }
-.kpi-page .kpi-sim-bar-planned { background: var(--brown); }
-.kpi-page .kpi-sim-bar.is-over .kpi-sim-bar-planned { background: var(--badge-red-ink); }
+.kpi-page .kpi-sim-result .is-over { color: var(--kpi-red); }
 .kpi-page .kpi-sim-remove { padding: var(--space-1) var(--space-4); }
 
 .kpi-page .kpi-donut-center {
