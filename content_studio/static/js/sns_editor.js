@@ -12,7 +12,9 @@ const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
 const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
 const REVIEW_API = "/content_studio/media/api/review";
-const PROMPT_API = "/content_studio/media/api/cardnews-prompt";
+const BRIEF_API = "/content_studio/media/api/design-brief";
+const ASSISTANT_API = "/content_studio/media/api/design-assistant";
+const FIGMA_API = "/content_studio/media/api/figma-preview";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -114,12 +116,15 @@ export function renderDesign(root, doc, { onSave } = {}) {
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
   const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
+  const translations = el("details", "studio-editor-translations");
+  translations.open = true;
   review.hidden = true;
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  wrap.append(pagesBar, bar, view, review);
+  wrap.append(pagesBar, bar, view, translations, review);
   root.replaceChildren(wrap);
+  renderExternal();
 
   const find = (id) => page.elements.find((item) => item.id === id);
   if (selectedId && !find(selectedId)) selectedId = null;
@@ -189,6 +194,89 @@ export function renderDesign(root, doc, { onSave } = {}) {
     if (editing) return;
     stage.style.background = page.bg;
     stage.replaceChildren(...page.elements.map(drawItem).filter(Boolean));
+    renderTranslations();
+  }
+
+  function renderTranslations() {
+    translations.replaceChildren(el("summary", "", `${pageIndex + 1}장 문구 · 한국어 뜻`));
+    if (draft.assistant) translations.append(el("p", "studio-hint", draft.assistant.notice));
+    const items = page.elements.filter((item) => item.type === "text" && item.text_ko);
+    if (!items.length) translations.append(el("p", "studio-hint", "AI 제안을 적용하면 베트남어 문구와 한국어 뜻을 함께 보여줍니다."));
+    for (const item of items) {
+      const row = el("div", "studio-editor-translation");
+      const vi = el("p", "", item.text);
+      vi.lang = "vi";
+      row.append(vi, el("p", "", item.text_ko));
+      if (item.translation_source !== item.text) row.append(el("p", "is-warn", "문구가 바뀌었습니다. 한국어 뜻을 다시 확인해 주세요."));
+      translations.append(row);
+    }
+  }
+
+  function figmaLink(value) {
+    try {
+      const url = new URL(value);
+      if (url.protocol === "https:" && ["figma.com", "www.figma.com"].includes(url.host)
+          && !url.username && !url.password && /^\/(design|file)\/[a-zA-Z0-9]+\//.test(url.pathname)
+          && /^\d+[-:]\d+$/.test(url.searchParams.get("node-id") || "")) return url.href;
+    } catch { /* 잘못된 링크는 열거나 저장하지 않습니다. */ }
+    return null;
+  }
+
+  function renderExternal() {
+    const panel = el("details", "studio-editor-external");
+    panel.open = Boolean(draft.external_figma);
+    panel.append(el("summary", "", "Figma에서 편집 · 외부 미리보기"),
+      el("p", "studio-hint", "Figma에서 편집한 프레임의 ‘선택 항목 링크’를 연결하세요. 자동 전송은 아직 연결되지 않았습니다. 원래 초안 PNG/JPG 받기는 위 버튼을 사용하세요."));
+    const input = el("input");
+    input.type = "url";
+    input.placeholder = "https://www.figma.com/design/…?node-id=…";
+    input.value = draft.external_figma?.url || "";
+    const msg = el("p", "studio-hint");
+    msg.setAttribute("role", "status");
+    const open = el("a", "btn", "Figma에서 편집");
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    const currentLink = figmaLink(draft.external_figma?.url);
+    open.hidden = !currentLink;
+    if (currentLink) open.href = currentLink;
+    const store = button("편집 링크 저장", async () => {
+      const url = figmaLink(input.value);
+      if (!url) { msg.textContent = "Figma 프레임의 선택 항목 링크를 확인해 주세요."; return; }
+      if (!onSave) return;
+      store.disabled = true;
+      const next = structuredClone(draft);
+      next.external_figma = url === draft.external_figma?.url ? { ...draft.external_figma } : { url };
+      try { await onSave(next); } catch { msg.textContent = "저장하지 못했습니다. 다시 시도해 주세요."; }
+      finally { store.disabled = false; }
+    });
+    const refresh = button("미리보기 새로고침", async () => {
+      const url = figmaLink(input.value);
+      if (!url) { msg.textContent = "Figma 선택 항목 링크를 먼저 넣어 주세요."; return; }
+      refresh.disabled = store.disabled = true;
+      msg.textContent = "Figma 결과를 불러오는 중…";
+      try {
+        const result = await postJson(FIGMA_API, { url });
+        if (!wrap.isConnected || !onSave) return;
+        const next = structuredClone(draft);
+        next.external_figma = { url, preview_url: result.preview_url, refreshed_at: result.refreshed_at };
+        await onSave(next);
+      } catch (error) { msg.textContent = error.message; }
+      finally { refresh.disabled = store.disabled = false; }
+    });
+    input.addEventListener("input", () => { open.hidden = input.value !== draft.external_figma?.url || !currentLink; });
+    panel.append(field("Figma 선택 항목 링크", input), store, open, refresh, msg);
+    const external = draft.external_figma;
+    if (currentLink && external?.preview_url?.startsWith("https://")) {
+      const img = el("img");
+      img.src = external.preview_url;
+      img.alt = "Figma에서 마지막으로 새로고침한 결과";
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", () => { img.hidden = true; msg.textContent = "이미지를 불러오지 못했습니다. 미리보기를 새로고침해 주세요."; });
+      const date = new Date(external.refreshed_at);
+      panel.append(el("p", "studio-hint", `외부 편집 결과 · 마지막 반영: ${Number.isNaN(date.getTime()) ? "확인 필요" : date.toLocaleString("ko-KR")}`), img,
+        el("p", "studio-hint", "위 편집기와 다운로드는 대시보드 원본입니다. 외부 수정 결과가 원본 요소에 자동 반영되지는 않습니다."));
+    }
+    wrap.append(panel);
   }
 
   function fit() {
@@ -428,6 +516,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
   function updateBar() {
     const item = find(selectedId);
     const tools = [];
+    if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
     tools.push(addSelect());
 
     if (!item) {
@@ -491,7 +580,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
     const multi = draft.pages.length > 1;
     tools.push(el("span", "studio-editor-spacer"), status, button("검수", runReview));
-    if (draft.kind === "cardnews") tools.push(button("프롬프트 만들기", openPrompt));
+    tools.push(button("프롬프트 · AI 초안", openPrompt));
     tools.push(
       button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
       button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
@@ -532,6 +621,20 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
   function renderReview(data) {
     const nodes = [el("h3", "", "광고 표현 검수")];
+    const guide = data.guidelines || {};
+    nodes.push(el("p", "studio-hint", `현지 시장 분석 자료 · 상태: ${guide.status === "confirmed" ? "확정" : "검토 중"} · 검토일: ${guide.reviewed_at || "미등록"}`));
+    for (const rule of guide.prompt_rules || []) nodes.push(el("p", "", rule));
+    for (const item of [...(guide.visual_cautions || []), ...(guide.required_notices || [])]) {
+      if (item.rule) nodes.push(el("p", "is-warn", item.rule));
+    }
+    for (const source of guide.sources || []) {
+      if (!/^https?:\/\//.test(source.url || "")) continue;
+      const link = el("a", "", source.title || "기준 출처");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      nodes.push(link);
+    }
     if (!data.ready) {
       nodes.push(el("p", "is-warn",
         "검수 기준이 아직 준비되지 않았습니다. (현지 시장 분석 탭에서 준비 중) 걸린 표현이 없어도 '문제 없음'이 아닙니다."));
@@ -564,50 +667,128 @@ export function renderDesign(root, doc, { onSave } = {}) {
     review.replaceChildren(...nodes);
   }
 
-  // ---------- 카드뉴스 프롬프트 만들기 ----------
-  // 원하는 바 + 기본 지침 + 템플릿 + 지금 초안으로 프롬프트를 만들고, 복사해서 ChatGPT·Canva에 붙여 넣어 씁니다.
+  // 기존 작업 안에서 AI 제안을 적용하므로 유진 담당 생성·저장 경로는 바꾸지 않습니다.
   function openPrompt() {
     const dialog = el("dialog", "studio-editor-prompt");
     const close = button("×", () => dialog.close(), "close");
     close.setAttribute("aria-label", "닫기");
+    const previous = draft.assistant?.options || {};
     const wish = el("textarea");
     wish.rows = 4;
-    wish.placeholder = "예: 베트남 여성의 날 선물로 망고스틴 찹쌀떡 소개, 20~30대 여성, 따뜻하고 귀여운 느낌";
-    const language = selectBox("", [["vi", "베트남어"], ["ko", "한국어"], ["vi_ko", "베트남어 + 한국어 번역"]], "vi", () => {});
+    wish.maxLength = 1500;
+    wish.value = previous.request || "";
+    wish.placeholder = "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
+    const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
+    const audience = el("input");
+    audience.value = previous.audience || "";
+    audience.maxLength = 1500;
+    audience.placeholder = "예: 다낭의 20~30대 디저트 소비자";
+    const mood = selectBox("", ["깔끔한 정보형", "사진 중심", "따뜻한 감성", "발랄하고 귀여운", "차분하고 고급스러운"].map((v) => [v, v]), previous.mood || "깔끔한 정보형", () => {});
+    const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
+    const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || draft.pages.length), () => {});
+    if (!pages.value) pages.value = "5";
     const msg = el("p", "studio-hint");
+    msg.setAttribute("role", "status");
     const result = el("textarea", "studio-editor-prompt-result");
-    result.rows = 14;
-    result.readOnly = true;
+    result.rows = 10;
+    result.maxLength = 12000;
+    result.setAttribute("aria-label", "제작 프롬프트 — 수정 후 AI에 반영할 수 있습니다");
     result.hidden = true;
+    const candidates = el("div", "studio-editor-candidates");
+    let proposals = [], selected = 0;
+    const settingsBox = el("fieldset", "studio-editor-brief");
+    settingsBox.append(el("legend", "", "제작 조건"), field("제품·요청", wish), field("목적", purpose),
+      field("대상", audience), field("분위기", mood), field("글의 양", density));
+    if (draft.kind === "cardnews") settingsBox.append(field("장수", pages));
+    const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
+      mood: mood.value, density: density.value, pages: draft.kind === "poster" ? 1 : Number(pages.value),
+      custom_prompt: result.hidden ? "" : result.value });
     const copy = button("복사", async () => {
       try {
         await navigator.clipboard.writeText(result.value);
-        msg.textContent = "복사했어요. ChatGPT·Canva에 붙여 넣어 쓰세요.";
+        msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
       } catch {
         result.select();
         msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
       }
     });
     copy.hidden = true;
-    const make = button("프롬프트 만들기", async () => {
-      if (!wish.value.trim()) { msg.textContent = "원하는 내용을 입력해 주세요."; return; }
-      make.disabled = true;
-      msg.textContent = "만드는 중…";
+    const apply = button("선택한 초안 적용", async () => {
+      if (!proposals[selected] || !onSave) return;
+      if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
+      apply.disabled = true;
       try {
-        const data = await postJson(PROMPT_API, { request: wish.value, design: draft, language: language.value });
+        await onSave(proposals[selected].design);
+        dialog.close();
+      } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
+      finally { apply.disabled = false; }
+    }, "btn dark");
+    apply.hidden = true;
+    function showCandidates() {
+      candidates.replaceChildren(...proposals.map((item, index) => {
+        const card = el("section", "studio-editor-candidate");
+        const choose = button(`${index === selected ? "✓ " : ""}${item.name}`, () => {
+          selected = index;
+          result.value = item.prompt;
+          showCandidates();
+        }, index === selected ? "btn dark" : "btn");
+        choose.setAttribute("aria-pressed", String(index === selected));
+        card.append(choose);
+        item.pages.forEach((words, pageNumber) => {
+          const vi = el("p", "", `${pageNumber + 1}장 · ${words.title_vi}\n${words.body_vi}`);
+          vi.lang = "vi";
+          card.append(vi, el("p", "studio-hint", `${words.title_ko}\n${words.body_ko}`));
+        });
+        return card;
+      }));
+    }
+    function invalidate() {
+      proposals = [];
+      candidates.replaceChildren();
+      apply.hidden = true;
+      result.value = "";
+      result.hidden = copy.hidden = true;
+      msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
+    }
+    settingsBox.addEventListener("input", invalidate);
+    const brief = button("기본 프롬프트 보기 (무료)", async () => {
+      brief.disabled = make.disabled = settingsBox.disabled = true;
+      try {
+        const data = await postJson(BRIEF_API, { design: draft, options: { ...options(), custom_prompt: "" } });
+        proposals = [];
+        candidates.replaceChildren();
+        apply.hidden = true;
         result.value = data.prompt;
         result.hidden = copy.hidden = false;
-        msg.textContent = data.rules_ready ? "" : "현지 시장 분석 탭의 기본 지침이 아직 없어 '준비 중'으로 들어갔어요.";
-      } catch (error) {
-        msg.textContent = error.message;
-      } finally {
-        make.disabled = false;
+        msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.ai_ready ? "AI 연결 설정 있음." : "유료 AI는 PM1의 API 키 설정 후 사용할 수 있습니다."}`;
+      } catch (error) { msg.textContent = error.message; }
+      finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
+    });
+    const make = button("AI 제안 3개 생성 (유료)", async () => {
+      if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
+      make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
+      candidates.inert = true;
+      msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
+      try {
+        const data = await postJson(ASSISTANT_API, { design: draft, options: options(), confirm_paid: true });
+        if (!wrap.isConnected) return;
+        proposals = data.proposals;
+        selected = 0;
+        result.value = proposals[0].prompt;
+        result.hidden = copy.hidden = apply.hidden = false;
+        showCandidates();
+        candidates.scrollIntoView({ block: "nearest" });
+        msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.model} · 입력 ${data.usage.input_tokens || 0} / 출력 ${data.usage.output_tokens || 0} 토큰. 제안을 고르고 적용하세요.`;
+      } catch (error) { msg.textContent = error.message; }
+      finally {
+        make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
+        candidates.inert = false;
       }
     }, "btn dark");
-
-    dialog.append(close, el("h2", "", "카드뉴스 프롬프트 만들기"),
-      el("p", "studio-hint", "원하는 바를 적으면 기본 지침·템플릿·지금 초안을 합쳐 프롬프트를 만들어요."),
-      field("원하는 내용", wish), field("결과 언어", language), make, msg, result, copy);
+    dialog.append(close, el("h2", "", `${draft.kind === "poster" ? "포스터" : "카드뉴스"} 전문 프롬프트 · AI 초안`),
+      el("p", "studio-hint", "베트남어 문구 + 한국어 뜻. 스타일은 검토용 제안이며 확정된 브랜드 지침은 없습니다."),
+      el("p", "studio-hint", "시험 예산 약 $5 · 유료 버튼을 누를 때마다 비용이 발생합니다. 총액 자동 차단은 연결되지 않았으니 OpenAI 사용 내역을 확인하세요. 사진 생성 비용은 발생하지 않습니다."),
+      settingsBox, brief, make, msg, candidates, result, copy, apply);
     dialog.addEventListener("close", () => dialog.remove());
     wrap.append(dialog);
     dialog.showModal();
