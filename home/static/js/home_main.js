@@ -508,7 +508,11 @@ function initialize() {
   }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
-    if (button.hasAttribute('data-cancel-delete')) dialog.close();
+    if (button.hasAttribute('data-cancel-delete')) { pendingImport = null; dialog.close(); }
+    if (button.hasAttribute('data-confirm-import') && pendingImport) {
+      const incoming = pendingImport; pendingImport = null;
+      if (save(structuredClone(incoming))) { dialog.close(); render(); toast('기록을 가져왔습니다.'); }
+    }
     if (button.dataset.confirmDelete) {
       const next = structuredClone(store), target = button.dataset.confirmDelete;
       next.campaigns = next.campaigns.filter(c => c.id !== target);
@@ -563,9 +567,46 @@ function initialize() {
     const count = store.tasks.filter(t => t.campaign_id === c.id).length;
     openDialog('이벤트 삭제', `<p>"${esc(c.name)}" 이벤트와 그 준비 업무 ${count}건을 지웁니다.</p><p class="home-muted">되돌릴 수 없습니다. 현지 일정 자료와 뉴스는 지워지지 않습니다.</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-delete="${esc(c.id)}" type="button">삭제</button></div>`);
   }
+  // 업무 기록은 이 브라우저에만 있습니다. 파일로 내려받아 두면 기록을 지우거나
+  // 다른 기기로 옮길 때 되살릴 수 있습니다. DB로 옮기기 전 백업 용도이기도 합니다.
+  function exportStore() {
+    try {
+      const payload = { app: 'hanjeongseon-home', format: 1, exported_at: new Date().toISOString(),
+        mode, counts: { campaigns: store.campaigns.length, tasks: store.tasks.length }, data: store };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `home-backup-${mode}-${today}.json`;
+      document.body.appendChild(link); link.click(); link.remove();
+      URL.revokeObjectURL(url);
+      toast(`이벤트 ${store.campaigns.length}개, 업무 ${store.tasks.length}건을 파일로 내려받았습니다.`);
+    } catch { toast('내려받지 못했습니다. 브라우저 다운로드 설정을 확인해주세요.'); }
+  }
+  let pendingImport = null;
+  async function readImport(file) {
+    if (!file) return;
+    try {
+      const payload = JSON.parse(await file.text());
+      // 다른 프로그램의 파일이나 손상된 파일을 덮어쓰지 않도록 형식을 먼저 확인합니다.
+      if (!payload || payload.app !== 'hanjeongseon-home' || !validStore(payload.data)) throw new Error('format');
+      // 예시 데이터를 실제 업무 기록 위에 덮어쓰지 않습니다.
+      if (payload.mode !== mode) throw new Error(payload.mode === 'demo' ? 'demo' : 'work');
+      pendingImport = payload.data;
+      const now = { campaigns: store.campaigns.length, tasks: store.tasks.length };
+      const next = { campaigns: payload.data.campaigns.length, tasks: payload.data.tasks.length };
+      openDialog('기록 가져오기', `<p>지금 기록을 <strong>파일 내용으로 완전히 바꿉니다.</strong></p><div class="home-preview"><div class="home-preview-row"><span>지금</span><span>이벤트 ${now.campaigns}개 · 업무 ${now.tasks}건</span></div><div class="home-preview-row"><span>파일</span><span>이벤트 ${next.campaigns}개 · 업무 ${next.tasks}건</span></div></div><p class="home-muted">되돌릴 수 없습니다. 지금 기록이 필요하면 먼저 내보내기를 해주세요.${payload.exported_at ? ` 이 파일은 ${esc(String(payload.exported_at).slice(0, 10))}에 내려받은 것입니다.` : ''}</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-import type="button">가져오기</button></div>`);
+    } catch (error) {
+      pendingImport = null;
+      const reason = { demo: '예시 데이터 파일은 내 업무로 가져올 수 없습니다.', work: '내 업무 파일은 예시 데이터로 가져올 수 없습니다.' };
+      toast(reason[error.message] || '이 파일은 HOME 기록 파일이 아니거나 손상되었습니다. 기존 기록은 그대로 둡니다.');
+    }
+  }
   function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (save(next)) render(); }
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
   $('#delete-campaign').onclick = removeCampaign;
+  $('#export-store').onclick = exportStore;
+  $('#import-store').onclick = () => $('#import-file').click();
+  $('#import-file').onchange = event => { readImport(event.target.files[0]); event.target.value = ''; };
   $('#to-campaign').onclick = () => showPanel('campaign');
   $('#to-calendar').onclick = () => showPanel('calendar');
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
