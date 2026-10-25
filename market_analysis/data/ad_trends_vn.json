@@ -1,0 +1,186 @@
+{
+  "country": "VN",
+  "platform": "TikTok Creative Center Top Ads",
+  "period": "Last 30 days",
+  "collected_at": "2026-10-25",
+  "sample_size": 6,
+  "data_status": "pilot_6_coded_12_discovered",
+  "source_url": "https://ads.tiktok.com/business/creativecenter/inspiration/topads/mobile/en?period=30&region=VN",
+  "limitations": [
+    "로그인하지 않은 공개 화면에서 확인 가능한 사례만 포함했습니다.",
+    "광고주가 공개를 승인한 일부 광고만 포함됩니다.",
+    "영상 내용까지 코딩한 표본 6건과 공식 목록에서 추가 확인한 검토 대기 6건을 구분합니다.",
+    "브랜드와 성과 구간이 공개되지 않은 항목은 추정하지 않았습니다.",
+    "발견한 12건은 베트남 전체 광고시장을 대표하지 않습니다."
+  ],
+  "summary": {
+    "objective_counts": {
+      "Product sales": 3,
+      "Reach": 3
+    },
+    "duration_seconds": {
+      "minimum": 5.06,
+      "median": 29.07,
+      "maximum": 75.2
+    },
+    "observed_patterns": [
+      {
+        "pattern": "첫 3초 안에 제품 또는 패키지 노출",
+        "count": 5,
+        "denominator": 6,
+        "share_percent": 83.3
+      },
+      {
+        "pattern": "사람 얼굴 등장",
+        "count": 3,
+        "denominator": 6,
+        "share_percent": 50.0
+      },
+      {
+        "pattern": "패키지 클로즈업으로 시작",
+        "count": 2,
+        "denominator": 6,
+        "share_percent": 33.3
+      },
+      {
+        "pattern": "제조 과정 직접 노출",
+        "count": 1,
+        "denominator": 6,
+        "share_percent": 16.7
+      },
+      {
+        "pattern": "큰 베트남어 화면 자막 확인",
+        "count": 1,
+        "denominator": 6,
+        "share_percent": 16.7
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "AD-VN-001",
+      "ad_id": "7683930749272817685",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "duration_seconds": 13.98,
+      "opening": "베이커리 매장과 인물, 제품 진열",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7683930749272817685/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-002",
+      "ad_id": "7686332310053404690",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "duration_seconds": 28.42,
+      "opening": "포장 제품 더미 클로즈업",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7686332310053404690/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-003",
+      "ad_id": "7686661274582827016",
+      "brand": "VIFON",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "duration_seconds": 29.72,
+      "opening": "제품 패키지 클로즈업",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7686661274582827016/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-004",
+      "ad_id": "7681479874749956104",
+      "objective": "Reach",
+      "industry": "Cuisine",
+      "duration_seconds": 34.4,
+      "opening": "컵 디저트 완성품 트레이",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7681479874749956104/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-005",
+      "ad_id": "7686026567004651527",
+      "objective": "Reach",
+      "industry": "Cuisine",
+      "duration_seconds": 75.2,
+      "opening": "진행자와 큰 베트남어 문구",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7686026567004651527/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-006",
+      "ad_id": "7681962671206711303",
+      "objective": "Reach",
+      "industry": "Non-alcoholic Beverages",
+      "duration_seconds": 5.06,
+      "opening": "운전자와 제품 음용 장면",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7681962671206711303/mobile/en?countryCode=VN&period=30"
+    }
+  ],
+  "hans_apply_hypotheses": [
+    "영상 첫 3초 안에 찹쌀떡 단면이나 패키지를 노출하는 안을 우선 테스트합니다.",
+    "제품 판매 목적 소재는 패키지와 제품 형태를 명확하게 보여주는 안을 비교합니다.",
+    "도달 목적 소재는 사람 중심 설명형과 제조 과정형을 각각 테스트합니다.",
+    "영상 길이는 15초 안과 30초 안 두 버전으로 나누어 검증합니다."
+  ],
+  "discovered_case_count": 12,
+  "pending_content_review_count": 6,
+  "pending_content_review": [
+    {
+      "id": "AD-VN-007",
+      "ad_id": "7683161826092138516",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "likes": 154,
+      "reach_percentile": 61,
+      "ctr_band": "Medium",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7683161826092138516/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-008",
+      "ad_id": "7686690082745597960",
+      "objective": "Reach",
+      "industry": "Food & Fresh Produce",
+      "likes": 395,
+      "reach_percentile": 93,
+      "ctr_band": "Medium",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7686690082745597960/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-009",
+      "ad_id": "7685398352407691271",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "likes": 50,
+      "reach_percentile": 73,
+      "ctr_band": "Medium",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7685398352407691271/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-010",
+      "ad_id": "7686660643152461844",
+      "objective": "Product sales",
+      "industry": "Food & Fresh Produce",
+      "likes": 55,
+      "reach_percentile": 74,
+      "ctr_band": "Low",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7686660643152461844/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-011",
+      "ad_id": "7684328108258148372",
+      "objective": "Video Views",
+      "industry": "Food & Fresh Produce",
+      "likes": 682,
+      "reach_percentile": 93,
+      "ctr_band": "Medium",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7684328108258148372/mobile/en?countryCode=VN&period=30"
+    },
+    {
+      "id": "AD-VN-012",
+      "ad_id": "7683708469620097025",
+      "objective": "Video Views",
+      "industry": "Cuisine",
+      "likes": 25,
+      "reach_percentile": 99,
+      "ctr_band": "Low",
+      "url": "https://ads.tiktok.com/business/creativecenter/topads/7683708469620097025/mobile/en?countryCode=VN&period=30"
+    }
+  ]
+}
