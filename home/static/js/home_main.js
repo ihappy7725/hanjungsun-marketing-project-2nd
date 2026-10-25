@@ -409,6 +409,11 @@ async function initialize() {
     $('#campaign-title').textContent = c?.name || '이벤트를 준비해보세요';
     $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
+    // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
+    const report = $('#open-report');
+    report.href = c ? `/home/report/${encodeURIComponent(c.id)}` : '#';
+    report.setAttribute('aria-disabled', String(!c));
+    report.hidden = !c;
     $('#retrospective').hidden = !c;
     if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }
     $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><span class="home-campaign-date">${esc(c.target_date)}</span><span class="home-dday">${esc(dday(c.target_date, today))}</span>${[c.product, c.audience, c.channel].filter(Boolean).length ? `<span class="home-muted home-campaign-detail">${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</span>` : ''}`;

@@ -642,6 +642,52 @@ def index():
     return render_template("home/home_index.html")
 
 
+@bp.get("/report/<campaign_id>")
+def campaign_report(campaign_id):
+    """선택한 이벤트의 실행 계획서를 인쇄용 화면으로 보여 줍니다.
+
+    HOME이 가진 자료와 공개 함수로 읽은 협업 일정만 씁니다.
+    성과·예산은 KPI 탭이 원본이므로 숫자를 옮겨 적지 않고 링크만 둡니다. (README 연동 보류)
+    """
+    campaign = db.session.get(HomeCampaign, campaign_id)
+    if campaign is None:
+        return render_template("home/home_report.html", campaign=None), 404
+    tasks = (HomeTask.query.filter(HomeTask.campaign_id == campaign_id, HomeTask.status != "cancelled")
+             .order_by(HomeTask.due_date.is_(None), HomeTask.due_date, HomeTask.title).all())
+    today = date.today()
+    done = [t for t in tasks if t.status == "done"]
+    overdue = [t for t in tasks if t.status != "done" and t.due_date and t.due_date < today]
+    dated = [t.due_date for t in tasks if t.due_date]
+    start = min(dated + [campaign.target_date])
+    end = max(dated + [campaign.target_date])
+
+    # 준비 기간에 걸치는 현지 일정. 등록 자료를 읽지 못해도 보고서는 계속 만듭니다.
+    try:
+        events = _load_events(start, end)
+    except Exception:
+        events = None
+
+    # 협업은 원본 탭의 공개 함수로만 읽습니다. 실패해도 나머지 항목은 그대로 보여 줍니다.
+    try:
+        from influencer_marketing.public import get_collaborations
+        linked = {row.collaboration_id for row in
+                  HomeCampaignCollaborationLink.query.filter_by(campaign_id=campaign_id).all()}
+        collaborations = [row for row in get_collaborations(include_demo=False)
+                          if row.get("collaboration_id") in linked
+                          or (campaign.event_id and row.get("event_id") == campaign.event_id)]
+    except Exception:
+        collaborations = None
+
+    return render_template(
+        "home/home_report.html", campaign=campaign, tasks=tasks, today=today,
+        done_count=len(done), overdue=overdue, events=events, collaborations=collaborations,
+        content_tasks=[t for t in tasks if t.related_tab == "content_studio"],
+        remaining=[t for t in tasks if t.status != "done"],
+        percent=round(len(done) / len(tasks) * 100) if tasks else 0,
+        period_start=start, period_end=end, categories=TASK_CATEGORIES,
+    )
+
+
 @bp.get("/api/signals")
 def signals():
     """일정·뉴스는 HOME 파일, 협업은 기존 공개 함수에서 읽습니다. DB에는 쓰지 않습니다."""
