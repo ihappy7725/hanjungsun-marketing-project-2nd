@@ -50,7 +50,7 @@ const palette = () => ({
   ink: cssVar("--ink"),         // 예산: 플랫폼 광고비(검정)
   pink: cssVar("--kpi-pink"),   // 예산: 인플루언서 예상(분홍, kpi_main.css에서 정의)
   ivory: cssVar("--beige"),     // 예산: 잔여 가용 예산(아이보리)
-  red: cssVar("--kpi-red"),     // VOC: 불만(가장 눈에 띄게, kpi_main.css에서 정의)
+  coral: cssVar("--kpi-coral"), // VOC: 불만(코랄, kpi_main.css에서 정의)
   light: cssVar("--gold"),      // VOC: 2위 이하 키워드(연한 갈색)
   muted: cssVar("--muted"),
   line: cssVar("--line"),
@@ -506,7 +506,7 @@ function renderVoc(stats, reviews, source) {
   const counts = Object.fromEntries(keys.map((k) => [k, (stats.sentiment_counts[k] || 0) + (sv?.sentiment_counts[k] || 0)]));
   const reviewTotal = stats.sample_size ?? reviews.length;
   const sampleTitle = sv ? `리뷰 ${num(reviewTotal)} + 설문 ${num(sv.respondents)}` : `리뷰 ${num(reviewTotal)}`;
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.lineStrong, p.red], { cutout: "58%", legend: true, title: sampleTitle });
+  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.lineStrong, p.coral], { cutout: "58%", legend: true, title: sampleTitle });
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
     // 리뷰 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
@@ -689,10 +689,35 @@ function showVocAi(demoReviews, ai) {
 }
 
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
-// 인플루언서 / 플랫폼 광고를 따로 입력하고, 표·결과도 둘로 나눠 소계를 보여 줍니다.
-const sim = { data: null, items: [], nextId: 1 };
-const KIND_LABEL = { influencer: "인플루언서", ad: "플랫폼 광고" };
-const CUSTOM = "__custom__";  // 드롭다운의 '직접 입력'
+// 단일 입력 폼: 집행 유형(KOL 협찬 / 공식 매체 광고)에 따라 입력 칸·매체 목록·예상 ROAS 기본값이 바뀝니다.
+// 상태는 sim 하나에 모읍니다: 서버 데이터 · 집행 유형 · ROAS 직접 수정 여부 · 집행 예정 목록.
+const sim = { data: null, type: "kol", roasEdited: false, items: [], nextId: 1 };
+const SIM_TYPE_LABEL = { kol: "KOL 협찬", paid: "공식 매체" };
+const CUSTOM = "__custom__";  // 매체 · 콘텐츠 형태 드롭다운의 '직접 입력'
+// KOL 콘텐츠 형태 기본 목록(매체별). 인플루언서 탭 단가에 있는 형식은 자동으로 더합니다.
+const KOL_FORMATS = {
+  TikTok: ["숏폼 1편", "숏폼 2편", "라이브 1회"],
+  Instagram: ["릴스 1편", "피드 1건", "스토리 1건", "릴스 1편 + 스토리 2"],
+  YouTube: ["쇼츠 1편", "롱폼 리뷰 1편"],
+  Facebook: ["피드 1건", "릴스 1편"],
+};
+// 매체 목록. roasFrom: 예상 ROAS 기본값을 가져올 실적 채널, help: 매체 아래 보조 글씨
+const SIM_MEDIA = {
+  kol: [
+    { value: "TikTok", roasFrom: "Influencer" },
+    { value: "Instagram", roasFrom: "Influencer" },
+    { value: "YouTube", roasFrom: "Influencer" },
+    { value: "Facebook", roasFrom: "Influencer" },
+  ],
+  paid: [
+    { value: "Meta", roasFrom: "Meta" },
+    { value: "TikTok", roasFrom: "TikTok" },
+    { value: "Shopee", roasFrom: "Shopee_Ads" },
+    { value: "Instagram", roasFrom: "Meta", help: "Meta 광고 관리자에서 집행 · ROAS는 Meta 실적 기준" },
+  ],
+};
+
+const simForm = () => $("sim-form");
 
 function simRoas(channel) {
   return sim.data?.channels.find((c) => c.channel === channel)?.roas_percent ?? null;
@@ -712,79 +737,112 @@ function formatMoneyInput(input) {
 
 const parseMoney = (value) => Number(String(value).replace(/\D/g, ""));
 const toKrw = (amount, unit) => (unit === "KRW" ? Math.round(amount) : Math.round((amount * sim.data.base_rate) / 100));
+const toVnd = (amount, unit) => (unit === "VND" ? Math.round(amount) : Math.round((amount * 100) / sim.data.base_rate));
 const estRevenue = (cost, roas) => (roas == null ? null : Math.round((cost * roas) / 100));
+
+function currentMedia() {
+  return SIM_MEDIA[sim.type].find((m) => m.value === simForm().elements.media.value) || null;
+}
+
+// 집행 유형 전환: 세그먼트 · 유형별 칸 · 매체 목록 · ROAS 기본값
+function setSimType(type) {
+  sim.type = type;
+  sim.roasEdited = false;
+  setSegment("sim-type", "type", type);
+  root.querySelectorAll(".kpi-sim-kol").forEach((n) => { n.hidden = type !== "kol"; });
+  root.querySelectorAll(".kpi-sim-paid").forEach((n) => { n.hidden = type !== "paid"; });
+  $("sim-format-name").hidden = true;  // KOL이면 onMediaChange → fillFormats에서 다시 판단
+  const option = (value, text = value) => {
+    const opt = el("option", { text });
+    opt.value = value;
+    return opt;
+  };
+  $("sim-media").replaceChildren(
+    ...SIM_MEDIA[type].map((m) => option(m.value)),
+    ...(type === "paid" ? [option(CUSTOM, "직접 입력 (새 매체)")] : []),
+  );
+  onMediaChange();
+}
+
+function onMediaChange() {
+  $("sim-media-name").hidden = simForm().elements.media.value !== CUSTOM;
+  setText("sim-media-help", currentMedia()?.help || "");
+  if (sim.type === "kol") fillFormats();
+  fillDefaultRoas();
+}
+
+// KOL 콘텐츠 형태: 매체별 기본 형식 + 그 계정의 인플루언서 탭 단가 형식 + 직접 입력
+function fillFormats() {
+  const f = simForm().elements;
+  const prev = f.format.value;
+  const fromQuotes = accountQuotes().filter((o) => o.platform === f.media.value && o.content_format).map((o) => o.content_format);
+  const formats = [...new Set([...fromQuotes, ...(KOL_FORMATS[f.media.value] || [])])];
+  $("sim-format").replaceChildren(
+    ...formats.map((v) => Object.assign(el("option", { text: v }), { value: v })),
+    Object.assign(el("option", { text: "직접 입력" }), { value: CUSTOM }),
+  );
+  if ([...f.format.options].some((o) => o.value === prev)) f.format.value = prev;
+  onFormatChange();
+}
+
+function onFormatChange() {
+  $("sim-format-name").hidden = sim.type !== "kol" || simForm().elements.format.value !== CUSTOM;
+  syncQuote();
+}
+
+// 예상 ROAS 기본값: 사용자가 직접 고치지 않았을 때만 채웁니다.
+function fillDefaultRoas() {
+  const m = currentMedia();
+  const roas = m ? simRoas(m.roasFrom) : null;
+  const label = m && sim.data?.channels.find((c) => c.channel === m.roasFrom)?.label;
+  if (!sim.roasEdited) simForm().elements.roas.value = roas == null ? "" : String(roas);
+  setText(
+    "sim-roas-help",
+    roas == null ? "실적이 없는 매체입니다. 예상 ROAS를 입력하면 예상 매출을 계산합니다." : `기본값: ${label} 실적 ${pct(roas)} (직접 수정 가능)`,
+  );
+}
 
 function renderSimOptions() {
   const d = sim.data;
   const inf = d.influencers;
-  const customOption = (text) => {
-    const opt = el("option", { text });
-    opt.value = CUSTOM;
-    return opt;
-  };
-  // 인플루언서 이름만(중복 없이). 플랫폼 · 광고 유형 · 단가는 고른 값에 따라 다음 칸에서 고릅니다.
-  $("sim-influencer").replaceChildren(
-    ...[...new Set(inf.options.map((o) => o.influencer))].map((name) => {
-      const opt = el("option", { text: name });
-      opt.value = name;
-      return opt;
-    }),
-    customOption("직접 입력"),
-  );
-  updateInfPlatforms();
-  $("sim-channel").replaceChildren(
-    ...d.ad_channels.map((ch) => {
-      const opt = el("option", { text: `${d.channels.find((c) => c.channel === ch)?.label || ch} (현재 ROAS ${pct(simRoas(ch))})` });
-      opt.value = ch;
-      return opt;
-    }),
-    customOption("직접 입력 (새 채널)"),
-  );
-  toggleSimCustom();
-  setText("sim-source", `인플루언서 후보: ${inf.note}${inf.status === "demo" ? " · 시연" : ""} · 환산: 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND`);
-}
-
-// 인플루언서 → 플랫폼 → 광고 유형 → 단가: 앞에서 고른 값에 맞는 항목만 다음 칸에 채웁니다.
-function fillSelect(name, values, label = (v) => v) {
-  const select = $(name);
-  const prev = select.value;
-  select.replaceChildren(...values.map((v) => {
-    const opt = el("option", { text: label(v) });
-    opt.value = typeof v === "object" ? v.id : v;
+  // 계정 자동완성: 인플루언서 탭 단가 목록(같은 계정이 여러 건이면 한 줄에 함께 표시)
+  $("sim-accounts").replaceChildren(...[...new Set(inf.options.map((o) => o.influencer))].map((name) => {
+    const quotes = inf.options.filter((o) => o.influencer === name);
+    const opt = el("option");
+    opt.value = name;
+    opt.label = quotes.map((o) => `${o.platform} ${o.content_format} · ${o.price_type_label} ${krwMan(toKrw(o.amount_vnd, "VND"))}`).join(" / ");
     return opt;
   }));
-  if ([...select.options].some((o) => o.value === prev)) select.value = prev;
+  setText("sim-rate-help", `1원 ≈ ${(100 / d.base_rate).toFixed(1)} VND (편성 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND)`);
+  setText("sim-source", `KOL 단가 자동완성: ${inf.note}${inf.status === "demo" ? " · 시연" : ""}`);
+  setSimType(sim.type);
 }
 
-function infQuotes(filter = {}) {
-  return (sim.data?.influencers.options || []).filter((o) => Object.entries(filter).every(([k, v]) => o[k] === v));
+// 계정명이 인플루언서 탭 단가와 일치하면 매체 · 콘텐츠 형태를 맞추고, 예산은 syncQuote가 채웁니다.
+function accountQuotes() {
+  const name = simForm().elements.account.value.trim();
+  return (sim.data?.influencers.options || []).filter((o) => o.influencer === name);
 }
 
-function updateInfPlatforms() {
-  const influencer = $("sim-influencer").value;
-  fillSelect("sim-inf-platform", [...new Set(infQuotes({ influencer }).map((o) => o.platform))]);
-  updateInfFormats();
+function applyQuote() {
+  const f = simForm().elements;
+  const quotes = accountQuotes();
+  if (!quotes.length) return setText("sim-quote-help", "");
+  const q = quotes.find((o) => o.platform === f.media.value) || quotes[0];
+  if (SIM_MEDIA.kol.some((m) => m.value === q.platform)) f.media.value = q.platform;
+  fillFormats();  // 그 계정의 단가 형식을 목록에 넣고
+  if (q.content_format) f.format.value = q.content_format;  // 단가의 형식을 고른 뒤
+  onMediaChange();  // ROAS · 형식 직접 입력 칸 · 예산(syncQuote)을 맞춥니다.
 }
 
-function updateInfFormats() {
-  const filter = { influencer: $("sim-influencer").value, platform: $("sim-inf-platform").value };
-  fillSelect("sim-inf-format", [...new Set(infQuotes(filter).map((o) => o.content_format))]);
-  updateInfPrices();
-}
-
-function updateInfPrices() {
-  const filter = { influencer: $("sim-influencer").value, platform: $("sim-inf-platform").value, content_format: $("sim-inf-format").value };
-  fillSelect("sim-inf-price", infQuotes(filter), (o) => `${o.price_type_label} ${num(o.amount_vnd)} VND`);
-  const o = infQuotes().find((x) => x.id === $("sim-inf-price").value);
-  $("sim-inf-krw").textContent = o ? `약 ${krwMan(toKrw(o.amount_vnd, "VND"))} (기준 환율 환산)` : "";
-}
-
-// '직접 입력'을 고르면 이름·플랫폼·광고 유형·금액 칸을 보여 줍니다.
-function toggleSimCustom() {
-  const custom = $("sim-influencer").value === CUSTOM;
-  root.querySelectorAll(".kpi-sim-pick").forEach((label) => { label.hidden = custom; });
-  $("sim-inf-custom").hidden = !custom;
-  $("sim-ad-custom").hidden = $("sim-channel").value !== CUSTOM;
+// 계정 + 매체 + 형식이 인플루언서 탭 단가와 맞으면 집행 예산을 그 단가로 채웁니다(고른 화폐 기준).
+function syncQuote() {
+  const f = simForm().elements;
+  if (sim.type !== "kol") return;
+  const q = accountQuotes().find((o) => o.platform === f.media.value && o.content_format === f.format.value);
+  if (!q) return setText("sim-quote-help", accountQuotes().length ? "이 매체·형식의 단가는 인플루언서 탭에 없습니다. 집행 예산을 직접 입력해 주세요." : "");
+  f.amount.value = (f.unit.value === "KRW" ? toKrw(q.amount_vnd, "VND") : q.amount_vnd).toLocaleString("en-US");
+  setText("sim-quote-help", `인플루언서 탭 ${q.price_type_label} ${num(q.amount_vnd)} VND (약 ${krwMan(toKrw(q.amount_vnd, "VND"))}) 불러옴`);
 }
 
 function renderSim() {
@@ -793,33 +851,42 @@ function renderSim() {
   const now = d.budget.remaining_krw;
   const total = d.budget.total_krw;
   const sumOf = (list, key) => list.reduce((s, it) => s + (it[key] || 0), 0);
-  const byKind = Object.fromEntries(Object.keys(KIND_LABEL).map((k) => [k, sim.items.filter((it) => it.kind === k)]));
+  const byType = Object.fromEntries(Object.keys(SIM_TYPE_LABEL).map((t) => [t, sim.items.filter((it) => it.type === t)]));
   const planned = sumOf(sim.items, "cost_krw");
   const after = now - planned;
 
-  // 표: 인플루언서 묶음 → 소계, 플랫폼 묶음 → 소계
+  // 표: 구분 | 매체 및 대상 | 세부 내용 | 집행 비용(원/VND) | 예상 ROAS | 예상 매출 | 관리 — 구분별 소계
+  const cost = (krw, vndValue) => el("span", {}, [document.createTextNode(krwMan(krw)), el("small", { text: `${num(vndValue)} VND` })]);
   const rows = [];
   const subtotalRows = [];
-  Object.entries(byKind).forEach(([kind, list]) => {
+  Object.entries(byType).forEach(([type, list]) => {
     if (!list.length) return;
     list.forEach((it) => {
-      const remove = el("button", { text: "빼기", className: "btn kpi-sim-remove" });
+      const remove = el("button", { text: "삭제", className: "btn kpi-sim-remove" });
       remove.type = "button";
       remove.dataset.kpiAction = "sim-remove";
       remove.dataset.id = String(it.id);
-      rows.push([it.label, KIND_LABEL[kind], krwMan(it.cost_krw), it.revenue_krw == null ? "—" : krwMan(it.revenue_krw), remove]);
+      rows.push([
+        SIM_TYPE_LABEL[type],
+        it.target ? `${it.media} · ${it.target}` : it.media,
+        it.detail || "—",
+        cost(it.cost_krw, it.cost_vnd),
+        it.roas == null ? "—" : pct(it.roas),
+        it.revenue_krw == null ? "—" : krwMan(it.revenue_krw),
+        remove,
+      ]);
     });
     subtotalRows.push(rows.length);
-    rows.push([`${KIND_LABEL[kind]} 소계 (${list.length}건)`, "", krwMan(sumOf(list, "cost_krw")), krwMan(sumOf(list, "revenue_krw")), ""]);
+    rows.push([`${SIM_TYPE_LABEL[type]} 소계`, `${list.length}건`, "", cost(sumOf(list, "cost_krw"), sumOf(list, "cost_vnd")), "", krwMan(sumOf(list, "revenue_krw")), ""]);
   });
-  if (!rows.length) rows.push(["아직 추가한 항목이 없습니다", "", "", "", ""]);
+  if (!rows.length) rows.push(["아직 추가한 항목이 없습니다", "", "", "", "", "", ""]);
   fillRows("sim-rows", rows);
   const trs = $("sim-rows").children;
   subtotalRows.forEach((i) => trs[i].classList.add("kpi-sim-subtotal"));
 
   setText("sim-now", krwMan(now));
-  setText("sim-planned-influencer", krwMan(sumOf(byKind.influencer, "cost_krw")));
-  setText("sim-planned-ad", krwMan(sumOf(byKind.ad, "cost_krw")));
+  setText("sim-planned-kol", krwMan(sumOf(byType.kol, "cost_krw")));
+  setText("sim-planned-paid", krwMan(sumOf(byType.paid, "cost_krw")));
   const afterEl = $("sim-after");
   afterEl.textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
   afterEl.classList.toggle("is-over", after < 0);
@@ -829,7 +896,7 @@ function renderSim() {
     const box = $("sim-summary");
     box.replaceChildren(
       warning(`예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다.`),
-      document.createTextNode(` (참고 예상 매출 ${krwMan(revenue)}, 현재 ROAS 유지 가정)`),
+      document.createTextNode(` (참고 예상 매출 ${krwMan(revenue)}, 예상 ROAS 기준)`),
     );
     box.hidden = false;
     return;
@@ -838,41 +905,44 @@ function renderSim() {
     "sim-summary",
     !sim.items.length
       ? "항목을 추가하면 집행 후 남는 예산을 바로 계산합니다."
-      : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (현재 ROAS 유지 가정)`,
+      : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (예상 ROAS 기준)`,
   );
 }
 
 function addSimItem(form) {
-  const d = sim.data;
-  const kind = form.dataset.kind;
   const f = form.elements;
   showError("sim-error", "");
-  let item;
-  if (kind === "influencer" && f.influencer.value !== CUSTOM) {
-    const o = d.influencers.options.find((x) => x.id === f.price.value);
-    if (!o) return showError("sim-error", "인플루언서 단가를 선택해 주세요.");
-    const cost = toKrw(o.amount_vnd, "VND");
-    item = { label: `${o.influencer} · ${o.platform} ${o.content_format} (${o.price_type_label})`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
-  } else {
-    const custom = kind === "influencer" || f.channel.value === CUSTOM;
-    const name = custom ? f.name.value.trim() : "";
-    if (custom && !name) return showError("sim-error", kind === "influencer" ? "인플루언서 이름을 입력해 주세요." : "채널 이름을 입력해 주세요.");
-    const amount = parseMoney(f.amount.value);
-    if (!amount) return showError("sim-error", "금액을 0보다 큰 숫자로 입력해 주세요.");
-    const cost = toKrw(amount, f.unit.value);
-    if (kind === "influencer") {
-      const format = f.cformat.value.trim();
-      item = { label: `${name} · ${f.cplatform.value}${format ? ` ${format}` : ""} (직접 입력)`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
-      f.cformat.value = "";
-    } else {
-      const label = custom ? name : d.channels.find((c) => c.channel === f.channel.value)?.label || f.channel.value;
-      // 새 채널은 현재 ROAS가 없어 예상 매출을 계산하지 않습니다.
-      item = { label: `${label} 광고${custom ? " (직접 입력)" : ""}`, cost_krw: cost, revenue_krw: custom ? null : estRevenue(cost, simRoas(f.channel.value)) };
-    }
-    f.amount.value = "";
-    if (custom) f.name.value = "";
-  }
-  sim.items.push({ ...item, kind, id: sim.nextId++ });
+  const custom = f.media.value === CUSTOM;
+  const media = custom ? f.mediaName.value.trim() : f.media.value;
+  if (!media) return showError("sim-error", "매체 이름을 입력해 주세요.");
+  const target = sim.type === "kol" ? f.account.value.trim() : "";
+  if (sim.type === "kol" && !target) return showError("sim-error", "계정/인물명을 입력해 주세요.");
+  const amount = parseMoney(f.amount.value);
+  if (!amount) return showError("sim-error", "집행 예산을 0보다 큰 숫자로 입력해 주세요.");
+  const roasText = f.roas.value.trim();
+  const roas = roasText === "" ? null : Number(roasText.replace(/[^\d.]/g, ""));
+  if (roasText !== "" && !Number.isFinite(roas)) return showError("sim-error", "예상 ROAS는 숫자(%)로 입력해 주세요.");
+
+  const costKrw = toKrw(amount, f.unit.value);
+  sim.items.push({
+    id: sim.nextId++,
+    type: sim.type,
+    media,
+    target,
+    detail: sim.type === "kol" ? (f.format.value === CUSTOM ? f.formatName.value.trim() : f.format.value) : f.objective.value,
+    cost_krw: costKrw,
+    cost_vnd: toVnd(amount, f.unit.value),
+    roas,
+    revenue_krw: estRevenue(costKrw, roas),
+  });
+  // 다음 입력을 위해 대상·금액을 비우고 ROAS는 기본값으로 되돌립니다(유형·매체는 유지).
+  f.account.value = "";
+  f.formatName.value = "";
+  f.amount.value = "";
+  if (custom) f.mediaName.value = "";
+  setText("sim-quote-help", "");
+  sim.roasEdited = false;
+  onMediaChange();  // 계정을 비웠으니 형식 목록 · ROAS 기본값을 다시 맞춥니다.
   renderSim();
 }
 
@@ -1065,11 +1135,13 @@ root.addEventListener("click", (event) => {
     setExpanded(target.closest(".kpi-panel"));
     requestAnimationFrame(() => {
       $("sim").scrollIntoView({ block: "start", behavior: "smooth" });
-      $("sim-influencer").focus({ preventScroll: true });
+      $("sim-account").focus({ preventScroll: true });
     });
   } else if (action === "sim-remove") {
     sim.items = sim.items.filter((it) => String(it.id) !== target.dataset.id);
     renderSim();
+  } else if (action === "sim-type") {
+    setSimType(target.dataset.type);
   } else if (action === "voc-analyze") {
     analyzeVoc(target);
   } else if (action === "currency") {
@@ -1089,20 +1161,25 @@ root.addEventListener("click", (event) => {
 
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
-  if (event.target.matches('[data-kpi="sim-influencer"]')) updateInfPlatforms();
-  if (event.target.matches('[data-kpi="sim-inf-platform"]')) updateInfFormats();
-  if (event.target.matches('[data-kpi="sim-inf-format"], [data-kpi="sim-inf-price"]')) updateInfPrices();
-  if (event.target.matches('[data-kpi="sim-influencer"], [data-kpi="sim-channel"]')) toggleSimCustom();
+  if (event.target.matches('[data-kpi="sim-media"]')) onMediaChange();
+  if (event.target.matches('[data-kpi="sim-format"]')) onFormatChange();
+  // 화폐를 바꾸면 불러온 KOL 단가를 그 화폐로 다시 채웁니다(단가가 없는 항목의 금액은 그대로).
+  if (event.target.matches('[data-kpi="sim-unit"]')) syncQuote();
   if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
   if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);
 });
 
 root.addEventListener("input", (event) => {
   if (event.target.matches("[data-kpi-money]")) formatMoneyInput(event.target);
+  if (event.target.matches('[data-kpi="sim-account"]')) {
+    if (accountQuotes().length) applyQuote();
+    else fillFormats();  // 목록에 없는 계정이면 매체 기본 형식만
+  }
+  if (event.target.matches('[data-kpi="sim-roas"]')) sim.roasEdited = event.target.value.trim() !== "";
 });
 
 root.addEventListener("submit", (event) => {
-  if (!event.target.matches(".kpi-sim-form")) return;
+  if (!event.target.matches('[data-kpi="sim-form"]')) return;
   event.preventDefault();
   if (sim.data) addSimItem(event.target);
 });

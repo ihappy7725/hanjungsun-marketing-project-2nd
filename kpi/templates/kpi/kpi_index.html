@@ -116,94 +116,78 @@
           <section class="kpi-sim" data-kpi="sim" aria-label="예산 집행 시뮬레이션">
             <p class="kpi-detail-title">
               집행 시뮬레이션 <span class="kpi-status is-fallback">추정</span>
-              {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 예정 비용 × 해당 채널의 현재 ROAS ÷ 100\n(현재 ROAS가 유지된다고 가정한 추정이며 저장되지 않습니다)") }}
+              {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 집행 비용 × 예상 ROAS ÷ 100\n예상 ROAS 기본값: KOL 협찬은 인플루언서 채널 실적, 공식 매체는 매체별 실적(직접 수정 가능)\n(저장되지 않는 추정입니다)") }}
             </p>
-            <!-- 인플루언서 / 플랫폼 광고를 나란히 따로 입력합니다. 목록에 없으면 '직접 입력' -->
-            <div class="kpi-sim-forms">
-              <form class="kpi-sim-form" data-kind="influencer" aria-label="인플루언서 집행 예정 추가">
-                <p class="kpi-sim-form-title">인플루언서</p>
-                <!-- 인플루언서 → 플랫폼 → 광고 유형 → 단가 순서로 고릅니다(앞에서 고른 값에 맞는 항목만 표시). -->
-                <div class="kpi-sim-grid">
-                  <label class="field">인플루언서
-                    <select name="influencer" data-kpi="sim-influencer"></select>
-                  </label>
-                  <label class="field kpi-sim-pick">플랫폼
-                    <select name="platform" data-kpi="sim-inf-platform"></select>
-                  </label>
-                  <label class="field kpi-sim-pick">광고 유형
-                    <select name="format" data-kpi="sim-inf-format"></select>
-                  </label>
-                  <label class="field kpi-sim-pick">단가
-                    <select name="price" data-kpi="sim-inf-price"></select>
-                    <small class="kpi-sim-krw" data-kpi="sim-inf-krw"></small>
-                  </label>
-                </div>
-                <!-- 직접 입력: 목록에 없는 인플루언서 -->
-                <div class="kpi-sim-grid" data-kpi="sim-inf-custom" hidden>
-                  <label class="field">이름
-                    <input type="text" name="name" maxlength="40" placeholder="예: @hanoi.eats">
-                  </label>
-                  <label class="field">플랫폼
-                    <select name="cplatform">
-                      <option value="TikTok">TikTok</option>
-                      <option value="Instagram">Instagram</option>
-                      <option value="YouTube">YouTube</option>
-                      <option value="기타">기타</option>
-                    </select>
-                  </label>
-                  <label class="field">광고 유형
-                    <input type="text" name="cformat" maxlength="40" placeholder="예: 숏폼 1편">
-                  </label>
-                  <div class="kpi-sim-row">
-                    <label class="field">금액
-                      <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 15,000,000" data-kpi-money>
-                    </label>
-                    <label class="field kpi-sim-unit">단위
-                      <select name="unit">
-                        <option value="VND">VND</option>
-                        <option value="KRW">원</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-                <button type="submit" class="btn dark">인플루언서 추가</button>
-              </form>
-              <form class="kpi-sim-form" data-kind="ad" aria-label="플랫폼 광고 집행 예정 추가">
-                <p class="kpi-sim-form-title">플랫폼 광고</p>
-                <label class="field">채널
-                  <select name="channel" data-kpi="sim-channel"></select>
+            <!-- 단일 입력 폼: 집행 유형(KOL 협찬 / 공식 매체 광고)에 따라 아래 칸이 바뀝니다. -->
+            <form class="kpi-sim-form" data-kpi="sim-form" aria-label="집행 예정 추가">
+              <div class="kpi-seg kpi-sim-type" role="group" aria-label="집행 유형">
+                <button type="button" class="is-on" data-kpi-action="sim-type" data-type="kol" aria-pressed="true">KOL / 인플루언서 협찬</button>
+                <button type="button" data-kpi-action="sim-type" data-type="paid" aria-pressed="false">공식 매체 광고 (Paid)</button>
+              </div>
+              <div class="kpi-sim-fields">
+                <label class="field">집행 매체
+                  <select name="media" data-kpi="sim-media"></select>
+                  <small class="kpi-sim-help" data-kpi="sim-media-help"></small>
                 </label>
-                <label class="field" data-kpi="sim-ad-custom" hidden>채널 이름
-                  <input type="text" name="name" maxlength="40" placeholder="예: Google Ads">
+                <label class="field" data-kpi="sim-media-name" hidden>매체 이름
+                  <input type="text" name="mediaName" maxlength="40" placeholder="예: Google Ads">
+                </label>
+                <!-- KOL 협찬: 계정명은 입력 + 자동완성(인플루언서 탭 단가 목록). 고르면 매체·콘텐츠·예산을 채웁니다. -->
+                <label class="field kpi-sim-kol">계정/인물명
+                  <input type="text" name="account" list="kpi-sim-accounts" maxlength="40" autocomplete="off" placeholder="예: @hanoi.eats" data-kpi="sim-account">
+                  <datalist id="kpi-sim-accounts" data-kpi="sim-accounts"></datalist>
+                  <small class="kpi-sim-help" data-kpi="sim-quote-help"></small>
+                </label>
+                <!-- 콘텐츠 형태: 집행 매체에 맞는 형식만 표시. 계정·매체·형식이 인플루언서 탭 단가와 맞으면 집행 예산 자동 채움 -->
+                <label class="field kpi-sim-kol">콘텐츠 형태
+                  <select name="format" data-kpi="sim-format"></select>
+                </label>
+                <label class="field" data-kpi="sim-format-name" hidden>콘텐츠 형태 직접 입력
+                  <input type="text" name="formatName" maxlength="40" placeholder="예: 라이브 2회">
+                </label>
+                <!-- 공식 매체 광고 -->
+                <label class="field kpi-sim-paid" hidden>캠페인 목적
+                  <select name="objective">
+                    <option value="전환/매출 증대">전환/매출 증대</option>
+                    <option value="트래픽">트래픽</option>
+                    <option value="도달">도달</option>
+                  </select>
+                </label>
+                <label class="field">예상 ROAS(%)
+                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 300" data-kpi="sim-roas">
+                  <small class="kpi-sim-help" data-kpi="sim-roas-help"></small>
                 </label>
                 <div class="kpi-sim-row">
-                  <label class="field">예정 광고비
-                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 20,000,000" data-kpi-money>
+                  <label class="field">집행 예산
+                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 1,000,000" data-kpi-money>
                   </label>
-                  <label class="field kpi-sim-unit">단위
-                    <select name="unit">
+                  <label class="field kpi-sim-unit">화폐
+                    <select name="unit" data-kpi="sim-unit">
+                      <option value="KRW" selected>KRW(원)</option>
                       <option value="VND">VND</option>
-                      <option value="KRW">원</option>
                     </select>
                   </label>
                 </div>
-                <button type="submit" class="btn dark">플랫폼 추가</button>
-              </form>
-            </div>
+              </div>
+              <div class="kpi-sim-foot">
+                <small class="kpi-sim-help" data-kpi="sim-rate-help"></small>
+                <button type="submit" class="btn dark">목록에 추가</button>
+              </div>
+            </form>
             <p class="kpi-note" data-kpi="sim-source"></p>
             <p class="kpi-error" data-kpi="sim-error" hidden></p>
 
             <div class="table-wrap">
               <table class="kpi-table kpi-t-sim">
-                <thead><tr><th class="is-text">집행 예정 항목</th><th class="is-text">유형</th><th>비용(원)</th><th>예상 매출(원, 참고)</th><th></th></tr></thead>
+                <thead><tr><th class="is-text">구분</th><th class="is-text">매체 및 대상</th><th class="is-text">세부 내용</th><th>집행 비용</th><th>예상 ROAS</th><th>예상 매출</th><th>관리</th></tr></thead>
                 <tbody data-kpi="sim-rows"></tbody>
               </table>
             </div>
 
             <div class="kpi-sim-result">
               <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong></div>
-              <div><span>인플루언서 예정</span><strong data-kpi="sim-planned-influencer">—</strong></div>
-              <div><span>플랫폼 광고 예정</span><strong data-kpi="sim-planned-ad">—</strong></div>
+              <div><span>KOL 협찬 예정</span><strong data-kpi="sim-planned-kol">—</strong></div>
+              <div><span>공식 매체 예정</span><strong data-kpi="sim-planned-paid">—</strong></div>
               <div><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong></div>
             </div>
             <p class="kpi-note" data-kpi="sim-summary">항목을 추가하면 집행 후 남는 예산을 바로 계산합니다.</p>

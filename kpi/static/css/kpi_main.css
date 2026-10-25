@@ -8,14 +8,15 @@
 .kpi-page { margin-top: 0; }
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
-.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; }  /* 붉은색(차분한 벽돌빛): 손익분기 미달·예산 초과 경고·불만 */
+.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-coral: #ee8b76; }
+/* 빨강(차분한 벽돌빛): 손익분기 미달·예산 초과 경고 / 코랄: VOC 불만(도넛 · 설문 1점 · 리뷰 글씨) */
 /* 조치가 필요한 문구(⚠ 손익분기 미달 → 예산 조정 검토, 예산 초과) */
 .kpi-page .kpi-warn { color: var(--kpi-red); font-weight: 700; }
 /* 리뷰 만족도: 박스 없이 작은 글씨(만족 녹색 · 보통 회색 · 불만 붉은색) */
 .kpi-page .kpi-mood { font-size: var(--fs-table); font-weight: 600; }
 .kpi-page .kpi-mood-good { color: var(--teal); }
 .kpi-page .kpi-mood-mid { color: var(--muted); }
-.kpi-page .kpi-mood-bad { color: var(--kpi-red); }
+.kpi-page .kpi-mood-bad { color: var(--kpi-coral); }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
 .kpi-page .kpi-head h1 { margin: 0; font-size: var(--fs-display); line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
@@ -222,26 +223,26 @@
 
 /* ---------- 집행 시뮬레이션 (예산 블록 확대 시) ---------- */
 .kpi-page .kpi-sim { margin-top: var(--space-7); padding-top: var(--space-2); border-top: 1px solid var(--line); }
-/* 인플루언서 / 플랫폼 광고 입력 칸을 나란히 둡니다(좁은 화면에서는 위아래). */
-.kpi-page .kpi-sim-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+/* 단일 입력 폼: 맨 위 집행 유형 세그먼트 → 입력 칸(3열 격자) → 환산 안내 · [목록에 추가] */
 .kpi-page .kpi-sim-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
   background: var(--paper);
 }
-.kpi-page .kpi-sim-form-title { margin: 0; font-size: var(--fs-min); font-weight: 700; }
+.kpi-page .kpi-sim-type { align-self: flex-start; }
+.kpi-page .kpi-sim-type button { height: 32px; padding: 0 var(--space-6); }
+.kpi-page .kpi-sim-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: var(--space-4) var(--space-5); }
 .kpi-page .kpi-sim-form .field input,
 .kpi-page .kpi-sim-form .field select { padding: var(--space-4); }
 .kpi-page .kpi-sim-form [hidden] { display: none; }
-/* 인플루언서 칸: 인플루언서 · 플랫폼 / 광고 유형 · 단가를 2×2로 */
-.kpi-page .kpi-sim-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-4); }
-.kpi-page .kpi-sim-krw { color: var(--muted); font-size: var(--fs-min); }
-.kpi-page .kpi-sim-row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-.kpi-page .kpi-sim-row .field { flex: 1; min-width: 120px; }
-.kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 96px; min-width: 96px; }
-.kpi-page .kpi-sim-form .btn { align-self: flex-end; }
+.kpi-page .kpi-sim-help { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-sim-help:empty { display: none; }
+.kpi-page .kpi-sim-row { display: flex; gap: var(--space-4); }
+.kpi-page .kpi-sim-row .field { flex: 1; min-width: 0; }
+.kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 110px; }
+.kpi-page .kpi-sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .kpi-page .kpi-sim-subtotal td { background: var(--paper); font-weight: 600; }
 .kpi-page .kpi-sim-result {
   display: grid;
@@ -331,11 +332,16 @@
 .kpi-page .kpi-t-spend th:nth-child(4) { width: 17%; }
 .kpi-page .kpi-t-spend th:nth-child(5) { width: 17%; }
 
-.kpi-page .kpi-t-sim th:nth-child(1) { width: 32%; }
-.kpi-page .kpi-t-sim th:nth-child(2) { width: 18%; }
+/* 집행 예정: 구분 | 매체 및 대상 | 세부 내용 | 집행 비용(원/VND) | 예상 ROAS | 예상 매출 | 관리 */
+.kpi-page .kpi-t-sim th:nth-child(1) { width: 12%; }
+.kpi-page .kpi-t-sim th:nth-child(2) { width: 22%; }
 .kpi-page .kpi-t-sim th:nth-child(3) { width: 17%; }
-.kpi-page .kpi-t-sim th:nth-child(4) { width: 21%; }
-.kpi-page .kpi-t-sim th:nth-child(5) { width: 12%; }
+.kpi-page .kpi-t-sim th:nth-child(4) { width: 17%; }
+.kpi-page .kpi-t-sim th:nth-child(5) { width: 11%; }
+.kpi-page .kpi-t-sim th:nth-child(6) { width: 12%; }
+.kpi-page .kpi-t-sim th:nth-child(7) { width: 9%; }
+.kpi-page .kpi-t-sim th:nth-child(7),
+.kpi-page .kpi-t-sim td:nth-child(7) { text-align: center; }
 
 .kpi-page .kpi-t-survey th:nth-child(1) { width: 16%; }
 .kpi-page .kpi-t-survey th:nth-child(2) { width: 40%; }
@@ -401,7 +407,7 @@
 .kpi-page .kpi-survey-bar { display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--progress-bg); }
 .kpi-page .kpi-survey-bar span { display: block; height: 100%; }
 .kpi-page .kpi-survey-bar span + span { box-shadow: inset 1px 0 0 var(--page-bg); }
-.kpi-page .kpi-s1 { background: var(--kpi-red); }   /* 1점: 가장 눈에 띄게 */
+.kpi-page .kpi-s1 { background: var(--kpi-coral); }   /* 1점: 불만과 같은 코랄 */
 .kpi-page .kpi-s2 { background: var(--kpi-pink); }
 .kpi-page .kpi-s3 { background: var(--beige); }
 .kpi-page .kpi-s4 { background: var(--celadon); }
@@ -534,7 +540,7 @@
   .kpi-page .kpi-ga4-metrics { grid-template-columns: 1fr; }
   .kpi-page .kpi-ga4-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-sim-result,
-  .kpi-page .kpi-sim-forms { grid-template-columns: 1fr; }
+  .kpi-page .kpi-sim-fields { grid-template-columns: 1fr; }
   .kpi-page .kpi-sim-result > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-panel.is-expanded { inset: 12px; max-height: none; transform: none; }
 }
