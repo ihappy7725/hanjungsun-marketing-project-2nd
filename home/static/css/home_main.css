@@ -257,3 +257,12 @@
 .home-page .home-tl-head { border-radius: var(--radius) var(--radius) 0 0; }
 .home-page .home-event.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
 .home-page .home-period-bar.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
+.home-page .home-paneltabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-5); border-bottom: 1px solid var(--line); }
+.home-page .home-paneltab { padding: var(--space-3) var(--space-5); border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: var(--fs-subheading); font-family: var(--font-serif); cursor: pointer; }
+.home-page .home-paneltab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold); }
+.home-page .home-btn-sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: var(--line); }
+.home-page .home-btn-quiet { color: var(--muted); }
+.home-page .home-datatools { position: relative; }
+.home-page .home-datatools > summary { list-style: none; cursor: pointer; }
+.home-page .home-datatools > summary::-webkit-details-marker { display: none; }
+.home-page .home-datatools-menu { position: absolute; right: 0; z-index: 20; display: grid; gap: var(--space-2); min-width: 160px; margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); box-shadow: var(--shadow); }

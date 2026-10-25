@@ -649,10 +649,15 @@ async function initialize() {
     if (await save(next)) toast(completed ? '완료했습니다. 일정과 진척에 반영했습니다.' : '예정 상태로 되돌렸습니다.');
     render();
   });
+  const PANEL_KEY = 'hjs-home-panel';
   function showPanel(name) {
     panel = name;
     $('#calendar-panel').hidden = name !== 'calendar';
     $('#campaign-panel').hidden = name !== 'campaign';
+    // 탭은 지금 보고 있는 화면을 표시합니다. 다음에 들어올 때 같은 화면으로 엽니다.
+    $('#tab-calendar').setAttribute('aria-selected', String(name === 'calendar'));
+    $('#tab-campaign').setAttribute('aria-selected', String(name === 'campaign'));
+    try { localStorage.setItem(PANEL_KEY, name); } catch { /* 저장 못 해도 동작합니다 */ }
   }
   function removeCampaign() {
     const c = selected();
@@ -767,8 +772,12 @@ async function initialize() {
   $('#import-file').onchange = event => { readImport(event.target.files[0]); event.target.value = ''; };
   $('#migrate-store').onclick = startMigration;
   $('#migration-file').onchange = event => { readMigration(event.target.files[0]); event.target.value = ''; };
-  $('#to-campaign').onclick = () => showPanel('campaign');
-  $('#to-calendar').onclick = () => showPanel('calendar');
+  $('#tab-campaign').onclick = () => showPanel('campaign');
+  $('#tab-calendar').onclick = () => showPanel('calendar');
+  try {
+    const saved = localStorage.getItem(PANEL_KEY);
+    if (saved === 'campaign' || saved === 'calendar') showPanel(saved);
+  } catch { /* 기본 화면을 그대로 씁니다 */ }
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
   $('#scope').onchange = event => { scope = event.target.value; render(); };
   $('#new-campaign').onclick = () => planner('create');
