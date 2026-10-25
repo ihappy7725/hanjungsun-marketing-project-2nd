@@ -154,22 +154,30 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
 
   // ---------- ② 프롬프트 검토 ----------
   // 영어(Higgsfield로 보내는 문장)는 읽기 전용이고, 한국어를 고쳐 저장하면 서버가 영어에 반영합니다(videos.py korean_to_english).
-  const prompt = el("textarea", "studio-video-prompt is-readonly");
-  prompt.rows = 16;
+  // 영어는 줄마다 나눠 그린 읽기 전용 상자입니다(textarea는 글자 일부를 강조할 수 없어서).
+  const enLines = (doc.prompt || "").split("\n");
+  const prompt = el("div", "studio-video-prompt studio-video-prompt-view is-readonly");
   prompt.lang = "en";
-  prompt.readOnly = true;
-  prompt.value = doc.prompt;
+  prompt.setAttribute("role", "textbox");
+  prompt.setAttribute("aria-readonly", "true");
   prompt.setAttribute("aria-label", "Higgsfield로 보낼 영어 프롬프트 (읽기 전용)");
+  const enRows = enLines.map((line) => el("div", "studio-video-prompt-line", line));
+  prompt.append(...enRows);
 
   const copy = el("button", "btn studio-video-copy", "복사");
   copy.type = "button";
   copy.title = "영어 프롬프트 복사";
   copy.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(prompt.value);
+      await navigator.clipboard.writeText(doc.prompt);
     } catch {
-      prompt.select();
-      document.execCommand("copy");  // http 주소 등에서 clipboard API가 막힐 때
+      // http 주소 등에서 clipboard API가 막힐 때: 잠깐 만든 칸으로 복사합니다.
+      const temp = el("textarea");
+      temp.value = doc.prompt;
+      document.body.append(temp);
+      temp.select();
+      document.execCommand("copy");
+      temp.remove();
     }
     copy.textContent = "복사됨";
     setTimeout(() => { copy.textContent = "복사"; }, 1500);
@@ -181,6 +189,54 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
   promptKo.placeholder = "예전에 영어를 직접 고친 작업이라 한국어가 없어요. [자동 프롬프트로]를 누르면 새로 만들어요.";
   promptKo.setAttribute("aria-label", "프롬프트 한국어 (고치면 저장할 때 영어에 반영)");
   promptKo.addEventListener("input", markDirty);
+
+  // 한국어 칸에서 누르거나 고른 줄·표현을 영어 칸에서 강조합니다.
+  // 줄: 한국어·영어는 한 줄씩 짝이라 같은 번호 줄(줄 수가 다르면 줄 강조는 안 함) / 표현: 서버가 준 대응표(phrase_pairs)
+  const pairs = doc.phrase_pairs || [];
+  function phraseAt(line, start, end) {
+    const picked = line.slice(start, end).trim();
+    if (picked) {
+      // 이 줄에 있는 표현 중 고른 글자를 담은 가장 짧은 것, 없으면 고른 글자 안에 든 가장 긴 표현
+      const here = pairs.filter(([ko]) => line.includes(ko));
+      const inside = here.filter(([ko]) => ko.includes(picked)).sort((a, b) => a[0].length - b[0].length)[0];
+      return inside || here.filter(([ko]) => picked.includes(ko)).sort((a, b) => b[0].length - a[0].length)[0];
+    }
+    // 커서를 덮는 표현 중 가장 짧은 것 (단어 단위에 가깝게)
+    let best = null;
+    for (const pair of pairs) {
+      for (let at = line.indexOf(pair[0]); at >= 0; at = line.indexOf(pair[0], at + 1)) {
+        if (at <= start && start <= at + pair[0].length && (!best || pair[0].length < best[0].length)) best = pair;
+      }
+    }
+    return best;
+  }
+
+  function showPhrase(row, phrase) {
+    const text = row.textContent;
+    const at = text.indexOf(phrase);
+    if (at < 0) return false;
+    row.replaceChildren(text.slice(0, at), el("mark", "studio-video-mark", phrase), text.slice(at + phrase.length));
+    return true;
+  }
+
+  function highlight() {
+    enRows.forEach((row, i) => { row.classList.remove("is-line"); row.textContent = enLines[i]; });
+    const value = promptKo.value;
+    const { selectionStart: start, selectionEnd: end } = promptKo;
+    const index = value.slice(0, start).split("\n").length - 1;
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const koLines = value.split("\n");
+    const line = koLines[index] || "";
+    const pair = phraseAt(line, start - lineStart, Math.min(end, lineStart + line.length) - lineStart);
+    const aligned = koLines.length === enLines.length;
+    const row = aligned ? enRows[index] : null;
+    row?.classList.add("is-line");
+    // 표현은 짝 줄에서 먼저 찾고, 줄이 어긋났으면 영어 전체에서 처음 나오는 곳을 찾습니다.
+    const marked = pair && ((row && showPhrase(row, pair[1])) || (!aligned && enRows.some((r) => showPhrase(r, pair[1]))));
+    const target = marked ? prompt.querySelector(".studio-video-mark") : row;
+    if (target) prompt.scrollTop = target.offsetTop - prompt.clientHeight / 3;  // 상자가 position: relative라 상자 기준 위치
+  }
+  for (const type of ["click", "keyup", "select"]) promptKo.addEventListener(type, highlight);
 
   // 단어 규칙으로 영어에 못 바꾼 줄 (AI 연결 전). 그 줄의 영어는 바뀌지 않았습니다.
   const untranslated = el("div", "studio-video-untranslated");
@@ -209,6 +265,46 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
   const genButtons = [makeImage, generate];
   makeImage.addEventListener("click", () => askGenerate("image"));
   generate.addEventListener("click", () => askGenerate("video"));
+  // 만들 수 있는 때: 고친 내용이 저장됐고 제품 사진이 있을 때 (사진은 필수)
+  const canGenerate = () => save.disabled && Boolean(doc.image);
+  genButtons.forEach((button) => { button.disabled = !canGenerate(); });
+
+  // 제품 사진 (필수): 희주 업로드 API(/media/api/upload)로 올리고, 문서 image에 새 버전으로 저장합니다.
+  const photoInput = el("input");
+  photoInput.type = "file";
+  photoInput.accept = "image/jpeg,image/png,image/webp";
+  photoInput.hidden = true;
+  const photoButton = el("button", "btn", doc.image ? "사진 바꾸기" : "사진 올리기");
+  photoButton.type = "button";
+  photoButton.addEventListener("click", () => photoInput.click());
+  const photoNote = el("span", "studio-hint", doc.image ? "" : "영상과 미리보기 이미지를 만들려면 제품 사진이 필요해요.");
+  const photoBox = el("div", "studio-video-photo");
+  if (doc.image) {
+    const thumb = el("img", "studio-video-photo-thumb");
+    thumb.src = doc.image.url;
+    thumb.alt = "제품 사진";
+    photoBox.append(thumb);
+  }
+  photoBox.append(photoButton, photoInput, photoNote);
+  photoInput.addEventListener("change", async () => {
+    const file = photoInput.files[0];
+    if (!file) return;
+    photoButton.disabled = true;
+    photoNote.textContent = "사진을 올리는 중…";
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const response = await fetch(apiBase.replace(/api$/, "media/api/upload"), { method: "POST", body: form });
+      const data = await response.json().catch(() => ({ ok: false, error: "서버 응답을 읽지 못했습니다." }));
+      if (!data.ok) throw new Error(data.error || "사진을 올리지 못했습니다.");
+      const next = collect();
+      next.image = { file_id: data.file_id, url: data.url };
+      await saveDoc(next);
+    } catch (error) {
+      photoNote.textContent = `사진을 올리지 못했어요. (${error.message})`;
+      photoButton.disabled = false;
+    }
+  });
 
   // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
   const maxScenes = Math.min(doc.duration, 12);
@@ -253,7 +349,9 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
   const generateBlock = el("div", "studio-video-generate");
   generateBlock.append(
     el("h3", "", "③ 영상 만들기"),
-    el("p", "studio-hint", "Kling 4.0 · 720p. 미리보기 이미지를 먼저 만들면 그 그림을 첫 장면으로 영상을 만듭니다. "
+    el("h4", "", "제품 사진 (필수)"),
+    photoBox,
+    el("p", "studio-hint", "Kling 4.0 · 720p. 제품 사진을 참고해 만들고, 미리보기 이미지를 먼저 만들면 그 그림을 첫 장면으로 씁니다. "
       + "누를 때마다 쓰일 크레딧·남은 크레딧을 먼저 보여 드리고, [실행]을 눌러야만 요청합니다."),
     actions(makeImage, generate),
     genStatus,
@@ -285,7 +383,7 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
       const status = doc[key]?.status;
       return status ? `${label}: ${STATUS_LABELS[status] || status}` : "";
     }).filter(Boolean);
-    genStatus.textContent = parts.join(" · ");
+    genStatus.textContent = parts.join(" · ") || (doc.image ? "" : "제품 사진을 먼저 올려 주세요.");
   }
 
   // 비용 확인 창 (base.css dialog). 실행할 수 없으면 이유를 보여 주고 [실행]을 끕니다.
@@ -298,6 +396,7 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
         el("li", "", `이번에 쓰일 크레딧: ${fmt(quote.credits)}`),
         el("li", "", `계정 남은 크레딧: ${fmt(quote.balance)} → 실행 후 약 ${fmt(quote.balance - quote.credits)}`),
         el("li", "", `오늘 대시보드 사용: ${fmt(quote.today_used)} / ${fmt(quote.daily_limit)}`),
+        el("li", "", "제품 사진 참고: 올린 사진"),
       );
       const run = el("button", "btn dark", "실행");
       run.type = "button";
@@ -343,7 +442,7 @@ export function renderVideo(root, doc, { onSave, onCommand, notice }) {
     } catch (error) {
       genStatus.textContent = `요청하지 못했습니다. (${error.message})`;
     } finally {
-      genButtons.forEach((button) => { button.disabled = !save.disabled; });
+      genButtons.forEach((button) => { button.disabled = !canGenerate(); });
     }
   }
 

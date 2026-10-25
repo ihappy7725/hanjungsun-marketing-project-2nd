@@ -12,7 +12,9 @@ const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
 const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
 const REVIEW_API = "/content_studio/media/api/review";
-const PROMPT_API = "/content_studio/media/api/cardnews-prompt";
+const BRIEF_API = "/content_studio/media/api/design-brief";
+const ASSISTANT_API = "/content_studio/media/api/design-assistant";
+const FIGMA_API = "/content_studio/media/api/figma-preview";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -91,6 +93,222 @@ function imageSize(file) {
   });
 }
 
+function field(label, input) {
+  const box = el("label", "studio-editor-field");
+  box.append(el("span", "", label), input);
+  return box;
+}
+
+function button(text, onClick, className = "btn") {
+  const node = el("button", className, text);
+  node.type = "button";
+  node.addEventListener("click", onClick);
+  return node;
+}
+
+function option(value, text, disabled = false) {
+  const node = el("option", "", text);
+  node.value = value;
+  node.disabled = disabled;
+  return node;
+}
+
+function selectBox(className, choices, value, onChange) {
+  const select = el("select", className);
+  for (const [key, text] of choices) select.append(option(key, text));
+  select.value = value;
+  select.addEventListener("change", () => onChange(select.value));
+  return select;
+}
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({ ok: false }));
+  if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
+  return data;
+}
+
+// ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
+// 편집기 안 창(openPrompt)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
+// extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
+// empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
+// 돌려주는 값: intro(제목·안내) · controls(조건·버튼) · results(제안·프롬프트) 묶음과, 순서대로 합친 nodes.
+function promptForm(doc, { onApply, isActive = () => true, extra = null, empty = null } = {}) {
+  const previous = doc.assistant?.options || {};
+  const wish = el("textarea");
+  wish.rows = 4;
+  wish.maxLength = 1500;
+  wish.value = previous.request || "";
+  wish.placeholder = "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
+  const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
+  const audience = el("input");
+  audience.value = previous.audience || "";
+  audience.maxLength = 1500;
+  audience.placeholder = "예: 다낭의 20~30대 디저트 소비자";
+  const mood = selectBox("", ["깔끔한 정보형", "사진 중심", "따뜻한 감성", "발랄하고 귀여운", "차분하고 고급스러운"].map((v) => [v, v]), previous.mood || "깔끔한 정보형", () => {});
+  const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
+  const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || doc.pages.length), () => {});
+  if (!pages.value) pages.value = "5";
+  const msg = el("p", "studio-hint");
+  msg.setAttribute("role", "status");
+  const result = el("textarea", "studio-editor-prompt-result");
+  result.rows = 10;
+  result.maxLength = 12000;
+  result.setAttribute("aria-label", "제작 프롬프트 — 수정 후 AI에 반영할 수 있습니다");
+  result.hidden = true;
+  const candidates = el("div", "studio-editor-candidates");
+  let proposals = [], selected = 0;
+  const settingsBox = el("fieldset", "studio-editor-brief");
+  const wide = (node) => { node.classList.add("is-wide"); return node; };  // 두 칸을 다 쓰는 칸
+  settingsBox.append(el("legend", "", "제작 조건"));
+  if (extra) settingsBox.append(wide(extra));
+  settingsBox.append(wide(field("제품·요청", wish)), wide(field("대상", audience)),
+    field("목적", purpose), field("분위기", mood), field("글의 양", density));
+  if (doc.kind === "cardnews") settingsBox.append(field("장수", pages));
+  const syncEmpty = () => { if (empty) empty.hidden = proposals.length > 0 || !result.hidden; };
+  const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
+    mood: mood.value, density: density.value, pages: doc.kind === "poster" ? 1 : Number(pages.value),
+    custom_prompt: result.hidden ? "" : result.value });
+  const copy = button("복사", async () => {
+    try {
+      await navigator.clipboard.writeText(result.value);
+      msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
+    } catch {
+      result.select();
+      msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
+    }
+  });
+  copy.hidden = true;
+  const apply = button("선택한 초안 적용", async () => {
+    if (!proposals[selected] || !onApply) return;
+    if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
+    apply.disabled = true;
+    try {
+      await onApply(proposals[selected].design);
+    } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
+    finally { apply.disabled = false; }
+  }, "btn dark");
+  apply.hidden = true;
+  // 제안 카드: 실제 모양 미리보기 + 문구(베트남어·한국어 뜻). 카드 아무 곳이나 누르면 고릅니다.
+  function showCandidates() {
+    candidates.replaceChildren(...proposals.map((item, index) => {
+      const isSelected = index === selected;
+      const card = el("section", `studio-editor-candidate${isSelected ? " is-selected" : ""}`);
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("summary") || selected === index) return;
+        selected = index;
+        result.value = item.prompt;
+        showCandidates();
+      });
+      const choose = button(`${isSelected ? "✓ " : ""}${item.name}`, () => {}, isSelected ? "btn dark" : "btn");
+      choose.setAttribute("aria-pressed", String(isSelected));
+      const words = el("details", "studio-editor-candidate-words");
+      words.open = item.pages.length === 1;
+      words.append(el("summary", "", item.pages.length > 1 ? `문구 보기 · ${item.pages.length}장` : "문구 보기"));
+      item.pages.forEach((page, pageNumber) => {
+        const vi = el("p", "", `${item.pages.length > 1 ? `${pageNumber + 1}장 · ` : ""}${page.title_vi}\n${page.body_vi}`);
+        vi.lang = "vi";
+        words.append(vi, el("p", "studio-hint", `${page.title_ko}\n${page.body_ko}`));
+      });
+      card.append(choose, item.design ? renderThumb(item.design) : "", words);
+      return card;
+    }));
+    syncEmpty();
+  }
+  function invalidate() {
+    proposals = [];
+    candidates.replaceChildren();
+    apply.hidden = true;
+    result.value = "";
+    result.hidden = copy.hidden = true;
+    syncEmpty();
+    msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
+  }
+  settingsBox.addEventListener("input", invalidate);
+  const brief = button("기본 프롬프트 보기 (무료)", async () => {
+    brief.disabled = make.disabled = settingsBox.disabled = true;
+    try {
+      const data = await postJson(BRIEF_API, { design: doc, options: { ...options(), custom_prompt: "" } });
+      proposals = [];
+      candidates.replaceChildren();
+      apply.hidden = true;
+      result.value = data.prompt;
+      result.hidden = copy.hidden = false;
+      syncEmpty();
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.ai_ready ? "AI 연결 설정 있음." : "유료 AI는 PM1의 API 키 설정 후 사용할 수 있습니다."}`;
+    } catch (error) { msg.textContent = error.message; }
+    finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
+  });
+  const make = button("AI 제안 3개 생성 (유료)", async () => {
+    if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
+    make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
+    candidates.inert = true;
+    msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
+    try {
+      const data = await postJson(ASSISTANT_API, { design: doc, options: options(), confirm_paid: true });
+      if (!isActive()) return;
+      proposals = data.proposals;
+      selected = 0;
+      result.value = proposals[0].prompt;
+      result.hidden = copy.hidden = apply.hidden = false;
+      showCandidates();
+      candidates.scrollIntoView({ block: "nearest" });
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.model} · 입력 ${data.usage.input_tokens || 0} / 출력 ${data.usage.output_tokens || 0} 토큰. 제안을 고르고 적용하세요.`;
+    } catch (error) { msg.textContent = error.message; }
+    finally {
+      make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
+      candidates.inert = false;
+    }
+  }, "btn dark");
+  const label = doc.kind === "poster" ? "포스터" : "카드뉴스";
+  const actions = el("div", "studio-editor-actions");
+  actions.append(brief, make);
+  const resultActions = el("div", "studio-editor-actions");
+  resultActions.append(apply, copy);
+  const intro = [el("h2", "", `${label} AI 초안`),
+    el("p", "studio-hint", "베트남어 문구와 한국어 뜻을 함께 만들어요. 스타일은 검토용 제안이에요."),
+    el("p", "studio-editor-cost", "유료 버튼은 누를 때마다 OpenAI 비용이 나가요 (시험 예산 약 $5, 자동 차단 없음). 사진 생성 비용은 없어요.")];
+  const controls = [settingsBox, actions, msg];
+  const results = [candidates, resultActions, result];
+  syncEmpty();
+  return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus() };
+}
+
+// ---------- 첫 화면 (작업이 아직 없을 때) ----------
+// sns.js(유진)가 포스터·카드뉴스 탭에 작업이 없을 때 부릅니다. 왼쪽 제작 조건 · 오른쪽 AI 초안 미리보기 두 칸이고,
+// 고른 초안은 onCreate(design, { product_id })로 새 작업에 저장합니다. (저장 실패 시 onCreate가 throw)
+// products: [{id, name_ko}] — 주면 제품 고르기 칸을 맨 앞에 넣습니다.
+export function renderStart(root, { kind, ratio, products = [], onCreate } = {}) {
+  // 빈 초안: 색은 designs.py 기본 색 조합을 쓰도록 비워 둡니다.
+  const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };
+  const [W, H] = sizeOf(base);
+  const label = kind === "poster" ? "포스터" : "카드뉴스";
+  const wrap = el("div", "studio-editor studio-editor-start");
+  const side = el("div", "studio-editor-start-form");
+  const main = el("section", "studio-editor-start-result");
+
+  // 결과가 나오기 전 오른쪽: 고른 비율의 빈 틀 + 다음에 할 일
+  const empty = el("div", "studio-editor-empty");
+  const frame = el("div", "studio-editor-empty-frame", ratio);
+  frame.style.aspectRatio = `${W} / ${H}`;
+  empty.append(frame, el("p", "", `왼쪽 조건을 고르고 [AI 제안 3개 생성]을 누르면 여기에 ${label} 초안 3개가 나타나요.`),
+    el("p", "studio-hint", "마음에 드는 초안을 골라 적용하면 바로 편집 화면으로 넘어가요."));
+
+  const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), products[0].id, () => {}) : null;
+  const form = promptForm(base, {
+    isActive: () => wrap.isConnected,
+    extra: product && field("제품", product),
+    empty,
+    onApply: (design) => onCreate(design, { product_id: product ? product.value : null }),
+  });
+  side.append(...form.intro, ...form.controls);
+  main.append(el("h3", "", "AI 초안 미리보기"), empty, ...form.results);
+  wrap.append(side, main);
+  root.replaceChildren(wrap);
+}
+
 // 지금 편집기에서 보고 있는 장 번호(0부터). sns.js가 대화로 고치기 요청에 page로 보냅니다.
 export function currentPage() {
   return pageIndex;
@@ -114,12 +332,15 @@ export function renderDesign(root, doc, { onSave } = {}) {
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
   const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
+  const translations = el("details", "studio-editor-translations");
+  translations.open = true;
   review.hidden = true;
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  wrap.append(pagesBar, bar, view, review);
+  wrap.append(pagesBar, bar, view, translations, review);
   root.replaceChildren(wrap);
+  renderExternal();
 
   const find = (id) => page.elements.find((item) => item.id === id);
   if (selectedId && !find(selectedId)) selectedId = null;
@@ -189,6 +410,89 @@ export function renderDesign(root, doc, { onSave } = {}) {
     if (editing) return;
     stage.style.background = page.bg;
     stage.replaceChildren(...page.elements.map(drawItem).filter(Boolean));
+    renderTranslations();
+  }
+
+  function renderTranslations() {
+    translations.replaceChildren(el("summary", "", `${pageIndex + 1}장 문구 · 한국어 뜻`));
+    if (draft.assistant) translations.append(el("p", "studio-hint", draft.assistant.notice));
+    const items = page.elements.filter((item) => item.type === "text" && item.text_ko);
+    if (!items.length) translations.append(el("p", "studio-hint", "AI 제안을 적용하면 베트남어 문구와 한국어 뜻을 함께 보여줍니다."));
+    for (const item of items) {
+      const row = el("div", "studio-editor-translation");
+      const vi = el("p", "", item.text);
+      vi.lang = "vi";
+      row.append(vi, el("p", "", item.text_ko));
+      if (item.translation_source !== item.text) row.append(el("p", "is-warn", "문구가 바뀌었습니다. 한국어 뜻을 다시 확인해 주세요."));
+      translations.append(row);
+    }
+  }
+
+  function figmaLink(value) {
+    try {
+      const url = new URL(value);
+      if (url.protocol === "https:" && ["figma.com", "www.figma.com"].includes(url.host)
+          && !url.username && !url.password && /^\/(design|file)\/[a-zA-Z0-9]+\//.test(url.pathname)
+          && /^\d+[-:]\d+$/.test(url.searchParams.get("node-id") || "")) return url.href;
+    } catch { /* 잘못된 링크는 열거나 저장하지 않습니다. */ }
+    return null;
+  }
+
+  function renderExternal() {
+    const panel = el("details", "studio-editor-external");
+    panel.open = Boolean(draft.external_figma);
+    panel.append(el("summary", "", "Figma에서 편집 · 외부 미리보기"),
+      el("p", "studio-hint", "Figma에서 편집한 프레임의 ‘선택 항목 링크’를 연결하세요. 자동 전송은 아직 연결되지 않았습니다. 원래 초안 PNG/JPG 받기는 위 버튼을 사용하세요."));
+    const input = el("input");
+    input.type = "url";
+    input.placeholder = "https://www.figma.com/design/…?node-id=…";
+    input.value = draft.external_figma?.url || "";
+    const msg = el("p", "studio-hint");
+    msg.setAttribute("role", "status");
+    const open = el("a", "btn", "Figma에서 편집");
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    const currentLink = figmaLink(draft.external_figma?.url);
+    open.hidden = !currentLink;
+    if (currentLink) open.href = currentLink;
+    const store = button("편집 링크 저장", async () => {
+      const url = figmaLink(input.value);
+      if (!url) { msg.textContent = "Figma 프레임의 선택 항목 링크를 확인해 주세요."; return; }
+      if (!onSave) return;
+      store.disabled = true;
+      const next = structuredClone(draft);
+      next.external_figma = url === draft.external_figma?.url ? { ...draft.external_figma } : { url };
+      try { await onSave(next); } catch { msg.textContent = "저장하지 못했습니다. 다시 시도해 주세요."; }
+      finally { store.disabled = false; }
+    });
+    const refresh = button("미리보기 새로고침", async () => {
+      const url = figmaLink(input.value);
+      if (!url) { msg.textContent = "Figma 선택 항목 링크를 먼저 넣어 주세요."; return; }
+      refresh.disabled = store.disabled = true;
+      msg.textContent = "Figma 결과를 불러오는 중…";
+      try {
+        const result = await postJson(FIGMA_API, { url });
+        if (!wrap.isConnected || !onSave) return;
+        const next = structuredClone(draft);
+        next.external_figma = { url, preview_url: result.preview_url, refreshed_at: result.refreshed_at };
+        await onSave(next);
+      } catch (error) { msg.textContent = error.message; }
+      finally { refresh.disabled = store.disabled = false; }
+    });
+    input.addEventListener("input", () => { open.hidden = input.value !== draft.external_figma?.url || !currentLink; });
+    panel.append(field("Figma 선택 항목 링크", input), store, open, refresh, msg);
+    const external = draft.external_figma;
+    if (currentLink && external?.preview_url?.startsWith("https://")) {
+      const img = el("img");
+      img.src = external.preview_url;
+      img.alt = "Figma에서 마지막으로 새로고침한 결과";
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", () => { img.hidden = true; msg.textContent = "이미지를 불러오지 못했습니다. 미리보기를 새로고침해 주세요."; });
+      const date = new Date(external.refreshed_at);
+      panel.append(el("p", "studio-hint", `외부 편집 결과 · 마지막 반영: ${Number.isNaN(date.getTime()) ? "확인 필요" : date.toLocaleString("ko-KR")}`), img,
+        el("p", "studio-hint", "위 편집기와 다운로드는 대시보드 원본입니다. 외부 수정 결과가 원본 요소에 자동 반영되지는 않습니다."));
+    }
+    wrap.append(panel);
   }
 
   function fit() {
@@ -320,12 +624,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
   }
 
   // ---------- 편집 막대 ----------
-  function field(label, input) {
-    const box = el("label", "studio-editor-field");
-    box.append(el("span", "", label), input);
-    return box;
-  }
-
   function colorInput(value, onChange) {
     const input = el("input");
     input.type = "color";
@@ -334,21 +632,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return input;
   }
 
-  function button(text, onClick, className = "btn") {
-    const node = el("button", className, text);
-    node.type = "button";
-    node.addEventListener("click", onClick);
-    return node;
-  }
-
   const status = el("span", "studio-hint");
-
-  function option(value, text, disabled = false) {
-    const node = el("option", "", text);
-    node.value = value;
-    node.disabled = disabled;
-    return node;
-  }
 
   // 글꼴 목록: 묶음별 웹글꼴 + 맨 아래 내 PC 글꼴 (README 3-5)
   function fontSelect(item) {
@@ -401,14 +685,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return select;
   }
 
-  function selectBox(className, choices, value, onChange) {
-    const select = el("select", className);
-    for (const [key, text] of choices) select.append(option(key, text));
-    select.value = value;
-    select.addEventListener("change", () => onChange(select.value));
-    return select;
-  }
-
   // [추가] 메뉴: 고르면 바로 추가하고 다시 "＋ 추가"로 돌아갑니다.
   function addSelect() {
     const select = selectBox("studio-editor-add",
@@ -428,6 +704,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
   function updateBar() {
     const item = find(selectedId);
     const tools = [];
+    if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
     tools.push(addSelect());
 
     if (!item) {
@@ -491,7 +768,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
     const multi = draft.pages.length > 1;
     tools.push(el("span", "studio-editor-spacer"), status, button("검수", runReview));
-    if (draft.kind === "cardnews") tools.push(button("프롬프트 만들기", openPrompt));
+    tools.push(button("프롬프트 · AI 초안", openPrompt));
     tools.push(
       button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
       button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
@@ -509,15 +786,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
     }
   }
 
-  async function postJson(url, body) {
-    const res = await fetch(url, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => ({ ok: false }));
-    if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
-    return data;
-  }
-
   // ---------- 광고 표현 검수 (README 6장) ----------
   // 모든 장의 글을 현지 시장 분석 탭 기준으로 검사합니다. 참고 안내이며 법적 판단이 아닙니다.
   async function runReview() {
@@ -532,6 +800,20 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
   function renderReview(data) {
     const nodes = [el("h3", "", "광고 표현 검수")];
+    const guide = data.guidelines || {};
+    nodes.push(el("p", "studio-hint", `현지 시장 분석 자료 · 상태: ${guide.status === "confirmed" ? "확정" : "검토 중"} · 검토일: ${guide.reviewed_at || "미등록"}`));
+    for (const rule of guide.prompt_rules || []) nodes.push(el("p", "", rule));
+    for (const item of [...(guide.visual_cautions || []), ...(guide.required_notices || [])]) {
+      if (item.rule) nodes.push(el("p", "is-warn", item.rule));
+    }
+    for (const source of guide.sources || []) {
+      if (!/^https?:\/\//.test(source.url || "")) continue;
+      const link = el("a", "", source.title || "기준 출처");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      nodes.push(link);
+    }
     if (!data.ready) {
       nodes.push(el("p", "is-warn",
         "검수 기준이 아직 준비되지 않았습니다. (현지 시장 분석 탭에서 준비 중) 걸린 표현이 없어도 '문제 없음'이 아닙니다."));
@@ -564,54 +846,24 @@ export function renderDesign(root, doc, { onSave } = {}) {
     review.replaceChildren(...nodes);
   }
 
-  // ---------- 카드뉴스 프롬프트 만들기 ----------
-  // 원하는 바 + 기본 지침 + 템플릿 + 지금 초안으로 프롬프트를 만들고, 복사해서 ChatGPT·Canva에 붙여 넣어 씁니다.
+  // 기존 작업 안에서 AI 제안을 적용하므로 유진 담당 생성·저장 경로는 바꾸지 않습니다.
   function openPrompt() {
     const dialog = el("dialog", "studio-editor-prompt");
     const close = button("×", () => dialog.close(), "close");
     close.setAttribute("aria-label", "닫기");
-    const wish = el("textarea");
-    wish.rows = 4;
-    wish.placeholder = "예: 베트남 여성의 날 선물로 망고스틴 찹쌀떡 소개, 20~30대 여성, 따뜻하고 귀여운 느낌";
-    const language = selectBox("", [["vi", "베트남어"], ["ko", "한국어"], ["vi_ko", "베트남어 + 한국어 번역"]], "vi", () => {});
-    const msg = el("p", "studio-hint");
-    const result = el("textarea", "studio-editor-prompt-result");
-    result.rows = 14;
-    result.readOnly = true;
-    result.hidden = true;
-    const copy = button("복사", async () => {
-      try {
-        await navigator.clipboard.writeText(result.value);
-        msg.textContent = "복사했어요. ChatGPT·Canva에 붙여 넣어 쓰세요.";
-      } catch {
-        result.select();
-        msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
-      }
+    const form = promptForm(draft, {
+      isActive: () => wrap.isConnected,
+      onApply: async (design) => {
+        if (!onSave) return;
+        await onSave(design);
+        dialog.close();
+      },
     });
-    copy.hidden = true;
-    const make = button("프롬프트 만들기", async () => {
-      if (!wish.value.trim()) { msg.textContent = "원하는 내용을 입력해 주세요."; return; }
-      make.disabled = true;
-      msg.textContent = "만드는 중…";
-      try {
-        const data = await postJson(PROMPT_API, { request: wish.value, design: draft, language: language.value });
-        result.value = data.prompt;
-        result.hidden = copy.hidden = false;
-        msg.textContent = data.rules_ready ? "" : "현지 시장 분석 탭의 기본 지침이 아직 없어 '준비 중'으로 들어갔어요.";
-      } catch (error) {
-        msg.textContent = error.message;
-      } finally {
-        make.disabled = false;
-      }
-    }, "btn dark");
-
-    dialog.append(close, el("h2", "", "카드뉴스 프롬프트 만들기"),
-      el("p", "studio-hint", "원하는 바를 적으면 기본 지침·템플릿·지금 초안을 합쳐 프롬프트를 만들어요."),
-      field("원하는 내용", wish), field("결과 언어", language), make, msg, result, copy);
+    dialog.append(close, ...form.nodes);
     dialog.addEventListener("close", () => dialog.remove());
     wrap.append(dialog);
     dialog.showModal();
-    wish.focus();
+    form.focus();
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
@@ -782,22 +1034,52 @@ async function paint(ctx, item, W, H) {
   }
 }
 
-// 문서 한 장을 원본 크기(예: 4:5 = 1080×1350)로 그려 PNG/JPG로 내려받습니다.
-export async function exportImage(doc, type = "png", pageIndex = 0) {
+// 문서 한 장을 canvas에 그립니다. scale: 원본 대비 배율(썸네일은 작게).
+// lenient: 사진을 못 불러와도 멈추지 않고 나머지를 그립니다(썸네일용). 내려받기는 실패를 알려야 해서 false.
+async function drawPage(doc, pageIndex = 0, scale = 1, lenient = false) {
   const [W, H] = sizeOf(doc);
   const page = doc.pages[pageIndex];
   const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
   const ctx = canvas.getContext("2d");
+  ctx.scale(scale, scale);
   await loadFontsFor(page);
   if (document.fonts) await document.fonts.ready;
 
   ctx.fillStyle = page.bg || "#ffffff";  // JPG는 투명이 없어 배경을 먼저 채웁니다.
   ctx.fillRect(0, 0, W, H);
   for (const item of [...page.elements].sort((a, b) => (a.z || 0) - (b.z || 0))) {
-    await paint(ctx, item, W, H);
+    try {
+      await paint(ctx, item, W, H);
+    } catch (error) {
+      if (!lenient) throw error;
+    }
   }
+  return canvas;
+}
+
+// 썸네일: 문서 한 장을 작게 그린 canvas. 바로 돌려주고, 글꼴·사진을 받은 뒤 그림을 채웁니다.
+// sns.js(유진) 첫 화면 내 작업 카드와 AI 제안 카드가 씁니다.
+const THUMB_SCALE = 0.4;
+export function renderThumb(doc, pageIndex = 0) {
+  const canvas = el("canvas", "studio-editor-thumb");
+  const [W, H] = sizeOf(doc || {});
+  canvas.width = Math.round(W * THUMB_SCALE);
+  canvas.height = Math.round(H * THUMB_SCALE);
+  canvas.style.aspectRatio = `${W} / ${H}`;
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", "디자인 미리보기");
+  if (!doc?.pages?.[pageIndex]) return canvas;
+  drawPage(doc, pageIndex, THUMB_SCALE, true)
+    .then((drawn) => canvas.getContext("2d").drawImage(drawn, 0, 0))
+    .catch(() => canvas.classList.add("is-broken"));
+  return canvas;
+}
+
+// 문서 한 장을 원본 크기(예: 4:5 = 1080×1350)로 그려 PNG/JPG로 내려받습니다.
+export async function exportImage(doc, type = "png", pageIndex = 0) {
+  const canvas = await drawPage(doc, pageIndex);
 
   const mime = type === "jpg" ? "image/jpeg" : "image/png";
   const blob = await new Promise((resolve, reject) => {

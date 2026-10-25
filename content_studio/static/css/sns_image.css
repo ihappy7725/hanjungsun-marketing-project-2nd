@@ -252,3 +252,223 @@
 .studio-editor .studio-editor-prompt button[hidden] {
   display: none;
 }
+
+/* ---------- 새로 만들기 첫 화면 (renderStart): 왼쪽 조건 · 오른쪽 미리보기 [희주] ---------- */
+.studio-editor.studio-editor-start {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: var(--space-9);
+  align-items: start;
+  padding-bottom: var(--space-8);
+}
+
+.studio-editor .studio-editor-start-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.studio-editor .studio-editor-start-form h2 {
+  margin: 0;
+  font-size: var(--fs-subheading);
+  font-weight: 600;
+}
+
+.studio-editor .studio-editor-start-form > p,
+.studio-editor .studio-editor-start-result h3 {
+  margin: 0;
+}
+
+.studio-editor .studio-editor-start-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-height: 100%;
+  padding: var(--space-8);
+  background: var(--paper);
+  border-radius: var(--radius);
+}
+
+.studio-editor .studio-editor-start-result h3 {
+  font-size: var(--fs-panel-title);
+  font-weight: 600;
+}
+
+/* 유료 안내: 눈에 띄되 작게 */
+.studio-editor .studio-editor-cost {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--gold);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  line-height: var(--line-height);
+}
+
+/* 제작 조건: 두 칸 격자, 넓은 칸(is-wide)은 한 줄 전체 */
+.studio-editor .studio-editor-brief {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6) var(--space-5);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.studio-editor .studio-editor-brief:disabled {
+  opacity: .6;
+}
+
+.studio-editor .studio-editor-brief legend {
+  margin-bottom: var(--space-5);
+  padding: 0;
+  font-weight: 600;
+}
+
+.studio-editor .studio-editor-brief .studio-editor-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--fs-min);
+}
+
+.studio-editor .studio-editor-brief .studio-editor-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+/* 입력 칸·선택 상자 모양 통일 */
+.studio-editor .studio-editor-brief input,
+.studio-editor .studio-editor-brief select,
+.studio-editor .studio-editor-brief textarea,
+.studio-editor .studio-editor-prompt-result {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--control-height);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--control-bg);
+  color: var(--ink);
+  font-size: var(--fs-body);
+}
+
+.studio-editor .studio-editor-brief textarea,
+.studio-editor .studio-editor-prompt-result {
+  line-height: var(--line-height);
+  resize: vertical;
+}
+
+.studio-editor .studio-editor-brief input:focus,
+.studio-editor .studio-editor-brief select:focus,
+.studio-editor .studio-editor-brief textarea:focus {
+  border-color: var(--brown);
+  outline: none;
+}
+
+.studio-editor .studio-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.studio-editor .studio-editor-actions:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
+.studio-editor .studio-editor-start-form .studio-editor-actions .btn {
+  flex: 1 1 0;
+}
+
+.studio-editor .studio-editor-start-form [role="status"]:empty {
+  display: none;
+}
+
+/* 결과 전: 고른 비율의 빈 틀 */
+.studio-editor .studio-editor-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+.studio-editor .studio-editor-empty p {
+  margin: 0;
+}
+
+.studio-editor .studio-editor-empty-frame {
+  display: grid;
+  place-items: center;
+  width: min(240px, 60%);
+  margin-bottom: var(--space-5);
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--muted);
+  font-size: var(--fs-panel-title);
+}
+
+/* AI 제안 카드: 미리보기 + 문구 */
+.studio-editor .studio-editor-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-6);
+}
+
+.studio-editor .studio-editor-candidates:empty {
+  display: none;
+}
+
+.studio-editor .studio-editor-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--control-bg);
+  cursor: pointer;
+}
+
+.studio-editor .studio-editor-candidate:hover {
+  border-color: var(--line-strong);
+}
+
+.studio-editor .studio-editor-candidate.is-selected {
+  border-color: var(--brown);
+}
+
+.studio-editor .studio-editor-candidate > .btn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-editor .studio-editor-candidate-words summary {
+  color: var(--muted);
+  font-size: var(--fs-min);
+  cursor: pointer;
+}
+
+.studio-editor .studio-editor-candidate-words p {
+  margin: var(--space-3) 0 0;
+  white-space: pre-line;
+  line-height: var(--line-height);
+}
+
+/* 썸네일 canvas (renderThumb): 틀 안에 비율대로 맞춥니다 */
+.studio-editor .studio-editor-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  box-shadow: var(--shadow-overlay);
+}
+
+@media (max-width: 1100px) {
+  .studio-editor.studio-editor-start {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -4,9 +4,15 @@ API는 /content_studio/api/... 아래에 둡니다.
 포스터·카드뉴스를 대화로 고치는 규칙은 designs.py(희주)에 있고, 여기서는 부르기만 합니다.
 """
 import copy
+import json
+import os
+import re
+import threading
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
-from flask import jsonify, render_template, request
+from flask import current_app, g, jsonify, render_template, request
 
 from platform_core.extensions import db
 
@@ -15,7 +21,7 @@ from . import higgsfield
 from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import PRODUCTS, get_product
-from .videos import make_draft, normalize_scenes, refresh_prompts, revise_draft
+from .videos import ai_messages, apply_ai, make_draft, normalize_scenes, phrase_pairs, refresh_prompts, revise_draft
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
@@ -28,7 +34,9 @@ def index():
     tab = request.args.get("tab", "poster")
     if tab not in TABS:
         tab = "poster"
-    return render_template("content_studio/content_studio_index.html", tab=tab)
+    # 포스터·카드뉴스 첫 화면(희주 renderStart)의 제품 고르기 칸에 쓰는 목록
+    products = [{"id": item["id"], "name_ko": item["name_ko"]} for item in PRODUCTS]
+    return render_template("content_studio/content_studio_index.html", tab=tab, products=products)
 
 
 # ---------- 도우미 ----------
@@ -53,8 +61,12 @@ def _chat_info(chat):
 
 def _design_state(chat):
     design = chat.design
+    doc = design.doc if design else None
+    if doc and chat.kind == "video":
+        # 한국어 프롬프트에서 누른 표현을 영어에서 강조할 대응표. 화면에 보낼 때만 붙이고 저장하지 않습니다.
+        doc = {**doc, "phrase_pairs": phrase_pairs(doc)}
     return {
-        "design": design.doc if design else None,
+        "design": doc,
         "can_undo": bool(design and design.can_undo),
         "can_redo": bool(design and design.can_redo),
     }
@@ -74,9 +86,71 @@ def _find_product(product_id, text):
     return None
 
 
+# ---------- AI (OpenAI) ----------
+# 키는 KPI와 같은 OPENAI_API_KEY (서버에서만 사용, 앱은 OS 환경변수만 읽음). 모델·한도는 README 10장 결정.
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_MODEL = "gpt-4o-mini"
+AI_DAILY_LIMIT = 200  # 하루(한국 시간) 호출 수. 서버 메모리에서 세므로 서버를 다시 켜면 0부터 셉니다.
+_ai_usage = {"day": None, "count": 0}
+_ai_lock = threading.Lock()
+
+
+def _ai_take_turn():
+    """오늘 한도 안이면 1회 쓰고 True."""
+    today = datetime.now(KST).date()
+    with _ai_lock:
+        if _ai_usage["day"] != today:
+            _ai_usage.update(day=today, count=0)
+        if _ai_usage["count"] >= AI_DAILY_LIMIT:
+            return False
+        _ai_usage["count"] += 1
+        return True
+
+
+def _openai_json(messages):
+    """OpenAI에 JSON 답을 요청합니다. (결과, 실패 이유) — 실패해도 예외를 내지 않습니다."""
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    body = {"model": OPENAI_MODEL, "temperature": 0.4, "response_format": {"type": "json_object"}, "messages": messages}
+    req = urllib.request.Request(
+        OPENAI_URL,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=40) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        return json.loads(payload["choices"][0]["message"]["content"]), None
+    except urllib.error.HTTPError as exc:
+        hint = {401: "키 확인 필요", 429: "사용 한도·결제 상태 확인 필요", 404: "모델 이름 확인 필요"}.get(exc.code, "")
+        return None, f"OpenAI HTTP {exc.code}" + (f", {hint}" if hint else "")
+    except (urllib.error.URLError, TimeoutError) as exc:
+        return None, f"OpenAI 연결 실패({exc.__class__.__name__})"
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None, "OpenAI 응답 형식 오류"
+
+
 def _call_ai(kind, text, doc):
-    """AI(GPT) 연결 자리 (README 2장). 연결 전에는 None을 돌려주고, 단어 규칙(videos.py)을 씁니다."""
-    return None
+    """AI로 요청을 이해합니다 (README 6장). 지금은 영상만 연결했고, 포스터·카드뉴스는 None(단어 규칙).
+    영상: 이해했으면 (새 문서, 바꾼 것 목록), 아니면 None → 부른 쪽이 단어 규칙(videos.py)을 씁니다.
+    키는 있는데 쓰지 못했으면(한도·실패) g.ai_note에 이유를 남겨 답장에 붙입니다."""
+    if kind != "video" or doc is None or not os.environ.get("OPENAI_API_KEY", "").strip():
+        return None
+    if not _ai_take_turn():
+        g.ai_note = f"오늘 AI 사용 한도({AI_DAILY_LIMIT}회)를 넘었어요"
+        return None
+    data, error = _openai_json(ai_messages(doc, text))
+    result = apply_ai(doc, data) if error is None else None
+    if result is None:
+        g.ai_note = error or "AI 답을 읽지 못했어요"
+        current_app.logger.warning("콘텐츠 스튜디오 AI 실패: %s", g.ai_note)
+        return None
+    return result if result[1] else None
+
+
+def _with_ai_note(reply):
+    note = g.pop("ai_note", None)
+    return f"{reply} (AI를 쓰지 못해 단어 규칙으로 처리했어요: {note})" if note else reply
 
 
 # ---------- 대화 ----------
@@ -116,7 +190,8 @@ def post_message():
                 duration = int(body.get("duration") or 5)
             except (TypeError, ValueError):
                 duration = 5
-            doc = _call_ai(kind, text, None) or make_draft(
+            # 단어 규칙 초안을 먼저 만들고, AI가 있으면 요청에 맞게 다듬습니다.
+            doc = make_draft(
                 text,
                 ratio=ratio,
                 duration=duration,
@@ -124,6 +199,9 @@ def post_message():
                 product=product["name_ko"],
                 event=body.get("event"),
             )
+            ai = _call_ai(kind, text, doc)
+            if ai:
+                doc = ai[0]
         # 기념일 ID가 아직 없어(현지 시장 분석 get_events 준비 중) 이름을 그대로 저장합니다.
         chat = SnsChat(kind=kind, title=text[:40], product_id=product["id"], event_id=body.get("event"),
                        file_id=body.get("file_id"))
@@ -135,7 +213,7 @@ def post_message():
         elif kind == "cardnews":
             reply = f"카드뉴스 {len(doc['pages'])}장 초안을 만들었어요. 위 장 번호로 장을 옮기며 고칠 수 있어요."
         else:
-            reply = f"{len(doc['scenes'])}컷 초안을 만들었어요. 프롬프트와 자막을 검토해 주세요."
+            reply = _with_ai_note(f"{len(doc['scenes'])}컷 초안을 만들었어요. 프롬프트와 자막을 검토해 주세요.")
     else:
         current = chat.design.doc if chat.design else None
         if current is None:
@@ -152,9 +230,8 @@ def post_message():
             else:
                 reply = f"어떻게 고칠지 알아듣지 못했어요. {DESIGN_REVISE_HINT}"
         else:
-            doc = _call_ai(kind, text, current)
-            if doc is None:
-                doc, changes = revise_draft(current, text)
+            ai = _call_ai(kind, text, current)
+            doc, changes = ai if ai else revise_draft(current, text)
             if changes:
                 chat.design.push(doc)
                 reply = "바꿨어요: " + ", ".join(changes)
@@ -162,12 +239,64 @@ def post_message():
                     reply += ". 영상이 바뀌어 프롬프트를 다시 검토해 주세요."
             else:
                 reply = f"어떻게 고칠지 알아듣지 못했어요. {REVISE_HINT}"
+            reply = _with_ai_note(reply)
 
     chat.messages.append(SnsMessage(role="user", text=text))
     chat.messages.append(SnsMessage(role="assistant", text=reply))
     _touch(chat)
     db.session.commit()
     return jsonify({"ok": True, "chat_id": chat.id, "reply": reply, "changes": changes, **_design_state(chat), "demo": True})
+
+
+# ---------- 첫 화면 AI 초안으로 새 작업 (포스터·카드뉴스) ----------
+# 희주 편집기(sns_editor.js renderStart)가 만든 초안을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
+DESIGN_RATIOS = {"poster": ("4:5", "9:16", "16:9", "1:1"), "cardnews": ("4:5", "1:1")}
+DESIGN_MAX_BYTES = 160 * 1024
+TAB_LABELS = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"}
+
+
+def _check_design(kind, design):
+    """첫 초안 형식 검사(README 8장 요소 JSON). 틀리면 이유, 맞으면 None."""
+    if not isinstance(design, dict) or design.get("kind") != kind:
+        return "초안(design)의 탭 종류가 올바르지 않습니다."
+    if design.get("ratio") not in DESIGN_RATIOS[kind]:
+        return f"{TAB_LABELS[kind]} 비율은 {' · '.join(DESIGN_RATIOS[kind])}만 쓸 수 있습니다."
+    pages = design.get("pages")
+    if not isinstance(pages, list) or not pages or not all(
+            isinstance(page, dict) and isinstance(page.get("elements"), list) for page in pages):
+        return "초안의 장(pages) 형식이 올바르지 않습니다."
+    if len(json.dumps(design, ensure_ascii=False).encode("utf-8")) > DESIGN_MAX_BYTES:
+        return "초안이 너무 큽니다. (160KB 이하)"
+    return None
+
+
+def _design_title(kind, design, product):
+    """작업 제목: 1장의 제목 글자(40자), 없으면 '찹쌀떡 포스터'처럼 제품 + 탭 이름."""
+    for item in design["pages"][0]["elements"]:
+        if isinstance(item, dict) and item.get("role") == "title" and isinstance(item.get("text"), str) and item["text"].strip():
+            return item["text"].strip()[:40]
+    return f"{product['name_ko']} {TAB_LABELS[kind]}"
+
+
+@bp.route("/api/chats", methods=["POST"])
+def create_chat():
+    body = request.get_json(silent=True) or {}
+    kind, design = body.get("kind"), body.get("design")
+    if kind not in DESIGN_KINDS:
+        return _error("포스터·카드뉴스만 초안으로 새 작업을 만들 수 있습니다.")
+    problem = _check_design(kind, design)
+    if problem:
+        return _error(problem)
+    product = get_product(body.get("product_id"))
+    if product is None:
+        return _error("제품을 골라 주세요.")
+    chat = SnsChat(kind=kind, title=_design_title(kind, design, product), product_id=product["id"])
+    chat.design = SnsDesign()
+    chat.design.push(design)
+    db.session.add(chat)
+    db.session.commit()
+    return jsonify({"ok": True, "chat_id": chat.id, "reply": "", "changes": [], **_design_state(chat),
+                    "demo": bool(design.get("demo", True))})
 
 
 # ---------- 이전 작업 ----------
@@ -238,7 +367,12 @@ def save_design(chat_id):
         return _error("이 작업과 결과물의 탭 종류가 다릅니다.")
     if chat.design is None:
         chat.design = SnsDesign()
+    doc.pop("phrase_pairs", None)  # 화면용 대응표는 저장하지 않습니다.
     if chat.kind == "video":
+        photo = _clean_photo(doc.get("image"))
+        if photo is False:
+            return _error("제품 사진 형식이 올바르지 않습니다. 다시 올려 주세요.")
+        doc["image"] = photo
         # 직접 고친 프롬프트(custom)·장면이 바뀌어 영상이 달라지면 다시 검토가 필요합니다.
         before = chat.design.doc
         try:
@@ -301,12 +435,35 @@ def _target():
     return target if target in TARGETS else None
 
 
+# 제품 사진: 희주 업로드 API(/media/api/upload)로 올린 파일. 문서 image = {file_id, url}. 영상·미리보기를 만들 때 필수입니다.
+PHOTO_URL = re.compile(r"^/content_studio/media/uploads/([0-9a-f]{32})\.(jpg|png|webp)$")
+PHOTO_REQUIRED = "제품 사진을 먼저 올려 주세요."
+
+
+def _clean_photo(image):
+    """저장 전 검사: None이거나 서버가 만든 업로드 주소만. 맞으면 {file_id, url}, 틀리면 False."""
+    if not image:
+        return None
+    match = PHOTO_URL.match(image.get("url", "")) if isinstance(image, dict) else None
+    return {"file_id": match.group(1), "url": image["url"]} if match else False
+
+
+def _photo_path(doc):
+    """문서의 제품 사진 → 서버의 파일 경로(Higgsfield CLI가 직접 올림). 없거나 파일이 사라졌으면 None."""
+    match = PHOTO_URL.match((doc.get("image") or {}).get("url", "")) if isinstance(doc.get("image"), dict) else None
+    if not match:
+        return None
+    path = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio", f"{match.group(1)}.{match.group(2)}")
+    return path if os.path.isfile(path) else None
+
+
 def _gen_args(doc, target):
+    photo = _photo_path(doc)
     if target == "image":
-        return higgsfield.image_args(doc)
+        return higgsfield.image_args(doc, photo=photo)
     keyframe = doc.get("keyframe") or {}
     start = keyframe.get("request_id") if keyframe.get("status") == higgsfield.DONE else None
-    return higgsfield.video_args(doc, start_image=start)
+    return higgsfield.video_args(doc, start_image=start, photo=photo)
 
 
 def _quote(doc, target):
@@ -347,6 +504,8 @@ def generate_quote(chat_id):
         return _error("영상 작업을 찾을 수 없습니다.", 404)
     if target is None:
         return _error("만들 것(target: image/video)이 올바르지 않습니다.")
+    if not _photo_path(chat.design.doc):
+        return _error(PHOTO_REQUIRED)
     try:
         return jsonify({"ok": True, "quote": _quote(chat.design.doc, target)})
     except higgsfield.HiggsfieldError as error:
@@ -363,6 +522,8 @@ def generate(chat_id):
         return _error("만들 것(target: image/video)이 올바르지 않습니다.")
     confirmed = (request.get_json(silent=True) or {}).get("credits")
     doc = chat.design.doc
+    if not _photo_path(doc):
+        return _error(PHOTO_REQUIRED)
     try:
         quote = _quote(doc, target)
         if confirmed is None or float(confirmed) != quote["credits"]:

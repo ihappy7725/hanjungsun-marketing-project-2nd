@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api">
+<div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api" data-products='{{ products|tojson }}'>
   <header class="pagehead">
     <div>
       <h1>콘텐츠 스튜디오</h1>
@@ -39,14 +39,14 @@
 
     <div class="panelhead studio-recs-head">
       <h2>지금 만들면 좋은 {{ tab_labels[tab] }}</h2>
-      <span class="studio-hint">기념일 D-day · 제철 · 신메뉴 기준</span>
+      <span class="studio-hint">기념일 D-day · 제철 · 신메뉴 기준 <span class="demo">DEMO · 예시 데이터</span></span>
     </div>
     <div class="studio-recs" data-role="recs"></div>
   </section>
 
   {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 + 아래 한 줄 입력 (README 1장 ③④) #}
-  <section class="studio-work" data-role="work-screen" hidden>
-    <aside class="studio-history" data-role="history" hidden>
+  <section class="studio-work has-history" data-role="work-screen" hidden>
+    <aside class="studio-history" data-role="history">
       <div class="panelhead"><h2>이전 작업</h2></div>
       <ul class="studio-history-list" data-role="history-list"></ul>
     </aside>

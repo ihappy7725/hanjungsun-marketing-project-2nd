@@ -38,7 +38,22 @@
 .studio-page .studio-card:hover { border-color: var(--line-strong); }
 .studio-page .studio-card:has([data-ratio="16:9"]) { flex-basis: 400px; }
 .studio-page .studio-card-body { padding: var(--space-4) var(--space-5) var(--space-5); }
-.studio-page .studio-card-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.studio-page .studio-card-title { margin: 0; overflow: hidden; font-size: var(--fs-body); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+
+/* 포스터·카드뉴스: 같은 크기 틀(4:5) 안에 실제 미리보기를 비율대로 맞춰 카드 높이를 맞춥니다 */
+.studio-page .studio-card.is-design { overflow: hidden; }
+.studio-page .studio-preview { position: relative; aspect-ratio: 4 / 5; background: var(--line-soft); }
+.studio-page .studio-preview .studio-editor-thumb {
+  position: absolute;
+  inset: var(--space-6);
+  width: calc(100% - 2 * var(--space-6));
+  height: calc(100% - 2 * var(--space-6));
+  object-fit: contain;
+  filter: drop-shadow(var(--shadow-overlay));
+}
+.studio-page .studio-preview .studio-editor-thumb.is-broken { visibility: hidden; }
+.studio-page .studio-preview .badge { position: absolute; top: 10px; left: 10px; z-index: 1; }
+.studio-page .studio-card.is-design:hover .studio-preview { background: var(--line); }
 .studio-page .studio-card-meta { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--fs-min); }
 
 /* 미리보기 자리표시 (실제 디자인 축소 미리보기는 희주 sns_editor.js 연결 후 교체) */
@@ -69,25 +84,40 @@
 .studio-page .studio-scenes li { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .studio-page .studio-scenes b { margin-right: var(--space-2); font-family: var(--font-serif); font-weight: 400; }
 
-/* 추천 카드 (최대 6개) */
-.studio-page .studio-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-5); }
+/* 추천 카드 (최대 6개): 왼쪽 큰 표시(D-day · 제철 · NEW) + 제목 · 날짜 · 컨셉 */
+.studio-page .studio-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-6); }
 .studio-page .studio-rec {
   display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-5);
+  align-items: stretch;
+  gap: var(--space-6);
+  padding: var(--space-6);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--paper);
+  background: var(--control-bg);
   text-align: left;
 }
-.studio-page .studio-rec:hover { border-color: var(--line-strong); }
-.studio-page .studio-rec .studio-thumb { flex: 0 0 64px; padding: var(--space-4); }
-.studio-page .studio-rec .studio-thumb strong { font-size: var(--fs-min); }
-.studio-page .studio-rec-text { min-width: 0; }
-.studio-page .studio-rec-text p { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-rec:hover { border-color: var(--brown); }
+.studio-page .studio-rec-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 76px;
+  min-height: 76px;
+  border-radius: var(--radius);
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-family: var(--font-title);
+  font-size: var(--fs-subheading);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.studio-page .studio-rec.is-dday .studio-rec-mark { background: var(--badge-red-bg); color: var(--badge-red-ink); }
+.studio-page .studio-rec.is-season .studio-rec-mark { background: var(--badge-green-bg); color: var(--badge-green-ink); }
+.studio-page .studio-rec-text { display: flex; flex-direction: column; min-width: 0; }
 .studio-page .studio-rec-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
-.studio-page .studio-rec-text .studio-rec-concept { margin-top: var(--space-3); color: var(--ink); line-height: var(--line-height); }
+.studio-page .studio-rec-note { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-rec-concept { margin: var(--space-4) 0 0; color: var(--ink); font-size: var(--fs-min); line-height: var(--line-height); }
+.studio-page .studio-rec-go { margin-top: auto; padding-top: var(--space-4); color: var(--brown); font-size: var(--fs-min); font-weight: 600; }
+/* 영상 검토 상태 배지 (sns_video.js) */
 .studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
 
@@ -226,6 +256,15 @@
 .studio-page .studio-video-input { width: 100%; font-family: var(--font-vi); }
 /* 영어 프롬프트: 읽기 전용이지만 Higgsfield로 보내는 문장이라 글자는 진하게 */
 .studio-page .studio-video-prompt.is-readonly { background: var(--paper); color: var(--ink); }
+/* 영어 프롬프트 상자: 한국어 칸(16줄)과 같은 높이, 줄마다 나눠 그려 한국어에서 누른 줄·표현을 강조 */
+.studio-page .studio-video-prompt-view { position: relative; height: calc(16 * var(--line-height) * var(--fs-min) + 2 * var(--space-4)); overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.studio-page .studio-video-prompt-line.is-line { background: var(--primary-soft); }
+.studio-page .studio-video-mark { background: var(--gold); color: var(--ink); font-weight: 600; }
+/* ③ 제품 사진 (필수) */
+.studio-page .studio-video-generate h4 { margin: var(--space-4) 0; font-size: var(--fs-min); font-weight: 600; }
+.studio-page .studio-video-photo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.studio-page .studio-video-photo-thumb { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); }
+.studio-page .studio-video-photo .studio-hint { margin: 0; }
 .studio-page .studio-video-prompt-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .studio-page .studio-video-copy { padding: var(--space-1) var(--space-4); font-size: var(--fs-min); }
 .studio-page .studio-video-untranslated { margin-top: var(--space-4); padding: var(--space-4) var(--space-5); background: var(--badge-red-bg); color: var(--badge-red-ink); font-size: var(--fs-min); }

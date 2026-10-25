@@ -1,0 +1,146 @@
+<!-- Figma 플러그인 창 [희주] README 3-4
+     대시보드 서버(127.0.0.1:5000)의 읽기 전용 창구 3개에서 디자인·사진을 받아 code.js로 넘깁니다.
+     이 창은 Figma 안에서 열려 base.css를 불러올 수 없어, 색은 Figma 기본 화면에 맞춘 값을 씁니다. -->
+<style>
+  .plugin-page { font: 12px/1.5 "Inter", system-ui, sans-serif; color: #222; margin: 0; padding: 12px; }
+  .plugin-page h1 { font-size: 13px; margin: 0 0 8px; }
+  .plugin-page .plugin-status { min-height: 18px; margin: 0 0 8px; color: #555; }
+  .plugin-page .plugin-status.is-error { color: #c8102e; }
+  .plugin-page ul { list-style: none; margin: 0 0 8px; padding: 0; max-height: 330px; overflow-y: auto; border: 1px solid #e5e5e5; border-radius: 6px; }
+  .plugin-page li { padding: 8px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+  .plugin-page li:last-child { border-bottom: 0; }
+  .plugin-page li:hover, .plugin-page li.is-selected { background: #f2f7ff; }
+  .plugin-page .plugin-meta { color: #777; font-size: 11px; }
+  .plugin-page .plugin-demo { color: #c8102e; font-weight: 600; }
+  .plugin-page .plugin-actions { display: flex; gap: 8px; }
+  .plugin-page .plugin-actions button { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  .plugin-page .plugin-actions button.is-primary { background: #0d99ff; border-color: #0d99ff; color: #fff; }
+  .plugin-page .plugin-actions button:disabled { opacity: 0.5; cursor: default; }
+</style>
+
+<div class="plugin-page">
+  <h1>대시보드 포스터·카드뉴스 가져오기</h1>
+  <p class="plugin-status" id="status">불러오는 중…</p>
+  <ul id="list"></ul>
+  <div class="plugin-actions">
+    <button type="button" id="reload">새로고침</button>
+    <button type="button" id="import" class="is-primary" disabled>Figma로 가져오기</button>
+  </div>
+</div>
+
+<script type="module">
+  // manifest.json의 networkAccess와 같은 주소만 씁니다.
+  const SERVER = "http://127.0.0.1:5000";
+  const API = `${SERVER}/content_studio/media/api/figma`;
+  const KIND_NAME = { poster: "포스터", cardnews: "카드뉴스" };
+
+  const statusBox = document.getElementById("status");
+  const list = document.getElementById("list");
+  const importButton = document.getElementById("import");
+  const reloadButton = document.getElementById("reload");
+  let selectedId = null;
+
+  function setStatus(message, isError = false) {
+    statusBox.textContent = message;
+    statusBox.classList.toggle("is-error", isError);
+  }
+
+  async function getJson(url) {
+    let response;
+    try {
+      response = await fetch(url);
+    } catch {
+      throw new Error("대시보드 서버에 연결하지 못했습니다. 내 PC에서 서버(127.0.0.1:5000)를 켜 주세요.");
+    }
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.ok) throw new Error(data?.error || `서버 오류 (${response.status})`);
+    return data;
+  }
+
+  async function getImage(src) {
+    const response = await fetch(`${API}/image?src=${encodeURIComponent(src)}`);
+    if (!response.ok) throw new Error(`사진을 받지 못했습니다: ${src}`);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  function renderList(items) {
+    list.replaceChildren();
+    selectedId = null;
+    importButton.disabled = true;
+    for (const item of items) {
+      const row = document.createElement("li");
+      const title = document.createElement("div");
+      title.textContent = item.title || `${KIND_NAME[item.kind] || item.kind} #${item.id}`;
+      const meta = document.createElement("div");
+      meta.className = "plugin-meta";
+      meta.textContent = `${KIND_NAME[item.kind] || item.kind} · ${item.ratio} · ${item.pages}장 · ${item.updated_at.slice(0, 16).replace("T", " ")}`;
+      if (item.demo) {
+        const demo = document.createElement("span");
+        demo.className = "plugin-demo";
+        demo.textContent = " · DEMO · 예시 데이터";
+        meta.append(demo);
+      }
+      row.append(title, meta);
+      row.addEventListener("click", () => {
+        list.querySelectorAll(".is-selected").forEach((node) => node.classList.remove("is-selected"));
+        row.classList.add("is-selected");
+        selectedId = item.id;
+        importButton.disabled = false;
+      });
+      list.append(row);
+    }
+  }
+
+  async function loadList() {
+    setStatus("불러오는 중…");
+    list.replaceChildren();
+    importButton.disabled = true;
+    try {
+      const data = await getJson(`${API}/designs`);
+      renderList(data.items);
+      setStatus(data.items.length ? "가져올 디자인을 고르세요." : "저장된 포스터·카드뉴스가 없습니다.");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function importSelected() {
+    if (selectedId === null) return;
+    importButton.disabled = true;
+    setStatus("디자인과 사진을 받는 중…");
+    try {
+      const data = await getJson(`${API}/designs/${selectedId}`);
+      const sources = new Set();
+      for (const page of data.design.pages || []) {
+        for (const item of page.elements || []) {
+          if (item.type === "image" && item.src) sources.add(item.src);
+        }
+      }
+      const images = {};
+      const missing = [];
+      for (const src of sources) {
+        try {
+          images[src] = await getImage(src);
+        } catch {
+          missing.push(src);
+        }
+      }
+      setStatus("Figma에 레이어를 만드는 중…");
+      parent.postMessage({ pluginMessage: { type: "import", data, images, missing } }, "*");
+    } catch (error) {
+      setStatus(error.message, true);
+      importButton.disabled = false;
+    }
+  }
+
+  window.addEventListener("message", (event) => {
+    const message = event.data.pluginMessage;
+    if (!message) return;
+    setStatus(message.message, message.type === "error");
+    importButton.disabled = selectedId === null;
+  });
+
+  reloadButton.addEventListener("click", loadList);
+  importButton.addEventListener("click", importSelected);
+  loadList();
+</script>
