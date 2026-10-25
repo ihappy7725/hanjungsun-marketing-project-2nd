@@ -259,7 +259,11 @@ function initialize() {
     // 진척도는 현재 선택한 이벤트의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
     const campaign = selected(), campaignTasks = campaign ? store.tasks.filter(t => t.campaign_id === campaign.id) : [];
     const p = progress(campaignTasks);
-    $('#progress-campaign').textContent = campaign ? campaign.name : '';
+    // 지연된 업무가 있을 때만 빨간 배지를 띄웁니다. 평소에는 조용하고 문제가 있을 때만 눈에 띄게 합니다.
+    const overdue = campaignTasks.filter(t => unfinished(t) && t.due_date && t.due_date < today).length;
+    $('#progress-campaign').innerHTML = overdue
+      ? `${badge(`지연 ${overdue}건`, true)} <span class="home-muted">${esc(campaign.name)}</span>`
+      : `<span class="home-muted">${campaign ? esc(campaign.name) : ''}</span>`;
     $('#task-progress').innerHTML = campaign
       ? `<div class="home-progress-line"><div><strong class="home-progress-number">${p.percent}%</strong> <span class="home-muted">완료</span></div><span class="home-muted">${p.done}/${p.total} 업무 완료</span></div><div class="home-progress-track" role="progressbar" aria-label="이벤트 업무 완료율" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${p.percent}%"></span></div>`
       : empty('이벤트를 만들면 업무 진척이 표시됩니다.');
