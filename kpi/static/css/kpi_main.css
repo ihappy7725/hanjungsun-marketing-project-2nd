@@ -77,8 +77,8 @@
   width: max-content;
   max-width: 300px;
   padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--line);
-  background: var(--white);
+  border: 1px solid var(--line-strong);
+  background: var(--page-bg);  /* 블록 배경과 구분되는 흰 바탕: 뒤 글씨가 비쳐 겹쳐 보이지 않게 */
   color: var(--ink);
   font: normal 400 var(--fs-min)/var(--line-height) var(--font-body);
   letter-spacing: 0;
@@ -92,12 +92,16 @@
 }
 .kpi-page .kpi-scorecards .kpi:last-child .kpi-info::after { left: auto; right: -8px; }
 .kpi-page .kpi-info:hover::after,
-.kpi-page .kpi-info:focus::after { opacity: 1; visibility: visible; }
+.kpi-page .kpi-info:focus::after { opacity: 1; visibility: visible; z-index: 60; }
+/* 확대 화면에서는 ⓘ를 숨깁니다(상세 표와 겹치지 않게). */
+.kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
 
 /* ---------- 2×2 블록 ---------- */
+/* 4개 블록은 모두 같은 높이(가장 긴 블록 기준): 순서를 바꿔도 크기가 변하지 않습니다. */
 .kpi-page .kpi-board {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: var(--space-5);
 }
 /* 블록 높이는 내용에 맞춰 늘어나고(글자·차트가 잘리지 않게), 같은 줄의 두 블록은 높이를 맞춥니다. */
@@ -120,13 +124,14 @@
   font-size: var(--fs-min);
   line-height: var(--line-height);
 }
-.kpi-page .kpi-btn-small { padding: var(--space-2) var(--space-4); }
+/* 블록 머리의 버튼은 모두 높이 28px로 맞춥니다(집행 시뮬레이션 · ←→ · 손잡이 · 확대 · 선택 버튼). */
+.kpi-page .kpi-btn-small { display: inline-flex; align-items: center; height: 28px; padding: 0 var(--space-4); line-height: 1; }
 
 .kpi-page .kpi-expand {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -228,7 +233,18 @@
 .kpi-page .kpi-burn { margin-top: var(--space-4); }
 .kpi-page .kpi-burn-label { display: flex; justify-content: space-between; color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-burn-label b { color: var(--ink); font-weight: 700; }
-.kpi-page .kpi-burn .progress { margin-top: var(--space-3); }
+/* 예산 소진 막대: 도넛과 같은 색 구간으로 나눈 굵은 막대 */
+.kpi-page .kpi-burn-bar {
+  display: flex;
+  height: 14px;
+  margin-top: var(--space-3);
+  overflow: hidden;
+  border-radius: 7px;
+  background: var(--progress-bg);
+}
+.kpi-page .kpi-burn-seg { display: block; height: 100%; transition: width .3s; }
+.kpi-page .kpi-burn-seg + .kpi-burn-seg { box-shadow: inset 2px 0 0 var(--page-bg); }
+.kpi-page .kpi-burn-legend { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--fs-min); }
 
 /* ---------- 표 ---------- */
 .kpi-page .kpi-table th,
@@ -308,15 +324,16 @@
 .kpi-page .kpi-ga4-bars .kpi-bar-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
 .kpi-page .kpi-ga4-bars .kpi-bar-name small { margin-left: var(--space-2); color: var(--muted); }
 .kpi-page .kpi-ga4-bars .kpi-bar-track { position: relative; height: 8px; background: var(--progress-bg); }
-.kpi-page .kpi-ga4-bars .kpi-bar-fill { display: block; height: 100%; background: var(--gold); }
-.kpi-page .kpi-ga4-bars .kpi-bar-fill.is-high { background: var(--green); }
-.kpi-page .kpi-ga4-bars .kpi-bar-avg { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--badge-red-ink); }
+.kpi-page .kpi-ga4-bars .kpi-bar-fill { display: block; height: 100%; background: var(--orange); }
+.kpi-page .kpi-ga4-bars .kpi-bar-fill.is-high { background: var(--teal); }
+.kpi-page .kpi-ga4-bars .kpi-bar-avg { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--navy); }
 .kpi-page .kpi-ga4-bars .kpi-bar-value { font-family: var(--font-serif); font-weight: 700; text-align: right; }
 
 /* ---------- 선택 버튼 묶음 (통화 · 리뷰 언어 · 감성) ---------- */
 .kpi-page .kpi-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
 .kpi-page .kpi-seg button {
-  padding: var(--space-1) var(--space-4);
+  height: 26px;  /* 테두리 1px 포함 28px */
+  padding: 0 var(--space-4);
   border: 0;
   background: var(--white);
   color: var(--muted);
@@ -350,8 +367,8 @@
 .kpi-page .kpi-icon-btn {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -404,7 +421,10 @@
 .kpi-page .kpi-panel { padding: var(--panel-padding); }
 .kpi-page .kpi-panel .panelhead h2, .kpi-page .kpi-tools { flex-wrap: wrap; }
 .kpi-page .kpi-head-side { flex-wrap: wrap; }
-.kpi-page .kpi-info { width: 24px; height: 24px; }
+/* ⓘ는 작고 흐리게: 마우스를 올리거나 키보드로 고를 때만 진해집니다. */
+.kpi-page .kpi-info { width: 16px; height: 16px; font-size: 10px; opacity: .5; transition: opacity .15s; }
+.kpi-page .kpi-info:hover,
+.kpi-page .kpi-info:focus-visible { opacity: 1; }
 @media (max-width: 900px) { .kpi-page .kpi-board { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 650px) {
   .kpi-page .kpi-panel { padding: var(--space-6); }

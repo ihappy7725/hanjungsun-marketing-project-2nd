@@ -36,14 +36,17 @@ const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "i
 
 // ---------- 디자인 변수 ----------
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// 차트 색: 공통 톤(남색·청록·갈색·살구) 안에서 서로 잘 구분되는 진한 색을 씁니다. (base.css 변수만 사용)
 const palette = () => ({
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
-  gold: cssVar("--gold"),
-  green: cssVar("--green"),
-  brown: cssVar("--muted"),
-  red: cssVar("--badge-red-ink"),
+  strong: cssVar("--navy"),   // 가장 큰 몫(플랫폼 광고비)
+  good: cssVar("--teal"),     // 기준 이상 · 긍정 · 전환
+  low: cssVar("--orange"),    // 기준 미달 · 부정 · 예상 지출
+  mid: cssVar("--brown"),     // 보조 계열(인플루언서 집행 · 키워드 · 클릭)
+  soft: cssVar("--beige"),    // 중립
+  ref: cssVar("--navy"),      // 기준선(손익분기 · 전체 평균)
   font: cssVar("--font-body"),
 });
 
@@ -153,10 +156,10 @@ function renderBudget(data) {
   const p = palette();
   const remaining = Math.max(b.remaining_krw, 0);
   const parts = [
-    ["플랫폼 광고비", b.platform_krw, p.brown],
-    ["인플루언서 집행", b.influencer_paid_krw, p.gold],
-    ["인플루언서 예상", b.influencer_expected_krw, p.muted],
-    ["잔여 가용 예산", remaining, p.line],
+    ["플랫폼 광고비", b.platform_krw, p.strong],
+    ["인플루언서 집행", b.influencer_paid_krw, p.mid],
+    ["인플루언서 예상", b.influencer_expected_krw, p.low],
+    ["잔여 가용 예산", remaining, p.lineStrong],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
   setText("remaining-pct", pct(b.remaining_percent));
@@ -170,8 +173,20 @@ function renderBudget(data) {
   if (b.remaining_krw < 0) rows.push(el("div", {}, [el("dt", {}, [badge("예산 초과", "red")]), el("dd", { text: krwMan(-b.remaining_krw) })]));
   $("budget-list").replaceChildren(...rows);
 
+  // 예산 소진 막대: 도넛과 같은 색 구간(플랫폼 · 인플루언서 집행 · 인플루언서 예상 · 잔여)
   setText("burn-pct", pct(b.burn_rate_percent));
-  $("burn-bar").style.width = `${Math.min(b.burn_rate_percent ?? 0, 100)}%`;
+  const share = (v) => (b.total_krw ? Math.max((v / b.total_krw) * 100, 0) : 0);
+  $("burn-segments").replaceChildren(...parts.map(([label, value, color]) => {
+    const seg = el("span", { className: "kpi-burn-seg" });
+    seg.style.width = `${Math.min(share(value), 100)}%`;
+    seg.style.background = color;
+    seg.title = `${label} ${krwMan(value)} (${pct(share(value))})`;
+    return seg;
+  }));
+  setText(
+    "burn-legend",
+    `소진 ${pct(b.burn_rate_percent)} · 인플루언서 예상 ${pct(share(b.influencer_expected_krw))} · 잔여 ${pct(b.remaining_percent)}`,
+  );
 
   const link = data.influencer_link;
   setText(
@@ -205,14 +220,14 @@ function renderRoas(data) {
           type: "bar",
           label: "ROAS(%)",
           data: ch.map((c) => c.roas_percent),
-          backgroundColor: ch.map((c) => (c.roas_percent >= bep ? p.green : p.gold)),
+          backgroundColor: ch.map((c) => (c.roas_percent >= bep ? p.good : p.low)),
           maxBarThickness: 40,
         },
         {
           type: "line",
           label: `손익분기 ${bep}%`,
           data: ch.map(() => bep),
-          borderColor: p.red,
+          borderColor: p.ref,
           borderDash: [5, 4],
           borderWidth: 1.5,
           pointRadius: 0,
@@ -362,11 +377,11 @@ function renderGa4Channels(g) {
           type: "bar",
           label: "채널 참여율(%)",
           data: rows.map((c) => c.engagement_rate_percent),
-          backgroundColor: rows.map((c) => (avg != null && c.engagement_rate_percent >= avg ? p.green : p.gold)),
+          backgroundColor: rows.map((c) => (avg != null && c.engagement_rate_percent >= avg ? p.good : p.low)),
           maxBarThickness: 28,
         },
         ...(avg != null
-          ? [{ type: "line", label: `전체 ${pct(avg)}`, data: rows.map(() => avg), borderColor: p.red, borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 }]
+          ? [{ type: "line", label: `전체 ${pct(avg)}`, data: rows.map(() => avg), borderColor: p.ref, borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 }]
           : []),
       ],
     },
@@ -407,8 +422,8 @@ function renderCreators(creators) {
     data: {
       labels: creators.map((c) => c.creator),
       datasets: [
-        { label: "링크 클릭", data: creators.map((c) => c.clicks), backgroundColor: p.gold, maxBarThickness: 26, yAxisID: "y" },
-        { label: "전환", data: creators.map((c) => c.conversions), backgroundColor: p.green, maxBarThickness: 26, yAxisID: "y1" },
+        { label: "링크 클릭", data: creators.map((c) => c.clicks), backgroundColor: p.mid, maxBarThickness: 26, yAxisID: "y" },
+        { label: "전환", data: creators.map((c) => c.conversions), backgroundColor: p.good, maxBarThickness: 26, yAxisID: "y1" },
       ],
     },
     options: {
@@ -445,7 +460,7 @@ function renderVoc(stats, reviews, source) {
   const p = palette();
   const counts = stats.sentiment_counts;
   const keys = ["Positive", "Neutral", "Negative"];
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.green, p.lineStrong, p.red], { cutout: "58%", legend: true });
+  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.good, p.soft, p.low], { cutout: "58%", legend: true });
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
     charts.sentiment.options.onClick = (_e, els) => {
@@ -460,7 +475,7 @@ function renderVoc(stats, reviews, source) {
     type: "bar",
     data: {
       labels: stats.top_keywords.map((k) => k.keyword),
-      datasets: [{ label: "언급 수", data: stats.top_keywords.map((k) => k.count), backgroundColor: p.gold, maxBarThickness: 14 }],
+      datasets: [{ label: "언급 수", data: stats.top_keywords.map((k) => k.count), backgroundColor: p.mid, maxBarThickness: 14 }],
     },
     options: {
       indexAxis: "y",
