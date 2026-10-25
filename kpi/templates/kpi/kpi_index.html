@@ -113,7 +113,7 @@
 
           <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중</p>
           <div class="table-wrap">
-            <table class="kpi-table">
+            <table class="kpi-table kpi-t-spend">
               <thead><tr><th class="is-text">채널</th><th>집행액(VND)</th><th>집행액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
               <tbody data-kpi="spend-rows"></tbody>
             </table>
@@ -154,7 +154,7 @@
             <p class="kpi-error" data-kpi="sim-error" hidden></p>
 
             <div class="table-wrap">
-              <table class="kpi-table">
+              <table class="kpi-table kpi-t-sim">
                 <thead><tr><th class="is-text">집행 예정 항목</th><th class="is-text">유형</th><th>비용(원)</th><th>예상 매출(원, 참고)</th><th></th></tr></thead>
                 <tbody data-kpi="sim-rows"></tbody>
               </table>
@@ -198,9 +198,9 @@
         <p class="kpi-note kpi-one-line" data-kpi="roas-advice"></p>
         <dl class="kpi-roas-totals" data-kpi="roas-totals"></dl>
         <div class="kpi-detail table-wrap">
-          <table class="kpi-table">
+          <table class="kpi-table kpi-t-roas">
             <thead>
-              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th class="kpi-col-status">상태</th></tr>
+              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th>상태</th></tr>
             </thead>
             <tbody data-kpi="channel-rows"></tbody>
           </table>
@@ -243,7 +243,7 @@
             <span><i class="kpi-s1"></i>1점</span><span><i class="kpi-s2"></i>2점</span><span><i class="kpi-s3"></i>3점</span><span><i class="kpi-s4"></i>4점</span><span><i class="kpi-s5"></i>5점</span>
           </div>
           <div class="table-wrap">
-            <table class="kpi-table kpi-survey-table">
+            <table class="kpi-table kpi-t-survey">
               <thead><tr><th class="is-text">문항</th><th class="is-text">점수 분포</th><th>평균</th><th>긍정(4~5점)</th><th>응답</th></tr></thead>
               <tbody data-kpi="survey-rows"></tbody>
             </table>
@@ -331,7 +331,7 @@
                 <canvas data-kpi-chart="ga4-channels" aria-label="유입 채널별 참여율 막대 차트" role="img"></canvas>
               </div>
               <div class="table-wrap">
-                <table class="kpi-table">
+                <table class="kpi-table kpi-t-ga4">
                   <thead><tr><th class="is-text">채널</th><th>세션</th><th>세션 비중</th><th>참여 세션</th><th>참여율</th></tr></thead>
                   <tbody data-kpi="ga4-channel-rows"></tbody>
                 </table>
@@ -348,7 +348,7 @@
             </div>
           </div>
           <div class="table-wrap">
-            <table class="kpi-table">
+            <table class="kpi-table kpi-t-creator">
               <thead><tr><th class="is-text">#</th><th class="is-text">크리에이터</th><th class="is-text">플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
               <tbody data-kpi="creator-rows"></tbody>
               <tfoot><tr data-kpi="creator-total"></tr></tfoot>

@@ -180,18 +180,26 @@
 /* ---------- 확대 상태 ---------- */
 .kpi-page .kpi-backdrop { position: fixed; inset: 0; z-index: 25; background: var(--backdrop); }
 .kpi-page .kpi-backdrop[hidden] { display: none; }
+/* 확대 창은 내용 높이에 맞춰 화면 가운데에 띄우고, 화면보다 길면 창 안에서 스크롤합니다(아래 빈 공간 없음). */
 .kpi-page .kpi-panel.is-expanded {
   position: fixed;
-  inset: 32px max(32px, calc((100vw - 1180px) / 2));
+  top: 50%;
+  right: max(32px, calc((100vw - 1180px) / 2));
+  bottom: auto;
+  left: max(32px, calc((100vw - 1180px) / 2));
   z-index: 30;
   height: auto;
+  max-height: calc(100vh - 64px);
   padding: var(--space-8) var(--space-8) var(--space-6);
   overflow-y: auto;
+  transform: translateY(-50%);
 }
 .kpi-page .kpi-panel.is-expanded .kpi-detail { display: block; }
 .kpi-page .kpi-panel.is-expanded .kpi-compact-only { display: none; }
 .kpi-page .kpi-panel.is-expanded .kpi-panel-body { flex: none; }
-.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 300px; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 360px; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-wide { height: 320px; margin-bottom: var(--space-6); }
+.kpi-page .kpi-panel.is-expanded .kpi-roas-totals { margin-bottom: var(--space-2); }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-donut { width: 190px; height: 190px; }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-small,
 .kpi-page .kpi-panel.is-expanded .kpi-chart-keywords { height: 200px; }
@@ -282,17 +290,67 @@
 .kpi-page .kpi-burn-legend { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--fs-min); }
 
 /* ---------- 표 ---------- */
+/* 열 너비를 표마다 고정 비율로 둡니다: 통화(원·달러·동)를 바꿔 글자 길이가 달라져도 열 위치가 그대로입니다. */
+.kpi-page .kpi-table { table-layout: fixed; width: 100%; font-variant-numeric: tabular-nums; }
 .kpi-page .kpi-table th,
-.kpi-page .kpi-table td { padding: var(--space-4) var(--space-4); }
+.kpi-page .kpi-table td {
+  padding: var(--space-4) var(--space-5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
 /* 숫자 열은 오른쪽, 글자 열(첫 열 · .is-text)은 왼쪽 정렬 */
 .kpi-page .kpi-table td,
 .kpi-page .kpi-table th { text-align: right; }
 .kpi-page .kpi-table td:first-child,
 .kpi-page .kpi-table th:first-child,
 .kpi-page .kpi-table .is-text { text-align: left; }
-/* ROAS '상태' 열: 배지 폭만큼만 차지하고 제목은 가운데(배지는 오른쪽 정렬 그대로) */
-.kpi-page .kpi-table th.kpi-col-status { width: 1%; text-align: center; white-space: nowrap; }
 .kpi-page .kpi-table tfoot td { background: var(--paper); font-weight: 600; }
+
+/* 표별 열 너비 (합 100%) */
+.kpi-page .kpi-t-roas th:nth-child(1) { width: 20%; }   /* 채널 */
+.kpi-page .kpi-t-roas th:nth-child(2) { width: 19%; }   /* 광고비 */
+.kpi-page .kpi-t-roas th:nth-child(3) { width: 21%; }   /* 매출 */
+.kpi-page .kpi-t-roas th:nth-child(4) { width: 12%; }   /* ROAS */
+.kpi-page .kpi-t-roas th:nth-child(5) { width: 16%; }   /* CPA */
+.kpi-page .kpi-t-roas th:nth-child(6) { width: 12%; }   /* 상태 */
+/* ROAS '상태' 열: 제목과 배지 모두 가운데 */
+.kpi-page .kpi-t-roas th:nth-child(6),
+.kpi-page .kpi-t-roas td:nth-child(6) { text-align: center; }
+
+.kpi-page .kpi-t-spend th:nth-child(1) { width: 24%; }
+.kpi-page .kpi-t-spend th:nth-child(2) { width: 22%; }
+.kpi-page .kpi-t-spend th:nth-child(3) { width: 20%; }
+.kpi-page .kpi-t-spend th:nth-child(4) { width: 17%; }
+.kpi-page .kpi-t-spend th:nth-child(5) { width: 17%; }
+
+.kpi-page .kpi-t-sim th:nth-child(1) { width: 32%; }
+.kpi-page .kpi-t-sim th:nth-child(2) { width: 18%; }
+.kpi-page .kpi-t-sim th:nth-child(3) { width: 17%; }
+.kpi-page .kpi-t-sim th:nth-child(4) { width: 21%; }
+.kpi-page .kpi-t-sim th:nth-child(5) { width: 12%; }
+
+.kpi-page .kpi-t-survey th:nth-child(1) { width: 16%; }
+.kpi-page .kpi-t-survey th:nth-child(2) { width: 40%; }
+.kpi-page .kpi-t-survey th:nth-child(3) { width: 13%; }
+.kpi-page .kpi-t-survey th:nth-child(4) { width: 17%; }
+.kpi-page .kpi-t-survey th:nth-child(5) { width: 14%; }
+
+.kpi-page .kpi-t-ga4 th:nth-child(1) { width: 32%; }
+.kpi-page .kpi-t-ga4 th:nth-child(2) { width: 17%; }
+.kpi-page .kpi-t-ga4 th:nth-child(3) { width: 17%; }
+.kpi-page .kpi-t-ga4 th:nth-child(4) { width: 17%; }
+.kpi-page .kpi-t-ga4 th:nth-child(5) { width: 17%; }
+
+/* 크리에이터 표는 기본 화면(블록 높이 고정)에서만 줄 간격을 촘촘하게 */
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-t-creator th,
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-t-creator td { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.kpi-page .kpi-t-creator th:nth-child(1) { width: 10%; }  /* '#'·'합계'가 잘리지 않는 폭 */
+.kpi-page .kpi-t-creator th:nth-child(2) { width: 26%; }
+.kpi-page .kpi-t-creator th:nth-child(3) { width: 18%; }
+.kpi-page .kpi-t-creator th:nth-child(4) { width: 16%; }
+.kpi-page .kpi-t-creator th:nth-child(5) { width: 14%; }
+.kpi-page .kpi-t-creator th:nth-child(6) { width: 16%; }
 .kpi-page .kpi-detail.table-wrap,
 .kpi-page .kpi-review-wrap { margin-top: var(--space-5); }
 .kpi-page .kpi-review-wrap .kpi-table td,
@@ -333,7 +391,6 @@
 .kpi-page .kpi-qr b { font-family: var(--font-serif); font-weight: 700; }
 .kpi-page .kpi-qr .kpi-arrow { color: var(--muted); }
 /* QR 설문(확대 화면): 문항별 1~5점 응답 인원 비중 막대 */
-.kpi-page .kpi-survey-table td:nth-child(2) { width: 45%; min-width: 180px; }
 .kpi-page .kpi-survey-bar { display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--progress-bg); }
 .kpi-page .kpi-survey-bar span { display: block; height: 100%; }
 .kpi-page .kpi-survey-bar span + span { box-shadow: inset 1px 0 0 var(--page-bg); }
@@ -356,8 +413,6 @@
 .kpi-page .kpi-ga4-metrics strong { font-family: var(--font-serif); font-size: var(--fs-h1); font-weight: 700; }
 .kpi-page .kpi-metric-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink); font-size: var(--fs-min); font-weight: 600; }
 .kpi-page .kpi-sub-text { color: var(--muted); font-size: var(--fs-min); }
-.kpi-page [data-kpi="creator-panel"] .kpi-table td,
-.kpi-page [data-kpi="creator-panel"] .kpi-table th { padding: var(--space-2) var(--space-4); }
 .kpi-page .kpi-ga4-metrics > div { padding: var(--space-4) var(--space-5); }
 
 /* GA4 기본 화면: 유입 채널 Top 5 참여율 막대 */
@@ -473,7 +528,7 @@
   .kpi-page .kpi-ga4-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-sim-result { grid-template-columns: 1fr; }
   .kpi-page .kpi-sim-result > div + div { border-left: 0; border-top: 1px solid var(--line); }
-  .kpi-page .kpi-panel.is-expanded { inset: 12px; }
+  .kpi-page .kpi-panel.is-expanded { inset: 12px; max-height: none; transform: none; }
 }
 
 /* ---------- 인쇄 ---------- */
