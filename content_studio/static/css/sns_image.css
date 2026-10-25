@@ -194,6 +194,69 @@
   line-height: var(--line-height);
 }
 
+/* Figma에서 편집 · 외부 미리보기 [희주] */
+.studio-editor .studio-editor-external {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+}
+
+.studio-editor .studio-editor-external summary {
+  cursor: pointer;
+}
+
+.studio-editor .studio-editor-external-steps {
+  margin: var(--space-4) 0;
+  padding-left: var(--space-6);
+  font-size: var(--fs-min);
+}
+
+.studio-editor .studio-editor-external-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.studio-editor .studio-editor-external-manual {
+  margin-top: var(--space-4);
+  font-size: var(--fs-min);
+}
+
+.studio-editor .studio-editor-external-manual > .studio-editor-external-row {
+  margin-top: var(--space-3);
+}
+
+.studio-editor .studio-editor-external-row .studio-editor-field.is-wide {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.studio-editor .studio-editor-external-row .studio-editor-field.is-wide input {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-editor .studio-editor-external-row [hidden],
+.studio-editor .studio-editor-external-frame[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-external-frame {
+  display: block;
+  width: 100%;
+  height: 70vh;
+  margin-top: var(--space-4);
+  border: 1px solid var(--line);
+}
+
+.studio-editor .studio-editor-external img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  margin-top: var(--space-3);
+  border: 1px solid var(--line);
+}
+
 /* 광고 표현 검수 결과 · 카드뉴스 프롬프트 팝업 [희주] */
 .studio-editor .studio-editor-review {
   padding: var(--space-5) var(--space-6);

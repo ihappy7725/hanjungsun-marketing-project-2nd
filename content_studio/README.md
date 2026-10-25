@@ -110,7 +110,9 @@
 | B. 자체 편집기 + Figma 연동 | 대시보드에서 글·사진을 직접 눌러 옮기고, 필요할 때 Figma로 넘깁니다. | Figma 호환 내보내기 개발 필요. **자체 편집기는 이미 있으므로** Fabric.js 같은 캔버스 라이브러리는 꼭 필요할 때만 검토 |
 | Figma 파일 임베드 | 대시보드에 Figma 파일의 보기·미리보기 표시 | **완전한 Figma 편집기를 대시보드 안에 넣는 것과 다릅니다.** |
 - **진행 방식: Figma 플러그인.** Figma 플러그인이 대시보드 API에서 요소 JSON을 받아 편집 가능한 레이어로 만드는 방식으로 진행합니다 (REST API는 읽기 전용이라 레이어 생성 불가). 위 A안(MCP) 검증 대신 이 방식으로 정했습니다(10장).
-- 플러그인 폴더: `content_studio/figma_plugin/` (`manifest.json` · `ui.html` · `code.js`, 희주). 플러그인은 위 읽기 전용 GET 3개(`/media/api/figma/designs`, `/designs/<id>`, `/image`)만 쓰고, `manifest.json`의 `networkAccess`로 로컬 서버 `http://127.0.0.1:5000`에만 접근합니다.
+- 플러그인 폴더: `content_studio/figma_plugin/` (`manifest.json` · `ui.html` · `code.js`, 희주). 플러그인은 위 읽기 전용 GET 3개(`/media/api/figma/designs`, `/designs/<id>`, `/image`)와, 가져온 Figma 프레임 주소를 대시보드에 남기는 POST 1개(`/designs/<id>/link`)를 쓰고, `manifest.json`의 `networkAccess.devAllowedDomains`로 로컬 서버 `http://localhost:5000`에만 접근합니다. (Figma는 `127.0.0.1` 형식 주소를 허용하지 않아 `localhost`를 씁니다. 플러그인은 Figma 데스크톱 앱의 Plugins → Development → Import plugin from manifest로 불러옵니다.)
+- 자동 연결: 플러그인으로 가져오면 프레임 주소가 디자인 문서의 `external_figma`에 새 버전으로 저장되고, 대시보드로 돌아오면 편집기의 Figma 칸에 Figma 창(임베드, 보기 전용)이 자동으로 열립니다. 주소를 받지 못하면(`figma.fileKey` 미지원 등) ‘링크 직접 넣기’ 칸에 선택 항목 링크를 붙여 넣습니다.
+
 - JS 규칙 예외: `figma_plugin/code.js`는 Figma 플러그인 환경에서 실행되므로 우리 JS 규칙(`type="module"`, 전역 변수·함수 금지)의 예외입니다.
 
 - 참고: MCP는 AI와 도구를 잇는 프로토콜입니다. Figma 편집 화면을 대시보드 안에 넣어 주는 기술이 아닙니다.
@@ -426,7 +428,7 @@ content_studio/
 | `POST /media/api/remove-bg` · `GET /media/remove-bg/result/<id>.png` | 배경 제거 · 결과 받기 (5-5) | 희주 |
 | `POST /media/api/storyboard` · `POST /media/api/review` | 숏폼 콘티 · 광고 표현 검수 | 희주 |
 | `GET /media/api/figma/designs` | Figma 플러그인용 디자인 목록 (읽기 전용, 플러그인용 CORS) | 희주 |
-| `GET /media/api/figma/designs/<id>` | Figma 플러그인용 디자인 하나의 요소 JSON (읽기 전용, 플러그인용 CORS) | 희주 |
+| `POST /media/api/figma/designs/<id>/link` | Figma 플러그인이 가져온 프레임 주소를 `external_figma`에 새 버전으로 저장 (플러그인용 CORS, 쓰기는 이것 하나) | 희주 |
 | `GET /media/api/figma/image?src=` | Figma 플러그인용 디자인 속 이미지 (읽기 전용, 플러그인용 CORS) | 희주 |
 
 ### DB 테이블

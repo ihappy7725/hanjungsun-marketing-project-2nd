@@ -15,6 +15,7 @@ const REVIEW_API = "/content_studio/media/api/review";
 const BRIEF_API = "/content_studio/media/api/design-brief";
 const ASSISTANT_API = "/content_studio/media/api/design-assistant";
 const FIGMA_API = "/content_studio/media/api/figma-preview";
+const FIGMA_DESIGN_API = "/content_studio/media/api/figma/designs";  // 플러그인 창구 (주소 확인에도 씀)
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -380,7 +381,10 @@ export function renderDesign(root, doc, { onSave } = {}) {
   view.append(stage);
   wrap.append(pagesBar, bar, view, translations, review);
   root.replaceChildren(wrap);
+  let externalPanel = null;  // Figma 칸 (renderExternal)
   renderExternal();
+  window.addEventListener("focus", syncFigma);
+  syncFigma();
 
   const find = (id) => page.elements.find((item) => item.id === id);
   if (selectedId && !find(selectedId)) selectedId = null;
@@ -505,11 +509,25 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return null;
   }
 
+  // Figma 공식 임베드 주소 (보기 전용). 편집 화면은 Figma가 다른 사이트 안에 띄우는 것을 막습니다.
+  function figmaEmbed(link) {
+    const url = new URL(link);
+    url.host = "embed.figma.com";
+    url.pathname = url.pathname.replace(/^\/file\//, "/design/");
+    url.searchParams.set("embed-host", "hanjeongseon");
+    return url.href;
+  }
+
+  // 플러그인이 주소를 남기면 다시 그리므로, 지금 패널을 기억해 두고 바꿔 끼웁니다.
   function renderExternal() {
     const panel = el("details", "studio-editor-external");
     panel.open = Boolean(draft.external_figma);
-    panel.append(el("summary", "", "Figma에서 편집 · 외부 미리보기"),
-      el("p", "studio-hint", "Figma에서 편집한 프레임의 ‘선택 항목 링크’를 연결하세요. 자동 전송은 아직 연결되지 않았습니다. 원래 초안 PNG/JPG 받기는 위 버튼을 사용하세요."));
+    const steps = el("ol", "studio-editor-external-steps");
+    steps.append(el("li", "", "Figma에서 플러그인 ‘한정선 디자인 가져오기’를 켜고 이 디자인을 가져옵니다."),
+      el("li", "", "대시보드로 돌아오면 아래에 Figma 창이 자동으로 열립니다."),
+      el("li", "", "고치려면 ‘Figma에서 편집’을 눌러 새 탭에서 작업합니다."));
+    panel.append(el("summary", "", "Figma에서 편집 · 외부 미리보기"), steps,
+      el("p", "studio-hint", "원래 초안 PNG/JPG 받기는 위 버튼을 사용하세요."));
     const input = el("input");
     input.type = "url";
     input.placeholder = "https://www.figma.com/design/…?node-id=…";
@@ -546,8 +564,29 @@ export function renderDesign(root, doc, { onSave } = {}) {
       } catch (error) { msg.textContent = error.message; }
       finally { refresh.disabled = store.disabled = false; }
     });
-    input.addEventListener("input", () => { open.hidden = input.value !== draft.external_figma?.url || !currentLink; });
-    panel.append(field("Figma 선택 항목 링크", input), store, open, refresh, msg);
+    // 링크가 있으면 Figma 창(보기 전용)을 바로 펼칩니다.
+    const frame = el("iframe", "studio-editor-external-frame");
+    frame.title = "Figma 창 (보기 전용)";
+    frame.allowFullscreen = true;
+    frame.hidden = !currentLink;
+    if (currentLink) frame.src = figmaEmbed(currentLink);
+    const show = button(currentLink ? "Figma 창 닫기" : "Figma 창 보기", () => {
+      frame.hidden = !frame.hidden;
+      show.textContent = frame.hidden ? "Figma 창 보기" : "Figma 창 닫기";
+    });
+    show.hidden = !currentLink;
+    input.addEventListener("input", () => { open.hidden = show.hidden = input.value !== draft.external_figma?.url || !currentLink; });
+    const linkField = field("Figma 선택 항목 링크", input);
+    linkField.classList.add("is-wide");
+    const row = el("div", "studio-editor-external-row");
+    row.append(show, open, refresh);
+    // 자동 연결이 안 될 때만 쓰는 예비 칸
+    const manual = el("details", "studio-editor-external-manual");
+    const manualRow = el("div", "studio-editor-external-row");
+    manualRow.append(linkField, store);
+    manual.append(el("summary", "", "링크 직접 넣기 (자동 연결이 안 될 때)"), manualRow);
+    panel.append(row, msg, frame, manual);
+    if (currentLink) panel.append(el("p", "studio-hint", "Figma 창은 보기 전용입니다. Figma에 로그인되어 있고 파일 보기 권한이 있어야 보입니다."));
     const external = draft.external_figma;
     if (currentLink && external?.preview_url?.startsWith("https://")) {
       const img = el("img");
@@ -559,7 +598,24 @@ export function renderDesign(root, doc, { onSave } = {}) {
       panel.append(el("p", "studio-hint", `외부 편집 결과 · 마지막 반영: ${Number.isNaN(date.getTime()) ? "확인 필요" : date.toLocaleString("ko-KR")}`), img,
         el("p", "studio-hint", "위 편집기와 다운로드는 대시보드 원본입니다. 외부 수정 결과가 원본 요소에 자동 반영되지는 않습니다."));
     }
-    wrap.append(panel);
+    if (externalPanel) externalPanel.replaceWith(panel);
+    else wrap.append(panel);
+    externalPanel = panel;
+  }
+
+  // Figma 플러그인이 서버에 남긴 주소(external_figma)를 확인합니다. Figma에서 돌아와 창이 다시 활성화될 때마다 봅니다.
+  // 서버에는 이미 새 버전으로 저장돼 있으므로 여기서는 다시 저장하지 않고 화면만 바꿉니다.
+  async function syncFigma() {
+    if (!wrap.isConnected) return window.removeEventListener("focus", syncFigma);
+    const chatId = Number(new URL(location.href).searchParams.get("chat"));
+    if (!chatId) return;
+    try {
+      const data = await (await fetch(`${FIGMA_DESIGN_API}/${chatId}`)).json();
+      const link = data.ok && data.design.kind === draft.kind ? data.design.external_figma : null;
+      if (!wrap.isConnected || !figmaLink(link?.url) || link.url === draft.external_figma?.url) return;
+      draft.external_figma = link;
+      renderExternal();
+    } catch { /* 확인하지 못하면 지금 화면을 그대로 둡니다. */ }
   }
 
   function fit() {
