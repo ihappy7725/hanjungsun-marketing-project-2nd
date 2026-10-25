@@ -97,18 +97,17 @@
 .kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
 
 /* ---------- 2×2 블록 ---------- */
-/* 4개 블록은 모두 같은 높이(가장 긴 블록 기준): 순서를 바꿔도 크기가 변하지 않습니다. */
+/* 블록마다 자기 내용만큼만 높이를 가집니다(빈 공간 없이). */
 .kpi-page .kpi-board {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
+  align-items: start;
   gap: var(--space-5);
 }
-/* 블록 높이는 내용에 맞춰 늘어나고(글자·차트가 잘리지 않게), 같은 줄의 두 블록은 높이를 맞춥니다. */
+/* 블록 높이는 내용에 맞춰 정해집니다(글자·차트가 잘리지 않게). */
 .kpi-page .kpi-panel {
   display: flex;
   flex-direction: column;
-  min-height: 340px;
   padding: var(--space-6) var(--space-7) var(--space-5);
 }
 .kpi-page .kpi-panel .panelhead { margin-bottom: var(--space-4); }
@@ -125,7 +124,7 @@
   line-height: var(--line-height);
 }
 /* 블록 머리의 버튼은 모두 높이 28px로 맞춥니다(집행 시뮬레이션 · ←→ · 손잡이 · 확대 · 선택 버튼). */
-.kpi-page .kpi-btn-small { display: inline-flex; align-items: center; height: 28px; padding: 0 var(--space-4); line-height: 1; }
+.kpi-page .kpi-btn-small { display: inline-flex; align-items: center; height: 28px; min-height: 28px; padding: 0 var(--space-4); line-height: 1; }
 
 .kpi-page .kpi-expand {
   display: grid;
