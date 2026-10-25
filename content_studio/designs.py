@@ -15,6 +15,7 @@ AI 연결 전에는 정해진 틀로 만들고 demo=True로 표시합니다.
 import copy
 import math
 import re
+from pathlib import Path
 
 from flask import url_for
 
@@ -377,11 +378,18 @@ def _doc_palette(doc):
 
 
 def _switch_template(doc, template):
+    translations = [{item.get("text"): (item["text_ko"], item.get("translation_source"))
+                     for item in page.get("elements", []) if item.get("text_ko")}
+                    for page in doc["pages"]]
     contents = [_page_content(page) for page in doc["pages"]]
     palette = _doc_palette(doc)
     doc["template"] = template
     doc["palette"] = palette
     doc["pages"] = _build_pages(template, doc.get("ratio", DEFAULT_RATIO), contents, palette)
+    for page, saved in zip(doc["pages"], translations):
+        for item in page["elements"]:
+            if item.get("text") in saved:
+                item["text_ko"], item["translation_source"] = saved[item["text"]]
 
 
 # ---------- 대화로 고치기 (단어 규칙, AI 연결 전) ----------
@@ -788,3 +796,111 @@ def build_cardnews_prompt(request, doc=None, language="vi"):
               "- 제목은 한 줄, 본문은 1~2문장으로 짧게 쓴다.",
               f"- {LANGUAGES[language]}"]
     return "\n".join(lines), bool(rules)
+
+
+# 전문 AI도 기존 요소 문서와 저장·되돌리기 경로를 그대로 사용합니다.
+def build_design_brief(doc, options):
+    kind = doc.get("kind")
+    if kind not in ("poster", "cardnews") or doc.get("ratio") not in SIZES:
+        raise ValueError("포스터·카드뉴스와 지원 규격을 선택해 주세요.")
+    if kind == "cardnews" and doc["ratio"] not in CARDNEWS_RATIOS:
+        raise ValueError("카드뉴스는 4:5 또는 1:1 규격을 사용해 주세요.")
+    fields = {}
+    for key in ("request", "purpose", "audience", "mood", "density", "custom_prompt"):
+        value = options.get(key, "")
+        limit = 12000 if key == "custom_prompt" else 1500
+        if not isinstance(value, str) or len(value) > limit:
+            raise ValueError("요청 항목이 너무 길거나 형식이 올바르지 않습니다.")
+        fields[key] = value.strip()
+    if not fields["request"]:
+        raise ValueError("제품과 원하는 내용을 입력해 주세요.")
+    count = options.get("pages", DEFAULT_PAGES) if kind == "cardnews" else 1
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= MAX_PAGES:
+        raise ValueError("장수가 올바르지 않습니다.")
+    if kind == "cardnews" and count < MIN_PAGES:
+        raise ValueError("카드뉴스는 3~6장입니다.")
+    persona = (Path(__file__).parent / "prompts" / f"{kind}_base.md").read_text(encoding="utf-8")
+    rules = _guideline_rules()
+    brief = {**fields, "kind": kind, "ratio": doc["ratio"], "pages": count,
+             "reference_texts": design_texts(doc), "local_guidelines": rules,
+             "reference_is_demo": bool(doc.get("demo", True)),
+             "reference_notice": "기존 초안은 참고용입니다. 시연 문구의 제품 정보·효능·가격을 사실 근거로 사용하지 마세요.",
+             "guidelines_notice": "제공된 지침만 참고" if rules else "현지 검수 기준 준비 중"}
+    return persona, brief, bool(rules)
+
+
+def design_proposal_schema(count):
+    """API 출력과 서버 검증 모두 동일한 제한을 사용합니다."""
+    def obj(properties):
+        return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
+
+    def string(limit):
+        return {"type": "string", "minLength": 1, "maxLength": limit}
+
+    page = obj({"title_vi": string(90), "title_ko": string(150),
+                "body_vi": string(350), "body_ko": string(600)})
+    proposal = obj({"name": string(80), "prompt": string(4000),
+                    "template": {"type": "string", "enum": list(TEMPLATES)},
+                    "pages": {"type": "array", "minItems": count, "maxItems": count, "items": page}})
+    return obj({"proposals": {"type": "array", "minItems": 3, "maxItems": 3, "items": proposal}})
+
+
+def validate_proposals(value, schema):
+    """외부 AI 응답은 저장·그리기 전에 제한된 JSON 형식으로 검사합니다."""
+    type_ = schema["type"]
+    if type_ == "object":
+        if not isinstance(value, dict) or set(value) != set(schema["properties"]):
+            raise ValueError("AI 결과의 항목이 올바르지 않습니다.")
+        for key, child in schema["properties"].items():
+            validate_proposals(value[key], child)
+    elif type_ == "array":
+        if not isinstance(value, list) or not schema["minItems"] <= len(value) <= schema["maxItems"]:
+            raise ValueError("AI 결과의 제안 수 또는 장수가 올바르지 않습니다.")
+        for child in value:
+            validate_proposals(child, schema["items"])
+    elif not isinstance(value, str) or not value.strip() or len(value) > schema.get("maxLength", 4000):
+        raise ValueError("AI 결과의 문구가 비어 있거나 너무 깁니다.")
+    elif "enum" in schema and value not in schema["enum"]:
+        raise ValueError("AI 결과의 템플릿이 올바르지 않습니다.")
+
+
+def proposal_design(source, proposal, options):
+    """AI는 문구·구성을 제안하고, 사진은 기존 원본을 유지합니다."""
+    photo = next((item.get("src") for page in source.get("pages", [])
+                  for item in page.get("elements", []) if item.get("type") == "image" and item.get("src")), None)
+    texts = proposal["pages"]
+    if source["kind"] == "cardnews":
+        palette = _doc_palette(source)
+        contents = [{"title": item["title_vi"], "subtitle": item["body_vi"], "body": item["body_vi"],
+                     "quote": item["body_vi"], "checks": item["body_vi"].split("\n"), "badge": BRAND,
+                     "photo": photo} for item in texts]
+        doc = {"kind": "cardnews", "ratio": source["ratio"], "template": proposal["template"],
+               "palette": palette, "pages": _build_pages(proposal["template"], source["ratio"], contents, palette)}
+    else:
+        doc = make_poster("", ratio=source["ratio"])
+        for item in doc["pages"][0]["elements"]:
+            if item["type"] == "image":
+                item["src"] = photo
+            elif item.get("role") in ("title", "subtitle"):
+                item["text"] = texts[0]["title_vi" if item["role"] == "title" else "body_vi"]
+        # 긴 베트남어가 사진이나 화면 밖으로 넘치지 않도록 제목 아래에 본문을 배치합니다.
+        width, height = SIZES[doc["ratio"]]
+        title, body = [next(i for i in doc["pages"][0]["elements"] if i.get("role") == role)
+                       for role in ("title", "subtitle")]
+        for item, max_h in ((title, 12), (body, 15)):
+            while item["size"] > 18 and _text_h(item["text"], item["size"], item["w"], width, height) > max_h:
+                item["size"] -= 2
+            item["h"] = _text_h(item["text"], item["size"], item["w"], width, height)
+        body["y"] = title["y"] + title["h"] + 1
+    for page, words in zip(doc["pages"], texts):
+        for item in page["elements"]:
+            role = item.get("role")
+            if item["type"] == "text" and role in ("title", "subtitle", "body", "quote", "checks"):
+                item["text_ko"] = words["title_ko" if role == "title" else "body_ko"]
+                item["translation_source"] = item["text"]
+    doc["demo"] = source.get("demo", True)
+    doc["assistant"] = {"name": proposal["name"], "prompt": proposal["prompt"], "options": options,
+                        "notice": "AI 문구 초안 · 스타일 제안 · 제품 정보와 번역은 검토해 주세요."}
+    if source.get("external_figma"):
+        doc["external_figma"] = copy.deepcopy(source["external_figma"])
+    return doc

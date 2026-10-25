@@ -6,12 +6,18 @@ API는 /content_studio/media/api/... 아래에 둡니다. 예: @bp.route("/media
 import os
 import re
 import uuid
+import json
+from datetime import datetime, timezone
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.request import Request, urlopen
 
 from flask import current_app, jsonify, request, send_from_directory
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from . import bp
-from .designs import build_cardnews_prompt, design_texts
+from .designs import (build_cardnews_prompt, build_design_brief, design_proposal_schema,
+                      design_texts, proposal_design, validate_proposals)
 
 REVIEW_DISCLAIMER = "광고 표현·문화 참고 안내입니다. 법적 판단이 아닙니다."
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -179,6 +185,8 @@ def review_copy():
     return jsonify({
         "ok": True,
         "ready": bool(guidelines.get("avoid_expressions")),  # 기준이 비어 있으면 "문제 없음"이 아닙니다.
+        "guidelines": {key: guidelines.get(key) for key in
+                       ("status", "reviewed_at", "visual_cautions", "required_notices", "prompt_rules", "sources")},
         "disclaimer": guidelines.get("disclaimer") or REVIEW_DISCLAIMER,
         "checked": len(texts),
         "findings": findings,
@@ -194,3 +202,122 @@ def cardnews_prompt():
         return _error("원하는 내용을 입력해 주세요.")
     prompt, rules_ready = build_cardnews_prompt(wish, body.get("design"), body.get("language"))
     return jsonify({"ok": True, "prompt": prompt, "rules_ready": rules_ready})
+
+
+def _media_body():
+    if request.content_length and request.content_length > 160000:
+        raise ValueError("요청이 너무 큽니다. 문구와 장수를 줄여 주세요.")
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        raise ValueError("요청 형식이 올바르지 않습니다.")
+    return body
+
+
+def _design_request(body):
+    doc, options = body.get("design"), body.get("options")
+    if not isinstance(doc, dict) or not isinstance(options, dict):
+        raise ValueError("편집 중인 초안과 요청 항목이 필요합니다.")
+    pages = doc.get("pages")
+    if not isinstance(pages, list) or not 1 <= len(pages) <= 6:
+        raise ValueError("초안의 장수가 올바르지 않습니다.")
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("elements"), list):
+            raise ValueError("초안의 요소 형식이 올바르지 않습니다.")
+        if len(page["elements"]) > 100 or any(not isinstance(i, dict) for i in page["elements"]):
+            raise ValueError("초안의 요소가 너무 많거나 올바르지 않습니다.")
+    return doc, options
+
+
+def _api_json(url, headers, payload=None):
+    # 자동 재시도는 중복 과금 방지를 위해 하지 않습니다. 비밀 값·외부 오류 본문은 출력하지 않습니다.
+    data = json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None
+    req = Request(url, data=data, headers=headers)
+    with urlopen(req, timeout=90) as response:
+        raw = response.read(1500001)
+    if len(raw) > 1500000:
+        raise ValueError("외부 서비스 응답이 너무 큽니다.")
+    return json.loads(raw)
+
+
+@bp.route("/media/api/design-brief", methods=["POST"])
+def design_brief():
+    try:
+        doc, options = _design_request(_media_body())
+        persona, brief, ready = build_design_brief(doc, options)
+    except (ValueError, TypeError, KeyError):
+        return _error("제품·요청·규격·장수를 확인해 주세요.")
+    return jsonify({"ok": True, "prompt": persona + "\n\n[제작 요청]\n" + json.dumps(brief, ensure_ascii=False, indent=2),
+                    "rules_ready": ready,
+                    "ai_ready": bool(current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY"))})
+
+
+@bp.route("/media/api/design-assistant", methods=["POST"])
+def design_assistant():
+    try:
+        body = _media_body()
+        doc, options = _design_request(body)
+        persona, brief, ready = build_design_brief(doc, options)
+    except (ValueError, TypeError, KeyError):
+        return _error("제품·요청·규격·장수를 확인해 주세요.")
+    if body.get("confirm_paid") is not True:
+        return _error("유료 AI 제안 생성 버튼으로 실행해 주세요.")
+    key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if not key:
+        return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
+    schema = design_proposal_schema(brief["pages"])
+    try:
+        response = _api_json("https://api.openai.com/v1/responses",
+                             {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                             {"model": "gpt-4o-mini", "store": False, "instructions": persona,
+                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 6500,
+                              "text": {"format": {"type": "json_schema", "name": "design_proposals",
+                                                   "strict": True, "schema": schema}}})
+        if response.get("status") != "completed":
+            return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요.", 502)
+        output = "".join(part.get("text", "") for item in response.get("output", [])
+                         for part in item.get("content", []) if part.get("type") == "output_text")
+        result = json.loads(output)
+        validate_proposals(result, schema)
+        proposals = [{**item, "design": proposal_design(doc, item, options)} for item in result["proposals"]]
+        return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
+                        "usage": response.get("usage", {}), "model": "gpt-4o-mini"})
+    except HTTPError as error:
+        message = "API 키 또는 사용 권한을 확인해 주세요." if error.code in (401, 403) else "OpenAI 요청이 실패했습니다. 한도·잔액·모델 접근 권한을 확인해 주세요."
+        return _error(message, 502)
+    except (URLError, TimeoutError, OSError):
+        return _error("AI 응답을 받지 못했습니다. 사용 내역 확인 후 다시 실행해 주세요. 자동 재시도하지 않았습니다.", 502)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다.", 502)
+
+
+def _figma_selection(value):
+    if not isinstance(value, str) or len(value) > 2000:
+        raise ValueError("Figma 선택 영역 링크를 넣어 주세요.")
+    url = urlparse(value)
+    match = re.fullmatch(r"/(?:design|file)/([A-Za-z0-9]+)(?:/[^/]*)?/?", url.path)
+    node = parse_qs(url.query).get("node-id", [""])[0]
+    if (url.scheme != "https" or url.netloc not in ("www.figma.com", "figma.com")
+            or not match or not re.fullmatch(r"\d+[-:]\d+", node)):
+        raise ValueError("Figma에서 프레임을 선택하고 ‘선택 항목 링크 복사’로 얻은 주소를 넣어 주세요.")
+    return match[1], node.replace("-", ":")
+
+
+@bp.route("/media/api/figma-preview", methods=["POST"])
+def figma_preview():
+    try:
+        body = _media_body()
+        file_key, node_id = _figma_selection(body.get("url"))
+    except ValueError as error:
+        return _error(str(error))
+    token = current_app.config.get("FIGMA_ACCESS_TOKEN") or os.environ.get("FIGMA_ACCESS_TOKEN")
+    if not token:
+        return _error("Figma 연결이 필요합니다. PM1에게 서버 FIGMA_ACCESS_TOKEN 설정을 요청해 주세요. 편집 링크는 저장할 수 있습니다.", 503)
+    try:
+        data = _api_json(f"https://api.figma.com/v1/images/{file_key}?" + urlencode({"ids": node_id, "format": "png", "scale": "1"}),
+                         {"X-Figma-Token": token})
+        src = (data.get("images") or {}).get(node_id)
+        if not isinstance(src, str) or urlparse(src).scheme != "https":
+            return _error("선택 영역 이미지를 받지 못했습니다. 프레임과 접근 권한을 확인해 주세요.", 502)
+        return jsonify({"ok": True, "preview_url": src, "refreshed_at": datetime.now(timezone.utc).isoformat()})
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError, TypeError, AttributeError):
+        return _error("Figma 미리보기를 받지 못했습니다. 인증·파일 권한·사용 한도를 확인해 주세요.", 502)
