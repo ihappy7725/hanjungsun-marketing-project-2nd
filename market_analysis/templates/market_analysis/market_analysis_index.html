@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('market_analysis.static', filename='css/market_analysis_main.css') }}">
+<link rel="stylesheet" href="{{ url_for('market_analysis.static', filename='css/trends.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -26,7 +27,9 @@
     <button type="button" role="tab" data-tab="insight">AI 인사이트</button>
   </nav>
 
-  <section class="view" data-view="trend" role="tabpanel" hidden></section>
+  <section class="view" data-view="trend" role="tabpanel" hidden>
+    {% if dashboard.country == 'VN' %}{% include 'market_analysis/trends_panel.html' %}{% endif %}
+  </section>
   <section class="view" data-view="competitor" role="tabpanel" hidden></section>
   <section class="view" data-view="culture" role="tabpanel" hidden></section>
   <section class="view" data-view="insight" role="tabpanel" hidden></section>

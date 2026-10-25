@@ -396,3 +396,16 @@ def _safe(loader, path):
         return loader(path)
     except (csv.Error, ValueError, IndexError, OSError):
         return None
+
+
+@bp.get('/api/countries/<country_code>/trends')
+def trends_api(country_code):
+    from .repositories.trend_repository import TrendRepository
+    from .services.trend_service import TrendService
+    if country_code.upper() != 'VN':
+        return jsonify(error='현재 트렌드 분석은 베트남만 지원합니다.'), 404
+    try:
+        payload = TrendService(TrendRepository()).get_dashboard('VN')
+    except (ValueError, KeyError, TypeError, OSError):
+        return jsonify(error='트렌드 데이터를 읽지 못했습니다. 데이터 담당자에게 문의해 주세요.'), 503
+    return jsonify(payload)
