@@ -148,14 +148,17 @@
 
 .studio-page .studio-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
 .studio-page .studio-settings { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
-.studio-page .studio-product select { min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); }
+/* 영상 제목 입력칸: 버튼과 같은 높이·테두리 */
+.studio-page .studio-title { min-width: 16em; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); }
+/* 영상 제품 고르기: 비율 버튼과 같은 토글 버튼 줄([전체] + 4종, 여러 개 선택) */
+.studio-page .studio-product { flex-wrap: wrap; }
 .studio-page .studio-seg { display: flex; }
 .studio-page .studio-seg .btn + .btn { margin-left: calc(-1 * var(--space-1)); }
 .studio-page .btn:disabled { opacity: .45; cursor: default; }
 .studio-page .studio-duration { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-min); }
 .studio-page .studio-duration small { color: var(--muted); }
 
-.studio-page .studio-command-form input,
+.studio-page .studio-command-form textarea,
 .studio-page .studio-duration input,
 .studio-page .studio-video-input,
 .studio-page .studio-video-time-input,
@@ -166,7 +169,7 @@
   background: var(--white);
   color: var(--ink);
 }
-.studio-page .studio-duration input { width: 64px; padding: var(--space-3) var(--space-4); }
+.studio-page .studio-duration input { width: 64px; padding: var(--space-3) var(--space-4); background: var(--control-bg); }
 
 /* 한 줄 입력 + 한 줄 안내: 화면 아래에 붙어 있습니다 */
 .studio-page .studio-command {
@@ -178,6 +181,46 @@
   border-top: 1px solid var(--line);
 }
 .studio-page .studio-command-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); }
+.studio-page .studio-command-form textarea { display: block; width: 100%; resize: none; font: inherit; line-height: var(--line-height); }
+/* 영상 탭 입력창: 다른 입력칸과 같은 테두리·흰 배경, 글 길이에 맞춰 3~8줄(sns.js fitInput), 스크롤 막대·손잡이 없음.
+   [보내기]는 입력창 안 우측 하단 */
+/* 레퍼런스 썸네일 줄 → 입력창 → 아래 한 줄([+ 레퍼런스] 왼쪽 · [보내기] 오른쪽) */
+.studio-page[data-tab="video"] .studio-command-form { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; row-gap: var(--space-4); }
+.studio-page[data-tab="video"] .studio-command-form > .studio-refs,
+.studio-page[data-tab="video"] .studio-command-form > textarea { grid-column: 1 / -1; }
+.studio-page[data-tab="video"] .studio-command-form > .studio-ref-add { grid-column: 1; }
+.studio-page[data-tab="video"] .studio-command-form > [type="submit"] { grid-column: 3; }
+.studio-page[data-tab="video"] .studio-command-form textarea {
+  box-sizing: border-box;
+  min-height: calc(4 * var(--line-height) * 1em + 2 * var(--space-4) + 2px);  /* 예시 4줄 */
+  max-height: calc(8 * var(--line-height) * 1em + 2 * var(--space-4) + 2px);
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--control-bg);
+  overflow-y: auto;
+  scrollbar-width: none;
+  resize: none;
+}
+.studio-page[data-tab="video"] .studio-command-form textarea::-webkit-scrollbar { display: none; }
+/* 레퍼런스: 올린 것은 입력창 위에 작은 썸네일 + × */
+.studio-page .studio-refs { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); }
+.studio-page .studio-ref { position: relative; }
+.studio-page .studio-ref img, .studio-page .studio-ref video { display: block; width: 64px; height: 64px; object-fit: cover; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); }
+.studio-page .studio-ref-remove { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--control-bg); color: var(--ink); line-height: 1; }
+
+/* 영상(is-video): 제목 가운데 → 제품·비율·길이(·되돌리기) 한 줄 가운데. 첫 생성 화면(is-start)은 빈 가운데 칸을 숨기고 바로 입력창 */
+.studio-page .studio-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.studio-page .studio-work.is-video .studio-toolbar { flex-direction: column; align-items: stretch; margin-bottom: var(--space-6); }
+.studio-page .studio-work.is-video .studio-toolbar > .actions { display: none; }
+.studio-page .studio-work.is-video .studio-settings { flex-direction: column; align-items: center; gap: var(--space-5); }
+.studio-page .studio-work.is-video .studio-title { width: min(100%, 360px); text-align: center; }
+.studio-page .studio-work.is-video .studio-options { column-gap: var(--space-9); }  /* 제품 / 비율 / 길이 / 되돌리기 묶음 사이 */
+.studio-page .studio-work.is-video .studio-options { justify-content: center; }
+/* 초안 뒤 고정된 제목: 글자처럼 보이고, 누르면(읽기 전용 해제) 다시 입력칸 모양 */
+.studio-page .studio-title.is-fixed[readonly] { border-color: transparent; background: none; font-size: var(--fs-subheading); font-weight: 700; cursor: pointer; }
+.studio-page .studio-work.is-start .studio-canvas { display: none; }
+.studio-page .studio-work.is-start .studio-command { position: static; margin: 0; padding: 0 0 var(--space-6); border-top: 0; background: none; }
 .studio-page .studio-feedback { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 22px; margin-top: var(--space-4); color: var(--muted); font-size: var(--fs-min); }
 .studio-page .studio-feedback.is-ok { color: var(--green); }
 .studio-page .studio-feedback.is-ask { color: var(--ink); font-weight: 600; }
@@ -226,6 +269,7 @@
 .studio-page .studio-video-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
 .studio-page .studio-video-dot { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--white); font-size: var(--fs-min); }
 .studio-page .studio-video-dot.dark { background: var(--brown); border-color: var(--brown); color: var(--on-dark); }
+.studio-page .studio-video-dot.has-image { box-shadow: inset 0 -3px 0 var(--gold); }  /* 미리보기 이미지가 있는 컷 */
 
 .studio-page .studio-video h3 { margin: 0 0 var(--space-3); font-size: var(--fs-panel-title); font-weight: 600; }
 .studio-page .studio-video .studio-hint { display: block; margin: 0 0 var(--space-4); }
@@ -269,6 +313,7 @@
 .studio-page .studio-video-generate h4 { margin: var(--space-4) 0; font-size: var(--fs-min); font-weight: 600; }
 .studio-page .studio-video-photo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .studio-page .studio-video-photo-thumb { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); }
+.studio-page .studio-video-photo .studio-ref img, .studio-page .studio-video-photo .studio-ref video { width: 96px; height: 96px; }  /* ③ 레퍼런스도 제품 사진 크기 */
 .studio-page .studio-video-photo .studio-hint { margin: 0; }
 .studio-page .studio-video-prompt-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .studio-page .studio-video-copy { padding: var(--space-1) var(--space-4); font-size: var(--fs-min); }

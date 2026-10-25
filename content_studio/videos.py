@@ -14,6 +14,8 @@ import json
 import math
 import re
 
+from .products import PRODUCTS
+
 RATIOS = ("9:16", "16:9", "1:1")
 MIN_DURATION, MAX_DURATION = 5, 30
 MAX_SCENES = 8        # 길이로 자동으로 정하는 컷 수의 최대
@@ -590,7 +592,8 @@ def _prompt_lines(doc, lang):
     """프롬프트 줄들. lang 0=영어(Higgsfield용), 1=한국어 보기. 두 언어는 줄 수가 같고 한 줄씩 짝입니다.
     순서: 콘셉트 → 스타일 → 편집 리듬 → 제품 고정 → 배경·분위기 → 구간별 컷 → 카메라 → 조명·색감 → 연속성 → 소리 → 금지.
     컷마다 구간 이름·카메라·움직임·효과음은 저장하지 않고, 분위기와 컷 자리(소개·디테일·클라이맥스·히어로)로 매번 만듭니다.
-    영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·카메라·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다. 한국어도 똑같이 줄입니다."""
+    영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·카메라·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다.
+    여러 제품이면 제품 줄의 맛별 속 문장도 뺍니다. 한국어도 똑같이 줄입니다."""
     compact = len("\n".join(_lines(doc, 0, False))) > PROMPT_LIMIT
     return _lines(doc, lang, compact)
 
@@ -599,6 +602,7 @@ def _lines(doc, lang, compact):
     style = _style_of(doc)
     product = doc.get("product") or "찹쌀떡"
     look = PRODUCT_LOOK.get(product, PRODUCT_LOOK["찹쌀떡"])[lang]  # 모르는 제품이면 기본 찹쌀떡 문장
+    names = doc.get("products") or [product]  # 여러 제품이면 라인업 문장
     ratio = RATIO_WORDS.get(doc["ratio"], (doc["ratio"], doc["ratio"]))[lang]
     count = len(doc["scenes"])
     has_photo = bool(doc.get("image"))
@@ -621,7 +625,8 @@ def _lines(doc, lang, compact):
     continuity = CONTINUITY[lang] + (f"; {PHOTO_MATCH[lang]}." if has_photo else ".")
     if lang:
         head = f"'{style['concept'][1]}' — 한정선 {style['genre'][1]}, {doc['duration']}초, {ratio}, {style['quality'][1]}."
-        lock = f"제품: 한정선 {product} — {look}."
+        lock = f"제품: 한정선 {product} — {look}." if len(names) == 1 else (
+            f"제품: 한정선 찹쌀떡 {len(names)}가지 맛 — {_lineup(names, 1, compact)}. {LINEUP_SHELL[1]}.")
         sound = (f"소리: {style['music'][1]}, 컷마다 적은 효과음, {MUSIC_AVOID[1]}." if doc["sound"]
                  else "소리: 무음, 음악·효과음 없음.")
         labels = ("스타일", "편집", "배경", "분위기", "컷 구성:", "카메라", "조명·색감", "금지")
@@ -629,7 +634,9 @@ def _lines(doc, lang, compact):
         head = (f"'{style['concept'][0]}' — Hanjungsun {style['genre'][0]}, {doc['duration']} seconds, {ratio}, "
                 f"{style['quality'][0]}.")
         name = PRODUCT_EN.get(product, "Korean chapssal-tteok")
-        lock = f"Product: {name} by Hanjungsun — {look}."
+        lock = f"Product: {name} by Hanjungsun — {look}." if len(names) == 1 else (
+            f"Product: Hanjungsun chapssal-tteok in {len(names)} flavors — "
+            f"{_lineup(names, 0, compact)}. {LINEUP_SHELL[0]}.")
         sound = (f"Sound: {style['music'][0]}, plus the sound effects noted per shot, {MUSIC_AVOID[0]}." if doc["sound"]
                  else "Sound: silent, no music, no sound effects.")
         labels = ("Style", "Editing", "Setting", "Mood", "Shots:", "Camera", "Lighting and color", "Avoid")
@@ -646,10 +653,29 @@ def _lines(doc, lang, compact):
         f"{camera_l}: {ko(CAMERA_KO, doc['camera'])}; {style['camera'][lang]}.",
         f"{light_l}: {ko(LIGHTING_KO, doc['lighting'])}; {style['grade'][lang]}.",
         continuity,
+        *([f"{(REFERENCE_SHORT if compact else REFERENCE_NOTE)[lang]}."] if doc.get("user_refs") or doc.get("ref_video") else []),
         *[f"{_extra(doc, i, lang)}." for i in range(len(doc["extras"]))],
         sound,
         f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}'}, {style['avoid'][lang]}.",
     ]
+
+
+def _short(name, lang):
+    """제품 짧은 이름: '망고 요거트 찹쌀떡' → '망고 요거트' / 'mango yogurt'."""
+    return name.replace(" 찹쌀떡", "") if lang else PRODUCT_EN.get(name, name).replace(" chapssal-tteok", "")
+
+
+def _lineup(names, lang, compact):
+    """여러 제품 줄의 맛 목록. 프롬프트가 길면(compact) 맛 이름만, 아니면 맛별 속 문장까지."""
+    if compact:
+        return ", ".join(_short(n, lang) for n in names)
+    return "; ".join(f"{_short(n, lang)}: {_filling(n, lang)}" for n in names)
+
+
+def _filling(name, lang):
+    """제품 겉모습 문장에서 속 부분만: 'inside, …' / '속은 …'."""
+    look = PRODUCT_LOOK.get(name, PRODUCT_LOOK["찹쌀떡"])[lang]
+    return look.split("속은 ", 1)[-1] if lang else look.split("inside, ", 1)[-1]
 
 
 def _extra(doc, index, lang):
@@ -678,6 +704,14 @@ def build_prompt_ko(doc):
 # ---------- 직접 고친 한국어 → 영어 (단어 규칙, AI 연결 전) ----------
 # 영어·한국어 프롬프트는 한 줄씩 짝입니다. 고친 줄만 아는 표현을 영어로 바꾸고,
 # 모르는 한국어가 남으면 영어를 바꾸지 않고 untranslated에 적습니다(영상 모델에 한국어를 보내지 않음).
+# 사용자가 올린 레퍼런스 이미지·참고 영상이 있을 때 넣는 줄 (분위기 참고용, 제품은 제품 사진 기준)
+REFERENCE_NOTE = ("References: use the attached reference images and video only for mood, composition, camera movement "
+                  "and color; the product must match the product photo exactly",
+                  "레퍼런스: 첨부한 레퍼런스 이미지·영상은 분위기·구도·카메라 움직임·색감만 참고, 제품은 제품 사진과 똑같이")
+REFERENCE_SHORT = ("References: mood, composition and color only", "레퍼런스: 분위기·구도·색감만 참고")  # 프롬프트가 길 때
+# 여러 제품(라인업) 영상의 제품 줄 끝 문장
+LINEUP_SHELL = ("Each is a round, soft white rice cake with a light rice-flour dusting",
+                "모두 고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡")
 KO_LABELS = (("조명·색감:", "Lighting and color:"), ("컷 구성:", "Shots:"), ("스타일:", "Style:"), ("배경:", "Setting:"),
              ("분위기:", "Mood:"), ("카메라:", "Camera:"), ("금지:", "Avoid:"), ("효과음:", "SFX:"), ("소리:", "Sound:"),
              ("제품:", "Product:"), ("편집:", "Editing:"))
@@ -688,6 +722,7 @@ KO_FIXED = (
     ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
     CONTINUITY[::-1], PHOTO_MATCH[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
     ("한정선", "Hanjungsun"),
+    LINEUP_SHELL[::-1], REFERENCE_NOTE[::-1], REFERENCE_SHORT[::-1],
 )
 HANGUL = re.compile(r"[가-힣ㄱ-ㆎ]")
 
@@ -706,13 +741,16 @@ def _ko_phrases(doc):
     pairs += [(ko, en) for en, ko in RATIO_WORDS.values()]
     pairs.append(COMMON_AVOID[::-1])
     for name, en in PRODUCT_EN.items():
+        pairs.append((_short(name, 1), _short(name, 0)))
+        pairs.append((_filling(name, 1), _filling(name, 0)))
         pairs.append((f"한정선 {name}", f"{en} by Hanjungsun"))
         pairs.append(PRODUCT_LOOK.get(name, ("", ""))[::-1])
     pairs += [(doc.get("background_ko") or "", doc.get("background") or ""), (doc.get("mood_ko") or "", doc.get("mood") or "")]
     pairs += [(_extra(doc, i, 1), doc["extras"][i]) for i in range(len(doc.get("extras") or []))]
     scenes = [TEXTURE_SCENE, BITE_SCENE, *EXTRA_SCENES, *doc.get("scenes", [])]
     pairs += [(scene["ko"], scene["en"]) for scene in scenes if scene.get("ko") and scene.get("en")]
-    return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: len(pair[0]), reverse=True)
+    # 긴 표현 먼저, 길이가 같으면 글자 순(실행할 때마다 순서가 바뀌지 않게)
+    return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: (-len(pair[0]), pair))
 
 
 def phrase_pairs(doc):
@@ -730,6 +768,8 @@ def phrase_pairs(doc):
 
 def _ko_line_to_en(line, phrases):
     """한국어 한 줄 → 영어. 한국어가 남으면 None."""
+    # 여러 제품 줄의 머리("한정선 찹쌀떡 4가지 맛")는 한 덩어리로 먼저 바꿉니다(제품 이름 짝과 겹치지 않게).
+    line = re.sub(r"한정선 찹쌀떡 (\d+)가지 맛", r"Hanjungsun chapssal-tteok in \1 flavors", line)
     for ko, en in phrases:
         line = line.replace(ko, en)
     for ko, en in KO_LABELS:
@@ -778,8 +818,11 @@ def refresh_prompts(doc):
     return doc
 
 
-def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡", event=None):
-    """요청 문장 → 영상 문서 (README 8장 형식 + caption·demo·reviewed)."""
+def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡", event=None, products=None):
+    """요청 문장 → 영상 문서 (README 8장 형식 + caption·demo·reviewed).
+    products: 여러 제품 이름(라인업 영상). 주면 product는 그 첫 제품입니다."""
+    names = list(products or [product])
+    product = names[0]
     text = text or ""
     ratio = _pick(ratio, RATIOS, "9:16")
     duration = _duration(duration)
@@ -798,7 +841,15 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         dict(middle),
         {"ko": "브랜드 마무리 컷", "en": "the rice cakes beautifully plated, final hero shot", "caption": BRAND_CAPTION},
     ]
-    if scene_count(duration) >= 4:
+    if len(names) > 1:
+        # 라인업: 첫 컷은 맛들이 나란히, 다음은 맛을 하나씩 클로즈업. 컷 수가 모자라면 뒤쪽 클로즈업부터 빠집니다(_retime).
+        lineup = {"ko": f"{len(names)}가지 맛 찹쌀떡이 나란히 놓인 모습",
+                  "en": f"{len(names)} flavors of Hanjungsun chapssal-tteok lined up side by side",
+                  "caption": f"Mừng {event_vi}" if event_vi else f"Chapssal-tteok {len(names)} vị"}
+        closeups = [{"ko": f"{name} 클로즈업", "en": f"extreme close-up of {PRODUCT_EN.get(name, 'Korean chapssal-tteok')}",
+                     "caption": PRODUCT_VI.get(name, "")} for name in names]
+        scenes = [lineup, *closeups, dict(middle), scenes[-1]]
+    elif scene_count(duration) >= 4:
         scenes.insert(0, {**setting["opening"], "caption": ""})
 
     # 분위기: 요청 단어 → 없으면 기념일 영상은 따뜻한 감성, 그 밖에는 프리미엄 광고
@@ -808,10 +859,12 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         "ratio": ratio,
         "duration": duration,
         "sound": bool(sound),
-        "summary": " · ".join(filter(None, [f"{duration}초 {ratio}", product, event, STYLES[style]["label"]])),
+        "summary": " · ".join(filter(None, [f"{duration}초 {ratio}", product if len(names) == 1 else f"{len(names)}가지 맛",
+                                            event, STYLES[style]["label"]])),
         "scenes": _retime(scenes, duration, style),
         "style": style,
         "product": product,
+        "products": names,
         "event": event,
         "camera": CAMERAS[2] if re.search(r"빠르|역동", text) else CAMERAS[1],
         "lighting": LIGHTINGS[STYLES[style]["lighting"]],
@@ -942,15 +995,20 @@ def revise_draft(doc, text):
 # 단어 규칙(revise_draft)이 못 알아듣는 자유로운 요청("발렌타인 느낌으로, 장미꽃과 스위트하게")을 AI가 영상 문서의 칸으로 바꿉니다.
 # AI는 칸만 고치고, 프롬프트 문장은 지금처럼 _prompt_lines가 만듭니다(구조·길이 한도 유지). 호출은 routes_sns.py _call_ai.
 AI_TEXT_LIMIT = 200  # 칸 하나의 최대 글자 수
-TITLE_LIMIT = 30     # 작업 제목(주제) 최대 글자 수
+TITLE_LIMIT = 30     # 작업 제목(화면에서 직접 입력) 최대 글자 수
 
 
 def video_title(doc, event=None):
-    """작업 목록에 보일 짧은 주제. AI가 정한 title이 있으면 그것, 없으면 "기념일 - 제품" / "제품 분위기".
+    """작업 목록에 보일 짧은 주제. 화면에서 직접 입력한 title이 있으면 그것, 없으면 "기념일 - 제품" / "제품 · 분위기".
+    (AI는 제목을 정하지 않습니다. 예전에 AI가 정해 둔 title은 그대로 보입니다.)
     event: 문서에 기념일이 없을 때 쓸 작업의 기념일(SnsChat.event_id, 추천 카드로 만든 예전 작업)."""
     if doc.get("title"):
         return _no_tteok(doc["title"])
-    product = _no_tteok(doc.get("product") or "")
+    names = doc.get("products") or [doc.get("product") or ""]
+    if len(names) > 1:
+        product = "전체 제품" if set(names) >= {item["name_ko"] for item in PRODUCTS} else "·".join(_no_tteok(n) for n in names)
+    else:
+        product = _no_tteok(names[0])
     event = doc.get("event") or event
     if event:
         return f"{event} - {product}" if product else event
@@ -976,16 +1034,15 @@ AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드
 - 화면에 글자·로고를 그리라는 묘사는 넣지 마세요. 글은 caption(자막)으로만 넣습니다.
 - 제품({product})과 그 모양은 바꾸지 마세요. 과장된 효능·건강 표현은 쓰지 마세요.
 - event는 관련 기념일 이름(한국어, 없으면 기존 값 그대로)
-- title은 작업 목록에 보일 짧은 주제(한국어 20자 안팎). 예: "발렌타인데이 - 꿀 레드용과", "스승의 날 프로모션". "~만들거야" 같은 요청 문장과 "찹쌀떡"이라는 말은 쓰지 마세요.
 - changes는 바꾼 내용을 한국어 짧은 구절로 나열합니다(예: "배경을 장미 꽃잎 테이블로"). 요청을 이해하지 못했거나 바꿀 것이 없으면 []
 
 다음 JSON 형식으로만 답하세요:
-{{"changes": ["..."], "doc": {{"title": "...", "style": "...", "duration": 10, "ratio": "9:16", "sound": false, "camera": "...", "lighting": "...",
+{{"changes": ["..."], "doc": {{"style": "...", "duration": 10, "ratio": "9:16", "sound": false, "camera": "...", "lighting": "...",
   "background": "...", "background_ko": "...", "mood": "...", "mood_ko": "...", "event": "...",
   "extras": ["..."], "extras_ko": ["..."], "scenes": [{{"ko": "...", "en": "...", "caption": "..."}}]}}}}
 """
 
-AI_FIELDS = ("title", "style", "duration", "ratio", "sound", "camera", "lighting", "background", "background_ko", "mood", "mood_ko",
+AI_FIELDS = ("style", "duration", "ratio", "sound", "camera", "lighting", "background", "background_ko", "mood", "mood_ko",
              "event", "extras", "extras_ko", "scenes")
 
 
@@ -996,7 +1053,7 @@ def ai_messages(doc, text):
     instructions = AI_INSTRUCTIONS.format(
         styles=", ".join(f"{key}({style['label']})" for key, style in STYLES.items()),
         cameras=" | ".join(CAMERAS), lightings=" | ".join(LIGHTINGS),
-        max_scenes=MAX_MANUAL_SCENES, product=doc.get("product") or "찹쌀떡",
+        max_scenes=MAX_MANUAL_SCENES, product=", ".join(doc.get("products") or [doc.get("product") or "찹쌀떡"]),
     )
     return [
         {"role": "system", "content": instructions},
@@ -1032,9 +1089,6 @@ def apply_ai(doc, data):
         english, korean = _ai_text(got.get(key), english=True), _ai_text(got.get(f"{key}_ko"))
         if english and korean:
             new[key], new[f"{key}_ko"] = english, korean
-    title = got.get("title")
-    if isinstance(title, str) and title.strip() and len(title.strip()) <= TITLE_LIMIT:
-        new["title"] = title.strip()
     if isinstance(got.get("event"), str) and len(got["event"]) <= 30:
         new["event"] = got["event"].strip() or None
 
@@ -1060,7 +1114,7 @@ def apply_ai(doc, data):
 
     # 자막만 바뀌었는지 보려고 자막을 뺀 영상 칸끼리 비교합니다.
     def video_part(item):
-        part = {key: item.get(key) for key in AI_FIELDS if key not in ("scenes", "title")}
+        part = {key: item.get(key) for key in AI_FIELDS if key != "scenes"}
         part["scenes"] = [(s["ko"], s["en"], s["time"]) for s in item["scenes"]]
         return part
 

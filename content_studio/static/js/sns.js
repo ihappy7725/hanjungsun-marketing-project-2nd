@@ -232,7 +232,7 @@ function recCard(rec) {
   card.addEventListener("click", () => {
     if (!WORK_KINDS.includes(kind)) return notify(`"${rec.title}" 요청으로 바로 만들기는 다음 단계에서 연결됩니다.`);
     startNew();
-    send(rec.title, { event: rec.event, ...(rec.product_id && { product_id: rec.product_id }) });
+    send(rec.title, { event: rec.event, ...(rec.product_id && { product_ids: [rec.product_id] }) });
   });
   return card;
 }
@@ -282,8 +282,20 @@ function enableRailScroll(rail) {
 
 // ---------- 작업 화면 ----------
 const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false };
-// product_id: 영상 설정 줄의 [제품] 고르기(비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다)
-const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_id: "" };  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
+// product_ids: 영상 설정 줄의 [제품] 고르기(전체·여러 개). 비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다.
+// title: 영상 제목(직접 입력). 비우면 서버가 "기념일 - 제품" 규칙 제목을 씁니다.
+// user_refs·ref_video: 처음 만들 때 올린 레퍼런스 이미지(최대 4장)·참고 영상(1개). 초안 뒤에는 작업 문서에 저장합니다.
+const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
+  user_refs: [], ref_video: null };
+const USER_REFS_MAX = 4;
+// 영상 입력창 문구: 처음 만들 때와 초안 뒤
+const VIDEO_FIRST_PLACEHOLDER = [
+  "생성할 영상의 컨셉·스토리·분위기를 입력해 주세요.",
+  "예) 신메뉴 두리안 찹쌀떡 출시 기념 영상.",
+  "스토리: 포장을 푸는 손 → 반으로 갈라 진한 두리안 크림 단면 공개 → 한입 베어 물고 만족스러운 표정 → 제품 히어로 컷.",
+  "분위기: 고급스럽고 차분한 톤, 따뜻한 조명, 느린 카메라 움직임.",
+].join("\n");
+const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -317,14 +329,12 @@ function startNew() {
   showScreen("work");
   setUrl(null);
   notify("");
-  // 포스터·카드뉴스는 가운데 첫 화면(희주 renderStart)에서 시작하므로 입력줄 안내를 띄우지 않습니다.
-  if (kind === "video") {
-    feedback("info", "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
-  } else {
-    feedback("", "");
-  }
+  // 새 작업이라 이전 작업 칸은 닫습니다(☰ 이전 작업으로 다시 열 수 있음). 첫 안내는 입력창 문구(VIDEO_FIRST_PLACEHOLDER)로 합니다.
+  $("history").hidden = true;
+  $("work-screen").classList.remove("has-history");
+  Object.assign(settings, { title: "", user_refs: [], ref_video: null });  // 제목·레퍼런스는 작업마다 새로
+  feedback("", "");
   renderWork();
-  loadHistory();  // 이전 작업 칸은 처음부터 열려 있습니다.
   if (kind === "video") $("chat-input").focus();
 }
 
@@ -365,11 +375,41 @@ function renderWork() {
     button.title = ratioLocked ? "비율은 새로 만들 때 정해요" : "";
   }
   $("set-duration").closest("label").hidden = kind !== "video";
-  $("set-sound").hidden = kind !== "video";
-  // 제품 고르기: 영상만, 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
-  $("set-product").closest("label").hidden = kind !== "video";
-  $("set-product").value = doc ? (PRODUCTS.find((item) => item.name_ko === doc.product)?.id || "") : settings.product_id;
-  $("set-product").disabled = Boolean(doc);
+  $("set-sound").hidden = true;  // 소리는 버튼 대신 입력창에 "소리 켜줘"로 바꿉니다.
+  // 영상 탭은 [← 첫 화면]·[☰ 이전 작업] 버튼과 이전 작업 칸 없이 씁니다(첫 화면은 위쪽 [영상] 탭으로).
+  $("go-home").hidden = $("history-toggle").hidden = kind === "video";
+  if (kind === "video") {
+    $("history").hidden = true;
+    $("work-screen").classList.remove("has-history");
+  }
+  // 영상: 제목 가운데 → 제품·비율·길이(·되돌리기) 한 줄(is-video). 첫 생성 화면(is-start)은 그 아래 바로 입력창.
+  // 되돌리기·다시하기는 초안 뒤에만.
+  $("work-screen").classList.toggle("is-video", kind === "video");
+  $("work-screen").classList.toggle("is-start", kind === "video" && !doc);
+  $("undo").hidden = $("redo").hidden = kind === "video" && !doc;
+  // 제품 고르기: 영상만. 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
+  const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
+    : settings.product_ids;
+  $("set-product").hidden = kind !== "video";
+  // 영상 제목: 초안 전에는 입력값, 초안 뒤에는 그 작업 제목으로 고정해 보여 주고, 누르면 고칠 수 있습니다(이름 바꾸기).
+  const title = $("set-title");
+  title.hidden = kind !== "video";
+  const titleFixed = kind === "video" && Boolean(doc);
+  title.classList.toggle("is-fixed", titleFixed);
+  title.title = titleFixed ? "눌러서 제목 고치기" : "";
+  if (document.activeElement !== title) {
+    title.value = doc ? (doc.title || "") : settings.title;
+    title.readOnly = titleFixed;
+  }
+  for (const button of $("set-product").children) {
+    const all = button.dataset.value === "all";
+    button.classList.toggle("dark", all ? chosen.length === PRODUCTS.length : chosen.includes(button.dataset.value));
+    button.setAttribute("aria-pressed", String(button.classList.contains("dark")));
+    button.disabled = Boolean(doc);
+  }
+  if (kind === "video") $("chat-input").placeholder = doc ? REVISE_PLACEHOLDER : VIDEO_FIRST_PLACEHOLDER;
+  fitInput();
+  renderRefs();
   $("set-duration").value = current.duration;
   $("set-sound").textContent = current.sound ? "소리 켬" : "소리 끔";
   $("set-sound").classList.toggle("dark", current.sound);
@@ -394,10 +434,12 @@ function renderWork() {
     return;
   }
   if (!doc) {
-    $("canvas").replaceChildren(el("p", "empty-note", "아래 입력줄로 요청하면 여기에 장면 구성과 프롬프트 초안이 나타납니다."));
+    $("canvas").replaceChildren();
     return;
   }
-  if (kind === "video") renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
+  if (kind === "video") {
+    renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text), onUploadRef: uploadRef });
+  }
   else editor.renderDesign($("canvas"), doc, { onSave: saveDesign });
 }
 
@@ -490,6 +532,101 @@ async function move(step) {
 }
 
 // ---------- 이전 작업 ----------
+// ---------- 레퍼런스 (영상) ----------
+// 분위기·구도·색감 참고용 이미지(희주 업로드 API)와 참고 영상(/api/ref-video). 제품 모양은 제품 사진을 따릅니다.
+function currentRefs() {
+  const doc = work.doc;
+  return doc ? { user_refs: doc.user_refs || [], ref_video: doc.ref_video || null } : settings;
+}
+
+// 입력창 옆 레퍼런스는 첫 생성 화면에서만. 초안 뒤에는 ③ 영상 만들기의 레퍼런스 칸(sns_video.js)에서 넣고 뺍니다.
+function renderRefs() {
+  const show = kind === "video" && !work.doc;
+  $("ref-add").hidden = !show;
+  const { user_refs: images, ref_video: video } = currentRefs();
+  $("refs").hidden = !show || (!images.length && !video);
+  if (!show) return;
+  const item = (node, label, remove) => {
+    const box = el("span", "studio-ref");
+    const x = el("button", "studio-ref-remove", "×");
+    x.type = "button";
+    x.title = `${label} 빼기`;
+    x.addEventListener("click", remove);
+    box.append(node, x);
+    return box;
+  };
+  const nodes = images.map((ref, index) => {
+    const img = el("img");
+    img.src = ref.url;
+    img.alt = "레퍼런스 이미지";
+    return item(img, "레퍼런스 이미지", () => changeRefs({ user_refs: images.filter((_, i) => i !== index) }));
+  });
+  if (video) {
+    const clip = el("video");
+    clip.src = video.url;
+    clip.muted = true;
+    clip.preload = "metadata";
+    nodes.push(item(clip, "참고 영상", () => changeRefs({ ref_video: null })));
+  }
+  $("refs").replaceChildren(...nodes);
+}
+
+// 초안 전에는 설정에, 초안 뒤에는 작업 문서에 저장(새 버전, 되돌리기 가능)
+async function changeRefs(patch) {
+  if (!work.doc) {
+    Object.assign(settings, patch);
+    return renderRefs();
+  }
+  const { phrase_pairs: _, ...doc } = work.doc;
+  await saveDesign({ ...doc, ...patch });
+}
+
+async function addRef(file) {
+  const isVideo = file.type.startsWith("video/");
+  const refs = currentRefs();
+  if (!isVideo && refs.user_refs.length >= USER_REFS_MAX) return feedback("warn", `레퍼런스 이미지는 ${USER_REFS_MAX}장까지 올릴 수 있어요.`);
+  feedback("info", isVideo ? "참고 영상을 올리는 중…" : "레퍼런스 이미지를 올리는 중…");
+  try {
+    const ref = await uploadRef(file);
+    await changeRefs(isVideo ? { ref_video: ref } : { user_refs: [...refs.user_refs, ref] });
+    feedback("ok", isVideo ? "✓ 참고 영상을 넣었어요 (분위기·카메라 움직임 참고)" : "✓ 레퍼런스 이미지를 넣었어요 (분위기·구도·색감 참고)");
+  } catch (error) {
+    feedback("warn", `올리지 못했습니다. (${error.message})`);
+  }
+}
+
+// 레퍼런스 파일 올리기 → {file_id, url}. 이미지는 희주 업로드 API, 영상은 /api/ref-video
+async function uploadRef(file) {
+  const isVideo = file.type.startsWith("video/");
+  const form = new FormData();
+  form.append(isVideo ? "video" : "image", file);
+  const url = isVideo ? `${API}/ref-video` : API.replace(/api$/, "media/api/upload");
+  const response = await fetch(url, { method: "POST", body: form });
+  const data = await response.json().catch(() => ({ ok: false, error: "서버 응답을 읽지 못했습니다." }));
+  if (!data.ok) throw new Error(data.error || "올리지 못했습니다.");
+  return { file_id: data.file_id, url: data.url };
+}
+
+// 영상 입력창은 글 길이에 맞춰 높이가 늘어납니다(최소 3줄·최대 8줄은 sns.css). 스크롤 막대 없이 보이게 합니다.
+function fitInput() {
+  const input = $("chat-input");
+  if (kind !== "video") return;
+  input.style.height = "auto";
+  input.style.height = `${input.scrollHeight + 2}px`;  // 위아래 테두리 1px씩
+}
+
+async function renameWork(title) {
+  try {
+    const data = await api(`/chats/${work.chatId}`, { method: "PATCH", body: { title } });
+    work.doc = data.design;
+    renderWork();
+    loadHistory();
+    feedback("ok", `✓ 제목을 "${data.chat.title}"(으)로 바꿨어요`);
+  } catch (error) {
+    feedback("warn", `제목을 바꾸지 못했습니다. (${error.message})`);
+  }
+}
+
 async function loadHistory() {
   if ($("history").hidden) return;
   try {
@@ -524,7 +661,27 @@ function bindWork() {
   for (const button of $("set-ratio").children) {
     button.addEventListener("click", () => changeSetting("ratio", button.dataset.value, phrases[button.dataset.value]));
   }
-  $("set-product").addEventListener("change", (event) => { settings.product_id = event.target.value; });
+  // 영상 제목: 초안 전에는 설정에 담고, 초안 뒤에는 Enter·칸을 떠날 때 이름 바꾸기
+  $("set-title").addEventListener("input", (event) => { if (!work.doc) settings.title = event.target.value; });
+  $("set-title").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); event.target.blur(); } });
+  $("set-title").addEventListener("change", (event) => { if (work.doc && kind === "video") renameWork(event.target.value); });
+  // 초안 뒤 고정된 제목: 누르면 고치기, 칸을 떠나면 다시 고정
+  $("set-title").addEventListener("click", (event) => {
+    if (!event.target.readOnly) return;
+    event.target.readOnly = false;
+    event.target.select();
+  });
+  $("set-title").addEventListener("blur", (event) => { if (work.doc && kind === "video") event.target.readOnly = true; });
+  // [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다.
+  for (const button of $("set-product").children) {
+    button.addEventListener("click", () => {
+      const ids = PRODUCTS.map((item) => item.id), value = button.dataset.value;
+      if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
+      else if (settings.product_ids.includes(value)) settings.product_ids = settings.product_ids.filter((id) => id !== value);
+      else settings.product_ids = ids.filter((id) => id === value || settings.product_ids.includes(id));
+      renderWork();
+    });
+  }
   $("set-duration").addEventListener("change", (event) => {
     const value = Math.min(30, Math.max(5, Math.round(Number(event.target.value)) || 5));
     event.target.value = value;
@@ -540,10 +697,21 @@ function bindWork() {
     const input = $("chat-input");
     send(input.value);
     input.value = "";
+    fitInput();
   });
   // 한글 입력 중(조합 중) Enter는 글자 확정만 하고 보내지 않습니다.
+  $("chat-input").addEventListener("input", fitInput);
+  $("ref-add").addEventListener("click", () => $("ref-file").click());
+  $("ref-file").addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (file) addRef(file);
+  });
+  // Enter = 보내기, Shift+Enter = 줄바꿈. 한글 입력 중(조합 중) Enter는 글자 확정만 합니다.
   $("chat-input").addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && event.isComposing) event.preventDefault();
+    if (event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    if (!event.isComposing) $("chat-form").requestSubmit();
   });
 
   // Ctrl+Z / Ctrl+Shift+Z: 입력칸에 쓰는 중에는 글자 되돌리기로 둡니다.
@@ -557,6 +725,8 @@ function bindWork() {
 
 // ---------- 시작 ----------
 if (page) {
+  // 영상: 되돌리기·다시하기를 제품·비율·길이 줄 끝에 둡니다(제목 아래 가운데 한 줄).
+  if (kind === "video") page.querySelector(".studio-options").append($("undo").parentElement);
   enableRailScroll($("gallery"));
   $("recs").replaceChildren(...recommendations().map(recCard));
   $("new").addEventListener("click", startNew);
