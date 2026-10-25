@@ -93,6 +93,188 @@ function imageSize(file) {
   });
 }
 
+function field(label, input) {
+  const box = el("label", "studio-editor-field");
+  box.append(el("span", "", label), input);
+  return box;
+}
+
+function button(text, onClick, className = "btn") {
+  const node = el("button", className, text);
+  node.type = "button";
+  node.addEventListener("click", onClick);
+  return node;
+}
+
+function option(value, text, disabled = false) {
+  const node = el("option", "", text);
+  node.value = value;
+  node.disabled = disabled;
+  return node;
+}
+
+function selectBox(className, choices, value, onChange) {
+  const select = el("select", className);
+  for (const [key, text] of choices) select.append(option(key, text));
+  select.value = value;
+  select.addEventListener("change", () => onChange(select.value));
+  return select;
+}
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({ ok: false }));
+  if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
+  return data;
+}
+
+// ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
+// 편집기 안 창(openPrompt)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
+// extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
+function promptForm(doc, { onApply, isActive = () => true, extra = null } = {}) {
+  const previous = doc.assistant?.options || {};
+  const wish = el("textarea");
+  wish.rows = 4;
+  wish.maxLength = 1500;
+  wish.value = previous.request || "";
+  wish.placeholder = "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
+  const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
+  const audience = el("input");
+  audience.value = previous.audience || "";
+  audience.maxLength = 1500;
+  audience.placeholder = "예: 다낭의 20~30대 디저트 소비자";
+  const mood = selectBox("", ["깔끔한 정보형", "사진 중심", "따뜻한 감성", "발랄하고 귀여운", "차분하고 고급스러운"].map((v) => [v, v]), previous.mood || "깔끔한 정보형", () => {});
+  const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
+  const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || doc.pages.length), () => {});
+  if (!pages.value) pages.value = "5";
+  const msg = el("p", "studio-hint");
+  msg.setAttribute("role", "status");
+  const result = el("textarea", "studio-editor-prompt-result");
+  result.rows = 10;
+  result.maxLength = 12000;
+  result.setAttribute("aria-label", "제작 프롬프트 — 수정 후 AI에 반영할 수 있습니다");
+  result.hidden = true;
+  const candidates = el("div", "studio-editor-candidates");
+  let proposals = [], selected = 0;
+  const settingsBox = el("fieldset", "studio-editor-brief");
+  settingsBox.append(el("legend", "", "제작 조건"));
+  if (extra) settingsBox.append(extra);
+  settingsBox.append(field("제품·요청", wish), field("목적", purpose),
+    field("대상", audience), field("분위기", mood), field("글의 양", density));
+  if (doc.kind === "cardnews") settingsBox.append(field("장수", pages));
+  const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
+    mood: mood.value, density: density.value, pages: doc.kind === "poster" ? 1 : Number(pages.value),
+    custom_prompt: result.hidden ? "" : result.value });
+  const copy = button("복사", async () => {
+    try {
+      await navigator.clipboard.writeText(result.value);
+      msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
+    } catch {
+      result.select();
+      msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
+    }
+  });
+  copy.hidden = true;
+  const apply = button("선택한 초안 적용", async () => {
+    if (!proposals[selected] || !onApply) return;
+    if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
+    apply.disabled = true;
+    try {
+      await onApply(proposals[selected].design);
+    } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
+    finally { apply.disabled = false; }
+  }, "btn dark");
+  apply.hidden = true;
+  function showCandidates() {
+    candidates.replaceChildren(...proposals.map((item, index) => {
+      const card = el("section", "studio-editor-candidate");
+      const choose = button(`${index === selected ? "✓ " : ""}${item.name}`, () => {
+        selected = index;
+        result.value = item.prompt;
+        showCandidates();
+      }, index === selected ? "btn dark" : "btn");
+      choose.setAttribute("aria-pressed", String(index === selected));
+      card.append(choose);
+      item.pages.forEach((words, pageNumber) => {
+        const vi = el("p", "", `${pageNumber + 1}장 · ${words.title_vi}\n${words.body_vi}`);
+        vi.lang = "vi";
+        card.append(vi, el("p", "studio-hint", `${words.title_ko}\n${words.body_ko}`));
+      });
+      return card;
+    }));
+  }
+  function invalidate() {
+    proposals = [];
+    candidates.replaceChildren();
+    apply.hidden = true;
+    result.value = "";
+    result.hidden = copy.hidden = true;
+    msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
+  }
+  settingsBox.addEventListener("input", invalidate);
+  const brief = button("기본 프롬프트 보기 (무료)", async () => {
+    brief.disabled = make.disabled = settingsBox.disabled = true;
+    try {
+      const data = await postJson(BRIEF_API, { design: doc, options: { ...options(), custom_prompt: "" } });
+      proposals = [];
+      candidates.replaceChildren();
+      apply.hidden = true;
+      result.value = data.prompt;
+      result.hidden = copy.hidden = false;
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.ai_ready ? "AI 연결 설정 있음." : "유료 AI는 PM1의 API 키 설정 후 사용할 수 있습니다."}`;
+    } catch (error) { msg.textContent = error.message; }
+    finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
+  });
+  const make = button("AI 제안 3개 생성 (유료)", async () => {
+    if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
+    make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
+    candidates.inert = true;
+    msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
+    try {
+      const data = await postJson(ASSISTANT_API, { design: doc, options: options(), confirm_paid: true });
+      if (!isActive()) return;
+      proposals = data.proposals;
+      selected = 0;
+      result.value = proposals[0].prompt;
+      result.hidden = copy.hidden = apply.hidden = false;
+      showCandidates();
+      candidates.scrollIntoView({ block: "nearest" });
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.model} · 입력 ${data.usage.input_tokens || 0} / 출력 ${data.usage.output_tokens || 0} 토큰. 제안을 고르고 적용하세요.`;
+    } catch (error) { msg.textContent = error.message; }
+    finally {
+      make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
+      candidates.inert = false;
+    }
+  }, "btn dark");
+  const nodes = [el("h2", "", `${doc.kind === "poster" ? "포스터" : "카드뉴스"} 전문 프롬프트 · AI 초안`),
+    el("p", "studio-hint", "베트남어 문구 + 한국어 뜻. 스타일은 검토용 제안이며 확정된 브랜드 지침은 없습니다."),
+    el("p", "studio-hint", "시험 예산 약 $5 · 유료 버튼을 누를 때마다 비용이 발생합니다. 총액 자동 차단은 연결되지 않았으니 OpenAI 사용 내역을 확인하세요. 사진 생성 비용은 발생하지 않습니다."),
+    settingsBox, brief, make, msg, candidates, result, copy, apply];
+  return { nodes, focus: () => wish.focus() };
+}
+
+// ---------- 첫 화면 (작업이 아직 없을 때) ----------
+// sns.js(유진)가 포스터·카드뉴스 탭에 작업이 없을 때 부릅니다. 제작 조건 → 프롬프트 · AI 초안을 먼저 보여주고,
+// 고른 초안은 onCreate(design, { product_id })로 새 작업에 저장합니다. (저장 실패 시 onCreate가 throw)
+// products: [{id, name_ko}] — 주면 제품 고르기 칸을 맨 앞에 넣습니다.
+export function renderStart(root, { kind, ratio, products = [], onCreate } = {}) {
+  // 빈 초안: 색은 designs.py 기본 색 조합을 쓰도록 비워 둡니다.
+  const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };
+  const wrap = el("div", "studio-editor");
+  const panel = el("div", "studio-editor-prompt");
+  const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), products[0].id, () => {}) : null;
+  const form = promptForm(base, {
+    isActive: () => wrap.isConnected,
+    extra: product && field("제품", product),
+    onApply: (design) => onCreate(design, { product_id: product ? product.value : null }),
+  });
+  panel.append(...form.nodes);
+  wrap.append(panel);
+  root.replaceChildren(wrap);
+}
+
 // 지금 편집기에서 보고 있는 장 번호(0부터). sns.js가 대화로 고치기 요청에 page로 보냅니다.
 export function currentPage() {
   return pageIndex;
@@ -408,12 +590,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
   }
 
   // ---------- 편집 막대 ----------
-  function field(label, input) {
-    const box = el("label", "studio-editor-field");
-    box.append(el("span", "", label), input);
-    return box;
-  }
-
   function colorInput(value, onChange) {
     const input = el("input");
     input.type = "color";
@@ -422,21 +598,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return input;
   }
 
-  function button(text, onClick, className = "btn") {
-    const node = el("button", className, text);
-    node.type = "button";
-    node.addEventListener("click", onClick);
-    return node;
-  }
-
   const status = el("span", "studio-hint");
-
-  function option(value, text, disabled = false) {
-    const node = el("option", "", text);
-    node.value = value;
-    node.disabled = disabled;
-    return node;
-  }
 
   // 글꼴 목록: 묶음별 웹글꼴 + 맨 아래 내 PC 글꼴 (README 3-5)
   function fontSelect(item) {
@@ -486,14 +648,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
       draw();
       save();
     });
-    return select;
-  }
-
-  function selectBox(className, choices, value, onChange) {
-    const select = el("select", className);
-    for (const [key, text] of choices) select.append(option(key, text));
-    select.value = value;
-    select.addEventListener("change", () => onChange(select.value));
     return select;
   }
 
@@ -598,15 +752,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
     }
   }
 
-  async function postJson(url, body) {
-    const res = await fetch(url, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => ({ ok: false }));
-    if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
-    return data;
-  }
-
   // ---------- 광고 표현 검수 (README 6장) ----------
   // 모든 장의 글을 현지 시장 분석 탭 기준으로 검사합니다. 참고 안내이며 법적 판단이 아닙니다.
   async function runReview() {
@@ -672,127 +817,19 @@ export function renderDesign(root, doc, { onSave } = {}) {
     const dialog = el("dialog", "studio-editor-prompt");
     const close = button("×", () => dialog.close(), "close");
     close.setAttribute("aria-label", "닫기");
-    const previous = draft.assistant?.options || {};
-    const wish = el("textarea");
-    wish.rows = 4;
-    wish.maxLength = 1500;
-    wish.value = previous.request || "";
-    wish.placeholder = "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
-    const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
-    const audience = el("input");
-    audience.value = previous.audience || "";
-    audience.maxLength = 1500;
-    audience.placeholder = "예: 다낭의 20~30대 디저트 소비자";
-    const mood = selectBox("", ["깔끔한 정보형", "사진 중심", "따뜻한 감성", "발랄하고 귀여운", "차분하고 고급스러운"].map((v) => [v, v]), previous.mood || "깔끔한 정보형", () => {});
-    const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
-    const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || draft.pages.length), () => {});
-    if (!pages.value) pages.value = "5";
-    const msg = el("p", "studio-hint");
-    msg.setAttribute("role", "status");
-    const result = el("textarea", "studio-editor-prompt-result");
-    result.rows = 10;
-    result.maxLength = 12000;
-    result.setAttribute("aria-label", "제작 프롬프트 — 수정 후 AI에 반영할 수 있습니다");
-    result.hidden = true;
-    const candidates = el("div", "studio-editor-candidates");
-    let proposals = [], selected = 0;
-    const settingsBox = el("fieldset", "studio-editor-brief");
-    settingsBox.append(el("legend", "", "제작 조건"), field("제품·요청", wish), field("목적", purpose),
-      field("대상", audience), field("분위기", mood), field("글의 양", density));
-    if (draft.kind === "cardnews") settingsBox.append(field("장수", pages));
-    const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
-      mood: mood.value, density: density.value, pages: draft.kind === "poster" ? 1 : Number(pages.value),
-      custom_prompt: result.hidden ? "" : result.value });
-    const copy = button("복사", async () => {
-      try {
-        await navigator.clipboard.writeText(result.value);
-        msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
-      } catch {
-        result.select();
-        msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
-      }
-    });
-    copy.hidden = true;
-    const apply = button("선택한 초안 적용", async () => {
-      if (!proposals[selected] || !onSave) return;
-      if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
-      apply.disabled = true;
-      try {
-        await onSave(proposals[selected].design);
+    const form = promptForm(draft, {
+      isActive: () => wrap.isConnected,
+      onApply: async (design) => {
+        if (!onSave) return;
+        await onSave(design);
         dialog.close();
-      } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
-      finally { apply.disabled = false; }
-    }, "btn dark");
-    apply.hidden = true;
-    function showCandidates() {
-      candidates.replaceChildren(...proposals.map((item, index) => {
-        const card = el("section", "studio-editor-candidate");
-        const choose = button(`${index === selected ? "✓ " : ""}${item.name}`, () => {
-          selected = index;
-          result.value = item.prompt;
-          showCandidates();
-        }, index === selected ? "btn dark" : "btn");
-        choose.setAttribute("aria-pressed", String(index === selected));
-        card.append(choose);
-        item.pages.forEach((words, pageNumber) => {
-          const vi = el("p", "", `${pageNumber + 1}장 · ${words.title_vi}\n${words.body_vi}`);
-          vi.lang = "vi";
-          card.append(vi, el("p", "studio-hint", `${words.title_ko}\n${words.body_ko}`));
-        });
-        return card;
-      }));
-    }
-    function invalidate() {
-      proposals = [];
-      candidates.replaceChildren();
-      apply.hidden = true;
-      result.value = "";
-      result.hidden = copy.hidden = true;
-      msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
-    }
-    settingsBox.addEventListener("input", invalidate);
-    const brief = button("기본 프롬프트 보기 (무료)", async () => {
-      brief.disabled = make.disabled = settingsBox.disabled = true;
-      try {
-        const data = await postJson(BRIEF_API, { design: draft, options: { ...options(), custom_prompt: "" } });
-        proposals = [];
-        candidates.replaceChildren();
-        apply.hidden = true;
-        result.value = data.prompt;
-        result.hidden = copy.hidden = false;
-        msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.ai_ready ? "AI 연결 설정 있음." : "유료 AI는 PM1의 API 키 설정 후 사용할 수 있습니다."}`;
-      } catch (error) { msg.textContent = error.message; }
-      finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
+      },
     });
-    const make = button("AI 제안 3개 생성 (유료)", async () => {
-      if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
-      make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
-      candidates.inert = true;
-      msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
-      try {
-        const data = await postJson(ASSISTANT_API, { design: draft, options: options(), confirm_paid: true });
-        if (!wrap.isConnected) return;
-        proposals = data.proposals;
-        selected = 0;
-        result.value = proposals[0].prompt;
-        result.hidden = copy.hidden = apply.hidden = false;
-        showCandidates();
-        candidates.scrollIntoView({ block: "nearest" });
-        msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.model} · 입력 ${data.usage.input_tokens || 0} / 출력 ${data.usage.output_tokens || 0} 토큰. 제안을 고르고 적용하세요.`;
-      } catch (error) { msg.textContent = error.message; }
-      finally {
-        make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
-        candidates.inert = false;
-      }
-    }, "btn dark");
-    dialog.append(close, el("h2", "", `${draft.kind === "poster" ? "포스터" : "카드뉴스"} 전문 프롬프트 · AI 초안`),
-      el("p", "studio-hint", "베트남어 문구 + 한국어 뜻. 스타일은 검토용 제안이며 확정된 브랜드 지침은 없습니다."),
-      el("p", "studio-hint", "시험 예산 약 $5 · 유료 버튼을 누를 때마다 비용이 발생합니다. 총액 자동 차단은 연결되지 않았으니 OpenAI 사용 내역을 확인하세요. 사진 생성 비용은 발생하지 않습니다."),
-      settingsBox, brief, make, msg, candidates, result, copy, apply);
+    dialog.append(close, ...form.nodes);
     dialog.addEventListener("close", () => dialog.remove());
     wrap.append(dialog);
     dialog.showModal();
-    wish.focus();
+    form.focus();
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
