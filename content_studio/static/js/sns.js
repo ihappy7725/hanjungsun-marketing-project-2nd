@@ -6,17 +6,8 @@ import * as editor from "./sns_editor.js";
 
 // ---------- 시연 데이터 (DEMO) ----------
 // 영상 탭 "내 영상"은 저장된 작업(/api/gallery)이 없을 때만 시연 카드를 보여줍니다.
-// 포스터·카드뉴스 내 작업과 세 탭 추천은 아직 시연 데이터입니다.
+// 포스터·카드뉴스 내 작업은 저장된 작업의 실제 미리보기(희주 renderThumb)를 보여주고, 세 탭 추천은 아직 시연 데이터입니다.
 const DEMO_GALLERY = {
-  poster: [
-    { id: "p1", title: "망고스틴 찹쌀떡 출시", updated: "10월 21일", ratio: "4:5", tone: "hero", sub: "신메뉴 · 다낭 매장" },
-    { id: "p2", title: "베트남 여성의 날 선물", updated: "10월 15일", ratio: "4:5", tone: "red", sub: "20/10 · 선물 세트" },
-    { id: "p3", title: "주말 시식 행사", updated: "10월 9일", ratio: "1:1", tone: "gold", sub: "토·일 오후 2시" },
-  ],
-  cardnews: [
-    { id: "c1", title: "찹쌀떡 맛있게 먹는 법", updated: "10월 20일", ratio: "4:5", tone: "green", sub: "표지", pages: 5 },
-    { id: "c2", title: "한정선 이야기", updated: "10월 12일", ratio: "1:1", tone: "hero", sub: "표지", pages: 4 },
-  ],
   video: [
     {
       id: "v1", title: "한입 먹는 순간", updated: "10월 22일", ratio: "9:16", tone: "hero", duration: 5, status: "",
@@ -31,12 +22,12 @@ const DEMO_GALLERY = {
 
 // concept: 추천 카드에 붙는 임시 컨셉 한 줄 (마케터 검토 전 문구)
 const DEMO_EVENTS = [
-  { name: "베트남 스승의 날", date: "2026-11-20", tone: "red", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
-  { name: "크리스마스", date: "2026-12-25", tone: "green", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
+  { name: "베트남 스승의 날", date: "2026-11-20", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
+  { name: "크리스마스", date: "2026-12-25", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
 ];
-const DEMO_SEASON = { name: "감", note: "이번 달 제철", tone: "gold" };
+const DEMO_SEASON = { name: "감", note: "이번 달 제철", concept: "제철 감의 달콤함을 찹쌀떡과 함께 소개해 보세요" };
 const DEMO_NEW_MENU = {
-  name: "망고스틴 찹쌀떡", note: "신메뉴", tone: "hero", concept: "새콤달콤 망고스틴을 쫀득하게 감싼 첫 맛을 보여 주세요",
+  name: "망고스틴 찹쌀떡", note: "신메뉴", concept: "새콤달콤 망고스틴을 쫀득하게 감싼 첫 맛을 보여 주세요",
 };
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
@@ -111,12 +102,18 @@ function galleryCard(item) {
     box.append(list);
     card.append(box);
   } else {
-    const badge = kind === "cardnews" ? el("span", "badge", `${item.pages}장`) : null;
-    card.append(thumb(item, badge));
+    // 포스터·카드뉴스: 실제 디자인 1장 미리보기. 비율이 달라도 같은 크기 틀 안에 맞춰 카드 높이를 맞춥니다.
+    card.classList.add("is-design");
+    const box = el("div", "studio-preview");
+    if (item.pages > 1) box.append(el("span", "badge", `${item.pages}장`));
+    box.append(editor.renderThumb(item.design));
+    card.append(box);
   }
 
   const body = el("div", "studio-card-body");
-  body.append(el("p", "studio-card-title", item.title), el("p", "studio-card-meta", `${item.updated} · ${item.ratio}`));
+  const title = el("p", "studio-card-title", item.title);
+  title.title = item.title;
+  body.append(title, el("p", "studio-card-meta", `${item.updated} · ${item.ratio}`));
   card.append(body);
 
   card.addEventListener("click", () => {
@@ -133,8 +130,25 @@ function renderGallery(items) {
   $("gallery").hidden = items.length === 0;
 }
 
+async function loadDesignGallery() {
+  try {
+    const { items } = await api(`/gallery?kind=${kind}`);
+    renderGallery(items.filter((item) => item.design).map((item) => ({
+      chatId: item.id,
+      title: item.title,
+      updated: shortDate(item.updated_at),
+      ratio: item.design.ratio,
+      pages: item.design.pages.length,
+      design: item.design,
+    })));
+  } catch (error) {
+    renderGallery([]);
+    notify(`내 ${KIND_LABELS[kind]} 목록을 불러오지 못했습니다. (${error.message})`);
+  }
+}
+
 async function loadGallery() {
-  if (kind !== "video") return renderGallery(DEMO_GALLERY[kind]);
+  if (DESIGN_KINDS.includes(kind)) return loadDesignGallery();
   try {
     const { items } = await api(`/gallery?kind=${kind}`);
     if (!items.length) return renderGallery(DEMO_GALLERY.video);
@@ -163,44 +177,43 @@ function recommendations() {
     const days = daysUntil(event.date);
     if (days < 0) continue;
     recs.push({
-      badge: ["badge dday", days === 0 ? "D-DAY" : `D-${days}`],
+      type: "dday",
+      mark: days === 0 ? "D-DAY" : `D-${days}`,
       title: `${event.name} ${label}`,
       note: `${event.date.slice(5).replace("-", "/")} 기념일`,
       concept: event.concept,
-      tone: event.tone,
-      thumbTitle: event.name,
       event: event.name,
     });
   }
   const launch = {
-    badge: ["badge", "NEW"],
+    type: "new",
+    mark: "NEW",
     title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
     note: DEMO_NEW_MENU.note,
     concept: DEMO_NEW_MENU.concept,
-    tone: DEMO_NEW_MENU.tone,
-    thumbTitle: DEMO_NEW_MENU.name,
   };
   if (kind === "video") return [launch, ...recs.slice(0, 1)];
   recs.push({
-    badge: ["badge season", "제철"],
+    type: "season",
+    mark: "제철",
     title: `제철 ${DEMO_SEASON.name} × 찹쌀떡 ${label}`,
     note: DEMO_SEASON.note,
-    tone: DEMO_SEASON.tone,
-    thumbTitle: DEMO_SEASON.name,
+    concept: DEMO_SEASON.concept,
   });
   recs.push(launch);
   return recs.slice(0, MAX_RECS);
 }
 
+// 추천 카드: 왼쪽 큰 표시(D-26 · 제철 · NEW)로 이유를 먼저 보여주고, 오른쪽에 제목 · 날짜 · 한 줄 컨셉.
 function recCard(rec) {
-  const card = el("button", "studio-rec");
+  const card = el("button", `studio-rec is-${rec.type}`);
   card.type = "button";
-  const ratio = kind === "video" ? "9:16" : "4:5";
-  card.append(thumb({ ratio, tone: rec.tone, title: rec.thumbTitle }));
+  card.append(el("span", "studio-rec-mark", rec.mark));
 
   const text = el("div", "studio-rec-text");
-  text.append(el("span", rec.badge[0], rec.badge[1]), el("p", "studio-rec-title", rec.title), el("p", "", rec.note));
-  if (rec.concept && kind === "video") text.append(el("p", "studio-rec-concept", rec.concept));
+  text.append(el("p", "studio-rec-title", rec.title), el("p", "studio-rec-note", rec.note));
+  if (rec.concept) text.append(el("p", "studio-rec-concept", rec.concept));
+  text.append(el("span", "studio-rec-go", "바로 만들기 →"));
   card.append(text);
 
   card.addEventListener("click", () => {
@@ -297,6 +310,7 @@ function startNew() {
     feedback("", "");
   }
   renderWork();
+  loadHistory();  // 이전 작업 칸은 처음부터 열려 있습니다.
   if (kind === "video") $("chat-input").focus();
 }
 
