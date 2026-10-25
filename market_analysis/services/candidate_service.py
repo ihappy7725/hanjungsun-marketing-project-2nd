@@ -23,8 +23,8 @@ EXCLUDE_PATTERNS = {
     "다른 의미": ("bóng đá", "trực tiếp", "xôi lạc", "phim", "thái nguyên"),
 }
 MAX_CANDIDATES = MAX_RANK_CANDIDATES
-RELATED_SEEDS_PER_CATEGORY = 2
-MIN_RELATED_POOL = 10
+RELATED_SEEDS_PER_CATEGORY = 4  # 출발 검색어(suggest_seeds) 최대 사용 개수
+MIN_RELATED_POOL = 30  # 상품 후보가 이만큼 모이면 남은 출발 검색어는 건너뜁니다
 
 
 def plain(term):

@@ -12,32 +12,32 @@
       "id": "mochi",
       "label": "떡·모찌",
       "representative_query": ["\"bánh mochi\"", "\"bánh dày\"", "daifuku"],
-      "candidate_queries": ["mochi kem", "daifuku", "\"bánh dày\"", "\"bánh trung thu mochi\"", "\"bánh mochi nhật\""],
-      "suggest_seeds": ["bánh mochi", "mochi kem"],
+      "candidate_queries": ["daifuku", "\"bánh dày\"", "mochi kem"],
+      "suggest_seeds": ["bánh mochi", "mochi kem", "daifuku", "bánh dày"],
       "root_terms": ["mochi", "bánh dày", "daifuku"]
     },
     {
       "id": "sticky-rice",
       "label": "현지 찹쌀 디저트",
       "representative_query": ["\"bánh nếp\"", "\"chè trôi nước\"", "\"bánh ít\"", "\"chè nếp\"", "\"xôi ngọt\""],
-      "candidate_queries": ["\"bánh nếp\"", "\"chè trôi nước\"", "\"bánh ít\"", "\"bánh dẻo\""],
-      "suggest_seeds": ["bánh nếp", "chè trôi nước"],
+      "candidate_queries": ["\"bánh dẻo\"", "\"bánh ít\"", "\"chè trôi nước\"", "\"bánh nếp\""],
+      "suggest_seeds": ["bánh nếp", "chè trôi nước", "bánh dẻo", "bánh ít"],
       "root_terms": ["nếp", "xôi", "bánh ít", "chè trôi nước", "bánh dẻo"]
     },
     {
       "id": "fruit",
       "label": "현지 과일 디저트",
       "representative_query": ["\"hoa quả dầm\"", "\"trái cây tô\"", "\"sữa chua trái cây\"", "kem dừa", "kem xoài"],
-      "candidate_queries": ["kem dừa", "kem xoài", "\"hoa quả dầm\"", "\"sữa chua trái cây\"", "\"trái cây tô\""],
-      "suggest_seeds": ["hoa quả dầm", "kem dừa"],
+      "candidate_queries": ["kem dừa", "kem xoài", "kem sữa dừa"],
+      "suggest_seeds": ["hoa quả dầm", "kem dừa", "kem xoài", "kem sữa dừa"],
       "root_terms": ["hoa quả", "trái cây", "chè thái", "sữa chua", "kem", "xoài", "dừa", "sầu riêng", "dâu", "mít", "bưởi"]
     },
     {
       "id": "k-dessert",
       "label": "한국 디저트",
       "representative_query": ["bingsu", "hotteok", "yakgwa"],
-      "candidate_queries": ["bingsu", "hotteok", "yakgwa", "injeolmi", "bungeoppang"],
-      "suggest_seeds": ["bingsu", "hotteok"],
+      "candidate_queries": ["bingsu", "hotteok", "yakgwa"],
+      "suggest_seeds": ["bingsu", "hotteok", "yakgwa"],
       "root_terms": ["bingsu", "hotteok", "yakgwa", "hàn quốc", "injeolmi", "bánh cá"]
     }
   ],
@@ -88,6 +88,9 @@
     "mochi sầu riêng": "두리안 모찌",
     "mochi kem": "아이스크림 모찌",
     "mochi socola": "초콜릿 모찌",
+    "bánh mochi đậu đỏ": "팥 모찌",
+    "mochi khoai môn": "타로 모찌",
+    "mochi trà xanh": "말차 모찌",
     "bánh chưng": "반쯩",
     "bánh tét": "반뗏",
     "bánh ít": "반잇",
@@ -97,6 +100,7 @@
     "chè trái cây": "과일 쩨",
     "kem xoài": "망고 아이스크림",
     "kem dừa": "코코넛 아이스크림",
+    "kem sữa dừa": "코코넛 밀크 아이스크림",
     "chè sầu riêng": "두리안 쩨",
     "bingsu": "빙수",
     "hotteok": "호떡",
