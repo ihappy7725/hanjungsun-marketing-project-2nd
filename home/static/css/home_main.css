@@ -61,14 +61,14 @@
 .home-page .home-day[aria-pressed="true"] { background: var(--paper); outline: 1px solid var(--green); outline-offset: -1px; }
 .home-page .home-day-number { align-self: flex-start; min-width: 20px; text-align: center; line-height: var(--line-height); font-family: var(--font-serif); font-size: var(--fs-body); }
 .home-page .home-day.is-today .home-day-number { background: var(--green); color: var(--on-dark); border-radius: 50%; }
-.home-page .home-day-events { display: grid; gap: var(--space-1); margin-top: auto; width: 100%; }
+.home-page .home-day-events { display: grid; gap: var(--space-1); margin-top: auto; width: 100%; min-width: 0; overflow: hidden; }
 .home-page .home-day { min-width: 0; }
-.home-page .home-period-bar { z-index: 1; align-self: stretch; min-width: 0; min-height: 20px; margin: var(--space-1) var(--space-1); padding: var(--space-1) var(--space-3); border: 1px solid var(--line-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); background: var(--badge-bg); color: var(--badge-ink); text-align: left; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--line-height); }
+.home-page .home-period-bar { z-index: 2; align-self: stretch; min-width: 0; min-height: 20px; margin: var(--space-1) var(--space-1); padding: var(--space-1) var(--space-3); border: 1px solid var(--line-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); background: var(--badge-bg); color: var(--badge-ink); text-align: left; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--line-height); }
 .home-page .home-period-bar:hover { background: var(--note-bg); }
 .home-page .home-period-bar.continues-before { border-left-width: 1px; border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
 .home-page .home-period-bar.continues-after { border-right-style: dashed; border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 0; }
 .home-page .home-outside { opacity: .45; }
-.home-page .home-event { display: block; font-size: var(--fs-body); padding: var(--space-1) var(--space-2); background: var(--badge-green-bg); color: var(--green); overflow-wrap: anywhere; line-height: var(--line-height); }
+.home-page .home-event { display: block; font-size: var(--fs-body); padding: var(--space-1) var(--space-2); background: var(--badge-green-bg); color: var(--green); line-height: var(--line-height); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
 .home-page .home-event.local { background: var(--badge-bg); color: var(--badge-ink); }
 .home-page .home-event.creator { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .home-page .home-event.done { text-decoration: line-through; opacity: .6; }

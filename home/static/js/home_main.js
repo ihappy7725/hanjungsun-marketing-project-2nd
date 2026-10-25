@@ -227,7 +227,7 @@ function initialize() {
         grid += `<div class="home-tl-hour">${label}</div>`;
         grid += days.map(day => {
           const slot = at(day).filter(e => e.time && Number(e.time.slice(0, 2)) === hour);
-          return `<button class="home-tl-cell${day === today ? ' is-today' : ''}" data-slot="${day} ${label}" aria-label="${day} ${label} 업무 추가">${slot.map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}">${esc(e.time)} ${esc(e.title)}</span>`).join('')}</button>`;
+          return `<button class="home-tl-cell${day === today ? ' is-today' : ''}" data-slot="${day} ${label}" aria-label="${day} ${label} 업무 추가">${slot.map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.time)} ${esc(e.title)}">${esc(e.time)} ${esc(e.title)}</span>`).join('')}</button>`;
         }).join('');
       }
       $('#calendar-body').innerHTML = `<div class="home-timeline"><div class="home-tl-corner">${TIMEZONE_LABEL}</div>${header}<div class="home-tl-corner home-tl-allday-label">종일</div>${allDay}<div class="home-tl-scroll"><div class="home-tl-grid">${grid}</div></div></div>`;
@@ -245,7 +245,7 @@ function initialize() {
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
-          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span><span class="home-day-events">${dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}">${esc(e.title)}</span>`).join('')}${dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : ''}</span></button>`;
+          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span><span class="home-day-events">${dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('')}${dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : ''}</span></button>`;
         }
         html += segments.map(segment => {
           const e = segment.event;
