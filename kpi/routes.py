@@ -9,6 +9,7 @@ import datetime
 import email.utils
 import json
 import os
+import random
 import time
 import urllib.error
 import urllib.request
@@ -643,6 +644,46 @@ def _voc_stats(reviews):
     }
 
 
+# 설문 문항 → VOC 키워드 (재구매 의향은 토픽이 아니라서 키워드에서 뺍니다)
+SURVEY_KEYWORD = {"맛": "당도/맛", "식감": "당도/맛", "포장/보냉": "포장/보냉", "가격": "가격", "매장 응대": "기타"}
+SURVEY_LOW_SCORE = 2  # 이 점수 이하로 답한 문항을 불만 키워드로 셉니다.
+
+
+def _survey_respondents(survey, seed=186):
+    """문항별 분포(인원 수)를 그대로 지키면서 응답자 한 명 한 명의 답안으로 나눕니다.
+
+    시연 데이터에는 응답자별 원본이 없으므로, 만족한 사람은 여러 문항에 높게 답하는 경향을
+    흉내 내도록 '전체 만족도 순위 + 약간의 흔들림'으로 점수를 배정합니다. 시드가 고정이라 결과는 매번 같습니다.
+    실연동 시에는 설문 도구 응답 CSV의 응답자별 행을 그대로 씁니다.
+    """
+    rng = random.Random(seed)
+    n = min(sum(s["dist"]) for s in survey)
+    people = [{} for _ in range(n)]
+    for s in survey:
+        scores = sorted(i + 1 for i, c in enumerate(s["dist"]) for _ in range(c))[:n]
+        order = sorted(range(n), key=lambda k: k + rng.uniform(-45, 45))
+        for pos, k in enumerate(order):
+            people[k][s["item"]] = scores[pos]
+    return people
+
+
+def _survey_voc(survey):
+    """설문 응답자를 VOC 감성·키워드 집계에 더할 수 있게 셉니다.
+
+    감성: 응답자 평균 4점 이상 긍정 / 3점 이상 중립 / 3점 미만 부정
+    키워드: 2점 이하로 답한 문항의 토픽 (한 사람이 같은 토픽을 여러 번 세지 않음)
+    """
+    sentiment_counts = {s: 0 for s in SENTIMENTS}
+    keyword_counts = {}
+    people = _survey_respondents(survey)
+    for p in people:
+        avg = sum(p.values()) / len(p)
+        sentiment_counts["Positive" if avg >= 4 else "Neutral" if avg >= 3 else "Negative"] += 1
+        for tag in {SURVEY_KEYWORD[item] for item, score in p.items() if score <= SURVEY_LOW_SCORE and item in SURVEY_KEYWORD}:
+            keyword_counts[tag] = keyword_counts.get(tag, 0) + 1
+    return {"respondents": len(people), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
+
+
 def _survey_block(survey):
     """문항별 점수 분포(1~5점 인원)로 응답 수·평균·긍정(4~5점) 비율을 계산합니다."""
     items = []
@@ -661,6 +702,7 @@ def _survey_block(survey):
     return {
         "items": items,
         "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
+        "voc": _survey_voc(survey),  # VOC 감성 도넛·키워드에 더하는 응답자 집계
     }
 
 

@@ -11,7 +11,8 @@ const API = {
 };
 const charts = {};
 // 화면 선택 상태: ROAS 통화(기본 원화), 리뷰 언어(기본 한국어), 감성 필터(기본 전체)
-const view = { currency: "KRW", summary: null, reviewLang: "ko", reviewFilter: "all", reviews: [] };
+// surveyVoc: QR 설문 응답자 감성·불만 키워드 집계(서버 계산) — VOC 도넛·키워드에 리뷰와 합산
+const view = { currency: "KRW", summary: null, reviewLang: "ko", reviewFilter: "all", reviews: [], surveyVoc: null };
 
 const $ = (name) => root.querySelector(`[data-kpi="${name}"]`);
 const setText = (name, text) => {
@@ -76,14 +77,17 @@ function setStatus(name, text, status, title = "") {
   node.title = node.hidden ? "" : title;
 }
 
-// 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬합니다.
+// 머리 칸에 .is-text가 있는 열은 본문 칸도 왼쪽 정렬, .is-center가 있는 열은 가운데 정렬합니다.
 function fillRows(name, rows) {
   const body = $(name);
-  const heads = body.closest("table")?.querySelectorAll("thead th") || [];
-  const textCols = new Set([...heads].flatMap((th, i) => (th.classList.contains("is-text") ? [i] : [])));
+  const heads = [...(body.closest("table")?.querySelectorAll("thead th") || [])];
+  const colsWith = (cls) => new Set(heads.flatMap((th, i) => (th.classList.contains(cls) ? [i] : [])));
+  const textCols = colsWith("is-text");
+  const centerCols = colsWith("is-center");
   body.replaceChildren(...rows.map((cells) => el("tr", {}, cells.map((c, i) => {
     const td = c instanceof Node ? el("td", {}, [c]) : el("td", { text: c });
     if (textCols.has(i)) td.classList.add("is-text");
+    if (centerCols.has(i)) td.classList.add("is-center");
     return td;
   }))));
 }
@@ -100,17 +104,36 @@ function drawChart(key, config) {
   charts[key] = new window.Chart(canvas, config);
 }
 
-function doughnut(key, labels, values, colors, { cutout = "68%", legend = false } = {}) {
+function doughnut(key, labels, values, colors, { cutout = "68%", legend = false, title = "" } = {}) {
   drawChart(key, {
     type: "doughnut",
     data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
     options: {
       cutout,
       maintainAspectRatio: false,
-      plugins: { legend: legend ? { position: "right", labels: { boxWidth: 8, padding: 6 } } : { display: false } },
+      plugins: {
+        legend: legend ? { position: "right", labels: { boxWidth: 8, padding: 6 } } : { display: false },
+        title: { display: Boolean(title), text: title, align: "start", padding: { top: 0, bottom: 4 } },
+      },
     },
   });
 }
+
+// 가로 막대 끝에 값을 적는 작은 플러그인(축 눈금 대신 숫자를 바로 읽게)
+const barValueLabels = {
+  id: "kpiBarValues",
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.fillStyle = cssVar("--ink");
+    ctx.font = `600 ${cssVar("--fs-table")} ${cssVar("--font-body")}`;
+    ctx.textBaseline = "middle";
+    chart.getDatasetMeta(0).data.forEach((bar, i) => {
+      ctx.fillText(num(chart.data.datasets[0].data[i]), bar.x + 6, bar.y);
+    });
+    ctx.restore();
+  },
+};
 
 function chartNotice() {
   if (window.Chart) return;
@@ -159,11 +182,11 @@ function renderBudget(data) {
   const b = data.budget;
   const p = palette();
   const remaining = Math.max(b.remaining_krw, 0);
-  // 예산 색: 검정 · 녹색 · 분홍 · 아이보리
+  // 예산 색: 녹색 · 분홍 · 검정 · 아이보리 (검정은 가장 작은 몫인 인플루언서 예상에만 써서 눈에 덜 무겁게)
   const parts = [
-    ["플랫폼 광고비", b.platform_krw, p.ink],
-    ["인플루언서 집행", b.influencer_paid_krw, p.good],
-    ["인플루언서 예상", b.influencer_expected_krw, p.pink],
+    ["플랫폼 광고비", b.platform_krw, p.good],
+    ["인플루언서 집행", b.influencer_paid_krw, p.pink],
+    ["인플루언서 예상", b.influencer_expected_krw, p.ink],
     ["잔여 가용 예산", remaining, p.ivory],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
@@ -463,9 +486,13 @@ function setGa4Visible(show) {
 // ---------- VOC ----------
 function renderVoc(stats, reviews, source) {
   const p = palette();
-  const counts = stats.sentiment_counts;
+  // 리뷰(글) 감성 + QR 설문 응답자 감성(평균 4점↑ 긍정 / 3점대 중립 / 3점↓ 부정)을 합산합니다.
+  const sv = view.surveyVoc;
   const keys = ["Positive", "Neutral", "Negative"];
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.good, p.soft, p.low], { cutout: "58%", legend: true });
+  const counts = Object.fromEntries(keys.map((k) => [k, (stats.sentiment_counts[k] || 0) + (sv?.sentiment_counts[k] || 0)]));
+  const reviewTotal = stats.sample_size ?? reviews.length;
+  const sampleTitle = sv ? `리뷰 ${num(reviewTotal)} + 설문 ${num(sv.respondents)}` : `리뷰 ${num(reviewTotal)}`;
+  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.soft, p.low], { cutout: "58%", legend: true, title: sampleTitle });
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
     // 리뷰 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
@@ -483,21 +510,28 @@ function renderVoc(stats, reviews, source) {
     charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
   }
 
+  // 키워드: 리뷰 토픽 언급 + 설문에서 2점 이하로 답한 문항 토픽(불만)
+  const keywordCounts = {};
+  stats.top_keywords.forEach((k) => { keywordCounts[k.keyword] = (keywordCounts[k.keyword] || 0) + k.count; });
+  Object.entries(sv?.keyword_counts || {}).forEach(([k, n]) => { keywordCounts[k] = (keywordCounts[k] || 0) + n; });
+  const topKeywords = Object.entries(keywordCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
   drawChart("keywords", {
     type: "bar",
     data: {
-      labels: stats.top_keywords.map((k) => k.keyword),
-      datasets: [{ label: "언급 수", data: stats.top_keywords.map((k) => k.count), backgroundColor: p.mid, maxBarThickness: 14 }],
+      labels: topKeywords.map(([k]) => k),
+      datasets: [{ label: "언급 수", data: topKeywords.map(([, n]) => n), backgroundColor: p.mid, maxBarThickness: 14 }],
     },
     options: {
       indexAxis: "y",
       maintainAspectRatio: false,
+      layout: { padding: { right: 36 } },  // 막대 끝 숫자 자리
       scales: {
-        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: p.line } },
-        y: { grid: { display: false }, ticks: { autoSkip: false } },  // 키워드 이름을 건너뛰지 않고 모두 표시
+        x: { display: false, beginAtZero: true },  // 눈금 대신 막대 끝에 숫자 표시
+        y: { grid: { display: false }, ticks: { autoSkip: false, color: p.muted } },  // 키워드 이름을 건너뛰지 않고 모두 표시
       },
       plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start", padding: { top: 0, bottom: 4 } } },
     },
+    plugins: [barValueLabels],
   });
 
   view.reviews = reviews;
@@ -505,7 +539,7 @@ function renderVoc(stats, reviews, source) {
 
   setStatus("voc-source", source.text, source.status, source.title || "");
   const platforms = [...new Set(reviews.map((r) => PLATFORM_LABEL[r.platform] || r.platform))].join("·");
-  setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: 리뷰 ${num(stats.sample_size ?? reviews.length)}건 · 범위: 베트남`);
+  setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: ${sampleTitle}건 · 범위: 베트남`);
 }
 
 // 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운
@@ -566,6 +600,8 @@ function renderQr(qr) {
   );
   strip.title = `배포 팜플렛 ${num(qr.pamphlets)}장 · 스캔율 ${pct(qr.scan_rate_percent)} · 친구 추가율 ${pct(qr.follow_rate_percent)}`;
 
+  view.surveyVoc = qr.survey.voc || null;
+
   // 확대 화면: 문항별 1~5점 분포 막대 · 평균 · 긍정(4~5점) 비율 · 응답 수
   const items = qr.survey.items;
   $("survey-count").textContent = `응답 ${num(qr.survey_responses)}건 · ${items.length}문항`;
@@ -589,9 +625,11 @@ function showVocAi(demoReviews, ai) {
     title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
     meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전) · 원문은 시연 리뷰`,
   });
-  // 문장마다 줄을 나눠 짧게 읽히도록 표시합니다.
+  // 'AI 요약' 제목을 첫 문장 앞에 붙이고, 문장마다 줄을 나눠 짧게 읽히도록 표시합니다.
   const summary = (ai.summary_kr || "").trim().replace(/([.!?。])\s+/g, "$1\n");
-  setText("voc-summary", summary ? `AI 요약(검수 전)\n${summary}` : "AI 요약이 비어 있습니다.");
+  const box = $("voc-summary");
+  box.replaceChildren(el("strong", { text: "AI 요약 · 검수 전 " }), document.createTextNode(summary || "요약이 비어 있습니다."));
+  box.hidden = false;
 }
 
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------

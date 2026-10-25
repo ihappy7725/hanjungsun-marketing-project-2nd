@@ -200,7 +200,7 @@
         <div class="kpi-detail table-wrap">
           <table class="kpi-table">
             <thead>
-              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th>상태</th></tr>
+              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th class="is-center">상태</th></tr>
             </thead>
             <tbody data-kpi="channel-rows"></tbody>
           </table>
@@ -212,7 +212,7 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
+          <h2>VOC {{ info("감성 = 리뷰(글) 감성 + QR 설문 응답자 감성\n설문 응답자: 6문항 평균 4점 이상 긍정 · 3점대 중립 · 3점 미만 부정\n키워드 = 리뷰 토픽 + 설문에서 2점 이하로 답한 문항 토픽\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
         <div class="kpi-tools">
 
