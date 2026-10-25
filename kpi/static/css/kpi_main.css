@@ -294,6 +294,78 @@
 .kpi-page .kpi-sub-text { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page [data-kpi="creator-panel"] .kpi-table td,
 .kpi-page [data-kpi="creator-panel"] .kpi-table th { padding: var(--space-2) var(--space-4); }
+.kpi-page .kpi-ga4-metrics > div { padding: var(--space-4) var(--space-5); }
+
+/* GA4 기본 화면: 유입 채널 Top 5 참여율 막대 */
+.kpi-page .kpi-ga4-top { margin-top: var(--space-4); }
+.kpi-page .kpi-ga4-bars { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: var(--fs-min); }
+.kpi-page .kpi-ga4-bars li {
+  display: grid;
+  grid-template-columns: minmax(96px, 30%) 1fr 56px;
+  align-items: center;
+  gap: var(--space-4);
+}
+.kpi-page .kpi-ga4-bars .kpi-bar-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.kpi-page .kpi-ga4-bars .kpi-bar-name small { margin-left: var(--space-2); color: var(--muted); }
+.kpi-page .kpi-ga4-bars .kpi-bar-track { position: relative; height: 8px; background: var(--progress-bg); }
+.kpi-page .kpi-ga4-bars .kpi-bar-fill { display: block; height: 100%; background: var(--gold); }
+.kpi-page .kpi-ga4-bars .kpi-bar-fill.is-high { background: var(--green); }
+.kpi-page .kpi-ga4-bars .kpi-bar-avg { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--badge-red-ink); }
+.kpi-page .kpi-ga4-bars .kpi-bar-value { font-family: var(--font-serif); font-weight: 700; text-align: right; }
+
+/* ---------- 선택 버튼 묶음 (통화 · 리뷰 언어 · 감성) ---------- */
+.kpi-page .kpi-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+.kpi-page .kpi-seg button {
+  padding: var(--space-1) var(--space-4);
+  border: 0;
+  background: var(--white);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  cursor: pointer;
+}
+.kpi-page .kpi-seg button + button { border-left: 1px solid var(--line-strong); }
+.kpi-page .kpi-seg button.is-on { background: var(--brown); color: var(--on-dark); font-weight: 600; }
+.kpi-page .kpi-seg button:disabled { cursor: not-allowed; opacity: .45; }
+
+/* ROAS 기본 화면: 선택한 통화로 광고비·매출 합계 */
+.kpi-page .kpi-roas-totals { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin: var(--space-3) 0 0; font-size: var(--fs-min); }
+.kpi-page .kpi-roas-totals div { display: flex; gap: var(--space-2); }
+.kpi-page .kpi-roas-totals dt { color: var(--muted); }
+.kpi-page .kpi-roas-totals dd { margin: 0; font-family: var(--font-serif); font-weight: 700; }
+
+/* ---------- VOC 리뷰 보기 ---------- */
+.kpi-page .kpi-review-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-top: var(--space-5); }
+.kpi-page .kpi-review-count { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-review-list { display: grid; gap: var(--space-3); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.kpi-page .kpi-review-list li { padding: var(--space-4) var(--space-5); border: 1px solid var(--line-soft); background: var(--white); }
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-review-list li:nth-child(n + 4) { display: none; }
+.kpi-page .kpi-review-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-2); color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-review-ko { margin: 0; line-height: var(--line-height); }
+.kpi-page .kpi-review-vi { margin: 0; font-family: var(--font-vi); line-height: var(--line-height); }
+.kpi-page .kpi-review-ko + .kpi-review-vi { margin-top: var(--space-2); color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-review-empty { color: var(--muted); font-size: var(--fs-min); }
+
+/* ---------- 블록 순서 바꾸기 (위젯) ---------- */
+.kpi-page .kpi-move-tools { display: inline-flex; gap: var(--space-1); }
+.kpi-page .kpi-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--muted);
+  cursor: pointer;
+}
+.kpi-page .kpi-icon-btn:hover { color: var(--ink); border-color: var(--muted); }
+.kpi-page .kpi-icon-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.kpi-page .kpi-drag { cursor: grab; }
+.kpi-page .kpi-drag svg { stroke-width: 3; }
+.kpi-page .kpi-panel.is-dragging { opacity: .45; }
+.kpi-page .kpi-panel.is-drop-target { outline: 2px dashed var(--gold); outline-offset: 3px; }
+.kpi-page .kpi-panel.is-expanded .kpi-move-tools { display: none; }
 
 /* ---------- 반응형 ---------- */
 @media (max-width: 1360px) {

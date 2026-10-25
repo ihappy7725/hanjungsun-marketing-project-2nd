@@ -10,6 +10,21 @@
 <button type="button" class="kpi-info" aria-label="계산식 보기" data-tip="{{ tip }}">i</button>
 {%- endmacro %}
 
+{# 블록 순서 바꾸기: 손잡이를 끌거나 ← → 버튼으로 옮깁니다. 순서는 각자 브라우저에만 저장됩니다. #}
+{% macro move_tools() -%}
+<span class="kpi-move-tools">
+  <button type="button" class="kpi-icon-btn" data-kpi-action="move" data-dir="-1" aria-label="앞으로 옮기기" title="앞으로">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <button type="button" class="kpi-icon-btn" data-kpi-action="move" data-dir="1" aria-label="뒤로 옮기기" title="뒤로">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+  <span class="kpi-icon-btn kpi-drag" draggable="true" role="button" tabindex="-1" aria-label="끌어서 순서 바꾸기" title="끌어서 순서 바꾸기">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg>
+  </span>
+</span>
+{%- endmacro %}
+
 {% macro expand_button() -%}
 <button type="button" class="kpi-expand" data-kpi-action="expand" aria-label="블록 확대" title="확대">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
@@ -24,6 +39,7 @@
     </div>
     <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
+      <button type="button" class="btn" data-kpi-action="reset-order" title="블록 순서를 처음 배치로 되돌립니다">기본 순서로</button>
       <button type="button" class="btn" data-kpi-action="refresh">새로고침</button>
     </div>
   </header>
@@ -64,7 +80,7 @@
   </section>
 
   <!-- 2×2: 예산 · ROAS · VOC · GA4 -->
-  <div class="kpi-board">
+  <div class="kpi-board" data-kpi="board">
     <section class="panel kpi-panel" data-kpi-panel="budget">
       <div class="panelhead">
         <div>
@@ -72,6 +88,7 @@
         </div>
         <div class="kpi-tools">
           <button type="button" class="btn kpi-btn-small kpi-compact-only" data-kpi-action="simulate">집행 시뮬레이션</button>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -162,9 +179,15 @@
     <section class="panel kpi-panel" data-kpi-panel="roas">
       <div class="panelhead">
         <div>
-          <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%") }}</h2>
+          <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%\n통화: 원화 = VND × 편성 기준 환율 ÷ 100, 달러 = 원화 ÷ 현재 원/달러 고시 환율") }}</h2>
         </div>
         <div class="kpi-tools">
+          <div class="kpi-seg" role="group" aria-label="통화 단위">
+            <button type="button" class="is-on" data-kpi-action="currency" data-cur="KRW" aria-pressed="true">원</button>
+            <button type="button" data-kpi-action="currency" data-cur="USD" aria-pressed="false">달러</button>
+            <button type="button" data-kpi-action="currency" data-cur="VND" aria-pressed="false">동</button>
+          </div>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -173,10 +196,11 @@
           <canvas data-kpi-chart="roas" aria-label="채널별 ROAS 막대 차트" role="img"></canvas>
         </div>
         <p class="kpi-note kpi-one-line" data-kpi="roas-advice"></p>
+        <dl class="kpi-roas-totals" data-kpi="roas-totals"></dl>
         <div class="kpi-detail table-wrap">
           <table class="kpi-table">
             <thead>
-              <tr><th class="is-text">채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
+              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th>상태</th></tr>
             </thead>
             <tbody data-kpi="channel-rows"></tbody>
           </table>
@@ -193,6 +217,7 @@
         <div class="kpi-tools">
 
           <button type="button" class="btn dark kpi-btn-small" data-kpi-action="voc-analyze">AI로 분석</button>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -208,15 +233,27 @@
           </div>
         </div>
         <div class="kpi-qr" data-kpi="qr-strip"></div>
+
+        <!-- 리뷰 보기: 언어·감성 선택 (기본: AI가 다듬은 한국어, 전체). 기본 화면은 3건, 확대하면 전체 -->
+        <div class="kpi-review-tools">
+          <div class="kpi-seg" role="group" aria-label="리뷰 언어">
+            <button type="button" class="is-on" data-kpi-action="review-lang" data-lang="ko" aria-pressed="true">한국어</button>
+            <button type="button" data-kpi-action="review-lang" data-lang="vi" aria-pressed="false">베트남어</button>
+            <button type="button" data-kpi-action="review-lang" data-lang="both" aria-pressed="false">둘 다</button>
+          </div>
+          <div class="kpi-seg" role="group" aria-label="감성 필터">
+            <button type="button" class="is-on" data-kpi-action="review-filter" data-sentiment="all" aria-pressed="true">전체</button>
+            <button type="button" data-kpi-action="review-filter" data-sentiment="Positive" aria-pressed="false">긍정</button>
+            <button type="button" data-kpi-action="review-filter" data-sentiment="Neutral" aria-pressed="false">중립</button>
+            <button type="button" data-kpi-action="review-filter" data-sentiment="Negative" aria-pressed="false">부정</button>
+          </div>
+          <span class="kpi-review-count" data-kpi="review-count"></span>
+        </div>
+        <ul class="kpi-review-list" data-kpi="review-list"></ul>
+
         <div class="kpi-detail">
           <p class="kpi-detail-title">팜플렛 QR 설문 만족도</p>
           <dl class="kpi-survey" data-kpi="survey-list"></dl>
-          <div class="table-wrap kpi-review-wrap">
-            <table class="kpi-table">
-              <thead><tr><th>수집처</th><th>한국어 번역 / 베트남어 원문</th><th>감성</th><th>토픽</th></tr></thead>
-              <tbody data-kpi="review-rows"></tbody>
-            </table>
-          </div>
         </div>
       </div>
       <p class="kpi-meta" data-kpi="voc-meta"></p>
@@ -233,6 +270,7 @@
             <input type="checkbox" data-kpi-action="ga4-toggle" checked>
             <span>GA4</span>
           </label>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -256,6 +294,14 @@
             </div>
           </div>
           <p class="kpi-note" data-kpi="ga4-proxy"></p>
+          <!-- 기본 화면: 유입 채널 Top 5 참여율 (전체 채널은 확대 화면) -->
+          <div class="kpi-ga4-top kpi-compact-only" data-kpi="ga4-top-section">
+            <p class="kpi-detail-title">
+              유입 채널 Top 5 · 참여율
+              {{ info("세션 수가 많은 순서로 5개 채널\n막대 길이: 채널 참여율(참여 세션 ÷ 세션)\n세로선: 전체 참여율") }}
+            </p>
+            <ol class="kpi-ga4-bars" data-kpi="ga4-top"></ol>
+          </div>
           <div class="kpi-detail">
             <p class="kpi-note" data-kpi="ga4-note"></p>
             <div data-kpi="ga4-channel-section">

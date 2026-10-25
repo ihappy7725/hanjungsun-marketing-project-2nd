@@ -10,6 +10,8 @@ const API = {
   simulator: "/kpi/api/simulator",
 };
 const charts = {};
+// 화면 선택 상태: ROAS 통화(기본 원화), 리뷰 언어(기본 한국어), 감성 필터(기본 전체)
+const view = { currency: "KRW", summary: null, reviewLang: "ko", reviewFilter: "all", reviews: [] };
 
 const $ = (name) => root.querySelector(`[data-kpi="${name}"]`);
 const setText = (name, text) => {
@@ -227,22 +229,74 @@ function renderRoas(data) {
     },
   });
 
-  fillRows("channel-rows", ch.map((c) => [
-    c.label,
-    num(c.ad_spend_vnd),
-    num(c.sales_revenue_vnd),
-    pct(c.roas_percent),
-    c.cpa_vnd === null ? "—" : num(c.cpa_vnd),
-    c.roas_percent >= bep ? badge("기준 초과", "green") : badge("기준 미달", "red"),
-  ]));
-
   const best = [...ch].sort((a, b) => b.roas_percent - a.roas_percent)[0];
   const below = ch.filter((c) => c.roas_percent < bep).map((c) => c.label);
   setText(
     "roas-advice",
     `최고 ${best.label} ${pct(best.roas_percent)}` + (below.length ? ` · 손익분기 미달: ${below.join(", ")} → 예산 조정 검토` : ""),
   );
-  setText("roas-meta", `출처: 시연 값(Meta·TikTok·Shopee 정산 CSV 업로드 예정) · 기간: ${data.campaign_month} · 범위: 베트남 · 단위: VND`);
+  renderRoasMoney(data);
+}
+
+// ROAS 블록의 금액(광고비·매출·CPA)을 선택한 통화로 표시합니다. ROAS(%)는 비율이라 통화와 무관합니다.
+// A안: 원화 = VND × 편성 기준 환율 ÷ 100, 달러 = 그 원화 ÷ 현재 원/달러 고시 환율
+const CURRENCY_LABEL = { KRW: "원", USD: "달러", VND: "VND" };
+
+function money(vnd, data, cur) {
+  if (vnd == null) return null;
+  const krw = (vnd * data.fx.base_rate) / 100;
+  if (cur === "KRW") return krw;
+  if (cur === "USD") return data.usd?.ok ? krw / data.usd.krw_per_usd : null;
+  return vnd;
+}
+
+function fmtMoney(value, cur) {
+  if (value == null) return "—";
+  if (cur === "USD") return `$${Number(value).toLocaleString("en-US", { maximumFractionDigits: value < 100 ? 2 : 0 })}`;
+  if (cur === "KRW") return `${num(Math.round(value))}원`;
+  return `${num(Math.round(value))} VND`;
+}
+
+function renderRoasMoney(data) {
+  const cur = view.currency;
+  const bep = data.roas_bep_percent;
+  const unit = CURRENCY_LABEL[cur];
+  setText("th-spend", `광고비(${unit})`);
+  setText("th-revenue", `매출(${unit})`);
+  setText("th-cpa", `CPA(${unit})`);
+  fillRows("channel-rows", data.channels.map((c) => [
+    c.label,
+    fmtMoney(money(c.ad_spend_vnd, data, cur), cur),
+    fmtMoney(money(c.sales_revenue_vnd, data, cur), cur),
+    pct(c.roas_percent),
+    fmtMoney(money(c.cpa_vnd, data, cur), cur),
+    c.roas_percent >= bep ? badge("기준 초과", "green") : badge("기준 미달", "red"),
+  ]));
+  $("roas-totals").replaceChildren(
+    el("div", {}, [el("dt", { text: "총 광고비" }), el("dd", { text: fmtMoney(money(data.totals.ad_spend_vnd, data, cur), cur) })]),
+    el("div", {}, [el("dt", { text: "총 매출" }), el("dd", { text: fmtMoney(money(data.totals.revenue_vnd, data, cur), cur) })]),
+  );
+
+  // 달러 환율을 못 받으면 달러 버튼을 끄고 원화로 돌아갑니다.
+  const usdBtn = root.querySelector('[data-kpi-action="currency"][data-cur="USD"]');
+  usdBtn.disabled = !data.usd?.ok;
+  usdBtn.title = data.usd?.ok
+    ? `1달러 = ${num(data.usd.krw_per_usd)}원 · ${data.usd.source}${data.usd.as_of ? ` ${data.usd.as_of} 고시` : ""}`
+    : data.usd?.error || "달러 환율을 불러오지 못했습니다.";
+  if (cur === "USD" && !data.usd?.ok) return setCurrency("KRW");
+
+  const rateNote = cur === "KRW"
+    ? `원화 = 편성 기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND`
+    : cur === "USD"
+      ? `달러 = 원화 ÷ ${num(data.usd.krw_per_usd)}원/달러(${data.usd.source}${data.usd.as_of ? ` ${data.usd.as_of}` : ""})`
+      : "현지 통화 그대로";
+  setText("roas-meta", `기간: ${data.campaign_month} · 범위: 베트남 · 단위: ${unit} (${rateNote})`);
+}
+
+function setCurrency(cur) {
+  view.currency = cur;
+  setSegment("currency", "cur", cur);
+  if (view.summary) renderRoasMoney(view.summary);
 }
 
 // ---------- GA4 / 크리에이터 ----------
@@ -267,12 +321,35 @@ function renderGa4(data) {
   setGa4Visible($("ga4-panel").hidden === false);
 }
 
+// 기본 화면: 세션이 많은 채널 5개의 참여율 막대 (세로 점선 = 전체 참여율)
+function renderGa4Top(g) {
+  const avg = g.engagement_rate_percent;
+  const top = [...g.channels].sort((a, b) => b.sessions - a.sessions).slice(0, 5);
+  $("ga4-top").replaceChildren(...top.map((c) => {
+    const rate = c.engagement_rate_percent ?? 0;
+    const fill = el("span", { className: `kpi-bar-fill${avg != null && rate >= avg ? " is-high" : ""}` });
+    fill.style.width = `${Math.min(rate, 100)}%`;
+    const track = el("span", { className: "kpi-bar-track" }, [fill]);
+    if (avg != null) {
+      const mark = el("span", { className: "kpi-bar-avg" });
+      mark.style.left = `${Math.min(avg, 100)}%`;
+      mark.title = `전체 참여율 ${pct(avg)}`;
+      track.append(mark);
+    }
+    const name = el("span", { className: "kpi-bar-name" }, [document.createTextNode(c.channel), el("small", { text: `${num(c.sessions)}세션` })]);
+    name.title = `${c.channel} · 세션 ${num(c.sessions)} · 참여 세션 ${c.engaged_sessions == null ? "—" : num(c.engaged_sessions)}`;
+    return el("li", {}, [name, track, el("span", { className: "kpi-bar-value", text: pct(c.engagement_rate_percent) })]);
+  }));
+}
+
 // 확대 시: 유입 채널별 세션·참여율 (GA4 데모 CSV의 채널별 줄)
 function renderGa4Channels(g) {
   const hasChannels = g.channels && g.channels.length > 0;
   $("ga4-channel-section").hidden = !hasChannels;
   $("ga4-channel-empty").hidden = hasChannels;
+  $("ga4-top-section").hidden = !hasChannels;
   if (!hasChannels) return;
+  renderGa4Top(g);
   setStatus("ga4-channel-badge", g.status === "public_demo" ? "공개 데모" : "시연", g.status);
   const p = palette();
   const avg = g.engagement_rate_percent;
@@ -369,6 +446,15 @@ function renderVoc(stats, reviews, source) {
   const counts = stats.sentiment_counts;
   const keys = ["Positive", "Neutral", "Negative"];
   doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${counts[k]}`), keys.map((k) => counts[k]), [p.green, p.lineStrong, p.red], { cutout: "58%", legend: true });
+  if (charts.sentiment) {
+    // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
+    charts.sentiment.options.onClick = (_e, els) => {
+      if (!els.length) return;
+      const key = keys.at(els[0].index);
+      setReviewFilter(view.reviewFilter === key ? "all" : key);
+    };
+    charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
+  }
 
   drawChart("keywords", {
     type: "bar",
@@ -387,20 +473,56 @@ function renderVoc(stats, reviews, source) {
     },
   });
 
-  const tone = { Positive: "green", Negative: "red" };
-  fillRows("review-rows", reviews.map((r) => {
-    const text = el("div", {}, [document.createTextNode(r.translated_kr || "—"), el("small", { text: r.raw_text_vn })]);
-    return [
-      PLATFORM_LABEL[r.platform] || r.platform,
-      text,
-      r.sentiment ? badge(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : badge("미분류"),
-      r.keyword_tag || "—",
-    ];
-  }));
+  view.reviews = reviews;
+  renderReviewList();
 
   setStatus("voc-source", source.text, source.status, source.title || "");
   const platforms = [...new Set(reviews.map((r) => PLATFORM_LABEL[r.platform] || r.platform))].join("·");
   setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: 리뷰 ${num(stats.sample_size ?? reviews.length)}건 · 범위: 베트남`);
+}
+
+// 리뷰 목록: 언어(한국어 / 베트남어 / 둘 다) · 감성 필터. 기본 화면은 3건, 확대하면 전체(CSS).
+function renderReviewList() {
+  const tone = { Positive: "green", Negative: "red" };
+  const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
+  const label = view.reviewFilter === "all" ? "전체" : SENTIMENT_LABEL[view.reviewFilter];
+  $("review-count").textContent = `${label} ${num(list.length)}건`;
+  if (!list.length) {
+    $("review-list").replaceChildren(el("li", { className: "kpi-review-empty", text: `${label} 리뷰가 없습니다.` }));
+    return;
+  }
+  $("review-list").replaceChildren(...list.map((r) => {
+    const head = el("div", { className: "kpi-review-head" }, [
+      el("span", { text: PLATFORM_LABEL[r.platform] || r.platform }),
+      r.sentiment ? badge(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : badge("미분류"),
+      el("span", { text: r.keyword_tag || "" }),
+    ]);
+    const ko = el("p", { className: "kpi-review-ko", text: r.translated_kr || r.raw_text_vn });
+    const vi = el("p", { className: "kpi-review-vi", text: r.raw_text_vn });
+    vi.lang = "vi";
+    const body = view.reviewLang === "ko" ? [ko] : view.reviewLang === "vi" ? [vi] : [ko, vi];
+    return el("li", {}, [head, ...body]);
+  }));
+}
+
+function setSegment(action, attr, value) {
+  root.querySelectorAll(`[data-kpi-action="${action}"]`).forEach((b) => {
+    const on = b.dataset[attr] === value;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+}
+
+function setReviewLang(lang) {
+  view.reviewLang = lang;
+  setSegment("review-lang", "lang", lang);
+  renderReviewList();
+}
+
+function setReviewFilter(sentiment) {
+  view.reviewFilter = sentiment;
+  setSegment("review-filter", "sentiment", sentiment);
+  renderReviewList();
 }
 
 function renderQr(qr) {
@@ -579,6 +701,7 @@ let vocReviews = [];
 async function loadSummary() {
   try {
     const data = await getJson(API.summary);
+    view.summary = data;
     renderScorecards(data);
     renderBudget(data);
     renderRoas(data);
@@ -596,10 +719,94 @@ async function loadVoc() {
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
     else renderVoc(data, vocReviews, { text: "시연 분류", status: "demo", meta: "시연 리뷰·시연 분류" });
+    // 기본값: 베트남어 리뷰를 AI가 한국어로 다듬어 보여 줍니다. 키가 있으면 처음 한 번 자동 실행(서버가 결과 보관).
+    if (!data.ai && data.ai_available && !vocAutoTried) {
+      vocAutoTried = true;
+      setText("voc-summary", "AI가 베트남어 리뷰를 한국어로 다듬는 중…");
+      analyzeVoc(root.querySelector('[data-kpi-action="voc-analyze"]'));
+    }
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }
 }
+
+let vocAutoTried = false;
+
+// ---------- 블록 순서 바꾸기 (위젯) — 순서는 이 브라우저에만 저장 ----------
+const ORDER_KEY = "kpi-board-order";
+const DEFAULT_ORDER = ["budget", "roas", "voc", "ga4"];
+let dragged = null;
+
+function boardPanels() {
+  return [...$("board").querySelectorAll(":scope > .kpi-panel")];
+}
+
+function saveOrder() {
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(boardPanels().map((p) => p.dataset.kpiPanel)));
+  } catch { /* 저장이 막힌 브라우저에서는 이번 화면에만 적용 */ }
+}
+
+function applyOrder(order) {
+  const board = $("board");
+  const byKey = Object.fromEntries(boardPanels().map((p) => [p.dataset.kpiPanel, p]));
+  const keys = [...order.filter((k) => byKey[k]), ...DEFAULT_ORDER.filter((k) => !order.includes(k) && byKey[k])];
+  keys.forEach((k) => board.append(byKey[k]));
+  resizeCharts();
+}
+
+function loadOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || "null");
+    if (Array.isArray(saved)) applyOrder(saved);
+  } catch { /* 저장 값이 없거나 깨졌으면 기본 순서 */ }
+}
+
+function movePanel(panel, dir) {
+  const panels = boardPanels();
+  const to = panels.indexOf(panel) + dir;
+  if (to < 0 || to >= panels.length) return;
+  if (dir < 0) panels.at(to).before(panel);
+  else panels.at(to).after(panel);
+  saveOrder();
+  resizeCharts();
+  panel.querySelector(`[data-kpi-action="move"][data-dir="${dir}"]`)?.focus();
+}
+
+root.addEventListener("dragstart", (event) => {
+  const handle = event.target.closest?.(".kpi-drag");
+  if (!handle) return;
+  dragged = handle.closest(".kpi-panel");
+  dragged.classList.add("is-dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", dragged.dataset.kpiPanel);
+  event.dataTransfer.setDragImage(dragged, 24, 24);
+});
+
+root.addEventListener("dragover", (event) => {
+  const over = event.target.closest?.(".kpi-board > .kpi-panel");
+  if (!dragged || !over) return;
+  event.preventDefault();
+  root.querySelectorAll(".is-drop-target").forEach((p) => p !== over && p.classList.remove("is-drop-target"));
+  if (over !== dragged) over.classList.add("is-drop-target");
+});
+
+root.addEventListener("drop", (event) => {
+  const over = event.target.closest?.(".kpi-board > .kpi-panel");
+  if (!dragged || !over || over === dragged) return;
+  event.preventDefault();
+  const panels = boardPanels();
+  if (panels.indexOf(dragged) < panels.indexOf(over)) over.after(dragged);
+  else over.before(dragged);
+  saveOrder();
+  resizeCharts();
+});
+
+root.addEventListener("dragend", () => {
+  dragged?.classList.remove("is-dragging");
+  root.querySelectorAll(".is-drop-target").forEach((p) => p.classList.remove("is-drop-target"));
+  dragged = null;
+});
 
 async function analyzeVoc(button) {
   button.disabled = true;
@@ -610,6 +817,7 @@ async function analyzeVoc(button) {
     showVocAi(vocReviews, data.ai);
   } catch (err) {
     showError("voc-error", `${err.message}`);
+    setText("voc-summary", "");
   } finally {
     button.disabled = false;
     button.textContent = "AI로 분석";
@@ -634,6 +842,17 @@ root.addEventListener("click", (event) => {
     renderSim();
   } else if (action === "voc-analyze") {
     analyzeVoc(target);
+  } else if (action === "currency") {
+    setCurrency(target.dataset.cur);
+  } else if (action === "review-lang") {
+    setReviewLang(target.dataset.lang);
+  } else if (action === "review-filter") {
+    setReviewFilter(target.dataset.sentiment);
+  } else if (action === "move") {
+    movePanel(target.closest(".kpi-panel"), Number(target.dataset.dir));
+  } else if (action === "reset-order") {
+    applyOrder(DEFAULT_ORDER);
+    saveOrder();
   } else if (action === "expand") {
     const panel = target.closest(".kpi-panel");
     setExpanded(panel.classList.contains("is-expanded") ? null : panel);
@@ -658,6 +877,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 chartNotice();
+loadOrder();
 setGa4Visible(true);
 loadSummary();
 loadVoc();
