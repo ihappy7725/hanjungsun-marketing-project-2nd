@@ -69,6 +69,11 @@ export function cloneTasks(tasks, campaignId, target, oldTarget, makeId) {
   });
 }
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// 첫 문장만 미리 보여 주며, 전체 내용은 카드의 펼침 영역에 그대로 남깁니다.
+const newsPreview = value => {
+  const text = String(value ?? '').trim();
+  return text.match(/^[\s\S]*?[.!?](?=\s|$)/u)?.[0] || text;
+};
 const id = () => `vn_home_${crypto.randomUUID()}_${new Date().getUTCFullYear()}`;
 const kstToday = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const shortDate = value => value ? value.slice(5).replace('-', '/') : '날짜 없음';
@@ -452,7 +457,18 @@ async function initialize() {
       const sources = Array.isArray(n.sources) ? n.sources : [];
       const link = safeUrl(n.url) || safeUrl(sources[0]?.url);
       const evidence = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : esc(n.source || '출처 미제공');
-      return `<article class="home-news-item"><div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}${n.verified_at ? ` · 확인 ${esc(n.verified_at)}` : ''}</div><h3>${esc(n.title)}</h3><span class="home-muted">사실 요약</span>${n.is_demo ? "" : `<p>${esc(n.summary)}</p>`}${n.suggestion ? `<div class="home-suggestion"><span class="home-muted">적용 제안 · 운영 아이디어</span><p>${esc(n.suggestion)}</p><a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a></div>` : ''}${n.is_demo ? "" : `<p class="home-signal-meta">${evidence}</p>`}</article>`;
+      return `<article class="home-news-item">
+        <div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}</div>
+        <h3>${esc(n.title)}</h3>
+        ${n.is_demo ? badge('예시 데이터 (DEMO)') : `<p class="home-news-brief">${esc(newsPreview(n.summary))}</p>`}
+        ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion))}</p><span class="home-news-caution">참여·제품 적용 여부는 별도 확인이 필요합니다.</span></div>` : ''}
+        <details class="home-news-details"><summary>자세히 보기</summary>
+          ${n.is_demo ? '' : `<h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>`}
+          ${n.suggestion ? `<h4>적용 제안 · 전체 내용</h4><p>${esc(n.suggestion)}</p>` : ''}
+          ${n.verified_at ? `<p class="home-signal-meta">담당자 확인 ${esc(n.verified_at)}</p>` : ''}
+        </details>
+        <div class="home-news-links">${n.is_demo ? '' : evidence}${n.suggestion ? '<a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a>' : ''}</div>
+      </article>`;
     }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
   }
   function render() {
