@@ -14,7 +14,7 @@
   const PFN = Object.fromEntries(PF.map(p => [p.k, p.n]));
   const STATUS = [['candidate', '후보'], ['sent', '제안 발송'], ['replied', '회신 받음'], ['negotiating', '협상 중'], ['confirmed', '계약 확정'], ['shot', '촬영 완료'], ['posted', '게시 완료'], ['declined', '불가·보류']];
   const STN = Object.fromEntries(STATUS);
-  const ST_COLOR = { candidate: 'var(--im-faint)', sent: 'var(--im-accent)', replied: 'var(--im-warn)', negotiating: '#C9932F', confirmed: 'var(--im-bean)', shot: 'var(--im-ok)', posted: '#3E9B73', declined: 'var(--im-bad)' };
+  const ST_COLOR = { candidate: 'var(--im-faint)', sent: 'var(--im-accent)', replied: 'var(--im-warn)', negotiating: 'var(--accent)', confirmed: 'var(--im-bean)', shot: 'var(--im-ok)', posted: 'var(--primary)', declined: 'var(--im-bad)' };
   const C = BOOT.consts;
   const TIERS = C.tiers.map(t => ({ ...t, max: t.max == null ? Infinity : t.max }));
   const LAYERS = { public: '공개 참고가', quote: '견적', contract: '계약가' };
@@ -45,7 +45,6 @@
   const grp = n => (n == null || isNaN(n)) ? '–' : Math.round(n).toLocaleString('ko-KR');
   function toast(msg) { const t = $('#imToast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2800); }
   const statusChip = s => `<span class="im-chip st-${s}">${esc(STN[s] || s)}</span>`;
-  const demoTag = o => o && o.example ? '<span class="im-demo">시연 데이터</span>' : '';
   function mainPf(inf) { let best = null; for (const p of PF) { const f = +((inf.pf || {})[p.k]?.f || 0); if (f > 0 && (!best || f > best.f)) best = { k: p.k, f, v: +(inf.pf[p.k].v || 0) }; } return best; }
   const maxF = inf => mainPf(inf)?.f || 0;
   const tierOf = f => TIERS.find(t => f >= t.min && f < t.max) || TIERS[0];
@@ -106,7 +105,6 @@
   function renderBanners() {
     const b = [];
     const dc = demoCount();
-    if (dc) b.push(`<div class="im-banner is-info"><b>시연 데이터</b><div class="im-grow">지금 보이는 인플루언서·견적 중 <span class="im-num">${dc}</span>건은 사용법을 보여 주는 가상의 시연 데이터예요. 실제 인물이 아닙니다.</div><button type="button" class="im-btn is-sm" id="imClearDemo">시연 데이터 지우기</button></div>`);
     if (S.flt.ev) b.push(`<div class="im-banner is-info"><b>기념일별 보기</b><div class="im-grow">${esc(eventName(S.flt.ev))}에 연결된 협업만 보고 있어요.</div><button type="button" class="im-btn is-sm" id="imClearEv">전체 보기</button></div>`);
     $('#imBanners').innerHTML = b.join('');
     const cd = $('#imClearDemo'); if (cd) cd.onclick = () => armButton(cd, '한 번 더 누르면 삭제', async () => { try { replaceAll(await api('POST', 'api/demo/clear')); toast('시연 데이터를 지웠어요'); } catch (e) { toast(e.message); } });
@@ -159,7 +157,7 @@
         [sent ? Math.round(replied / sent * 100) + '%' : '–', '회신율', `${replied} / ${sent}명 회신`], [conf, '계약 확정 이상', '촬영·게시 포함'], [rv, '확인 필요 회신', rv ? '회신 정리 탭에서 확인' : '모두 확인됨']]
         .map(([b, s, e]) => `<div class="im-kpi"><span>${s}</span><b>${b}</b><em>${e}</em></div>`).join('');
       if (!L.length) {
-        $('#ovPipe', v).innerHTML = `<div class="im-empty">아직 등록된 인플루언서가 없어요.<div class="im-row" style="justify-content:center;margin-top:10px"><button type="button" class="im-btn is-primary" id="ovFind">[발굴] 탭에서 자동으로 찾기</button><button type="button" class="im-btn" id="ovAdd">직접 입력해서 추가</button>${S.inf.size ? '' : '<button type="button" class="im-btn" id="ovSeed">시연 데이터 넣기</button>'}</div><p class="im-muted im-small" style="margin:10px 0 0">[발굴] 탭: YouTube 후보 검색·인기 순위·파일 가져오기 / 직접 입력 창에서도 채널 주소를 넣고 [YouTube 지표 가져오기]를 누르면 숫자가 자동으로 채워져요</p></div>`;
+        $('#ovPipe', v).innerHTML = `<div class="im-empty">아직 등록된 인플루언서가 없어요.<div class="im-row" style="justify-content:center;margin-top:10px"><button type="button" class="im-btn is-primary" id="ovFind">[발굴] 탭에서 자동으로 찾기</button><button type="button" class="im-btn" id="ovAdd">직접 입력해서 추가</button></div><p class="im-muted im-small" style="margin:10px 0 0">[발굴] 탭: YouTube 후보 검색·인기 순위·파일 가져오기 / 직접 입력 창에서도 채널 주소를 넣고 [YouTube 지표 가져오기]를 누르면 숫자가 자동으로 채워져요</p></div>`;
         $('#ovAdd', v).onclick = () => openEditor(null);
         $('#ovFind', v).onclick = () => show('discover');
         const sd = $('#ovSeed', v); if (sd) sd.onclick = async () => { try { replaceAll(await api('POST', 'api/demo/seed')); toast('시연 데이터를 넣었어요'); } catch (e) { toast(e.message); } };
@@ -170,7 +168,7 @@
       $('#ovPipe', v).innerHTML = `<div class="im-pipe">${STATUS.filter(([k]) => cnt[k]).map(([k, n]) => `<div style="flex:${cnt[k]};background:${ST_COLOR[k]}" title="${n} ${cnt[k]}명"></div>`).join('')}</div>
         <div class="im-legend">${STATUS.map(([k, n]) => `<span><i style="background:${ST_COLOR[k]}"></i>${n} <b class="im-num">${cnt[k]}</b></span>`).join('')}</div>`;
       const T = tasks(L), tagFor = { late: ['회신 지연', 'st-declined'], review: ['확인', 'st-replied'], pick: ['일정', 'st-sent'], soon: ['촬영', 'st-confirmed'], stale: ['지표', ''] };
-      $('#ovTodo', v).innerHTML = T.length ? `<ul class="im-todo">${T.slice(0, 8).map(x => `<li><span class="im-chip ${tagFor[x.k][1]}">${tagFor[x.k][0]}</span><div class="im-grow"><b>${esc(x.i.name)}</b> ${demoTag(x.i)} · ${esc(x.txt)}<div class="im-muted im-small">${esc(x.act)}</div></div><button type="button" class="im-btn is-ghost is-sm" data-open="${esc(x.i.id)}">열기</button></li>`).join('')}</ul>${T.length > 8 ? `<p class="im-muted im-small" style="margin:8px 0 0">외 ${T.length - 8}건</p>` : ''}` : '<div class="im-empty">지금 처리할 일이 없어요</div>';
+      $('#ovTodo', v).innerHTML = T.length ? `<ul class="im-todo">${T.slice(0, 8).map(x => `<li><span class="im-chip ${tagFor[x.k][1]}">${tagFor[x.k][0]}</span><div class="im-grow"><b>${esc(x.i.name)}</b> · ${esc(x.txt)}<div class="im-muted im-small">${esc(x.act)}</div></div><button type="button" class="im-btn is-ghost is-sm" data-open="${esc(x.i.id)}">열기</button></li>`).join('')}</ul>${T.length > 8 ? `<p class="im-muted im-small" style="margin:8px 0 0">외 ${T.length - 8}건</p>` : ''}` : '<div class="im-empty">지금 처리할 일이 없어요</div>';
       $$('[data-open]', v).forEach(b => { b.onclick = () => openEditor(b.dataset.open); });
       const pc = {}; PF.forEach(p => { pc[p.k] = 0; }); L.forEach(i => { const m = mainPf(i); if (m) pc[m.k]++; }); const pm = Math.max(1, ...Object.values(pc));
       $('#ovPf', v).innerHTML = `<div class="im-bars">${PF.map(p => `<div class="im-bar"><span class="im-pf pf-${p.k}"><i></i>${p.n}</span><div class="im-track"><div class="im-fill" style="width:${pc[p.k] / pm * 100}%;background:var(--im-${p.k})"></div></div><span class="im-num">${pc[p.k]}명</span></div>`).join('')}</div>`;
@@ -200,7 +198,7 @@
             ${kwChips('ytQ')}
             <p class="im-muted im-small" style="margin:0">검색 1번에 약 101유닛을 써요 (하루 기본 10,000유닛). 결과에서 [후보로 추가]를 누르면 목록에 들어가요.</p>
             <div id="ytRes"></div><div class="im-hr"></div>
-            <div class="im-row"><button type="button" class="im-btn" id="ytAll">YouTube 지표 일괄 갱신</button><span class="im-muted im-small" id="ytAllMsg">YouTube 주소가 있는 인플루언서의 구독자·조회수 중앙값을 다시 가져와요 (1명당 약 3유닛, 시연 데이터 제외).</span></div>
+            <div class="im-row"><button type="button" class="im-btn" id="ytAll">YouTube 지표 일괄 갱신</button><span class="im-muted im-small" id="ytAllMsg">YouTube 주소가 있는 인플루언서의 구독자·조회수 중앙값을 다시 가져와요.</span></div>
           </div></details>
         <div class="im-tblwrap"><table><thead><tr id="lhead"></tr></thead><tbody id="lbody"></tbody></table></div>
         <p class="im-muted im-small" id="lcount" style="margin:8px 2px 0"></p>`;
@@ -251,7 +249,7 @@
       $$('#lhead th[data-s]', v).forEach(th => { th.onclick = () => { if (f.sort === th.dataset.s) f.dir *= -1; else { f.sort = th.dataset.s; f.dir = th.dataset.s === 'name' ? 1 : -1; } this.update(v); }; });
       const cell = (i, k) => { const p = (i.pf || {})[k]; if (!p || !+p.f) return '<td class="r im-faint">–</td>'; return `<td class="r im-num" ${mainPf(i)?.k === k ? 'style="font-weight:600"' : ''}>${short(p.f)}</td>`; };
       $('#lbody', v).innerHTML = L.length ? L.map(i => { const m = mainPf(i), tr = maxF(i) ? tierOf(maxF(i)) : null; return `<tr class="is-click" data-id="${esc(i.id)}">
-          <td><div class="im-nm">${esc(i.name)} ${demoTag(i)}</div><div class="im-sub">${esc(i.handle || '')}${i.city ? ' · ' + esc(i.city) : ''}</div></td>
+          <td><div class="im-nm">${esc(i.name)}</div><div class="im-sub">${esc(i.handle || '')}${i.city ? ' · ' + esc(i.city) : ''}</div></td>
           <td>${esc(i.category || '–')}</td>${PF.map(p => cell(i, p.k)).join('')}
           <td class="r im-num">${m && m.v ? short(m.v) + ` <span class="im-pf pf-${m.k}"><i></i></span>` : '<span class="im-faint">–</span>'}</td>
           <td>${tr ? tr.n : '–'}</td><td>${statusChip(i.status || 'candidate')}</td><td class="im-num im-muted">${esc(i.metricsDate || '–')} ${m && (i.pf[m.k] || {}).conf ? confChip(i.pf[m.k].conf) : ''}</td></tr>`; }).join('')
@@ -272,7 +270,7 @@
     const evField = EVENTS.length
       ? `<select id="eEv"><option value="">연결 안 함</option>${evIds.map(x => `<option value="${esc(x)}" ${o.eventId === x ? 'selected' : ''}>${esc(eventName(x))}</option>`).join('')}</select>`
       : `<input type="text" id="eEv" value="${esc(o.eventId)}" placeholder="예: vn_teachers_day_2026">`;
-    d.innerHTML = `<header><h2 id="imDrawerTitle">${isNew ? '인플루언서 추가' : esc(o.name)} ${demoTag(o)}</h2><button type="button" class="im-btn is-ghost" id="dClose">닫기</button></header>
+    d.innerHTML = `<header><h2 id="imDrawerTitle">${isNew ? '인플루언서 추가' : esc(o.name)}</h2><button type="button" class="im-btn is-ghost" id="dClose">닫기</button></header>
     <div class="im-body">
       <div class="im-fgrid"><label class="im-field">이름 *<input type="text" id="eName" value="${esc(o.name)}"></label>
         <label class="im-field">대표 핸들<input type="text" id="eHandle" value="${esc(o.handle)}" placeholder="@handle"></label>
@@ -281,7 +279,7 @@
         <label class="im-field">이메일<input type="email" id="eEmail" value="${esc(o.email)}"></label>
         <label class="im-field">Zalo 번호/ID<input type="text" id="eZalo" value="${esc(o.zalo)}"></label>
         <label class="im-field is-wide">매니지먼트·에이전시<input type="text" id="eMgr" value="${esc(o.manager)}" placeholder="직접 계약이면 비워 두세요"></label>
-        <label class="im-field is-wide">연결 기념일 (HOME 캘린더 역산 일정용)${evField}</label></div>
+        <label class="im-field is-wide">연결 기념일 (HOME 캘린더 연결)${evField}</label></div>
       <div><div class="im-eyebrow">채널 지표</div>
         <div class="im-pfgrid"><span class="im-h">플랫폼</span><span class="im-h">팔로워·구독자</span><span class="im-h">조회수 중앙값</span><span class="im-h im-u">채널 주소</span>
         ${PF.map(p => { const x = (o.pf || {})[p.k] || {}; return `<span class="im-pf pf-${p.k}"><i></i>${p.n}</span><input type="number" min="0" id="f_${p.k}" value="${esc(x.f ?? '')}" aria-label="${p.n} 팔로워"><input type="number" min="0" id="v_${p.k}" value="${esc(x.v ?? '')}" aria-label="${p.n} 조회수 중앙값"><input type="url" class="im-u" id="u_${p.k}" value="${esc(x.url ?? '')}" placeholder="https://" aria-label="${p.n} 주소">`; }).join('')}</div>
@@ -300,8 +298,8 @@
         <label class="im-field is-wide">메모<textarea id="eNotes" rows="3">${esc(o.notes)}</textarea></label></div>
       ${r ? `<div class="im-panel" style="padding:12px"><div class="im-eyebrow">받은 회신 · ${esc({ rule: '자동 정리', form: '응답 폼', manual: '직접 입력' }[r.via] || '직접 입력')} · ${esc((r.at || '').slice(0, 10))}</div>
         <p style="margin:6px 0">${{ yes: '<b style="color:var(--im-ok)">가능</b>', cond: '<b style="color:var(--im-warn)">조건부 가능</b>', no: '<b style="color:var(--im-bad)">불가</b>' }[r.avail] || '미확인'}${r.fee ? ` · 희망 비용 <span class="im-num">${grp(r.fee)} ${esc(r.cur || 'VND')}</span>` : ''}</p>
-        <p class="im-muted" style="margin:0;font-size:13px">협의 가능: ${(r.neg || []).map(fmtD).join(', ') || '–'} · 촬영 가능: ${(r.shoot || []).map(fmtD).join(', ') || '–'} · 게시: ${r.post ? fmtD(r.post) : '–'}</p>
-        ${r.note ? `<p style="margin:6px 0 0;font-size:13px">${esc(r.note)}</p>` : ''}${r.review ? '<p class="im-note" style="margin:8px 0 0">확인 필요 표시가 있어요. 회신 정리 탭에서 확인 후 저장하면 사라져요.</p>' : ''}</div>` : ''}
+        <p class="im-muted" style="margin:0;font-size:var(--fs-body)">협의 가능: ${(r.neg || []).map(fmtD).join(', ') || '–'} · 촬영 가능: ${(r.shoot || []).map(fmtD).join(', ') || '–'} · 게시: ${r.post ? fmtD(r.post) : '–'}</p>
+        ${r.note ? `<p style="margin:6px 0 0;font-size:var(--fs-body)">${esc(r.note)}</p>` : ''}${r.review ? '<p class="im-note" style="margin:8px 0 0">확인 필요 표시가 있어요. 회신 정리 탭에서 확인 후 저장하면 사라져요.</p>' : ''}</div>` : ''}
     </div>
     <footer>${isNew ? '' : '<button type="button" class="im-btn is-danger" id="eDel">삭제</button>'}<button type="button" class="im-btn" id="eResp" ${isNew ? 'disabled' : ''}>회신 입력</button><span class="im-grow"></span><button type="button" class="im-btn" id="eCancel">취소</button><button type="button" class="im-btn is-primary" id="eSave">저장</button></footer>`;
     $('#dClose').onclick = $('#eCancel').onclick = closeDrawer;
@@ -463,31 +461,31 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <div class="im-recips" id="recips"></div>
           <div class="im-row" style="margin-top:10px"><button type="button" class="im-btn" id="markSent">선택한 사람 '제안 발송'으로 표시</button><span class="im-muted im-small" id="selCnt"></span></div></div>
         <div class="im-panel"><h2>미리보기 <small id="pvWho"></small></h2><div id="pv"></div></div></div>
-        <div class="im-panel"><h2>캠페인 정보 <small>여기 적은 내용이 메일 본문에 자동으로 들어가요</small></h2>
-          <div style="background:var(--im-sunk);border-radius:8px;padding:10px 12px" style="margin-bottom:12px"><div class="im-eyebrow">저장된 캠페인</div>
-            <div class="im-row" style="margin-top:6px"><select id="cpSel" style="flex:1;min-width:160px"><option value="">불러올 캠페인 선택</option></select><button type="button" class="im-btn is-sm" id="cpLoad">불러오기</button><button type="button" class="im-btn is-sm" id="cpDel">삭제</button></div>
-            <div class="im-row" style="margin-top:6px"><input type="text" id="cpName" maxlength="40" placeholder="이름 (예: 2026 스승의 날 캠페인)" style="flex:1;min-width:160px"><button type="button" class="im-btn is-sm" id="cpSave">현재 정보를 이 이름으로 저장</button></div>
-            <p class="im-muted im-small" id="cpMsg" style="margin:6px 0 0">캠페인마다 정보를 저장해 두고 다시 꺼내 쓸 수 있어요. 불러오면 아래 칸과 메일에 바로 적용돼요.</p></div>
+        <div class="im-panel"><h2>이벤트 정보 <small>여기 적은 내용이 메일 본문에 자동으로 들어가요</small></h2>
+          <div style="background:var(--im-sunk);border-radius:8px;padding:10px 12px" style="margin-bottom:12px"><div class="im-eyebrow">저장된 이벤트</div>
+            <div class="im-row" style="margin-top:6px"><select id="cpSel" style="flex:1;min-width:160px"><option value="">불러올 이벤트 선택</option></select><button type="button" class="im-btn is-sm" id="cpLoad">불러오기</button><button type="button" class="im-btn is-sm" id="cpDel">삭제</button></div>
+            <div class="im-row" style="margin-top:6px"><input type="text" id="cpName" maxlength="40" placeholder="이름 (예: 2026 스승의 날 이벤트)" style="flex:1;min-width:160px"><button type="button" class="im-btn is-sm" id="cpSave">현재 정보를 이 이름으로 저장</button></div>
+            <p class="im-muted im-small" id="cpMsg" style="margin:6px 0 0">이벤트마다 정보를 저장해 두고 다시 꺼내 쓸 수 있어요. 불러오면 아래 칸과 메일에 바로 적용돼요.</p></div>
           <div class="im-fgrid">${inp('sBrand', '브랜드')}${inp('sBrandVi', '브랜드 (로마자)')}${inp('sProduct', '제품명 (한국어)')}${inp('sProductVi', '제품명 (베트남어)')}${inp('sProductEn', '제품명 (영어)', 'text', 1)}
           ${inp('sCompany', '회사명')}${inp('sSender', '보내는 사람')}${inp('sEmail', '회신 이메일', 'email')}${inp('sZalo', '회사 Zalo')}${inp('sPeriod', '예정 기간')}${inp('sDeadline', '회신 기한', 'date')}
           ${inp('sForm', '빠른 응답 폼 링크 (선택)', 'url', 1)}${inp('sFee', '비용 문구 (한국어)', 'text', 1)}${inp('sFeeVi', '비용 문구 (베트남어)', 'text', 1)}${inp('sFeeEn', '비용 문구 (영어)', 'text', 1)}
           ${ta('sGuideVi', '광고 가이드라인 (베트남어)', 5)}${ta('sGuideEn', '광고 가이드라인 (영어)', 4)}${ta('sGuideKo', '광고 가이드라인 (한국어)', 4)}</div>
-          <div class="im-row" style="margin-top:12px"><button type="button" class="im-btn is-primary" id="sSave">캠페인 정보 저장</button><span class="im-muted im-small">베트남어 문구는 발송 전 현지 직원이나 번역가 검수를 권장해요</span></div>
+          <div class="im-row" style="margin-top:12px"><button type="button" class="im-btn is-primary" id="sSave">이벤트 정보 저장</button><span class="im-muted im-small">베트남어 문구는 발송 전 현지 직원이나 번역가 검수를 권장해요</span></div>
           <p class="im-muted im-small" style="margin:12px 0 0">개정 광고법(Law No. 75/2025/QH15, 2026-01-01 시행)은 인플루언서가 광고임을 게시 전·중에 밝히고, 직접 써 보지 않은 제품은 홍보하지 않도록 정하고 있어요. 광고 표현 검수 안내는 콘텐츠 스튜디오 화면을 함께 확인하세요.</p></div></div>`;
       Object.keys(SET_FIELDS).forEach(id => { $('#' + id, v).oninput = e => { S.settings = { ...S.settings, [SET_FIELDS[id]]: e.target.value }; this.preview(v); }; });
-      $('#sSave', v).onclick = async () => { const o = {}; Object.entries(SET_FIELDS).forEach(([id, k]) => { o[k] = $('#' + id, v).value; }); if (await saveSettings(o)) toast('캠페인 정보를 저장했어요'); };
+      $('#sSave', v).onclick = async () => { const o = {}; Object.entries(SET_FIELDS).forEach(([id, k]) => { o[k] = $('#' + id, v).value; }); if (await saveSettings(o)) toast('이벤트 정보를 저장했어요'); };
       const curFields = () => { const o = {}; Object.entries(SET_FIELDS).forEach(([id, k]) => { o[k] = $('#' + id, v).value; }); return o; };
       const cpMsg = t => { $('#cpMsg', v).textContent = t; };
       const loadPresets = async () => { try { this._presets = await api('GET', 'api/campaign-presets'); } catch (e) { this._presets = []; }
-        $('#cpSel', v).innerHTML = '<option value="">불러올 캠페인 선택</option>' + this._presets.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.saved_at || '')}</option>`).join(''); };
+        $('#cpSel', v).innerHTML = '<option value="">불러올 이벤트 선택</option>' + this._presets.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.saved_at || '')}</option>`).join(''); };
       loadPresets();
       $('#cpSave', v).onclick = () => { const name = $('#cpName', v).value.trim(); if (!name) { cpMsg('저장할 이름을 입력하세요'); return; }
-        const go = async (overwrite) => { try { await api('POST', 'api/campaign-presets', { name, data: curFields(), overwrite }); await loadPresets(); $('#cpSel', v).value = name; cpMsg(`'${name}'(으)로 저장했어요`); toast('캠페인을 저장했어요'); } catch (e) { cpMsg(e.message); } };
+        const go = async (overwrite) => { try { await api('POST', 'api/campaign-presets', { name, data: curFields(), overwrite }); await loadPresets(); $('#cpSel', v).value = name; cpMsg(`'${name}'(으)로 저장했어요`); toast('이벤트를 저장했어요'); } catch (e) { cpMsg(e.message); } };
         if ((this._presets || []).some(p => p.name === name)) armButton($('#cpSave', v), '같은 이름이 있어요. 한 번 더 누르면 덮어써요', () => go(true)); else go(false); };
-      $('#cpLoad', v).onclick = async () => { const p = (this._presets || []).find(x => x.name === $('#cpSel', v).value); if (!p) { cpMsg('불러올 캠페인을 고르세요'); return; }
+      $('#cpLoad', v).onclick = async () => { const p = (this._presets || []).find(x => x.name === $('#cpSel', v).value); if (!p) { cpMsg('불러올 이벤트를 고르세요'); return; }
         Object.entries(SET_FIELDS).forEach(([id, k]) => { if (k in p.data) $('#' + id, v).value = p.data[k]; });
-        if (await saveSettings(curFields())) { $('#cpName', v).value = p.name; cpMsg(`'${p.name}'을(를) 불러와 현재 캠페인 정보로 적용했어요`); this.preview(v); } };
-      $('#cpDel', v).onclick = () => { const name = $('#cpSel', v).value; if (!name) { cpMsg('삭제할 캠페인을 고르세요'); return; }
+        if (await saveSettings(curFields())) { $('#cpName', v).value = p.name; cpMsg(`'${p.name}'을(를) 불러와 현재 이벤트 정보로 적용했어요`); this.preview(v); } };
+      $('#cpDel', v).onclick = () => { const name = $('#cpSel', v).value; if (!name) { cpMsg('삭제할 이벤트를 고르세요'); return; }
         armButton($('#cpDel', v), '한 번 더 누르면 삭제', async () => { try { await api('DELETE', 'api/campaign-presets', { name }); await loadPresets(); cpMsg(`'${name}'을(를) 삭제했어요`); } catch (e) { cpMsg(e.message); } }); };
       $$('#lang button', v).forEach(b => { b.onclick = () => { S.mail.lang = b.dataset.l; $$('#lang button', v).forEach(x => x.setAttribute('aria-pressed', x === b)); this.preview(v); }; });
       $('#markSent', v).onclick = async () => {
@@ -499,7 +497,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     update(v) {
       const L = filteredByEvent().filter(i => ['candidate', 'sent'].includes(i.status || 'candidate')).sort((a, b) => (a.status === b.status ? 0 : a.status === 'candidate' ? -1 : 1) || a.name.localeCompare(b.name));
       if (!S.mail.sel || !L.some(i => i.id === S.mail.sel)) S.mail.sel = L[0]?.id || null;
-      $('#recips', v).innerHTML = L.length ? L.map(i => `<div class="im-recip" data-id="${esc(i.id)}" aria-current="${S.mail.sel === i.id}"><input type="checkbox" aria-label="${esc(i.name)} 선택" ${S.mail.checked.has(i.id) ? 'checked' : ''}><div class="im-grow"><b>${esc(i.name)}</b> ${demoTag(i)}<div class="im-muted im-small" style="overflow-wrap:anywhere">${esc(i.email || '이메일 없음')}${i.zalo ? ' · Zalo ' + esc(i.zalo) : ''}</div></div>${statusChip(i.status || 'candidate')}</div>`).join('')
+      $('#recips', v).innerHTML = L.length ? L.map(i => `<div class="im-recip" data-id="${esc(i.id)}" aria-current="${S.mail.sel === i.id}"><input type="checkbox" aria-label="${esc(i.name)} 선택" ${S.mail.checked.has(i.id) ? 'checked' : ''}><div class="im-grow"><b>${esc(i.name)}</b><div class="im-muted im-small" style="overflow-wrap:anywhere">${esc(i.email || '이메일 없음')}${i.zalo ? ' · Zalo ' + esc(i.zalo) : ''}</div></div>${statusChip(i.status || 'candidate')}</div>`).join('')
         : '<div class="im-empty" style="border:0">제안할 후보가 없어요. 인플루언서 탭에서 추가하세요.</div>';
       $$('.im-recip', v).forEach(r => { r.onclick = e => {
         if (e.target.type === 'checkbox') { e.target.checked ? S.mail.checked.add(r.dataset.id) : S.mail.checked.delete(r.dataset.id); $('#selCnt', v).textContent = S.mail.checked.size ? `${S.mail.checked.size}명 선택` : ''; return; }
@@ -554,10 +552,10 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     update(v) {
       const L = filteredByEvent().sort((a, b) => a.name.localeCompare(b.name)), sel = $('#rWho', v);
       if (!S.resp.id || !S.inf.has(S.resp.id)) S.resp.id = (L.find(i => i.status === 'sent') || L[0])?.id || '';
-      sel.innerHTML = L.length ? L.map(i => `<option value="${esc(i.id)}" ${i.id === S.resp.id ? 'selected' : ''}>${esc(i.name)} · ${STN[i.status || 'candidate']}${i.example ? ' (시연)' : ''}</option>`).join('') : '<option value="">등록된 인플루언서 없음</option>';
+      sel.innerHTML = L.length ? L.map(i => `<option value="${esc(i.id)}" ${i.id === S.resp.id ? 'selected' : ''}>${esc(i.name)} · ${STN[i.status || 'candidate']}</option>`).join('') : '<option value="">등록된 인플루언서 없음</option>';
       if (this._for !== S.resp.id) this.form(v);
       const R = L.filter(i => i.resp).sort((a, b) => (!!b.resp.review - !!a.resp.review) || (b.resp.at || '').localeCompare(a.resp.at || ''));
-      $('#rList', v).innerHTML = R.length ? `<ul class="im-todo">${R.map(i => { const r = i.resp; return `<li><div class="im-grow"><b>${esc(i.name)}</b> ${demoTag(i)} ${r.review ? '<span class="im-chip st-replied">확인 필요</span>' : ''}<div class="im-muted im-small">${{ yes: '가능', cond: '조건부', no: '불가' }[r.avail] || '미확인'} · 촬영 가능 ${(r.shoot || []).map(fmtD).join(', ') || '–'}${i.confirmedShoot ? ' · <b style="color:var(--im-bean)">확정 ' + fmtD(i.confirmedShoot) + '</b>' : ''}</div></div><button type="button" class="im-btn is-sm" data-r="${esc(i.id)}">열기</button></li>`; }).join('')}</ul>` : '<div class="im-empty">아직 받은 회신이 없어요</div>';
+      $('#rList', v).innerHTML = R.length ? `<ul class="im-todo">${R.map(i => { const r = i.resp; return `<li><div class="im-grow"><b>${esc(i.name)}</b> ${r.review ? '<span class="im-chip st-replied">확인 필요</span>' : ''}<div class="im-muted im-small">${{ yes: '가능', cond: '조건부', no: '불가' }[r.avail] || '미확인'} · 촬영 가능 ${(r.shoot || []).map(fmtD).join(', ') || '–'}${i.confirmedShoot ? ' · <b style="color:var(--im-bean)">확정 ' + fmtD(i.confirmedShoot) + '</b>' : ''}</div></div><button type="button" class="im-btn is-sm" data-r="${esc(i.id)}">열기</button></li>`; }).join('')}</ul>` : '<div class="im-empty">아직 받은 회신이 없어요</div>';
       $$('[data-r]', v).forEach(b => { b.onclick = () => { S.resp.id = b.dataset.r; S.resp.draft = null; $('#rWho', v).value = b.dataset.r; this.form(v);
         $$('#rList li', v).forEach(li => { li.style.background = li.contains(b) ? 'var(--im-accent-soft)' : ''; li.style.borderRadius = '6px'; });
         const f = $('#rForm', v); f.style.transition = 'none'; f.style.boxShadow = '0 0 0 3px var(--im-accent)'; f.style.borderRadius = '8px';
@@ -626,9 +624,9 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       $$('.im-day', v).forEach(c => { const go = () => { S.calSel = c.dataset.d; this.update(v); }; c.onclick = go; c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
       const ds = S.calSel, de = (by[ds] || []).sort((a, b) => ord[a.t] - ord[b.t]);
       $('#dayTitle', v).textContent = ds ? `${ds.replace(/-/g, '.')} 일정` : '날짜를 누르면 그날 일정이 보여요';
-      $('#dayList', v).innerHTML = ds ? (de.length ? `<ul class="im-todo">${de.map(e => `<li><span class="im-ev ${e.t} ${e.clash ? 'clash' : ''}" style="flex:none">${tn[e.t]}</span><div class="im-grow"><b>${esc(e.i.name)}</b> ${demoTag(e.i)}<div class="im-muted im-small">${STN[e.i.status || 'candidate']}${e.clash ? ' · 같은 날 다른 촬영과 겹침' : ''}</div></div>${e.t === 'shoot' ? `<button type="button" class="im-btn is-sm is-bean" data-cf="${esc(e.i.id)}|${e.d}">이 날로 확정</button>` : ''}</li>`).join('')}</ul>` : '<p class="im-muted" style="margin:0">이 날짜에는 일정이 없어요</p>') : '<p class="im-muted" style="margin:0">달력에서 날짜를 고르세요</p>';
+      $('#dayList', v).innerHTML = ds ? (de.length ? `<ul class="im-todo">${de.map(e => `<li><span class="im-ev ${e.t} ${e.clash ? 'clash' : ''}" style="flex:none">${tn[e.t]}</span><div class="im-grow"><b>${esc(e.i.name)}</b><div class="im-muted im-small">${STN[e.i.status || 'candidate']}${e.clash ? ' · 같은 날 다른 촬영과 겹침' : ''}</div></div>${e.t === 'shoot' ? `<button type="button" class="im-btn is-sm is-bean" data-cf="${esc(e.i.id)}|${e.d}">이 날로 확정</button>` : ''}</li>`).join('')}</ul>` : '<p class="im-muted" style="margin:0">이 날짜에는 일정이 없어요</p>') : '<p class="im-muted" style="margin:0">달력에서 날짜를 고르세요</p>';
       const P = L.filter(i => !i.confirmedShoot && i.resp && i.resp.avail !== 'no' && (i.resp.shoot || []).length);
-      $('#pickList', v).innerHTML = P.length ? `<ul class="im-todo">${P.map(i => `<li><div class="im-grow"><b>${esc(i.name)}</b> ${demoTag(i)}<div class="im-row" style="gap:6px;margin-top:6px">${i.resp.shoot.map(d => `<button type="button" class="im-btn is-sm" data-cf="${esc(i.id)}|${d}">${fmtD(d)}</button>`).join('')}</div></div></li>`).join('')}</ul>` : '<p class="im-muted" style="margin:0">확정을 기다리는 사람이 없어요</p>';
+      $('#pickList', v).innerHTML = P.length ? `<ul class="im-todo">${P.map(i => `<li><div class="im-grow"><b>${esc(i.name)}</b><div class="im-row" style="gap:6px;margin-top:6px">${i.resp.shoot.map(d => `<button type="button" class="im-btn is-sm" data-cf="${esc(i.id)}|${d}">${fmtD(d)}</button>`).join('')}</div></div></li>`).join('')}</ul>` : '<p class="im-muted" style="margin:0">확정을 기다리는 사람이 없어요</p>';
       $$('[data-cf]', v).forEach(b => { b.onclick = async () => {
         const [id, d] = b.dataset.cf.split('|'), i = S.inf.get(id); if (!i) return;
         const clash = infList().filter(x => x.id !== id && x.confirmedShoot === d);
@@ -684,18 +682,18 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     },
     rateState(v) {
       const d = S.settings.rateSavedAt, el = $('#xState', v); if (!el) return;
-      el.innerHTML = d ? `직접 입력한 환율 · 저장일 <b>${esc(d)}</b>` : '<span style="color:var(--im-warn)">아직 예시값이에요. 실제 환율을 입력하고 [환율 저장]을 누르세요</span>';
+      el.innerHTML = d ? `직접 입력한 환율 · 저장일 <b>${esc(d)}</b>` : '<span style="color:var(--im-warn)">환율을 입력하고 저장하세요</span>';
     },
     update(v) {
       const L = infList().sort((a, b) => a.name.localeCompare(b.name)), qi = $('#qInf', v), cur = qi.value;
-      qi.innerHTML = '<option value="">선택</option>' + L.map(i => `<option value="${esc(i.id)}" ${i.id === cur ? 'selected' : ''}>${esc(i.name)}${i.example ? ' (시연)' : ''}</option>`).join('');
+      qi.innerHTML = '<option value="">선택</option>' + L.map(i => `<option value="${esc(i.id)}" ${i.id === cur ? 'selected' : ''}>${esc(i.name)}</option>`).join('');
       const Q = [...S.quotes.values()].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       const cmpTxt = { in: '범위 안', hi: '범위보다 높음', lo: '범위보다 낮음' };
-      $('#qBody', v).innerHTML = Q.length ? Q.map(q => { const m = quoteMetrics(q); return `<tr><td><b>${esc(m.i?.name || q.name || '삭제됨')}</b> ${demoTag(q)}<div class="im-sub">${esc(q.date || '')}${q.cond ? ' · ' + esc(q.cond) : ''}</div></td>
+      $('#qBody', v).innerHTML = Q.length ? Q.map(q => { const m = quoteMetrics(q); return `<tr><td><b>${esc(m.i?.name || q.name || '삭제됨')}</b><div class="im-sub">${esc(q.date || '')}${q.cond ? ' · ' + esc(q.cond) : ''}</div></td>
           <td><span class="im-pf pf-${q.platform}"><i></i>${PFN[q.platform] || ''}</span><div class="im-sub">${esc(q.format || '')}</div></td><td>${LAYERS[q.layer] || ''}</td>
           <td class="r im-num">${grp(q.amount)} <span class="im-faint">${esc(q.cur)}</span></td><td class="r im-num">$${grp(m.usd)}</td>
           <td class="r im-num">${m.cpm != null ? grp(m.cpm) + ' ₫' : '–'}</td><td class="r im-num">${m.perK != null ? grp(m.perK) + ' ₫' : '–'}</td><td class="r im-num">${m.cpv != null ? grp(m.cpv) + ' ₫' : '–'}</td>
-          <td>${m.cmp ? `<span class="im-cmp ${m.cmp}">${cmpTxt[m.cmp]}</span> <span class="im-faint" style="font-size:11px">${m.tier.n}</span>` : '<span class="im-faint">팔로워 없음</span>'}</td>
+          <td>${m.cmp ? `<span class="im-cmp ${m.cmp}">${cmpTxt[m.cmp]}</span> <span class="im-faint" style="font-size:var(--fs-body)">${m.tier.n}</span>` : '<span class="im-faint">팔로워 없음</span>'}</td>
           <td><button type="button" class="im-btn is-sm is-ghost" data-qd="${esc(q.id)}">삭제</button></td></tr>`; }).join('')
         : '<tr><td colspan="10"><div class="im-empty" style="border:0">받은 견적이나 계약 금액을 오른쪽에서 추가하세요. 쌓일수록 회사 자체 기준표가 돼요.</div></td></tr>';
       $$('[data-qd]', v).forEach(b => { b.onclick = () => armButton(b, '확인', async () => { if (await delQuote(b.dataset.qd)) toast('삭제했어요'); }); });
@@ -804,7 +802,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
             <label class="im-field">이 파일의 출처<select id="dCsvSrc"><option value="">파일의 '출처' 열 따르기 (우리 양식)</option><option value="saas">전문 SaaS 내보내기 파일</option><option value="submitted">에이전시·인플루언서 제출 자료</option><option value="manual">직접 확인한 값</option></select></label>
             <label class="im-field">제공처 이름 (선택)<input type="text" id="dCsvProv" maxlength="60" placeholder="예: Modash 내보내기, OO에이전시"></label>
             <label class="im-field">플랫폼 열이 없을 때<select id="dCsvPf"><option value="">주소로 자동 판별</option><option value="tt">TikTok</option><option value="ig">Instagram</option><option value="yt">YouTube</option><option value="fb">Facebook</option></select></label>
-            <label class="im-field" style="flex-direction:row;align-items:center;gap:8px;margin-top:22px"><input type="checkbox" id="dCsvDemo">시연용 파일 (시연 데이터로 표시)</label></div>
+            <input type="checkbox" id="dCsvDemo" hidden></div>
           <div class="im-row" style="margin-top:10px"><a class="im-btn is-sm" href="${API}export/discovery_template.csv">발굴 후보 CSV 양식</a><label class="im-btn is-sm is-primary" for="dCsv" style="cursor:pointer">파일 올리기</label><input type="file" id="dCsv" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" hidden></div>
           <div id="dCsvRep" style="margin-top:10px"></div></div>
         </div></div>`;

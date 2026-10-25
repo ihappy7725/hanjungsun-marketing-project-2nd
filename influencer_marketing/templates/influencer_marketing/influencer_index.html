@@ -26,5 +26,5 @@
 </div>
 
 <script id="imBoot" type="application/json">{{ boot|tojson }}</script>
-<script src="{{ url_for('influencer_marketing.static', filename='js/influencer_main.js') }}"></script>
+<script type="module" src="{{ url_for('influencer_marketing.static', filename='js/influencer_main.js') }}"></script>
 {% endblock %}

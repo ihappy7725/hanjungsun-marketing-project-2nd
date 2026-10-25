@@ -4,34 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>인플루언서 현황 보고서 {{ today }}</title>
+<link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/base.css') }}">
 <style>
   /* 인쇄 전용 보고서 화면. 공통 레이아웃 없이 단독으로 엽니다. */
-  .im-report{--ink:#14213A;--muted:#5A6479;--line:#DBE0E9;--navy:#1E3A6E;--sunk:#EEF2F8;
-    max-width:794px;margin:0 auto;padding:32px 24px;color:var(--ink);background:#fff;
-    font-family:"Noto Sans KR","Be Vietnam Pro","Malgun Gothic",system-ui,sans-serif;font-size:12px;line-height:1.5}
-  .im-report h1{font-size:22px;color:var(--navy);margin:0 0 4px}
-  .im-report h2{font-size:14px;color:var(--navy);margin:24px 0 8px;border-bottom:2px solid var(--navy);padding-bottom:4px}
+  .im-report{max-width:1100px;margin:0 auto;padding:var(--space-9) var(--space-8);color:var(--ink);background:var(--white);
+    font-family:var(--font-body);font-size:var(--fs-body);line-height:var(--line-height)}
+  .im-report h1{font-size:var(--fs-h1);color:var(--primary);margin:0 0 var(--space-2)}
+  .im-report h2{font-size:var(--fs-panel-title);color:var(--primary);margin:var(--space-8) 0 var(--space-4);border-bottom:2px solid var(--primary);padding-bottom:var(--space-2)}
   .im-report .muted{color:var(--muted)}
-  .im-report .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
-  .im-report .kp div{border:1px solid var(--line);border-radius:6px;padding:8px}
-  .im-report .kp b{display:block;font-size:18px}
-  .im-report table{width:100%;border-collapse:collapse;font-size:11px}
-  .im-report th{background:var(--sunk);color:var(--muted);text-align:left}
-  .im-report th,.im-report td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .im-report .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-top:var(--space-6)}
+  .im-report .kp div{border:1px solid var(--line);border-radius:var(--radius);padding:var(--space-4)}
+  .im-report .kp b{display:block;font-size:var(--fs-panel-title)}
+  .im-report table{width:100%;border-collapse:collapse;font-size:var(--fs-body)}
+  .im-report th{background:var(--paper);color:var(--muted);text-align:left}
+  .im-report th,.im-report td{white-space:normal;overflow-wrap:anywhere;padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--line);vertical-align:top}
   .im-report .r{text-align:right;font-variant-numeric:tabular-nums}
-  .im-report .demo{display:inline-block;font-size:10px;background:var(--sunk);color:var(--muted);padding:0 5px;border-radius:3px}
-  .im-report .bar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px}
-  .im-report button{font:inherit;padding:7px 14px;border-radius:6px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
-  .im-report .foot{color:#8A93A6;font-size:10px;margin-top:20px}
+  .im-report .bar{display:flex;gap:var(--space-4);justify-content:flex-end;margin-bottom:var(--space-6)}
+  .im-report button{font:inherit;padding:var(--space-3) var(--space-5);border-radius:var(--radius);border:1px solid var(--primary);background:var(--primary);color:var(--on-dark);cursor:pointer}
+  .im-report .foot{color:var(--muted);font-size:var(--fs-body);margin-top:var(--space-7)}
   @media print{.im-report .bar{display:none}.im-report{padding:0}@page{size:A4;margin:14mm}}
 </style>
 </head>
-<body style="margin:0;background:#fff">
+<body style="margin:0;background:var(--white)">
 <div class="im-report">
   <div class="bar"><span class="muted">인쇄 창에서 '대상: PDF로 저장'을 고르세요</span><button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>
 
   <h1>{{ conf.brand }} {{ conf.product }} · 베트남 인플루언서 현황</h1>
-  <div class="muted">작성일 {{ today }}{% if conf.company %} · {{ conf.company }}{% endif %}{% if conf.sender %} {{ conf.sender }}{% endif %}{% if has_demo %} · <b>시연 데이터 포함</b>{% endif %}</div>
+  <div class="muted">작성일 {{ today }}{% if conf.company %} · {{ conf.company }}{% endif %}{% if conf.sender %} {{ conf.sender }}{% endif %}</div>
 
   <div class="kp">
     <div>등록<b>{{ summary.total }}명</b></div>
@@ -47,7 +47,7 @@
     <tbody>
     {% for row in rows %}
       <tr>
-        <td>{{ row.inf.name }} {% if row.inf.example %}<span class="demo">시연</span>{% endif %}</td>
+        <td>{{ row.inf.name }} </td>
         <td>{{ row.inf.category }}</td>
         <td>{{ row.platform or '–' }}</td>
         <td class="r">{{ '{:,}'.format(row.followers|int) if row.followers else '–' }}</td>
@@ -80,7 +80,7 @@
     <tbody>
     {% for x in quotes %}
       <tr>
-        <td>{{ (x.m.inf or {}).get('name') or x.q.name }} {% if x.q.example %}<span class="demo">시연</span>{% endif %}</td>
+        <td>{{ (x.m.inf or {}).get('name') or x.q.name }} </td>
         <td>{{ x.platform }} {{ x.q.format }}</td>
         <td>{{ x.price_type }}</td>
         <td class="r">{{ '{:,.0f}'.format(x.q.amount) }} {{ x.q.cur }}</td>
