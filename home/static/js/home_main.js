@@ -2,6 +2,7 @@
 // type="module"로 불러오므로 전역 변수·함수가 생기지 않습니다. (README 7장)
 
 const DAY = 86400000;
+const DAY_SLOTS = 4; // 달력 한 칸에 보여 주는 최대 개수(기간 막대 포함)
 export const TASK_STATES = { todo: '예정', doing: '진행 중', blocked: '보류', done: '완료', cancelled: '취소' };
 const CAMPAIGN_STATES = { preparing: '준비', active: '진행', done: '완료', blocked: '보류', cancelled: '취소', archived: '보관' };
 const TABS = { market_analysis: '현지 시장 분석', content_studio: '콘텐츠 스튜디오', influencer_marketing: '인플루언서 마케팅', kpi: 'KPI' };
@@ -241,12 +242,17 @@ function initialize() {
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart);
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
-        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(38px, auto)">`;
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, calc(var(--home-chip-h) + 2px)) ` : ''}1fr">`;
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           // 이어지는 일정은 기간 막대로만 보여 주고 날짜 칩에서는 뺍니다. 같은 일정이 두 번 나오지 않게 합니다.
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
-          const chips = dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('') + (dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : '');
+          // 하루에 보이는 것은 기간 막대까지 더해 DAY_SLOTS개까지입니다. 업무가 많아도 달력 높이가 변하지 않습니다.
+          const room = Math.max(0, DAY_SLOTS - segments.filter(s => s.start <= day && s.end >= day).length);
+          let shown = Math.min(dayEvents.length, room);
+          if (dayEvents.length > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
+          const rest = dayEvents.length - shown;
+          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
           html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
           // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
           if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
@@ -283,6 +289,16 @@ function initialize() {
       const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
       return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
     }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
+    renderUndated();
+  }
+  // 마감일 없는 업무는 달력 어디에도 나오지 않아 잊히기 쉽습니다. 매일 보는 자리에 개수만 남겨 둡니다.
+  function renderUndated() {
+    const rows = inScope().filter(t => t.status !== 'cancelled' && !t.due_date && unfinished(t));
+    const box = $('#undated-box');
+    box.hidden = rows.length === 0;
+    if (!rows.length) return;
+    $('#undated-count').textContent = `날짜 미정 ${rows.length}건`;
+    $('#undated-list').innerHTML = rows.map(t => `<div class="home-undated-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions"><span class="home-muted">${esc(campaignName(t.campaign_id))}</span><button class="home-text-btn" data-today="${esc(t.id)}" title="오늘 날짜로 가져오기">오늘로</button></span></div>`).join('');
   }
   function moveTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId);
@@ -484,6 +500,10 @@ function initialize() {
   }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button) return;
+    if (button.dataset.today) {
+      const next = structuredClone(store), task = next.tasks.find(item => item.id === button.dataset.today);
+      if (task) { task.due_date = today; task.fixed = true; if (save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
+    }
     if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
     if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
     if (button.dataset.move) moveTask(button.dataset.move);
@@ -576,8 +596,13 @@ function initialize() {
       $('#news-search-list').innerHTML = data.items.map(n => {
         const url = safeUrl(n.url);
         const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)} ↗</a>` : esc(n.title);
-        return `<article class="home-news-result">${title}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}</p></article>`;
+        const via = n.source_label && n.source_label !== n.publisher ? ` · ${esc(n.source_label)}` : '';
+        return `<article class="home-news-result">${title}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
       }).join('') || empty('검색 결과가 없습니다. 다른 검색어로 찾아봐주세요.');
+      // 한 출처가 빠졌을 때 조용히 넘어가지 않고 어디가 빠졌는지 알립니다.
+      if (Array.isArray(data.unavailable) && data.unavailable.length) {
+        newsError(`${data.unavailable.join(' · ')} 출처를 불러오지 못했습니다. 아래 결과에는 빠져 있습니다.`);
+      }
     } catch (error) {
       // 불러오지 못한 경우 빈 목록을 결과처럼 보여 주지 않고 실패를 그대로 알립니다.
       if (token !== searchNumber) return;

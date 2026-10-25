@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 from flask import jsonify, render_template, request
 
 from . import bp
-from .news_search import SearchError, preset_labels, resolve, search
+from .news_search import SearchError, preset_labels, search
 
 _EVENTS_PATH = Path(__file__).parent / "data" / "events.json"
 _NEWS_PATH = Path(__file__).parent / "data" / "news.json"
@@ -221,11 +221,11 @@ def news_search():
     """
     preset = request.args.get("preset", "").strip()
     try:
-        query = resolve(preset) if preset else request.args.get("q", "")
-        items = search(query)
+        items, failed = search(query=request.args.get("q", ""), preset=preset or None)
     except SearchError as error:
         return jsonify(error=str(error), items=[]), error.status
     except Exception:
         # 예외 내용에는 외부 응답이 들어갈 수 있어 응답에 내보내지 않습니다.
         return jsonify(error="지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.", items=[]), 502
-    return jsonify(items=items, notice="검증하지 않은 검색 결과입니다. 원문을 열어 직접 확인해주세요.")
+    return jsonify(items=items, unavailable=failed,
+                   notice="검증하지 않은 검색 결과입니다. 원문을 열어 직접 확인해주세요.")

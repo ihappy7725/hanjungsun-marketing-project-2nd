@@ -13,7 +13,7 @@
       <div class="home-clocks" aria-label="현재 시각"><span class="home-clock"><b id="clock-kst">--:--</b> <span class="home-clock-zone">한국 (기준)</span></span><span class="home-clock"><b id="clock-ict">--:--</b> <span class="home-clock-zone">베트남</span></span><input id="reference-date" type="hidden"></div>
     </div>
     <div class="home-controls">
-      <label>데이터 <select id="data-mode"><option value="demo">기본 보기</option><option value="work">내 업무</option></select></label>
+      <label>데이터 <select id="data-mode"><option value="demo">예시 데이터 (DEMO)</option><option value="work">내 업무</option></select></label>
       <label>표시 범위 <select id="scope"><option value="all">전체 이벤트</option><option value="current">현재 이벤트</option></select></label>
     </div>
   </header>
@@ -66,6 +66,10 @@
       <section class="home-card home-today-card" aria-labelledby="tasks-title">
       <div class="home-panel-head"><h2 id="tasks-title">오늘의 해야 할 일</h2><button class="home-text-btn" id="today-reset" type="button" hidden>오늘로</button></div>
       <div id="task-list" class="home-task-list"></div>
+      <details id="undated-box" class="home-undated" hidden>
+        <summary id="undated-count">날짜 미정</summary>
+        <div id="undated-list"></div>
+      </details>
       </section>
       <section class="home-card home-opportunities-card" aria-label="현지 기회">
         <div class="home-opportunities"><div class="home-panel-head"><div><h2>현지 기회</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">전체 보기 ↗</a></div>
