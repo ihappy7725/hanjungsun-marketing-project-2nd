@@ -14,10 +14,14 @@ from urllib.request import Request, urlopen
 
 from flask import current_app, jsonify, request, send_from_directory
 from PIL import Image, ImageOps, UnidentifiedImageError
+from werkzeug.exceptions import NotFound
+
+from platform_core.extensions import db
 
 from . import bp
-from .designs import (build_cardnews_prompt, build_design_brief, design_proposal_schema,
+from .designs import (SIZES, build_cardnews_prompt, build_design_brief, design_proposal_schema,
                       design_texts, proposal_design, validate_proposals)
+from .models_sns import SnsChat
 
 REVIEW_DISCLAIMER = "광고 표현·문화 참고 안내입니다. 법적 판단이 아닙니다."
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -321,3 +325,69 @@ def figma_preview():
         return jsonify({"ok": True, "preview_url": src, "refreshed_at": datetime.now(timezone.utc).isoformat()})
     except (HTTPError, URLError, TimeoutError, OSError, ValueError, TypeError, AttributeError):
         return _error("Figma 미리보기를 받지 못했습니다. 인증·파일 권한·사용 한도를 확인해 주세요.", 502)
+
+
+# ---------- Figma 플러그인 창구 (README 3-4, 읽기 전용) ----------
+# 플러그인 화면은 출처(origin)가 "null"로 와서, 이 창구 응답에만 허락 헤더를 붙입니다. 고치기·지우기는 없습니다.
+FIGMA_KINDS = ("poster", "cardnews")
+STATIC_IMAGE_RE = re.compile(r"^/content_studio/static/images/sns/([A-Za-z0-9_.-]+\.(?:png|jpe?g|webp))$")
+UPLOAD_SRC_RE = re.compile(r"^/content_studio/media/uploads/([0-9a-f]{32}\.(?:jpg|png|webp))$")
+NOBG_SRC_RE = re.compile(r"^/content_studio/media/remove-bg/result/([0-9a-f]{32})\.png$")
+
+
+def _for_plugin(response, status=None):
+    if status:
+        response.status_code = status
+    response.headers["Access-Control-Allow-Origin"] = "null"
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+def _plugin_error(message, status=400):
+    return _for_plugin(jsonify({"ok": False, "error": message}), status)
+
+
+@bp.route("/media/api/figma/designs")
+def figma_designs():
+    items = []
+    for chat in SnsChat.query.filter(SnsChat.kind.in_(FIGMA_KINDS)).order_by(SnsChat.updated_at.desc()):
+        doc = chat.design.doc if chat.design else None
+        if doc:
+            items.append({"id": chat.id, "kind": chat.kind, "title": chat.title, "ratio": doc.get("ratio"),
+                          "pages": len(doc.get("pages") or []), "demo": bool(doc.get("demo")),
+                          "updated_at": chat.updated_at.isoformat()})
+    return _for_plugin(jsonify({"ok": True, "items": items}))
+
+
+@bp.route("/media/api/figma/designs/<int:chat_id>")
+def figma_design(chat_id):
+    chat = db.session.get(SnsChat, chat_id)
+    doc = chat.design.doc if chat and chat.kind in FIGMA_KINDS and chat.design else None
+    if not doc:
+        return _plugin_error("포스터·카드뉴스를 찾을 수 없습니다.", 404)
+    width, height = SIZES.get(doc.get("ratio"), (None, None))
+    if not width:
+        return _plugin_error("규격(ratio)이 올바르지 않습니다.", 422)
+    # x·y·w·h는 %이고 size는 원본 크기 기준 px이라, 플러그인은 width·height로 픽셀을 계산합니다.
+    return _for_plugin(jsonify({"ok": True, "id": chat.id, "title": chat.title,
+                                "width": width, "height": height, "design": doc}))
+
+
+@bp.route("/media/api/figma/image")
+def figma_image():
+    """문서 속 사진 주소(제품 사진·올린 사진·배경 제거 결과)만 파일로 돌려줍니다."""
+    src = request.args.get("src", "")
+    try:
+        if match := STATIC_IMAGE_RE.match(src):
+            response = send_from_directory(os.path.join(bp.static_folder, "images", "sns"), match[1])
+        elif match := UPLOAD_SRC_RE.match(src):
+            response = uploaded_photo(match[1])
+        elif match := NOBG_SRC_RE.match(src):
+            response = remove_bg_result(match[1])
+        else:
+            return _plugin_error("가져올 수 없는 사진 주소입니다.")
+    except NotFound:
+        return _plugin_error("사진 파일을 찾을 수 없습니다.", 404)
+    if isinstance(response, tuple):  # 파일이 없을 때 _error가 (응답, 상태) 를 돌려줍니다.
+        return _for_plugin(*response)
+    return _for_plugin(response)
