@@ -111,10 +111,10 @@
         <div class="kpi-detail">
           <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
 
-          <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중</p>
+          <p class="kpi-detail-title">채널별 광고비 지출 · 예산 대비 비중</p>
           <div class="table-wrap">
             <table class="kpi-table kpi-t-spend">
-              <thead><tr><th class="is-text">채널</th><th>집행액(VND)</th><th>집행액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
+              <thead><tr><th class="is-text">채널</th><th>지출액(VND)</th><th>지출액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
               <tbody data-kpi="spend-rows"></tbody>
             </table>
           </div>
@@ -124,32 +124,51 @@
               집행 시뮬레이션 <span class="kpi-status is-fallback">추정</span>
               {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 예정 비용 × 해당 채널의 현재 ROAS ÷ 100\n(현재 ROAS가 유지된다고 가정한 추정이며 저장되지 않습니다)") }}
             </p>
-            <form class="kpi-sim-form" data-kpi="sim-form">
-              <div class="kpi-sim-kind" role="radiogroup" aria-label="집행 유형">
-                <label><input type="radio" name="kind" value="influencer" checked> 인플루언서</label>
-                <label><input type="radio" name="kind" value="ad"> 배너·플랫폼 광고</label>
-              </div>
-              <div class="kpi-sim-fields" data-kpi="sim-influencer-fields">
-                <label class="field kpi-sim-wide">인플루언서 · 단가
+            <!-- 인플루언서 / 플랫폼 광고를 나란히 따로 입력합니다. 목록에 없으면 '직접 입력' -->
+            <div class="kpi-sim-forms">
+              <form class="kpi-sim-form" data-kind="influencer" aria-label="인플루언서 집행 예정 추가">
+                <p class="kpi-sim-form-title">인플루언서</p>
+                <label class="field">인플루언서 · 단가
                   <select name="influencer" data-kpi="sim-influencer"></select>
                 </label>
-              </div>
-              <div class="kpi-sim-fields" data-kpi="sim-ad-fields" hidden>
+                <div class="kpi-sim-row" data-kpi="sim-inf-custom" hidden>
+                  <label class="field">이름
+                    <input type="text" name="name" maxlength="40" placeholder="예: @hanoi.eats">
+                  </label>
+                  <label class="field">금액
+                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 15,000,000" data-kpi-money>
+                  </label>
+                  <label class="field kpi-sim-unit">단위
+                    <select name="unit">
+                      <option value="VND">VND</option>
+                      <option value="KRW">원</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="submit" class="btn dark">인플루언서 추가</button>
+              </form>
+              <form class="kpi-sim-form" data-kind="ad" aria-label="플랫폼 광고 집행 예정 추가">
+                <p class="kpi-sim-form-title">플랫폼 광고</p>
                 <label class="field">채널
                   <select name="channel" data-kpi="sim-channel"></select>
                 </label>
-                <label class="field">예정 광고비
-                  <input type="number" name="amount" min="0" step="1" inputmode="numeric" placeholder="예: 20000000">
+                <label class="field" data-kpi="sim-ad-custom" hidden>채널 이름
+                  <input type="text" name="name" maxlength="40" placeholder="예: Google Ads">
                 </label>
-                <label class="field">단위
-                  <select name="unit">
-                    <option value="VND">VND</option>
-                    <option value="KRW">원</option>
-                  </select>
-                </label>
-              </div>
-              <button type="submit" class="btn dark">목록에 추가</button>
-            </form>
+                <div class="kpi-sim-row">
+                  <label class="field">예정 광고비
+                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 20,000,000" data-kpi-money>
+                  </label>
+                  <label class="field kpi-sim-unit">단위
+                    <select name="unit">
+                      <option value="VND">VND</option>
+                      <option value="KRW">원</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="submit" class="btn dark">플랫폼 추가</button>
+              </form>
+            </div>
             <p class="kpi-note" data-kpi="sim-source"></p>
             <p class="kpi-error" data-kpi="sim-error" hidden></p>
 
@@ -162,7 +181,8 @@
 
             <div class="kpi-sim-result">
               <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong></div>
-              <div><span>집행 예정 합계</span><strong data-kpi="sim-planned">—</strong></div>
+              <div><span>인플루언서 예정</span><strong data-kpi="sim-planned-influencer">—</strong></div>
+              <div><span>플랫폼 광고 예정</span><strong data-kpi="sim-planned-ad">—</strong></div>
               <div><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong></div>
             </div>
             <p class="kpi-note" data-kpi="sim-summary">항목을 추가하면 집행 후 남는 예산을 바로 계산합니다.</p>
@@ -208,7 +228,7 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC {{ info("감성·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 감성: 응답자 6문항 평균 4점 이상 긍정 · 3점대 중립 · 3점 미만 부정\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
+          <h2>VOC {{ info("만족도·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
         <div class="kpi-tools">
 
@@ -222,7 +242,7 @@
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">
           <div class="kpi-chart kpi-chart-small">
-            <canvas data-kpi-chart="sentiment" aria-label="리뷰 감성 비율 도넛 차트" role="img"></canvas>
+            <canvas data-kpi-chart="sentiment" aria-label="리뷰 만족도 비율 도넛 차트" role="img"></canvas>
           </div>
           <div class="kpi-chart kpi-chart-keywords">
             <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
@@ -240,13 +260,13 @@
           </div>
           <div class="table-wrap">
             <table class="kpi-table kpi-t-survey">
-              <thead><tr><th class="is-text">문항</th><th class="is-text">점수 분포</th><th>평균</th><th>긍정(4~5점)</th><th>응답</th></tr></thead>
+              <thead><tr><th class="is-text">문항</th><th class="is-text">점수 분포</th><th>평균</th><th>만족(4~5점)</th><th>응답</th></tr></thead>
               <tbody data-kpi="survey-rows"></tbody>
             </table>
           </div>
-          <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 긍정 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
+          <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 만족 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
 
-          <!-- 리뷰 보기: 언어·감성 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
+          <!-- 리뷰 보기: 언어·만족도 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
           <p class="kpi-detail-title">리뷰</p>
           <div class="kpi-review-tools">
             <label class="kpi-select-label">언어
@@ -256,12 +276,12 @@
                 <option value="both">둘 다</option>
               </select>
             </label>
-            <label class="kpi-select-label">감성
+            <label class="kpi-select-label">만족도
               <select class="kpi-select" data-kpi-action="review-filter" data-kpi="review-filter">
                 <option value="all" selected>전체</option>
-                <option value="Positive">긍정</option>
-                <option value="Neutral">중립</option>
-                <option value="Negative">부정</option>
+                <option value="Positive">만족</option>
+                <option value="Neutral">보통</option>
+                <option value="Negative">불만</option>
               </select>
             </label>
             <span class="kpi-review-count" data-kpi="review-count"></span>

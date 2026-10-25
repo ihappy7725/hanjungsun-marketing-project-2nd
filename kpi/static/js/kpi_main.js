@@ -37,7 +37,8 @@ const vnd = (n) => `${num(n)} VND`;
 const pct = (n) => (n === null || n === undefined ? "—" : `${n.toFixed(1)}%`);
 const signedKrw = (n) => `${n >= 0 ? "+" : "−"}${num(Math.abs(n))}원`;
 
-const SENTIMENT_LABEL = { Positive: "긍정", Neutral: "중립", Negative: "부정" };
+// 화면에서는 '감성' 대신 '만족도'(만족 · 보통 · 불만)로 표시합니다. 데이터 값은 Positive/Neutral/Negative 그대로.
+const SENTIMENT_LABEL = { Positive: "만족", Neutral: "보통", Negative: "불만" };
 const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok", Zalo_OA: "Zalo QR", Zalo_Survey: "Zalo 설문" };
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
@@ -49,6 +50,8 @@ const palette = () => ({
   ink: cssVar("--ink"),         // 예산: 플랫폼 광고비(검정)
   pink: cssVar("--kpi-pink"),   // 예산: 인플루언서 예상(분홍, kpi_main.css에서 정의)
   ivory: cssVar("--beige"),     // 예산: 잔여 가용 예산(아이보리)
+  red: cssVar("--kpi-red"),     // VOC: 불만(가장 눈에 띄게, kpi_main.css에서 정의)
+  light: cssVar("--gold"),      // VOC: 2위 이하 키워드(연한 갈색)
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
@@ -503,7 +506,7 @@ function renderVoc(stats, reviews, source) {
   const counts = Object.fromEntries(keys.map((k) => [k, (stats.sentiment_counts[k] || 0) + (sv?.sentiment_counts[k] || 0)]));
   const reviewTotal = stats.sample_size ?? reviews.length;
   const sampleTitle = sv ? `리뷰 ${num(reviewTotal)} + 설문 ${num(sv.respondents)}` : `리뷰 ${num(reviewTotal)}`;
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.soft, p.low], { cutout: "58%", legend: true, title: sampleTitle });
+  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.lineStrong, p.red], { cutout: "58%", legend: true, title: sampleTitle });
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
     // 리뷰 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
@@ -530,7 +533,8 @@ function renderVoc(stats, reviews, source) {
     type: "bar",
     data: {
       labels: topKeywords.map(([k]) => k),
-      datasets: [{ label: "언급 수", data: topKeywords.map(([, n]) => n), backgroundColor: p.mid, maxBarThickness: 14 }],
+      // 1위 키워드만 진한 갈색, 나머지는 연한 색으로 눈에 띄는 순서를 만듭니다.
+      datasets: [{ label: "언급 수", data: topKeywords.map(([, n]) => n), backgroundColor: topKeywords.map((_, i) => (i === 0 ? p.mid : p.light)), maxBarThickness: 14 }],
     },
     options: {
       indexAxis: "y",
@@ -555,7 +559,7 @@ function renderVoc(stats, reviews, source) {
 
 // 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운 · 10건씩 페이지 넘김
 function renderReviewList() {
-  const tone = { Positive: "green", Negative: "red" };
+  const tone = { Positive: "green", Negative: "kpi-badge-bad" };  // 불만은 빨강 바탕으로 가장 눈에 띄게
   const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
   const label = view.reviewFilter === "all" ? "전체" : SENTIMENT_LABEL[view.reviewFilter];
   const pages = Math.max(Math.ceil(list.length / REVIEW_PAGE_SIZE), 1);
@@ -683,57 +687,104 @@ function showVocAi(demoReviews, ai) {
 }
 
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
+// 인플루언서 / 플랫폼 광고를 따로 입력하고, 표·결과도 둘로 나눠 소계를 보여 줍니다.
 const sim = { data: null, items: [], nextId: 1 };
-const KIND_LABEL = { influencer: "인플루언서", ad: "배너·플랫폼 광고" };
+const KIND_LABEL = { influencer: "인플루언서", ad: "플랫폼 광고" };
+const CUSTOM = "__custom__";  // 드롭다운의 '직접 입력'
 
 function simRoas(channel) {
   return sim.data?.channels.find((c) => c.channel === channel)?.roas_percent ?? null;
 }
 
+// 금액 입력: 1,000 단위 쉼표를 자동으로 붙이고, 커서는 입력하던 숫자 뒤에 그대로 둡니다.
+function formatMoneyInput(input) {
+  const digitsBefore = input.value.slice(0, input.selectionStart ?? input.value.length).replace(/\D/g, "").length;
+  const digits = input.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  input.value = digits ? Number(digits).toLocaleString("en-US") : "";
+  let pos = 0;
+  for (let seen = 0; pos < input.value.length && seen < digitsBefore; pos++) {
+    if (/\d/.test(input.value[pos])) seen++;
+  }
+  input.setSelectionRange(pos, pos);
+}
+
+const parseMoney = (value) => Number(String(value).replace(/\D/g, ""));
+const toKrw = (amount, unit) => (unit === "KRW" ? Math.round(amount) : Math.round((amount * sim.data.base_rate) / 100));
+const estRevenue = (cost, roas) => (roas == null ? null : Math.round((cost * roas) / 100));
+
 function renderSimOptions() {
   const d = sim.data;
   const inf = d.influencers;
-  const select = $("sim-influencer");
-  select.replaceChildren(...inf.options.map((o) => {
-    const krw = Math.round((o.amount_vnd * d.base_rate) / 100);
-    const label = `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (약 ${krwMan(krw)})`;
-    const opt = el("option", { text: label });
-    opt.value = o.id;
+  const customOption = (text) => {
+    const opt = el("option", { text });
+    opt.value = CUSTOM;
     return opt;
-  }));
-  if (!inf.options.length) select.append(el("option", { text: "선택할 수 있는 인플루언서 단가가 없습니다" }));
-  $("sim-channel").replaceChildren(...d.ad_channels.map((ch) => {
-    const opt = el("option", { text: `${d.channels.find((c) => c.channel === ch)?.label || ch} (현재 ROAS ${pct(simRoas(ch))})` });
-    opt.value = ch;
-    return opt;
-  }));
+  };
+  $("sim-influencer").replaceChildren(
+    ...inf.options.map((o) => {
+      const krw = Math.round((o.amount_vnd * d.base_rate) / 100);
+      const opt = el("option", { text: `${o.influencer} · ${o.platform} ${o.content_format} · ${o.price_type_label} ${num(o.amount_vnd)} VND (약 ${krwMan(krw)})` });
+      opt.value = o.id;
+      return opt;
+    }),
+    customOption("직접 입력 (목록에 없는 인플루언서)"),
+  );
+  $("sim-channel").replaceChildren(
+    ...d.ad_channels.map((ch) => {
+      const opt = el("option", { text: `${d.channels.find((c) => c.channel === ch)?.label || ch} (현재 ROAS ${pct(simRoas(ch))})` });
+      opt.value = ch;
+      return opt;
+    }),
+    customOption("직접 입력 (새 채널)"),
+  );
+  toggleSimCustom();
   setText("sim-source", `인플루언서 후보: ${inf.note}${inf.status === "demo" ? " · 시연" : ""} · 환산: 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND`);
+}
+
+// '직접 입력'을 고르면 이름·금액 칸을 보여 줍니다.
+function toggleSimCustom() {
+  $("sim-inf-custom").hidden = $("sim-influencer").value !== CUSTOM;
+  $("sim-ad-custom").hidden = $("sim-channel").value !== CUSTOM;
 }
 
 function renderSim() {
   const d = sim.data;
   if (!d) return;
   const now = d.budget.remaining_krw;
-  const planned = sim.items.reduce((s, it) => s + it.cost_krw, 0);
-  const after = now - planned;
   const total = d.budget.total_krw;
+  const sumOf = (list, key) => list.reduce((s, it) => s + (it[key] || 0), 0);
+  const byKind = Object.fromEntries(Object.keys(KIND_LABEL).map((k) => [k, sim.items.filter((it) => it.kind === k)]));
+  const planned = sumOf(sim.items, "cost_krw");
+  const after = now - planned;
 
-  fillRows("sim-rows", sim.items.map((it) => {
-    const remove = el("button", { text: "빼기", className: "btn kpi-sim-remove" });
-    remove.type = "button";
-    remove.dataset.kpiAction = "sim-remove";
-    remove.dataset.id = String(it.id);
-    return [it.label, KIND_LABEL[it.kind], krwMan(it.cost_krw), it.revenue_krw == null ? "—" : krwMan(it.revenue_krw), remove];
-  }));
-  if (!sim.items.length) fillRows("sim-rows", [["아직 추가한 항목이 없습니다", "", "", "", ""]]);
+  // 표: 인플루언서 묶음 → 소계, 플랫폼 묶음 → 소계
+  const rows = [];
+  const subtotalRows = [];
+  Object.entries(byKind).forEach(([kind, list]) => {
+    if (!list.length) return;
+    list.forEach((it) => {
+      const remove = el("button", { text: "빼기", className: "btn kpi-sim-remove" });
+      remove.type = "button";
+      remove.dataset.kpiAction = "sim-remove";
+      remove.dataset.id = String(it.id);
+      rows.push([it.label, KIND_LABEL[kind], krwMan(it.cost_krw), it.revenue_krw == null ? "—" : krwMan(it.revenue_krw), remove]);
+    });
+    subtotalRows.push(rows.length);
+    rows.push([`${KIND_LABEL[kind]} 소계 (${list.length}건)`, "", krwMan(sumOf(list, "cost_krw")), krwMan(sumOf(list, "revenue_krw")), ""]);
+  });
+  if (!rows.length) rows.push(["아직 추가한 항목이 없습니다", "", "", "", ""]);
+  fillRows("sim-rows", rows);
+  const trs = $("sim-rows").children;
+  subtotalRows.forEach((i) => trs[i].classList.add("kpi-sim-subtotal"));
 
   setText("sim-now", krwMan(now));
-  setText("sim-planned", krwMan(planned));
+  setText("sim-planned-influencer", krwMan(sumOf(byKind.influencer, "cost_krw")));
+  setText("sim-planned-ad", krwMan(sumOf(byKind.ad, "cost_krw")));
   const afterEl = $("sim-after");
   afterEl.textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
   afterEl.classList.toggle("is-over", after < 0);
 
-  const revenue = sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0);
+  const revenue = sumOf(sim.items, "revenue_krw");
   if (sim.items.length && after < 0) {
     const box = $("sim-summary");
     box.replaceChildren(
@@ -753,32 +804,34 @@ function renderSim() {
 
 function addSimItem(form) {
   const d = sim.data;
-  const kind = form.elements.kind.value;
+  const kind = form.dataset.kind;
+  const f = form.elements;
   showError("sim-error", "");
   let item;
-  if (kind === "influencer") {
-    const o = d.influencers.options.find((x) => x.id === form.elements.influencer.value);
+  if (kind === "influencer" && f.influencer.value !== CUSTOM) {
+    const o = d.influencers.options.find((x) => x.id === f.influencer.value);
     if (!o) return showError("sim-error", "인플루언서 단가를 선택해 주세요.");
-    const cost = Math.round((o.amount_vnd * d.base_rate) / 100);
-    const roas = simRoas("Influencer");
-    item = { kind, label: `${o.influencer} (${o.price_type_label})`, cost_krw: cost, revenue_krw: roas == null ? null : Math.round((cost * roas) / 100) };
+    const cost = toKrw(o.amount_vnd, "VND");
+    item = { label: `${o.influencer} (${o.price_type_label})`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
   } else {
-    const amount = Number(form.elements.amount.value);
-    if (!Number.isFinite(amount) || amount <= 0) return showError("sim-error", "예정 광고비를 0보다 큰 숫자로 입력해 주세요.");
-    const channel = form.elements.channel.value;
-    const cost = form.elements.unit.value === "KRW" ? Math.round(amount) : Math.round((amount * d.base_rate) / 100);
-    const roas = simRoas(channel);
-    const label = d.channels.find((c) => c.channel === channel)?.label || channel;
-    item = { kind, label: `${label} 광고`, cost_krw: cost, revenue_krw: roas == null ? null : Math.round((cost * roas) / 100) };
-    form.elements.amount.value = "";
+    const custom = kind === "influencer" || f.channel.value === CUSTOM;
+    const name = custom ? f.name.value.trim() : "";
+    if (custom && !name) return showError("sim-error", kind === "influencer" ? "인플루언서 이름을 입력해 주세요." : "채널 이름을 입력해 주세요.");
+    const amount = parseMoney(f.amount.value);
+    if (!amount) return showError("sim-error", "금액을 0보다 큰 숫자로 입력해 주세요.");
+    const cost = toKrw(amount, f.unit.value);
+    if (kind === "influencer") {
+      item = { label: `${name} (직접 입력)`, cost_krw: cost, revenue_krw: estRevenue(cost, simRoas("Influencer")) };
+    } else {
+      const label = custom ? name : d.channels.find((c) => c.channel === f.channel.value)?.label || f.channel.value;
+      // 새 채널은 현재 ROAS가 없어 예상 매출을 계산하지 않습니다.
+      item = { label: `${label} 광고${custom ? " (직접 입력)" : ""}`, cost_krw: cost, revenue_krw: custom ? null : estRevenue(cost, simRoas(f.channel.value)) };
+    }
+    f.amount.value = "";
+    if (custom) f.name.value = "";
   }
-  sim.items.push({ ...item, id: sim.nextId++ });
+  sim.items.push({ ...item, kind, id: sim.nextId++ });
   renderSim();
-}
-
-function setSimKind(kind) {
-  $("sim-influencer-fields").hidden = kind !== "influencer";
-  $("sim-ad-fields").hidden = kind !== "ad";
 }
 
 async function loadSimulator() {
@@ -1007,13 +1060,17 @@ root.addEventListener("click", (event) => {
 
 root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi-action="ga4-toggle"]')) setGa4Visible(event.target.checked);
-  if (event.target.matches('[data-kpi="sim-form"] [name="kind"]')) setSimKind(event.target.value);
+  if (event.target.matches('[data-kpi="sim-influencer"], [data-kpi="sim-channel"]')) toggleSimCustom();
   if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
   if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);
 });
 
+root.addEventListener("input", (event) => {
+  if (event.target.matches("[data-kpi-money]")) formatMoneyInput(event.target);
+});
+
 root.addEventListener("submit", (event) => {
-  if (!event.target.matches('[data-kpi="sim-form"]')) return;
+  if (!event.target.matches(".kpi-sim-form")) return;
   event.preventDefault();
   if (sim.data) addSimItem(event.target);
 });
