@@ -1,3 +1,4 @@
+import { initTrends } from "./trends.js";
 // 현지 시장 분석 화면 스크립트 [상준]
 // type="module"로 불러오므로 전역 변수·함수가 생기지 않습니다. (README 7장)
 // 서버(routes.py)가 넣어 준 실제 데이터만 그립니다. 값이 없으면 만들지 않고 "수집 전"으로 표시합니다.
@@ -128,6 +129,7 @@ function selfChange(values) {
 }
 
 function renderTrend() {
+  if (data.country === "VN") { initTrends(); return; }
   const t = data.trend;
   const view = page.querySelector('[data-view="trend"]');
   const mochi = t.categories.find((c) => c.key === "mochi");
