@@ -288,6 +288,9 @@ const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending:
 const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
   user_refs: [], ref_video: null };
 const USER_REFS_MAX = 4;
+// 포스터·카드뉴스 첫 화면에서 입력 중인 조건(희주 renderStart). 규격을 바꿔 다시 그려도 남고, 새로 만들기에서 비웁니다.
+let startForm = null;
+
 // 영상 입력창 문구: 처음 만들 때와 초안 뒤
 const VIDEO_FIRST_PLACEHOLDER = [
   "생성할 영상의 컨셉·스토리·분위기를 입력해 주세요.",
@@ -333,6 +336,7 @@ function startNew() {
   $("history").hidden = true;
   $("work-screen").classList.remove("has-history");
   Object.assign(settings, { title: "", user_refs: [], ref_video: null });  // 제목·레퍼런스는 작업마다 새로
+    startForm = null;
   feedback("", "");
   renderWork();
   if (kind === "video") $("chat-input").focus();
@@ -423,6 +427,9 @@ function renderWork() {
       kind,
       ratio: settings.ratio,
       products: PRODUCTS,
+            form: startForm,
+      onFormChange: (value) => { startForm = value; },
+
       onCreate: async (design, { product_id }) => {
         // 실패하면 throw → 희주 화면이 "저장하지 못했습니다" 안내
         const data = await api("/chats", { method: "POST", body: { kind, design, product_id } });

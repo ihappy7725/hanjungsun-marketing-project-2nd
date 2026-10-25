@@ -95,6 +95,12 @@
   outline-offset: 4px;
 }
 
+/* 키보드(Tab)로 고른 요소: 마우스 선택과 구분되게 점선 */
+.studio-editor .studio-editor-item:focus-visible {
+  outline: 6px dashed Highlight;
+  outline-offset: 4px;
+}
+
 .studio-editor .studio-editor-handle {
   position: absolute;
   right: -22px;

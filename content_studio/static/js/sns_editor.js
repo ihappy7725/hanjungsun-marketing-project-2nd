@@ -21,9 +21,18 @@ const MAX_SIDE = 4096;
 const EMOJIS = ["❤️", "⭐", "✨", "🌸", "🎁", "🎀", "🎉", "🔥", "😊", "👍", "🍡", "🍰", "🍵", "🍃", "🥭", "🍓"];
 const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 
+const MOVE_STEP = 1;    // 방향키 한 번에 옮기는 거리 (%) · Shift와 함께 누르면 BIG_STEP
+const BIG_STEP = 5;
+const ROLE_NAMES = { title: "제목", subtitle: "부제", body: "본문", checks: "체크 항목", quote: "감성 문구", badge: "배지",
+  brand: "로고", page_no: "쪽 번호", photo: "제품 사진", deco: "장식 원", card: "본문 바탕", overlay: "사진 위 바탕", bar: "위쪽 줄" };
+const TYPE_NAMES = { text: "글", image: "사진", shape: "도형", sticker: "이모지" };
+
 const measure = document.createElement("canvas").getContext("2d");
+// 베트남어 성조처럼 여러 코드로 된 글자를 한 글자로 셉니다. (지원하지 않는 브라우저는 코드 단위)
+const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
 let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다. (모듈 안 변수)
 let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
+let focusAfterRender = false;  // 키보드로 고치다 저장하면, 다시 그린 뒤 선택한 요소로 초점을 돌려줍니다.
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -44,7 +53,12 @@ function padOf(item) {
   return item.bg ? item.size * 0.4 : 0;
 }
 
+function graphemes(text) {
+  return segmenter ? Array.from(segmenter.segment(text), (part) => part.segment) : Array.from(text);
+}
+
 // 화면과 내보내기가 같은 줄바꿈을 쓰도록 글자 폭을 재서 줄을 나눕니다.
+// 상자보다 긴 한 단어(띄어쓰기 없는 한국어·해시태그·URL 등)는 글자 단위로 나눕니다.
 function wrapLines(ctx, item, maxWidth) {
   ctx.font = fontOf(item);
   const lines = [];
@@ -52,11 +66,19 @@ function wrapLines(ctx, item, maxWidth) {
     let line = "";
     for (const word of paragraph.split(" ")) {
       const next = line ? `${line} ${word}` : word;
-      if (line && ctx.measureText(next).width > maxWidth) {
-        lines.push(line);
-        line = word;
-      } else {
+      if (ctx.measureText(next).width <= maxWidth) {
         line = next;
+        continue;
+      }
+      if (line) lines.push(line);
+      line = "";
+      for (const char of graphemes(word)) {
+        if (line && ctx.measureText(line + char).width > maxWidth) {
+          lines.push(line);
+          line = char;
+        } else {
+          line += char;
+        }
       }
     }
     lines.push(line);
@@ -134,14 +156,19 @@ async function postJson(url, body) {
 // 편집기 안 창(openPrompt)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
 // extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
 // empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
+// productId: 고른 제품 id를 돌려주는 함수(첫 화면). 요청에 함께 보내 서버가 제품 목록으로 확인합니다.
+// initial: 처음 채울 조건(첫 화면에서 규격을 바꿔 다시 그릴 때). status: 처음 보일 안내.
 // 돌려주는 값: intro(제목·안내) · controls(조건·버튼) · results(제안·프롬프트) 묶음과, 순서대로 합친 nodes.
-function promptForm(doc, { onApply, isActive = () => true, extra = null, empty = null } = {}) {
-  const previous = doc.assistant?.options || {};
+function promptForm(doc, { onApply, isActive = () => true, extra = null, empty = null, productId = null,
+  initial = null, status = "" } = {}) {
+  const previous = initial || doc.assistant?.options || {};
   const wish = el("textarea");
   wish.rows = 4;
   wish.maxLength = 1500;
   wish.value = previous.request || "";
-  wish.placeholder = "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
+  wish.placeholder = productId
+    ? "확인된 제품 정보와 원하는 내용을 적어 주세요. 위에서 고른 제품은 자동으로 들어가요. 예: 신메뉴 소개"
+    : "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
   const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
   const audience = el("input");
   audience.value = previous.audience || "";
@@ -151,7 +178,7 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
   const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || doc.pages.length), () => {});
   if (!pages.value) pages.value = "5";
-  const msg = el("p", "studio-hint");
+  const msg = el("p", "studio-hint", status);
   msg.setAttribute("role", "status");
   const result = el("textarea", "studio-editor-prompt-result");
   result.rows = 10;
@@ -164,13 +191,13 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   const wide = (node) => { node.classList.add("is-wide"); return node; };  // 두 칸을 다 쓰는 칸
   settingsBox.append(el("legend", "", "제작 조건"));
   if (extra) settingsBox.append(wide(extra));
-  settingsBox.append(wide(field("제품·요청", wish)), wide(field("대상", audience)),
+  settingsBox.append(wide(field(productId ? "요청" : "제품·요청", wish)), wide(field("대상", audience)),
     field("목적", purpose), field("분위기", mood), field("글의 양", density));
   if (doc.kind === "cardnews") settingsBox.append(field("장수", pages));
   const syncEmpty = () => { if (empty) empty.hidden = proposals.length > 0 || !result.hidden; };
   const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
     mood: mood.value, density: density.value, pages: doc.kind === "poster" ? 1 : Number(pages.value),
-    custom_prompt: result.hidden ? "" : result.value });
+    custom_prompt: result.hidden ? "" : result.value, ...(productId && { product_id: productId() }) });
   const copy = button("복사", async () => {
     try {
       await navigator.clipboard.writeText(result.value);
@@ -267,20 +294,24 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   actions.append(brief, make);
   const resultActions = el("div", "studio-editor-actions");
   resultActions.append(apply, copy);
+  const styleNote = doc.kind === "poster"
+    ? "포스터 스타일 설명은 참고 가이드예요. 배치·색은 기본 틀 그대로 적용돼요."
+    : "스타일은 검토용 제안이에요.";
   const intro = [el("h2", "", `${label} AI 초안`),
-    el("p", "studio-hint", "베트남어 문구와 한국어 뜻을 함께 만들어요. 스타일은 검토용 제안이에요."),
+    el("p", "studio-hint", `베트남어 문구와 한국어 뜻을 함께 만들어요. ${styleNote}`),
     el("p", "studio-editor-cost", "유료 버튼은 누를 때마다 OpenAI 비용이 나가요 (시험 예산 약 $5, 자동 차단 없음). 사진 생성 비용은 없어요.")];
   const controls = [settingsBox, actions, msg];
   const results = [candidates, resultActions, result];
   syncEmpty();
-  return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus() };
+  return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus(), options };
 }
 
 // ---------- 첫 화면 (작업이 아직 없을 때) ----------
 // sns.js(유진)가 포스터·카드뉴스 탭에 작업이 없을 때 부릅니다. 왼쪽 제작 조건 · 오른쪽 AI 초안 미리보기 두 칸이고,
 // 고른 초안은 onCreate(design, { product_id })로 새 작업에 저장합니다. (저장 실패 시 onCreate가 throw)
 // products: [{id, name_ko}] — 주면 제품 고르기 칸을 맨 앞에 넣습니다.
-export function renderStart(root, { kind, ratio, products = [], onCreate } = {}) {
+// form·onFormChange: 입력 중인 조건을 sns.js가 들고 있다가, 규격을 바꿔 다시 그릴 때 form으로 돌려줍니다.
+export function renderStart(root, { kind, ratio, products = [], onCreate, form: saved = null, onFormChange } = {}) {
   // 빈 초안: 색은 designs.py 기본 색 조합을 쓰도록 비워 둡니다.
   const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };
   const [W, H] = sizeOf(base);
@@ -296,13 +327,19 @@ export function renderStart(root, { kind, ratio, products = [], onCreate } = {})
   empty.append(frame, el("p", "", `왼쪽 조건을 고르고 [AI 제안 3개 생성]을 누르면 여기에 ${label} 초안 3개가 나타나요.`),
     el("p", "studio-hint", "마음에 드는 초안을 골라 적용하면 바로 편집 화면으로 넘어가요."));
 
-  const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), products[0].id, () => {}) : null;
+  const savedProduct = products.some((item) => item.id === saved?.product_id) ? saved.product_id : products[0]?.id;
+  const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), savedProduct, () => {}) : null;
   const form = promptForm(base, {
     isActive: () => wrap.isConnected,
     extra: product && field("제품", product),
     empty,
+    productId: product && (() => product.value),
+    initial: saved,
+    status: saved && saved.ratio !== ratio ? "규격을 바꿨어요. 입력한 조건은 그대로예요. 프롬프트 또는 AI 제안을 다시 만들어 주세요." : "",
     onApply: (design) => onCreate(design, { product_id: product ? product.value : null }),
   });
+  // 조건을 고칠 때마다 sns.js에 알려, 규격을 바꿔 다시 그려도 입력이 남게 합니다.
+  if (onFormChange) side.addEventListener("input", () => onFormChange({ ...form.options(), ratio }));
   side.append(...form.intro, ...form.controls);
   main.append(el("h3", "", "AI 초안 미리보기"), empty, ...form.results);
   wrap.append(side, main);
@@ -335,6 +372,9 @@ export function renderDesign(root, doc, { onSave } = {}) {
   const translations = el("details", "studio-editor-translations");
   translations.open = true;
   review.hidden = true;
+  stage.setAttribute("role", "group");
+  stage.setAttribute("aria-label",
+    "편집 화면. Tab으로 요소 고르기, Enter로 글 고치기(Ctrl+Enter로 마치기), 방향키로 옮기기(Shift와 함께 크게), Esc로 선택 풀기");
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
@@ -347,17 +387,41 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
   async function save() {
     if (!onSave) return;
+    focusAfterRender = stage.contains(document.activeElement);
     try {
       await onSave(structuredClone(draft));
     } catch {
       // 안내 문구는 sns.js가 보여줍니다.
+    } finally {
+      focusAfterRender = false;
     }
   }
 
   // ---------- 그리기 ----------
+  function itemLabel(item) {
+    const name = ROLE_NAMES[item.role] || TYPE_NAMES[item.type] || "요소";
+    if (item.type === "text") return `${name} 글: ${String(item.text || "").slice(0, 40)}`;
+    if (item.type === "sticker") return `이모지 ${item.emoji || ""}`;
+    if (item.type === "image" && !item.src) return "제품 사진 자리";
+    return name;
+  }
+
+  let refocusing = false;  // 코드로 초점을 옮길 때는 focusin에서 다시 고르지 않습니다.
+  function focusItem(id) {
+    const node = id && stage.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    if (!node) return;
+    refocusing = true;
+    node.focus({ preventScroll: true });
+    refocusing = false;
+  }
+
   function drawItem(item) {
     const node = el("div", "studio-editor-item");
     node.dataset.id = item.id;
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    node.setAttribute("aria-label", itemLabel(item));
+    node.setAttribute("aria-pressed", String(item.id === selectedId));
     Object.assign(node.style, {
       left: `${item.x}%`, top: `${item.y}%`, width: `${item.w}%`, height: `${item.h}%`, zIndex: item.z || 0,
     });
@@ -408,8 +472,11 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
   function draw() {
     if (editing) return;
+    // 다시 그리면 요소가 새로 생기므로, 편집 화면 안에 있던 키보드 초점을 같은 요소로 돌려줍니다.
+    const focused = stage.contains(document.activeElement) ? document.activeElement.dataset.id : null;
     stage.style.background = page.bg;
     stage.replaceChildren(...page.elements.map(drawItem).filter(Boolean));
+    if (focused) focusItem(selectedId || focused);
     renderTranslations();
   }
 
@@ -923,9 +990,51 @@ export function renderDesign(root, doc, { onSave } = {}) {
   stage.addEventListener("pointerup", endAction);
   stage.addEventListener("pointercancel", endAction);
 
-  // ---------- 두 번 눌러 글자 수정 ----------
+  // ---------- 키보드로 고르기 · 옮기기 ----------
+  // Tab으로 요소에 가면 고르고, 방향키로 옮기고, Enter로 글을 고치고, Esc로 선택을 풉니다.
+  stage.addEventListener("focusin", (event) => {
+    if (editing || refocusing) return;
+    const node = event.target.closest(".studio-editor-item");
+    if (!node || node.dataset.id === selectedId) return;
+    selectedId = node.dataset.id;
+    draw();
+    updateBar();
+  });
+
+  let moveTimer = null;  // 방향키를 누를 때마다 저장하지 않고, 멈춘 뒤 한 번 저장합니다.
+  stage.addEventListener("keydown", (event) => {
+    if (editing || !event.target.closest(".studio-editor-item")) return;
+    const item = find(selectedId);
+    if (event.key === "Escape") {
+      if (!item) return;
+      event.preventDefault();
+      selectedId = null;
+      draw();
+      updateBar();
+      return;
+    }
+    if (!item) return;
+    if (event.key === "Enter" && item.type === "text") {
+      event.preventDefault();
+      startEdit();
+      return;
+    }
+    const moves = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    const move = moves[event.key];
+    if (!move || event.ctrlKey || event.metaKey || event.altKey) return;
+    event.preventDefault();
+    const step = event.shiftKey ? BIG_STEP : MOVE_STEP;
+    item.x = round2(clamp(item.x + move[0] * step, MIN_SIZE - item.w, 100 - MIN_SIZE));
+    item.y = round2(clamp(item.y + move[1] * step, MIN_SIZE - item.h, 100 - MIN_SIZE));
+    draw();
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(() => { if (wrap.isConnected) save(); }, 600);
+  });
+
+  // ---------- 두 번 눌러(또는 Enter) 글자 수정 ----------
   // 첫 번째 누름에서 다시 그려져 눌린 요소가 바뀔 수 있으므로, 선택된 요소를 기준으로 찾습니다.
-  stage.addEventListener("dblclick", () => {
+  // Ctrl+Enter·Tab·바깥 누르기 = 마치기, Esc = 취소
+  function startEdit() {
     const item = find(selectedId);
     const node = item?.type === "text" && stage.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
     if (!node) return;
@@ -937,10 +1046,13 @@ export function renderDesign(root, doc, { onSave } = {}) {
     getSelection().selectAllChildren(box);
 
     let cancelled = false;
+    let byKey = false;  // 키로 마치면 그 요소로 초점을 돌려줍니다.
     box.addEventListener("keydown", (key) => {
       key.stopPropagation();  // 수정 중 Ctrl+Z는 글자 되돌리기로 둡니다.
-      if (key.key === "Escape") {
-        cancelled = true;
+      if (key.key === "Escape" || (key.key === "Enter" && (key.ctrlKey || key.metaKey))) {
+        key.preventDefault();
+        cancelled = key.key === "Escape";
+        byKey = true;
         box.blur();
       }
     });
@@ -950,14 +1062,17 @@ export function renderDesign(root, doc, { onSave } = {}) {
       const changed = !cancelled && text !== item.text;
       if (changed) item.text = text;
       draw();
+      if (byKey) focusItem(item.id);
       if (changed) save();
     }, { once: true });
-  });
+  }
+  stage.addEventListener("dblclick", startEdit);
 
   renderPages();
   draw();
   updateBar();
   fit();
+  if (focusAfterRender) focusItem(selectedId);
   // 웹글꼴을 받은 뒤 글자 폭이 달라지므로 다시 그립니다.
   loadFontsFor(page).then(() => { if (wrap.isConnected) draw(); });
 }
