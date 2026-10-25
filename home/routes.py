@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from flask import jsonify, render_template, request
 
 from . import bp
+from .news_search import SearchError, preset_labels, resolve, search
 
 _EVENTS_PATH = Path(__file__).parent / "data" / "events.json"
 _NEWS_PATH = Path(__file__).parent / "data" / "news.json"
@@ -105,43 +106,55 @@ def _load_news():
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("뉴스 객체 필요")
+        # 승인 전 후보는 화면에 올리지 않고 건너뜁니다. 형식 검사는 등록 도구가 수행합니다.
         if row.get("verification_status") != "verified" or row.get("registration_status") != "approved":
             continue
-        required = ("news_id", "title", "summary", "region", "source", "url", "verification_notes")
-        if any(not isinstance(row.get(key), str) or not row[key].strip() for key in required):
-            raise ValueError("필수 뉴스 필드 누락")
+        _validate_news_row(row, seen)
+        result.append(row)
+    return sorted(result, key=lambda row: (row["published_at"], row["news_id"]), reverse=True)[:3]
+
+
+def _validate_news_row(row, seen=None):
+    """뉴스 한 건의 형식과 교차 검증 근거를 검사합니다. 출처의 사실성은 보증하지 않습니다.
+
+    화면 API와 등록 도구(news_import.py)가 같은 규칙을 쓰도록 분리했습니다.
+    """
+    if not isinstance(row, dict):
+        raise ValueError("뉴스 객체 필요")
+    required = ("news_id", "title", "summary", "region", "source", "url", "verification_notes")
+    if any(not isinstance(row.get(key), str) or not row[key].strip() for key in required):
+        raise ValueError("필수 뉴스 필드 누락")
+    if seen is not None:
         if row["news_id"] in seen:
             raise ValueError("중복 뉴스 ID")
         seen.add(row["news_id"])
-        if row.get("country") != "VN" or row.get("is_demo") is not False:
-            raise ValueError("실제 베트남 자료 필요")
-        for key in ("published_at", "verified_at"):
-            value = row.get(key)
-            if not isinstance(value, str) or date.fromisoformat(value).isoformat() != value:
-                raise ValueError("YYYY-MM-DD 필요")
-        if row["verified_at"] < row["published_at"]:
-            raise ValueError("발행일보다 앞선 확인일")
-        if "suggestion" in row and not isinstance(row["suggestion"], str):
-            raise ValueError("적용 제안 문자열 필요")
-        sources = row.get("sources")
-        if not isinstance(sources, list) or len(sources) < 2:
-            raise ValueError("뉴스 검증 출처 부족")
-        urls, roles = set(), set()
-        for source in sources:
-            if not isinstance(source, dict) or any(
-                not isinstance(source.get(key), str) or not source[key].strip()
-                for key in ("publisher", "title", "url", "supports", "role")
-            ):
-                raise ValueError("출처 필드 누락")
-            url = urlsplit(source["url"])
-            if url.scheme != "https" or not url.hostname or url.username or url.password:
-                raise ValueError("HTTPS 원문 주소 필요")
-            urls.add(source["url"])
-            roles.add(source["role"])
-        if row["url"] not in urls or len(urls) < 2 or not {"primary", "independent_corrob"} <= roles:
-            raise ValueError("뉴스 교차 검증 근거 부족")
-        result.append(row)
-    return sorted(result, key=lambda row: (row["published_at"], row["news_id"]), reverse=True)[:3]
+    if row.get("country") != "VN" or row.get("is_demo") is not False:
+        raise ValueError("실제 베트남 자료 필요")
+    for key in ("published_at", "verified_at"):
+        value = row.get(key)
+        if not isinstance(value, str) or date.fromisoformat(value).isoformat() != value:
+            raise ValueError("YYYY-MM-DD 필요")
+    if row["verified_at"] < row["published_at"]:
+        raise ValueError("발행일보다 앞선 확인일")
+    if "suggestion" in row and not isinstance(row["suggestion"], str):
+        raise ValueError("적용 제안 문자열 필요")
+    sources = row.get("sources")
+    if not isinstance(sources, list) or len(sources) < 2:
+        raise ValueError("뉴스 검증 출처 부족")
+    urls, roles = set(), set()
+    for source in sources:
+        if not isinstance(source, dict) or any(
+            not isinstance(source.get(key), str) or not source[key].strip()
+            for key in ("publisher", "title", "url", "supports", "role")
+        ):
+            raise ValueError("출처 필드 누락")
+        url = urlsplit(source["url"])
+        if url.scheme != "https" or not url.hostname or url.username or url.password:
+            raise ValueError("HTTPS 원문 주소 필요")
+        urls.add(source["url"])
+        roles.add(source["role"])
+    if row["url"] not in urls or len(urls) < 2 or not {"primary", "independent_corrob"} <= roles:
+        raise ValueError("뉴스 교차 검증 근거 부족")
 
 
 @bp.route("/")
@@ -191,3 +204,28 @@ def signals():
     read("collaborations", collaborations)
     read("attention", tasks)
     return jsonify(result)
+
+
+@bp.get("/api/news/presets")
+def news_presets():
+    """검색 버튼에 쓸 한국어 라벨만 전달합니다. 현지어 검색어는 서버에만 둡니다."""
+    return jsonify(items=preset_labels())
+
+
+@bp.get("/api/news/search")
+def news_search():
+    """공개 RSS 조회 결과를 그대로 전달합니다. 요약·사실 판정·저장을 하지 않습니다.
+
+    여기서 돌려주는 자료는 검증된 자료가 아니며 화면에 미검증으로 표시해야 합니다.
+    불러오지 못하면 빈 목록이나 만들어 낸 자료로 대체하지 않고 실패를 그대로 알립니다.
+    """
+    preset = request.args.get("preset", "").strip()
+    try:
+        query = resolve(preset) if preset else request.args.get("q", "")
+        items = search(query)
+    except SearchError as error:
+        return jsonify(error=str(error), items=[]), error.status
+    except Exception:
+        # 예외 내용에는 외부 응답이 들어갈 수 있어 응답에 내보내지 않습니다.
+        return jsonify(error="지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.", items=[]), 502
+    return jsonify(items=items, notice="검증하지 않은 검색 결과입니다. 원문을 열어 직접 확인해주세요.")

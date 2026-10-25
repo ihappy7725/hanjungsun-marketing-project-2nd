@@ -37,7 +37,26 @@
           <details id="retrospective"><summary>이벤트 회고·관리</summary><form id="review-form"><label class="home-field">이벤트 상태<select name="status"><option value="preparing">준비</option><option value="active">진행</option><option value="done">완료</option><option value="blocked">보류</option><option value="cancelled">취소</option><option value="archived">보관</option></select></label><label class="home-field">잘된 점 · 문제 · 다음에 바꿀 점<textarea name="review" rows="4" maxlength="5000" placeholder="이벤트 운영에서 배운 내용을 기록하세요."></textarea></label><button class="btn" type="submit">회고 저장</button></form></details>
         </div>
       </section>
-      <section class="home-card home-news" aria-labelledby="news-title"><div class="home-panel-head"><div><h2 id="news-title">뉴스·트렌드</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">현지 시장 분석 ↗</a></div><div id="news-list" class="home-news-grid"></div></section>
+      <section class="home-card home-news" aria-labelledby="news-title">
+        <div class="home-panel-head"><div><h2 id="news-title">현지 뉴스</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">현지 시장 분석 ↗</a></div>
+        <form id="news-search-form" class="home-news-search" role="search" data-presets-url="{{ url_for('home.news_presets') }}" data-search-url="{{ url_for('home.news_search') }}">
+          <div id="news-presets" class="home-news-presets"></div>
+          <div class="home-news-query">
+            <label class="home-muted" for="news-query">직접 검색</label>
+            <input id="news-query" name="q" type="search" maxlength="60" autocomplete="off" placeholder="예: quà tặng Tết">
+            <button class="btn" type="submit">검색</button>
+          </div>
+          <p id="news-search-error" class="home-error" hidden role="alert"></p>
+        </form>
+        <div class="home-news-block">
+          <h3 class="home-news-heading">검색 결과 <span class="home-badge">미검증 · 원문 확인 필요</span></h3>
+          <div id="news-search-list" class="home-news-results"></div>
+        </div>
+        <div class="home-news-block">
+          <h3 class="home-news-heading">확인된 규제·공지</h3>
+          <div id="news-list" class="home-news-grid"></div>
+        </div>
+      </section>
     </div>
     <div class="home-side-column">
       <section class="home-card home-progress-card" aria-labelledby="progress-title">

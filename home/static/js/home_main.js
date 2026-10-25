@@ -241,11 +241,15 @@ function initialize() {
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart);
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
-        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(38px, 1fr)">`;
+        html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--control-height) ${laneCount ? `repeat(${laneCount}, minmax(var(--control-height), auto)) ` : ''}minmax(38px, auto)">`;
         for (let column = 1; column <= 7; column++) {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
+          // 이어지는 일정은 기간 막대로만 보여 주고 날짜 칩에서는 뺍니다. 같은 일정이 두 번 나오지 않게 합니다.
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end));
-          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span><span class="home-day-events">${dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('')}${dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : ''}</span></button>`;
+          const chips = dayEvents.slice(0, 2).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.title)}">${esc(e.title)}</span>`).join('') + (dayEvents.length > 2 ? `<span class="home-more">+${dayEvents.length - 2}</span>` : '');
+          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
+          // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
+          if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
         }
         html += segments.map(segment => {
           const e = segment.event;
@@ -552,5 +556,53 @@ function initialize() {
     if (save(next)) { render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
   };
   addEventListener('storage', event => { if (event.key === key() || event.key === null) { locked = true; showError('다른 창에서 기록이 변경되었습니다. 새로고침 후 계속해주세요.'); } });
+  // 현지 뉴스 검색. 결과는 검증하지 않은 외부 목록이라 요약 없이 제목·언론사·발행일·원문 링크만 보여 줍니다.
+  const newsForm = $('#news-search-form');
+  function newsError(message) {
+    const box = $('#news-search-error');
+    box.textContent = message || '';
+    box.hidden = !message;
+  }
+  let searchNumber = 0;
+  async function searchNews(params) {
+    const token = ++searchNumber;
+    newsError('');
+    $('#news-search-list').innerHTML = empty('검색 중입니다.');
+    try {
+      const response = await fetch(`${newsForm.dataset.searchUrl}?${new URLSearchParams(params)}`);
+      const data = await response.json().catch(() => ({}));
+      if (token !== searchNumber) return;
+      if (!response.ok || !Array.isArray(data.items)) throw new Error(data.error || '');
+      $('#news-search-list').innerHTML = data.items.map(n => {
+        const url = safeUrl(n.url);
+        const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)} ↗</a>` : esc(n.title);
+        return `<article class="home-news-result">${title}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}</p></article>`;
+      }).join('') || empty('검색 결과가 없습니다. 다른 검색어로 찾아봐주세요.');
+    } catch (error) {
+      // 불러오지 못한 경우 빈 목록을 결과처럼 보여 주지 않고 실패를 그대로 알립니다.
+      if (token !== searchNumber) return;
+      $('#news-search-list').innerHTML = '';
+      newsError(error.message || '지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
+    }
+  }
+  // 뉴스 검색 화면이 없으면 이 기능만 건너뜁니다. 한 기능의 실패가 달력·업무까지 멈추지 않게 합니다.
+  if (newsForm) {
+    $('#news-presets').onclick = event => {
+      const button = event.target.closest('[data-preset]');
+      if (button) searchNews({ preset: button.dataset.preset });
+    };
+    newsForm.onsubmit = event => { event.preventDefault(); searchNews({ q: $('#news-query').value }); };
+    $('#news-search-list').innerHTML = empty('검색 항목을 고르거나 검색어를 입력하면 현지 기사를 찾아봅니다.');
+    (async () => {
+      try {
+        const response = await fetch(newsForm.dataset.presetsUrl);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.items)) throw new Error('');
+        $('#news-presets').innerHTML = data.items.map(p => `<button type="button" class="btn" data-preset="${esc(p.key)}">${esc(p.label)}</button>`).join('');
+      } catch {
+        newsError('검색 항목을 불러오지 못했습니다. 직접 검색은 그대로 쓸 수 있습니다.');
+      }
+    })();
+  }
   load(); updateRange(); refreshSignals();
 }
