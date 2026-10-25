@@ -39,6 +39,30 @@ CATEGORY_KEYWORDS = {  # YouTube 키워드 검색용 베트남어 검색어
     "Food": "review đồ ăn", "Dessert": "bánh ngọt", "Mukbang": "mukbang",
     "Korean Food": "đồ ăn Hàn Quốc", "Lifestyle": "vlog cuộc sống",
 }
+# 타깃 그룹: 누구를 겨냥한 채널인지. 버튼을 누르면 [발굴] 검색 조건이 바뀌고, 등록할 때 이 그룹이 붙습니다.
+SEGMENTS = [
+    {"key": "vn_food", "name": "베트남(인) · 식품(맛집·먹방)", "category": "맛집 리뷰", "platform": "tt", "country": "Vietnam", "language": "vi",
+     "keyword": "review đồ ăn | mukbang | review quán ăn", "cats": ["Food", "Mukbang"]},
+    {"key": "vn_snack", "name": "베트남(인) · 간식·디저트", "category": "디저트·먹방", "platform": "tt", "country": "Vietnam", "language": "vi",
+     "keyword": "đồ ăn vặt | bánh ngọt | món tráng miệng", "cats": ["Dessert"]},
+    {"key": "vn_kfood", "name": "베트남(인) · K-푸드·K-컬처", "category": "K-컬처", "platform": "tt", "country": "Vietnam", "language": "vi",
+     "keyword": "đồ ăn Hàn Quốc | ăn thử đồ Hàn | bánh mochi Hàn Quốc", "cats": ["Korean Food"]},
+    {"key": "vn_life", "name": "베트남(인) · 라이프스타일", "category": "라이프스타일", "platform": "tt", "country": "Vietnam", "language": "vi",
+     "keyword": "vlog cuộc sống | vlog ăn uống", "cats": ["Lifestyle"]},
+    {"key": "kr_danang", "name": "한국(인) · 다낭 여행 유튜버", "category": "여행", "platform": "yt", "country": "Korea", "language": "ko",
+     "keyword": "다낭 여행 | 다낭 브이로그 | 다낭 맛집", "cats": []},
+]
+SEGMENT_NAMES = [x["name"] for x in SEGMENTS]
+SEGMENT_UNSET = "미분류"
+COUNTRY_CODE = {"vietnam": "vn", "vn": "vn", "베트남": "vn", "korea": "kr", "kr": "kr", "한국": "kr", "south korea": "kr"}
+
+
+def segment_name(value):
+    """허용된 타깃 그룹 이름만 돌려줍니다 (모르는 값은 빈 문자열)."""
+    v = str(value or "").strip()
+    return v if v in SEGMENT_NAMES else ""
+
+
 CATEGORY_TO_LOCAL = {"Food": "맛집 리뷰", "Dessert": "디저트·먹방", "Mukbang": "디저트·먹방", "Korean Food": "K-컬처", "Lifestyle": "라이프스타일"}
 
 
@@ -130,15 +154,16 @@ def providers():
 # ---------------------------------------------------------------- 검색 실행
 def _youtube_rows(f):
     cats = f.get("categories") or []
-    q = f.get("keyword") or " | ".join(CATEGORY_KEYWORDS[c] for c in cats if c in CATEGORY_KEYWORDS) or "review đồ ăn"
+    kr = f.get("country_code") == "kr"
+    q = f.get("keyword") or ("다낭 여행" if kr else " | ".join(CATEGORY_KEYWORDS[c] for c in cats if c in CATEGORY_KEYWORDS) or "review đồ ăn")
     rows = []
-    for c in ext.youtube_search(q, 25):
+    for c in ext.youtube_search(q, 25, region="KR" if kr else "VN", lang=f.get("language") or ("ko" if kr else "vi")):
         rows.append({"provider": "YouTube Data API", "source_type": "official_api", "platform": "yt",
                      "handle": c.get("handle") or c["channel_id"], "name": c["title"], "url": c["url"],
                      "followers": c.get("subscribers"), "median_views": None, "views_basis": "",
                      "avg_views": None, "er": None, "vn_audience": None, "country": c.get("country", ""), "language": "",
                      "provider_id": c["channel_id"]})
-    return rows, {"query": q}
+    return rows, {"query": q, "region": "KR" if kr else "VN"}
 
 
 def apply_filters(rows, f):
@@ -193,7 +218,7 @@ def standardize(r, f=None):
 
 def search(provider, platform, f):
     f = dict(f or {})
-    f["country_code"] = "vn" if (f.get("country") or "").lower() in ("vietnam", "vn", "베트남") else ""
+    f["country_code"] = COUNTRY_CODE.get((f.get("country") or "").lower(), "")
     if provider == "youtube":
         if platform != "yt":
             raise ext.ApiError("YouTube Data API는 YouTube 채널만 검색할 수 있어요")
@@ -210,7 +235,7 @@ def search(provider, platform, f):
     before = len(rows)
     rows = apply_filters(rows, f)
     meta = {**(meta or {}), "returned": before, "after_filter": len(rows),
-            "category_filter_applied": provider == "youtube" and bool(f.get("categories"))}
+            "category_filter_applied": provider == "youtube" and bool(f.get("categories")) and f.get("country_code") != "kr"}
     return rows, meta
 
 
@@ -232,7 +257,7 @@ MAX_ROWS = 2000
 
 FIELD_LABEL = {"platform": "플랫폼", "url": "계정 주소·핸들", "name": "이름", "followers": "팔로워", "median_views": "조회수 중앙값",
                "avg_views": "평균 조회수", "views_unknown": "조회수(기준 불명)", "er": "참여율", "vn_audience": "베트남 시청자 비중",
-               "language": "콘텐츠 언어", "country": "활동 국가", "source": "출처", "collected_on": "수집일", "category": "분야", "notes": "메모"}
+               "language": "콘텐츠 언어", "country": "활동 국가", "source": "출처", "collected_on": "수집일", "category": "분야", "notes": "메모", "segment": "타깃 그룹"}
 _HEADER_ALIASES = {
     "platform": ["플랫폼", "platform", "network", "socialnetwork", "nềntảng", "mạngxãhội"],
     "url": ["계정주소또는핸들", "계정주소", "주소", "핸들", "url", "profileurl", "profilelink", "link", "account", "accounturl",
@@ -252,6 +277,7 @@ _HEADER_ALIASES = {
     "collected_on": ["수집일", "기준일", "collectedon", "collected", "date", "asof", "updated", "lastupdated", "ngàythuthập", "ngày"],
     "category": ["분야", "category", "categories", "niche", "topic", "danhmục"],
     "notes": ["메모", "notes", "note", "comment", "comments", "ghichú"],
+    "segment": ["타깃그룹", "타깃", "타겟그룹", "segment", "targetgroup", "target"],
 }
 _ALIAS_INDEX = {a: f for f, names in _HEADER_ALIASES.items() for a in names}
 _PLATFORM_WORDS = {"tiktok": "tt", "tt": "tt", "instagram": "ig", "insta": "ig", "ig": "ig", "youtube": "yt", "yt": "yt",
@@ -512,7 +538,7 @@ def cleanse_file(raw, source_type="", provider="", default_platform="", is_demo=
         rec = {"platform": platform, "url": ref, "name": get(row, "name"), "followers": nums["followers"],
                "median_views": nums["median_views"], "avg_views": nums["avg_views"], "er": nums["er"], "vn_audience": nums["vn_audience"],
                "language": get(row, "language"), "country": get(row, "country"), "source_type": st, "provider": prov or "외부 파일",
-               "collected_on": collected, "category": get(row, "category"),
+               "collected_on": collected, "category": get(row, "category"), "segment": segment_name(get(row, "segment")),
                "notes": "; ".join(x for x in [notes] + [x for x in issues if "기준 불명" in x] if x), "_line": line, "_issues": issues}
         records.append(rec)
     return records, errors, report
@@ -586,7 +612,7 @@ def _channel_row(ch, provider, today):
             "total_views": ch.get("total_views"), "video_count": ch.get("video_count"), "unverified": []}
 
 
-def build_ranking(kind, size=50, platform="tt", keyword="", now=None, food_only=True):
+def build_ranking(kind, size=50, platform="tt", keyword="", now=None, food_only=True, region="VN"):
     """공식 API로 순위를 만들고 기준 시각·집계 기준을 붙입니다. (행 목록, 메타)"""
     if kind not in RANKING_KINDS:
         raise ext.ApiError("알 수 없는 순위 종류예요")
@@ -624,7 +650,9 @@ def build_ranking(kind, size=50, platform="tt", keyword="", now=None, food_only=
         kw = (keyword or "").strip()
         if not kw:
             raise ext.ApiError("키워드를 입력하세요. 예: mukbang")
-        rows = [_channel_row(ch, f"YouTube 검색 \"{kw[:30]}\"", today) for ch in ext.youtube_search_channels(kw, 50 if size <= 50 else 100)]  # 검색은 페이지(50개) 단위로 같은 비용이라 한 페이지를 다 모은 뒤 순위를 매김
+        region = "KR" if str(region).upper() == "KR" else "VN"
+        rows = [_channel_row(ch, f"YouTube 검색 \"{kw[:30]}\" ({region})", today)
+                for ch in ext.youtube_search_channels(kw, 50 if size <= 50 else 100, region=region, lang="ko" if region == "KR" else "vi")]  # 검색은 페이지(50개) 단위로 같은 비용이라 한 페이지를 다 모은 뒤 순위를 매김
         rows.sort(key=lambda r: -(r["followers"] or -1))
         rows = rows[:size]
     else:
@@ -652,6 +680,6 @@ def build_ranking(kind, size=50, platform="tt", keyword="", now=None, food_only=
         r["rank"] = i
     meta = {"kind": kind, "label": meta_kind["label"], "basis": meta_kind["basis"], "size": size, "count": len(rows),
             "platform": meta_kind.get("platform") or platform, "keyword": keyword if kind == "yt_keyword_channels" else "",
-            "collected_at": at, "region": "베트남(VN)",
+            "collected_at": at, "region": "한국(KR)" if (kind == "yt_keyword_channels" and str(region).upper() == "KR") else "베트남(VN)",
             "food_filter": food or {"applied": False}}
     return rows, meta
