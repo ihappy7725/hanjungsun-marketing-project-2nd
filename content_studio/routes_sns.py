@@ -34,7 +34,9 @@ def index():
     tab = request.args.get("tab", "poster")
     if tab not in TABS:
         tab = "poster"
-    return render_template("content_studio/content_studio_index.html", tab=tab)
+    # 포스터·카드뉴스 첫 화면(희주 renderStart)의 제품 고르기 칸에 쓰는 목록
+    products = [{"id": item["id"], "name_ko": item["name_ko"]} for item in PRODUCTS]
+    return render_template("content_studio/content_studio_index.html", tab=tab, products=products)
 
 
 # ---------- 도우미 ----------
@@ -244,6 +246,57 @@ def post_message():
     _touch(chat)
     db.session.commit()
     return jsonify({"ok": True, "chat_id": chat.id, "reply": reply, "changes": changes, **_design_state(chat), "demo": True})
+
+
+# ---------- 첫 화면 AI 초안으로 새 작업 (포스터·카드뉴스) ----------
+# 희주 편집기(sns_editor.js renderStart)가 만든 초안을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
+DESIGN_RATIOS = {"poster": ("4:5", "9:16", "16:9", "1:1"), "cardnews": ("4:5", "1:1")}
+DESIGN_MAX_BYTES = 160 * 1024
+TAB_LABELS = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"}
+
+
+def _check_design(kind, design):
+    """첫 초안 형식 검사(README 8장 요소 JSON). 틀리면 이유, 맞으면 None."""
+    if not isinstance(design, dict) or design.get("kind") != kind:
+        return "초안(design)의 탭 종류가 올바르지 않습니다."
+    if design.get("ratio") not in DESIGN_RATIOS[kind]:
+        return f"{TAB_LABELS[kind]} 비율은 {' · '.join(DESIGN_RATIOS[kind])}만 쓸 수 있습니다."
+    pages = design.get("pages")
+    if not isinstance(pages, list) or not pages or not all(
+            isinstance(page, dict) and isinstance(page.get("elements"), list) for page in pages):
+        return "초안의 장(pages) 형식이 올바르지 않습니다."
+    if len(json.dumps(design, ensure_ascii=False).encode("utf-8")) > DESIGN_MAX_BYTES:
+        return "초안이 너무 큽니다. (160KB 이하)"
+    return None
+
+
+def _design_title(kind, design, product):
+    """작업 제목: 1장의 제목 글자(40자), 없으면 '찹쌀떡 포스터'처럼 제품 + 탭 이름."""
+    for item in design["pages"][0]["elements"]:
+        if isinstance(item, dict) and item.get("role") == "title" and isinstance(item.get("text"), str) and item["text"].strip():
+            return item["text"].strip()[:40]
+    return f"{product['name_ko']} {TAB_LABELS[kind]}"
+
+
+@bp.route("/api/chats", methods=["POST"])
+def create_chat():
+    body = request.get_json(silent=True) or {}
+    kind, design = body.get("kind"), body.get("design")
+    if kind not in DESIGN_KINDS:
+        return _error("포스터·카드뉴스만 초안으로 새 작업을 만들 수 있습니다.")
+    problem = _check_design(kind, design)
+    if problem:
+        return _error(problem)
+    product = get_product(body.get("product_id"))
+    if product is None:
+        return _error("제품을 골라 주세요.")
+    chat = SnsChat(kind=kind, title=_design_title(kind, design, product), product_id=product["id"])
+    chat.design = SnsDesign()
+    chat.design.push(design)
+    db.session.add(chat)
+    db.session.commit()
+    return jsonify({"ok": True, "chat_id": chat.id, "reply": "", "changes": [], **_design_state(chat),
+                    "demo": bool(design.get("demo", True))})
 
 
 # ---------- 이전 작업 ----------

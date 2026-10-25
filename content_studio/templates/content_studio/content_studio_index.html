@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api">
+<div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api" data-products='{{ products|tojson }}'>
   <header class="pagehead">
     <div>
       <h1>콘텐츠 스튜디오</h1>

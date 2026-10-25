@@ -72,7 +72,7 @@
 
 ### 3-2. 흐름
 
-1. 마케터가 **제품명, 홍보 목적, 핵심 문구, 디자인 분위기, 규격**을 입력합니다.
+1. 마케터가 **제품명, 홍보 목적, 핵심 문구, 디자인 분위기, 규격**을 입력합니다. [새로 만들기]를 누르면 가운데에 첫 화면(희주 `sns_editor.js` `renderStart`: 제품 고르기·제작 조건·AI 제안)이 나오고, 이때는 아래 입력줄을 숨깁니다. 초안을 적용하면 `POST /api/chats`로 새 작업이 저장되고 입력줄이 다시 보입니다(카드뉴스도 같음).
 2. AI가 포스터 문구와 배경·제품 연출 이미지를 만듭니다.
 3. 제목·본문·배경·제품 이미지 등을 **서로 다른 편집 요소(레이어)**로 구성합니다.
 4. 마케터는 대화로 수정을 요청합니다. 예: "제목을 크게", "사진을 오른쪽으로".
@@ -148,7 +148,7 @@
 
 ### 4-1. 기능별 상태
 
-> 새로 만들기·대화로 고치기가 연결됐습니다(`designs.py` `make_cardnews`·`revise_design`). 첫 화면 "내 카드뉴스" 목록은 아직 시연 카드만 보입니다.
+> 새로 만들기(첫 화면 AI 초안, 3-2와 같음)·대화로 고치기가 연결됐습니다(`designs.py` `make_cardnews`·`revise_design`). 첫 화면 "내 카드뉴스" 목록은 아직 시연 카드만 보입니다.
 
 | 기능 | 상태 | 내용 |
 | --- | --- | --- |
@@ -400,6 +400,7 @@ content_studio/
 | --- | --- | --- |
 | `GET /?tab=poster|cardnews|video` | 화면 | 유진 |
 | `POST /api/messages` | 메시지 보내기 `{chat_id?, text, file_id?, kind, ratio, template?, page?, duration?}` → 답 + 현재 디자인 | 유진 |
+| `POST /api/chats` | 포스터·카드뉴스 첫 화면 AI 초안으로 새 작업 만들기: `{kind, design, product_id}` → 작업 + 첫 버전 저장, `/api/messages`와 같은 형식으로 응답. 검사: kind는 poster·cardnews, 비율(포스터 4종·카드뉴스 4:5·1:1), pages·elements 형식, 160KB 이하, products.py의 제품 | 유진 |
 | `GET /api/chats?kind=` · `GET/DELETE /api/chats/<id>` | 이전 작업 목록 · 열기 · 삭제 | 유진 |
 | `GET /api/gallery?kind=` | 첫 화면 내 작업 (포스터·카드뉴스는 첫 장 디자인, 영상은 결과 주소·요약) | 유진 |
 | `GET /api/recommendations?kind=` | 첫 화면 추천 (기념일·제철·신메뉴, 미리보기 디자인 포함) | 유진 |

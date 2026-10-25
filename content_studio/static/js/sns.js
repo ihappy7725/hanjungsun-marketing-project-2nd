@@ -48,6 +48,7 @@ const MAX_RECS = 6;
 const page = document.querySelector(".studio-page");
 const kind = KIND_LABELS[page?.dataset.tab] ? page.dataset.tab : "poster";
 const API = page?.dataset.api;
+const PRODUCTS = JSON.parse(page?.dataset.products || "[]");  // [{id, name_ko}] 포스터·카드뉴스 첫 화면 제품 고르기
 const $ = (role) => page.querySelector(`[data-role="${role}"]`);
 
 function el(tag, className, text) {
@@ -289,13 +290,14 @@ function startNew() {
   showScreen("work");
   setUrl(null);
   notify("");
-  feedback("info", {
-    poster: "어떤 포스터를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요.",
-    cardnews: "어떤 카드뉴스를 만들까요? 제품·기념일을 입력해 주세요. 위에서 비율을 먼저 고를 수 있어요.",
-    video: "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.",
-  }[kind]);
+  // 포스터·카드뉴스는 가운데 첫 화면(희주 renderStart)에서 시작하므로 입력줄 안내를 띄우지 않습니다.
+  if (kind === "video") {
+    feedback("info", "어떤 영상을 만들까요? 제품·기념일·분위기를 입력해 주세요. 위에서 비율·길이·소리를 먼저 고를 수 있어요.");
+  } else {
+    feedback("", "");
+  }
   renderWork();
-  $("chat-input").focus();
+  if (kind === "video") $("chat-input").focus();
 }
 
 async function openChat(chatId) {
@@ -342,9 +344,25 @@ function renderWork() {
   $("undo").disabled = !work.canUndo || work.busy;
   $("redo").disabled = !work.canRedo || work.busy;
 
+  // 포스터·카드뉴스는 초안이 생기기 전에는 아래 입력줄을 숨기고, 가운데 첫 화면에서 AI 초안을 만듭니다.
+  $("chat-form").closest(".studio-command").hidden = !doc && DESIGN_KINDS.includes(kind);
+  if (!doc && DESIGN_KINDS.includes(kind)) {
+    editor.renderStart($("canvas"), {
+      kind,
+      ratio: settings.ratio,
+      products: PRODUCTS,
+      onCreate: async (design, { product_id }) => {
+        // 실패하면 throw → 희주 화면이 "저장하지 못했습니다" 안내
+        const data = await api("/chats", { method: "POST", body: { kind, design, product_id } });
+        applyState(data.chat_id, data);
+        loadHistory();
+        renderWork();
+      },
+    });
+    return;
+  }
   if (!doc) {
-    const what = { poster: "포스터 초안이", cardnews: "카드뉴스 초안이", video: "장면 구성과 프롬프트 초안이" }[kind];
-    $("canvas").replaceChildren(el("p", "empty-note", `아래 입력줄로 요청하면 여기에 ${what} 나타납니다.`));
+    $("canvas").replaceChildren(el("p", "empty-note", "아래 입력줄로 요청하면 여기에 장면 구성과 프롬프트 초안이 나타납니다."));
     return;
   }
   if (kind === "video") renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text) });
