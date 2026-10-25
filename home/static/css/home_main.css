@@ -41,7 +41,7 @@
 .home-page .home-segment button { border: 0; padding: var(--space-2) var(--space-4); background: transparent; color: var(--muted); }
 .home-page .home-segment button[aria-pressed="true"] { background: var(--white); color: var(--green); font-weight: 600; }
 .home-page .home-calendar-body { flex: 1; min-height: 0; overflow-y: auto; }
-.home-page .home-timeline { display: grid; grid-template-columns: 46px repeat(7, minmax(0, 1fr)); grid-auto-rows: min-content; height: 100%; }
+.home-page .home-timeline { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); grid-template-rows: auto auto minmax(0, 1fr); min-width: 580px; min-height: 320px; height: 100%; }
 .home-page .home-tl-corner { color: var(--muted); font-size: var(--fs-min); padding: var(--space-2) var(--space-1); border-bottom: 1px solid var(--line); }
 .home-page .home-tl-head { border: 0; border-bottom: 1px solid var(--line); background: transparent; display: flex; flex-direction: column; align-items: center; gap: 0; padding: var(--space-1) 0; cursor: pointer; }
 .home-page .home-tl-head .home-tl-weekday { color: var(--muted); font-size: var(--fs-min); }
@@ -51,7 +51,7 @@
 .home-page .home-tl-allday-label { display: grid; place-items: center; }
 .home-page .home-tl-allday-cell { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 22px; padding: 1px; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
 .home-page .home-tl-scroll { grid-column: 1 / -1; overflow-y: auto; min-height: 0; }
-.home-page .home-tl-grid { display: grid; grid-template-columns: 46px repeat(7, minmax(0, 1fr)); }
+.home-page .home-tl-grid { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); }
 .home-page .home-tl-hour { color: var(--muted); font-size: var(--fs-min); padding-right: var(--space-2); text-align: right; border-bottom: 1px solid var(--line-soft); }
 .home-page .home-tl-cell { border: 0; border-left: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); background: transparent; min-height: 30px; padding: 1px; display: flex; flex-direction: column; gap: 1px; cursor: pointer; }
 .home-page .home-tl-cell.is-today { background: var(--paper); }
@@ -153,8 +153,11 @@
 .home-page details form { margin-top: var(--space-6); }
 .home-page .home-opportunities, .home-page .home-collaborations { min-width: 0; }
 .home-page .home-range { padding: var(--space-5); background: var(--paper); border: 1px solid var(--line); }
-.home-page .home-range > .home-field { grid-template-columns: 1fr 1fr; align-items: center; }
-.home-page .home-range-dates { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: var(--space-3); }
+.home-page .home-range-preset { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--space-4); }
+.home-page .home-range-preset .home-field { margin: 0; min-width: 0; }
+.home-page .home-range-custom { margin-top: var(--space-4); padding-top: var(--space-4); border-color: var(--line-soft); }
+.home-page .home-range-custom summary { padding-block: var(--space-2); }
+.home-page .home-range-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: var(--space-4); margin-top: var(--space-4); }
 .home-page .home-range-dates .home-field { margin-bottom: 0; min-width: 0; }
 .home-page .home-range input { min-width: 0; padding: var(--space-3); font-size: var(--fs-body); }
 .home-page #opportunity-list { max-height: 305px; margin-top: var(--space-4); }
@@ -251,10 +254,19 @@
 .home-page #news-translate[aria-pressed="true"]::before { background: var(--on-dark); opacity: .45; }
 .home-page #news-translate[aria-pressed="true"]::after { transform: translateX(11px); }
 .home-page .home-segment button[aria-pressed="true"] { background: var(--white); color: var(--teal); }
-.home-page .home-tl-allday-cell { gap: 2px; padding: 2px; }
-.home-page .home-tl-allday-cell .home-event { height: auto; min-height: var(--home-chip-h); padding: 2px var(--space-2); border-radius: 999px; border-left-width: 4px; white-space: normal; line-height: 1.35; cursor: pointer; }
+.home-page .home-tl-allday-cell { gap: var(--space-1); padding: var(--space-1); max-height: 104px; overflow-y: auto; }
+.home-page .home-tl-allday-cell .home-event { flex-shrink: 0; height: var(--home-chip-h); min-height: var(--home-chip-h); padding: 0 var(--space-2); border-radius: var(--radius); border-left-width: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .home-page .home-tl-cell .home-event { border-radius: 999px; padding: 0 var(--space-2); }
 .home-page .home-tl-head { border-radius: var(--radius) var(--radius) 0 0; }
+.home-page .home-tl-head { padding-block: var(--space-3); gap: var(--space-1); }
+.home-page .home-tl-hour { padding-top: var(--space-2); font-family: var(--font-mono); background: var(--paper); }
+.home-page .home-tl-cell { min-height: calc(var(--control-height) + var(--space-2)); padding: var(--space-1); }
+.home-page .home-side-column > .home-card { padding: var(--space-7); }
+.home-page .home-side-column .home-panel-head { min-height: 28px; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); }
+.home-page .home-panel-head h2 { margin: 0; font-family: var(--font-title); font-size: var(--fs-panel-title); font-weight: var(--title-weight); line-height: var(--line-height); }
+.home-page .home-card .btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: var(--control-height); padding-inline: var(--space-5); }
+.home-page .home-side-column .home-text-btn { min-height: 28px; padding: var(--space-1) var(--space-3); }
+.home-page .home-task:last-child, .home-page .home-opportunity:last-child, .home-page .home-collaboration:last-child { border-bottom: 0; }
 .home-page .home-event.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
 .home-page .home-period-bar.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
 .home-page .home-mainpanel > .home-paneltabs { flex: 0 0 auto; flex-direction: row; align-items: stretch; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line-strong); }

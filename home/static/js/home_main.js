@@ -217,6 +217,7 @@ async function initialize() {
   function range() { return { start: $('#range-start').value, end: $('#range-end').value }; }
   function updateRange() {
     const preset = store.preferences.preset || '45'; $('#range-preset').value = preset;
+    $('#range-custom').open = preset === 'custom';
     $('#range-start').value = preset === 'custom' ? store.preferences.range_start || today : today;
     $('#range-end').value = preset === 'custom' ? store.preferences.range_end || today : addDays(today, Number(preset));
   }
@@ -830,6 +831,7 @@ async function initialize() {
   $('#calendar-next').onclick = () => moveCalendar(1);
   $('#calendar-today').onclick = () => { cursor = today; selectedDate = today; refreshSignals(); };
   $('#range-preset').onchange = event => {
+    $('#range-custom').open = event.target.value === 'custom';
     if (event.target.value !== 'custom') { $('#range-start').value = today; $('#range-end').value = addDays(today, Number(event.target.value)); }
   };
   ['#range-start', '#range-end'].forEach(sel => { $(sel).onchange = () => { $('#range-preset').value = 'custom'; }; });

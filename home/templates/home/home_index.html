@@ -94,7 +94,11 @@
       </section>
       <section class="home-card home-opportunities-card" aria-label="현지 기회">
         <div class="home-opportunities"><div class="home-panel-head"><div><h2>현지 기회</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">전체 보기 ↗</a></div>
-        <form id="range-form" class="home-range"><label class="home-field">조회 기간<select id="range-preset"><option value="30">앞으로 30일</option><option value="45" selected>앞으로 45일</option><option value="90">앞으로 90일</option><option value="custom">직접 입력</option></select></label><div class="home-range-dates"><label class="home-field">시작일<input type="date" id="range-start" required></label><label class="home-field">종료일<input type="date" id="range-end" required></label><button class="btn" type="submit">조회</button></div><p id="range-error" class="home-error" role="alert" hidden></p></form>
+        <form id="range-form" class="home-range">
+          <div class="home-range-preset"><label class="home-field">조회 기간<select id="range-preset"><option value="30">앞으로 30일</option><option value="45" selected>앞으로 45일</option><option value="90">앞으로 90일</option><option value="custom">직접 입력</option></select></label><button class="btn" type="submit">조회</button></div>
+          <details id="range-custom" class="home-range-custom"><summary>날짜 직접 지정</summary><div class="home-range-dates"><label class="home-field">시작일<input type="date" id="range-start" required></label><label class="home-field">종료일<input type="date" id="range-end" required></label></div></details>
+          <p id="range-error" class="home-error" role="alert" hidden></p>
+        </form>
         <div id="opportunity-list" class="home-scroll"></div>
         </div>
       </section>
