@@ -805,16 +805,26 @@ function fillDefaultRoas() {
 function renderSimOptions() {
   const d = sim.data;
   const inf = d.influencers;
-  // 계정 자동완성: 인플루언서 탭 단가 목록(같은 계정이 여러 건이면 한 줄에 함께 표시)
-  $("sim-accounts").replaceChildren(...[...new Set(inf.options.map((o) => o.influencer))].map((name) => {
+  const list = d.influencer_list || [];
+  // 계정 자동완성: 인플루언서 탭 리스트(단가가 없어도 표시) + 단가 목록. 보조 글씨는 대표 매체 · 팔로워 · 상태 · 단가
+  const names = [...new Set([...list.map((x) => x.influencer), ...inf.options.map((o) => o.influencer)])];
+  $("sim-accounts").replaceChildren(...names.map((name) => {
+    const entry = list.find((x) => x.influencer === name);
     const quotes = inf.options.filter((o) => o.influencer === name);
+    const parts = entry ? [entry.platform, entry.followers != null ? `팔로워 ${followersText(entry.followers)}` : "", entry.status_label] : [];
+    parts.push(quotes.length
+      ? quotes.map((o) => `${o.platform} ${o.content_format} ${o.price_type_label} ${krwMan(toKrw(o.amount_vnd, "VND"))}`).join(" / ")
+      : "단가 미등록");
     const opt = el("option");
     opt.value = name;
-    opt.label = quotes.map((o) => `${o.platform} ${o.content_format} · ${o.price_type_label} ${krwMan(toKrw(o.amount_vnd, "VND"))}`).join(" / ");
+    opt.label = parts.filter(Boolean).join(" · ");
     return opt;
   }));
   setText("sim-rate-help", `1원 ≈ ${(100 / d.base_rate).toFixed(1)} VND (편성 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND)`);
-  setText("sim-source", `KOL 단가 자동완성: ${inf.note}${inf.status === "demo" ? " · 시연" : ""}`);
+  setText(
+    "sim-source",
+    `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}${inf.status === "demo" ? " · 시연" : ""}`,
+  );
   setSimType(sim.type);
 }
 
@@ -824,10 +834,25 @@ function accountQuotes() {
   return (sim.data?.influencers.options || []).filter((o) => o.influencer === name);
 }
 
+// 인플루언서 탭 리스트(get_collaborations)에서 입력한 계정을 찾습니다.
+function accountListEntry() {
+  const name = simForm().elements.account.value.trim();
+  return (sim.data?.influencer_list || []).find((x) => x.influencer === name) || null;
+}
+
+const followersText = (n) => (n >= 10000 ? `${(n / 10000).toFixed(1).replace(/\.0$/, "")}만` : num(n));
+
 function applyQuote() {
   const f = simForm().elements;
   const quotes = accountQuotes();
-  if (!quotes.length) return setText("sim-quote-help", "");
+  const entry = accountListEntry();
+  if (!quotes.length) {
+    // 리스트에는 있지만 단가가 없는 인플루언서: 대표 매체만 맞추고 예산은 직접 입력
+    if (entry && SIM_MEDIA.kol.some((m) => m.value === entry.platform)) f.media.value = entry.platform;
+    onMediaChange();
+    const info = entry ? [entry.platform, entry.followers != null ? `팔로워 ${followersText(entry.followers)}` : "", entry.status_label].filter(Boolean).join(" · ") : "";
+    return setText("sim-quote-help", entry ? `인플루언서 탭 리스트: ${info} · 단가 미등록 — 집행 예산을 직접 입력해 주세요.` : "");
+  }
   const q = quotes.find((o) => o.platform === f.media.value) || quotes[0];
   if (SIM_MEDIA.kol.some((m) => m.value === q.platform)) f.media.value = q.platform;
   fillFormats();  // 그 계정의 단가 형식을 목록에 넣고
@@ -840,7 +865,10 @@ function syncQuote() {
   const f = simForm().elements;
   if (sim.type !== "kol") return;
   const q = accountQuotes().find((o) => o.platform === f.media.value && o.content_format === f.format.value);
-  if (!q) return setText("sim-quote-help", accountQuotes().length ? "이 매체·형식의 단가는 인플루언서 탭에 없습니다. 집행 예산을 직접 입력해 주세요." : "");
+  if (!q) {
+    if (!accountQuotes().length && accountListEntry()) return;  // 리스트만 있는 계정: applyQuote의 '단가 미등록' 안내 유지
+    return setText("sim-quote-help", accountQuotes().length ? "이 매체·형식의 단가는 인플루언서 탭에 없습니다. 집행 예산을 직접 입력해 주세요." : "");
+  }
   f.amount.value = (f.unit.value === "KRW" ? toKrw(q.amount_vnd, "VND") : q.amount_vnd).toLocaleString("en-US");
   setText("sim-quote-help", `인플루언서 탭 ${q.price_type_label} ${num(q.amount_vnd)} VND (약 ${krwMan(toKrw(q.amount_vnd, "VND"))}) 불러옴`);
 }
@@ -884,12 +912,19 @@ function renderSim() {
   const trs = $("sim-rows").children;
   subtotalRows.forEach((i) => trs[i].classList.add("kpi-sim-subtotal"));
 
+  // 결과 카드: 금액 + 총 예산 대비 %(작게). '집행 후 남는 예산' 카드는 강조, 초과 시 경고 색
+  const ofTotal = (krw) => `총 예산의 ${pct((krw / total) * 100)}`;
+  const kolKrw = sumOf(byType.kol, "cost_krw");
+  const paidKrw = sumOf(byType.paid, "cost_krw");
   setText("sim-now", krwMan(now));
-  setText("sim-planned-kol", krwMan(sumOf(byType.kol, "cost_krw")));
-  setText("sim-planned-paid", krwMan(sumOf(byType.paid, "cost_krw")));
-  const afterEl = $("sim-after");
-  afterEl.textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
-  afterEl.classList.toggle("is-over", after < 0);
+  setText("sim-now-sub", ofTotal(now));
+  setText("sim-planned-kol", krwMan(kolKrw));
+  setText("sim-planned-kol-sub", `${byType.kol.length}건 · ${ofTotal(kolKrw)}`);
+  setText("sim-planned-paid", krwMan(paidKrw));
+  setText("sim-planned-paid-sub", `${byType.paid.length}건 · ${ofTotal(paidKrw)}`);
+  $("sim-after").textContent = after >= 0 ? krwMan(after) : `−${krwMan(-after)}`;
+  setText("sim-after-sub", after >= 0 ? ofTotal(after) : `총 예산 대비 ${pct((-after / total) * 100)} 초과`);
+  $("sim-after-card").classList.toggle("is-over", after < 0);
 
   const revenue = sumOf(sim.items, "revenue_krw");
   if (sim.items.length && after < 0) {
@@ -1172,8 +1207,8 @@ root.addEventListener("change", (event) => {
 root.addEventListener("input", (event) => {
   if (event.target.matches("[data-kpi-money]")) formatMoneyInput(event.target);
   if (event.target.matches('[data-kpi="sim-account"]')) {
-    if (accountQuotes().length) applyQuote();
-    else fillFormats();  // 목록에 없는 계정이면 매체 기본 형식만
+    if (accountQuotes().length || accountListEntry()) applyQuote();
+    else { fillFormats(); setText("sim-quote-help", ""); }  // 탭에 없는 계정이면 매체 기본 형식만
   }
   if (event.target.matches('[data-kpi="sim-roas"]')) sim.roasEdited = event.target.value.trim() !== "";
 });

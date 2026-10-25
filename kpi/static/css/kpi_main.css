@@ -244,17 +244,31 @@
 .kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 110px; }
 .kpi-page .kpi-sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .kpi-page .kpi-sim-subtotal td { background: var(--paper); font-weight: 600; }
+/* 결과 카드: 흰 카드 4칸, 금액은 크게 + 총 예산 대비 %(작게). '집행 후 남는 예산'은 녹색 바탕으로 강조 */
 .kpi-page .kpi-sim-result {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
   margin-top: var(--space-5);
-  border: 1px solid var(--line);
 }
-.kpi-page .kpi-sim-result > div { display: grid; gap: var(--space-1); padding: var(--space-5) var(--space-5); }
-.kpi-page .kpi-sim-result > div + div { border-left: 1px solid var(--line); }
-.kpi-page .kpi-sim-result span { color: var(--muted); font-size: var(--fs-min); }
-.kpi-page .kpi-sim-result strong { font-family: var(--font-serif); font-size: var(--fs-subheading); font-weight: 700; }
-.kpi-page .kpi-sim-result .is-over { color: var(--kpi-red); }
+.kpi-page .kpi-sim-result > div {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+  box-shadow: var(--shadow);
+}
+.kpi-page .kpi-sim-result span { color: var(--muted); font-size: var(--fs-min); font-weight: 600; }
+.kpi-page .kpi-sim-result strong { font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); line-height: var(--line-height-heading); }
+.kpi-page .kpi-sim-result small { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-sim-result .kpi-sim-key { border-color: var(--teal); background: var(--teal); }
+.kpi-page .kpi-sim-result .kpi-sim-key span,
+.kpi-page .kpi-sim-result .kpi-sim-key strong,
+.kpi-page .kpi-sim-result .kpi-sim-key small { color: var(--on-dark); }
+.kpi-page .kpi-sim-result .kpi-sim-key.is-over { border-color: var(--kpi-red); background: var(--kpi-red); }
 .kpi-page .kpi-sim-remove { padding: var(--space-1) var(--space-4); }
 
 .kpi-page .kpi-donut-center {
@@ -541,7 +555,6 @@
   .kpi-page .kpi-ga4-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-sim-result,
   .kpi-page .kpi-sim-fields { grid-template-columns: 1fr; }
-  .kpi-page .kpi-sim-result > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .kpi-page .kpi-panel.is-expanded { inset: 12px; max-height: none; transform: none; }
 }
 

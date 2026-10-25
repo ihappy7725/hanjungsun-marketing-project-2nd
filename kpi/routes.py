@@ -505,6 +505,36 @@ def _simulator_influencers():
     return {"status": status, "note": note, "options": options}
 
 
+def _simulator_influencer_list():
+    """인플루언서 탭 리스트(get_collaborations) — 단가가 없는 인플루언서도 계정 자동완성에 보여 주기 위함.
+
+    이름 · 대표 매체 · 팔로워 · 진행 상태만 씁니다(같은 이름은 한 번만). 실패하거나 비어 있으면 빈 목록이고,
+    그때 화면은 단가 목록(get_quote_summary 또는 시연 후보)만으로 동작합니다.
+    """
+    try:
+        from influencer_marketing.public import get_collaborations
+
+        rows = list(get_collaborations(include_demo=True) or [])
+    except Exception:  # 주인 탭 오류로 내 화면이 멈추지 않게 (README 10장)
+        return []
+    out, seen = [], set()
+    for r in rows:
+        r = r or {}
+        name = str(r.get("influencer") or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        followers = r.get("followers")
+        out.append({
+            "influencer": name,
+            "platform": r.get("main_platform") or "",
+            "followers": followers if isinstance(followers, int) else None,
+            "status_label": r.get("status_label") or "",
+            "is_demo": bool(r.get("is_demo")),
+        })
+    return out
+
+
 # ---------------------------------------------------------------------------
 # GA4 — 지금은 공식 데모 계정(Google Merchandise Store) CSV를 읽습니다.
 # 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_csv만 GA4 Data API 호출로 바꿉니다.
@@ -939,6 +969,7 @@ def api_simulator():
         ],
         "ad_channels": [c["channel"] for c in DEMO_CHANNELS if c["channel"] != "Influencer"],
         "influencers": _simulator_influencers(),
+        "influencer_list": _simulator_influencer_list(),
     })
 
 
