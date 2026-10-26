@@ -539,7 +539,12 @@ function renderWork() {
 
   // 포스터·카드뉴스도 영상처럼 입력창으로 시작합니다. 초안 전 [보내기]는 시안 3개(startChoices),
   // 초안 뒤에는 아래 입력창으로 AI에게 말로 고칩니다(결과 안내 줄은 비어 있으면 숨김).
-  $("chat-form").hidden = false;
+  // 시안을 보는 동안(choosing)은 입력창을 숨기고, 위쪽 버튼 줄은 보이되 옅게 잠급니다(is-choosing, sns.css).
+  // 조건을 바꾸려면 희주 화면의 팝업 [취소]·[← 조건 바꾸기](onBack)로 첫 화면에 돌아갑니다.
+  const choosing = DESIGN_KINDS.includes(kind) && !doc && work.choosing;
+  $("chat-form").hidden = choosing;
+  $("work-screen").classList.toggle("is-choosing", choosing);
+  page.querySelector(".studio-settings").inert = choosing;
   if (DESIGN_KINDS.includes(kind)) $("chat-input").placeholder = doc ? DESIGN_REVISE_PLACEHOLDER : designFirstPlaceholder(KIND_LABELS[kind]);
   // 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
   $("command-toggle").hidden = !doc;
@@ -598,7 +603,8 @@ function showProductChoices(reply) {
 }
 
 // 포스터·카드뉴스 초안 전 [보내기]: /api/messages 대신 가운데 칸에 시안 3개(희주 renderChoices).
-// 다시 누르면 지금 버튼 조건·입력 글로 3개를 다시 만듭니다. 확정하면 기존 POST /api/chats로 새 작업을 저장합니다.
+// 입력창은 숨기고(입력 글은 그대로 둠), onBack으로 돌아오면 지금 버튼 조건·입력 글이 남은 첫 화면이 됩니다.
+// 확정하면 기존 POST /api/chats로 새 작업을 저장합니다.
 function startChoices(text) {
   const productIds = [...settings.product_ids];
   const productId = productIds[0];
@@ -622,6 +628,12 @@ function startChoices(text) {
       applyState(data.chat_id, data);
       loadHistory();
       renderWork();
+    },
+    // 팝업 [취소] · [← 조건 바꾸기]: 첫 화면으로 (입력 글·제목·버튼 설정·레퍼런스는 그대로)
+    onBack: () => {
+      work.choosing = false;
+      renderWork();
+      $("chat-input").focus({ preventScroll: true });
     },
   });
 }

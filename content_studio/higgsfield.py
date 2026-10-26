@@ -16,10 +16,12 @@ from .videos import COMMON_AVOID, FOOD_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, 
 VIDEO_MODEL = "kling4_0"            # Kling 4.0
 VIDEO_RESOLUTION = "720p"
 IMAGE_MODEL = "nano_banana_flash"   # Nano Banana 2 (미리보기 이미지)
-# 포스터·카드뉴스 시안 그림 (2026-10-27 유진 결정): 글자 표현·화질이 나은 Nano Banana Pro 2k, 장당 2크레딧(generate cost 확인)
-DESIGN_IMAGE_MODEL = "nano_banana_pro"
-DESIGN_IMAGE_LABEL = "Nano Banana Pro"
+# 포스터·카드뉴스 시안 그림 (2026-10-27 유진 결정): 그림 속 베트남어 글자가 깨지지 않게 GPT Image 2 high 2k,
+# 장당 6.5크레딧(generate cost 확인). 처음엔 Nano Banana Pro(2크레딧)였으나 긴 제목 글자가 겹치고 틀려서 바꿈.
+DESIGN_IMAGE_MODEL = "gpt_image_2"
+DESIGN_IMAGE_LABEL = "GPT Image 2"
 DESIGN_IMAGE_RESOLUTION = "2k"
+DESIGN_IMAGE_QUALITY = "high"
 DAILY_LIMIT = 200                   # 대시보드에서 쓰는 크레딧, 하루(한국 시간) 한도
 
 DONE, FAILED = "completed", ("failed", "nsfw", "canceled", "cancelled")
@@ -157,7 +159,7 @@ def design_image_args(prompt, ratio, photos=()):
                    "Never draw any text, letters, labels or tags seen in the photos; the only text in the image is the "
                    "text written in this prompt.")
     args = [DESIGN_IMAGE_MODEL, "--prompt", text, "--aspect_ratio", IMAGE_RATIOS[ratio],
-            "--resolution", DESIGN_IMAGE_RESOLUTION]
+            "--resolution", DESIGN_IMAGE_RESOLUTION, "--quality", DESIGN_IMAGE_QUALITY]
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 

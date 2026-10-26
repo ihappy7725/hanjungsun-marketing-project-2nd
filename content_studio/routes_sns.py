@@ -8,6 +8,7 @@ import json
 import os
 import re
 import threading
+import time
 import urllib.error
 import uuid
 import urllib.request
@@ -1091,15 +1092,50 @@ def design_images():
     return _design_jobs_reply(jobs, flat, response, quote)
 
 
+# Higgsfield 일시 오류(서버 5xx, 참고 사진 올리기 실패): 생성 전에 끊긴 것이라 크레딧이 나가지 않아 다시 보내도 됩니다.
+# "응답이 늦습니다"(시간 초과)는 요청이 들어갔을 수 있어 다시 보내지 않습니다(이중 결제 방지).
+TRANSIENT_HF = re.compile(r"HTTP (502|503|504|520|522|524)\b|upload_url|failed to PUT", re.I)
+TRANSIENT_RETRIES, TRANSIENT_WAIT = 2, 2  # 최대 2번 더, 2초 쉬고
+
+
+def _create_with_retry(args):
+    for attempt in range(TRANSIENT_RETRIES + 1):
+        try:
+            return higgsfield.create(args)
+        except higgsfield.HiggsfieldError as error:
+            if attempt == TRANSIENT_RETRIES or not TRANSIENT_HF.search(str(error)):
+                raise
+            current_app.logger.warning("Higgsfield 일시 오류, %s초 뒤 다시 보냄 (%s/%s): %s",
+                                       TRANSIENT_WAIT, attempt + 1, TRANSIENT_RETRIES, error)
+            time.sleep(TRANSIENT_WAIT)
+
+
+def _log_design_prompt(request_id, args, chat_id):
+    """보낸 그림 프롬프트를 instance/exports/content_studio/design_prompts.jsonl에 한 줄씩 남깁니다(원인 확인용, Git 제외).
+    기록 실패가 생성 자체를 막지 않게 합니다."""
+    try:
+        folder = os.path.join(current_app.config["EXPORT_ROOT"], "content_studio")
+        os.makedirs(folder, exist_ok=True)
+        record = {"at": datetime.now(KST).isoformat(timespec="seconds"), "request_id": request_id, "chat_id": chat_id,
+                  "model": args[0], "ratio": args[args.index("--aspect_ratio") + 1],
+                  "prompt": args[args.index("--prompt") + 1],
+                  "refs": [os.path.basename(args[i + 1]) for i, part in enumerate(args) if part == "--image-references"]}
+        with open(os.path.join(folder, "design_prompts.jsonl"), "a", encoding="utf-8") as out:
+            out.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception:
+        current_app.logger.exception("그림 프롬프트 기록 실패")
+
+
 def _send_design_jobs(arg_list, chat_id, quote):
     """그림 요청을 차례로 보내고 보낸 만큼 크레딧을 기록합니다(시안 만들기·비율 바꾸기 공용).
     돌려줌: (결과 목록 — 장마다 {request_id, status} 또는 None(못 보냄), 문제 응답 또는 None).
-    중간에 실패하면 거기서 멈춥니다. 하나도 못 보냈으면 결과 목록이 비고 문제 응답(_hf_error)이 옵니다."""
+    일시 오류는 장마다 최대 2번 다시 보내고(_create_with_retry), 그래도 실패하면 거기서 멈춥니다.
+    하나도 못 보냈으면 결과 목록이 비고 문제 응답(_hf_error)이 옵니다. 보낸 프롬프트는 파일에 남깁니다."""
     results = [None] * len(arg_list)
     sent, failure, unknown = [], None, False
     for index, args in enumerate(arg_list):
         try:
-            job = higgsfield.create(args)
+            job = _create_with_retry(args)
         except higgsfield.HiggsfieldError as error:  # CLI가 실패를 알림 → 이 건은 크레딧이 나가지 않음
             failure = error
             break
@@ -1110,6 +1146,7 @@ def _send_design_jobs(arg_list, chat_id, quote):
             break
         results[index] = {"request_id": job["request_id"], "status": job["status"]}
         sent.append(job["request_id"])
+        _log_design_prompt(job["request_id"], args, chat_id)
     if not sent:
         return [], _hf_error(failure)
     try:

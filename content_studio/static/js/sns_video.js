@@ -483,7 +483,7 @@ export function renderVideo(root, doc, options) {
   // scene: 미리보기 이미지를 만들 컷(0부터). 없으면 모든 컷.
   async function askGenerate(target, scene = null) {
     genButtons.forEach((button) => { button.disabled = true; });
-    genStatus.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    genStatus.textContent = "비용과 남은 크레딧을 확인하는 중…";
     try {
       let { quote } = await call("/generate/quote", { method: "POST", body: { target, scene } });
       while (await confirmDialog(target, quote)) {
