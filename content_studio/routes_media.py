@@ -24,8 +24,8 @@ from platform_core.extensions import db
 
 from . import bp
 from .designs import (SIZES, background_element, background_photos, background_prompt, build_cardnews_prompt,
-                      build_design_brief, change_ratio, design_texts, finish_image_proposals, image_proposal_schema,
-                      validate_proposals)
+                      build_design_brief, change_ratio, design_texts, finish_image_proposals, finish_poster_copy,
+                      image_proposal_schema, poster_copy_schema, validate_proposals)
 from .models_sns import SnsChat, SnsCreditLog
 from .products import get_product
 
@@ -272,8 +272,9 @@ def _cost_note(cost):
     return f" (이번 요청 {cost['total_tokens']:,} 토큰 · 예상 ${cost['usd']:.4f})" if cost else ""
 
 
-# 새로 만들기 시안 3개의 그림 프롬프트 (sns_editor.js renderChoices). 그림은 유진 쪽 Higgsfield API가 만듭니다.
-# 돌려주는 proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
+# 새로 만들기 시안 3개 (sns_editor.js renderChoices). 그림은 유진 쪽 Higgsfield API가 만듭니다.
+# 카드뉴스: 장별 그림 프롬프트 — proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
+# 포스터: 문구만 (그림은 유진 베이스 템플릿) — proposals: [{name, concept_ko, layout, style_label, texts, pages: [{prompt_en: "", texts}]}] × 3
 @bp.route("/media/api/design-assistant", methods=["POST"])
 def design_assistant():
     try:
@@ -289,14 +290,16 @@ def design_assistant():
     key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not key:
         return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
-    schema = image_proposal_schema(brief["pages"])
+    poster = brief["kind"] == "poster"
+    schema = poster_copy_schema() if poster else image_proposal_schema(brief["pages"])
     cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다.
     try:
         response = _api_json("https://api.openai.com/v1/responses",
                              {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                              {"model": ASSISTANT_MODEL, "store": False, "instructions": persona,
                               "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 12000,
-                              "text": {"format": {"type": "json_schema", "name": "design_image_proposals",
+                              "text": {"format": {"type": "json_schema",
+                                                   "name": "poster_copy" if poster else "design_image_proposals",
                                                    "strict": True, "schema": schema}}})
         cost = _usage_cost(ASSISTANT_MODEL, response.get("usage"))
         if response.get("status") != "completed":
@@ -305,7 +308,8 @@ def design_assistant():
                          for part in item.get("content", []) if part.get("type") == "output_text")
         result = json.loads(output)
         validate_proposals(result, schema)
-        proposals = finish_image_proposals(result["proposals"])
+        proposals = (finish_poster_copy(result["proposals"], [item["key"] for item in brief["layouts"]]) if poster
+                     else finish_image_proposals(result["proposals"]))
         return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
                         "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
     except HTTPError as error:
