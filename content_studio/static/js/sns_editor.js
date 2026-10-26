@@ -284,8 +284,7 @@ function imageCard(item, isSelected, onPick, ratio, withLogo = false) {
   full.append(el("summary", "", "프롬프트 전문"),
     ...prompts.map((text, index) => el("pre", "", `${prompts.length > 1 ? `${index + 1}장\n` : ""}${text}`)));
   full.hidden = !prompts.length;
-  const label = item.layout ? item.style_label : `스타일 · ${item.style_label}`;
-  card.append(choose, el("p", "studio-hint", `${label} · ${progress}`), strip, words, full);
+  card.append(choose, el("p", "studio-hint", `스타일 · ${item.style_label} · ${progress}`), strip, words, full);
   return card;
 }
 
@@ -339,7 +338,7 @@ function logoElement(index, ratio) {
 function imageDesign(kind, ratio, item) {
   const poster = kind === "poster";
   return {
-    kind, ratio, demo: false, mode: IMAGE_MODE, style: item.style || null, ...(item.layout && { layout: item.layout }),
+    kind, ratio, demo: false, mode: IMAGE_MODE, style: item.style || null,
     assistant: { name: item.name, prompt: item.concept_ko,
       notice: `AI 그림 시안 · ${item.style_label} · 그림 속 글자와 제품 정보는 꼭 확인해 주세요.` },
     pages: item.pages.map((page, index) => ({
@@ -411,10 +410,10 @@ function fillReview(node, data) {
 // productIds: 여러 제품(라인업). 유진 API가 product_id 하나만 받는 동안 첫 제품을 product_id로도 보냅니다.
 // refs: 레퍼런스 이미지 [{file_id, url}] (없으면 []). 견적·생성 API에 ref_images로 그대로 넘깁니다.
 // onBack: 조건 바꾸기 화면으로 돌아가기 (팝업 [취소] · [← 조건 바꾸기]). 없으면 [← 조건 바꾸기]를 숨깁니다.
-// layout (포스터): "" = A·B·C 하나씩 3안, "A"|"B"|"C" = 그 레이아웃으로 3안. 포스터는 도우미가 문구만 쓰고
-//   그림은 유진 베이스 템플릿이 조립합니다(생성 요청에 proposals [{layout, texts}], 응답 prompts를 pages[].prompt로).
-export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", layout = "",
-  pages = 5, request = "", refs = [], onCreate, onBack = null } = {}) {
+// 포스터·카드뉴스 모두 도우미가 장면 프롬프트를 쓰고 prompts로 생성을 요청합니다. (포스터 템플릿 방식은 2026-10-27 되돌림)
+// 응답 prompts(서버가 다듬어 실제로 보낸 전문)는 "프롬프트 전문"과 확정 문서의 pages[].prompt로 씁니다.
+export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", pages = 5,
+  request = "", refs = [], onCreate, onBack = null } = {}) {
   const ids = (Array.isArray(productIds) && productIds.length ? productIds : [productId]).filter(Boolean);
   const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages,
     ref_images: Array.isArray(refs) ? refs : [] };
@@ -524,19 +523,15 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       if (!proposals.length) {  // 견적이 바뀌어 다시 누를 때는 이미 쓴 프롬프트를 그대로 씁니다.
         const data = await postJson(ASSISTANT_API, {
           design: { kind, ratio, demo: true, pages: [{ elements: [] }] }, confirm_paid: true,
-          options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages,
-            ...(kind === "poster" && { layout: layout || "" }) },
+          options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages },
         });
         if (!wrap.isConnected) return;
         proposals = data.proposals.map((item) => ({ ...item, pages: item.pages.map((page) => ({ ...page, job: null })) }));
       }
-      // 포스터: 레이아웃·문구·스타일 버튼 값만 보내고 유진 템플릿이 조립 (style "" = AI 추천) / 카드뉴스: 장별 프롬프트
-      const plan = kind === "poster"
-        ? { proposals: proposals.map((item) => ({ layout: item.layout, texts: item.texts })), style: style || "" }
-        : { prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)) };
-      const res = await fetch(IMAGE_API, {
+      const res = await fetch(IMAGE_API, {  // 포스터·카드뉴스 모두 [[장면 프롬프트] × 장] × 3안
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...target, ...plan, credits: quote.credits }),
+        body: JSON.stringify({ ...target, prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)),
+          credits: quote.credits }),
       });
       const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
       if (!wrap.isConnected) return;

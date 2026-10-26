@@ -904,18 +904,6 @@ def build_design_brief(doc, options):
         persona += (f"\n\n[참고 분위기 - 마케터가 고른 느낌: {STYLES[style]}]\n- {STYLE_HINTS[style]}\n"
                     "- 제안 3개 모두 이 느낌을 배치·색·글씨체·문구에 조금씩 반영한다. style은 서로 달라도 된다.")
     rules = _guideline_rules()
-    if kind == "poster":  # 포스터: 그림은 유진 베이스 템플릿이 조립하고, 도우미는 문구만 씁니다 (2026-10-27 유진 결정)
-        layout = options.get("layout") or ""
-        if layout not in ("", *POSTER_LAYOUTS):
-            raise ValueError("레이아웃은 A · B · C 중 하나여야 합니다.")
-        brief = {"request": wish.strip(), "kind": kind,
-                 "products": [{"id": item["id"], "name_ko": item["name_ko"], "name_vi": item.get("name_vi", "")}
-                              for item in products],
-                 "layouts": [{"key": key, "name": POSTER_LAYOUTS[key]} for key in poster_layouts(layout)],
-                 "text_max_chars": POSTER_TEXT_MAX, "headline_max_words": POSTER_HEADLINE_WORDS,
-                 "local_guidelines": rules,
-                 "guidelines_notice": "제공된 지침만 참고" if rules else "현지 검수 기준 준비 중"}
-        return persona, brief, bool(rules)
     width, height = SIZES[doc["ratio"]]
     brief = {"request": wish.strip(), "kind": kind, "ratio": doc["ratio"],
              "orientation": "landscape" if width > height else "square" if width == height else "portrait",
@@ -924,7 +912,9 @@ def build_design_brief(doc, options):
                            "flavor_en": item["id"].replace("_", " ")} for item in products],
              "brand": BRAND, "brand_colors": BRAND_COLORS,
              "colors_notice": "행사·시즌이 요청에 있으면 행사 색을 쓰고(예: 발렌타인 = 크림·분홍 + 진한 빨강 곡선), 없으면 브랜드 색",
-             "text_language": "그림 속 글자는 베트남어만 (HANJUNGSUN 제외). 한국어로 받은 문구는 베트남어로 바꿔 넣기",
+             "text_language": ("그림 속 글자는 베트남어만. 로고·HANJUNGSUN은 쓰지 않기(로고는 서버가 얹음)" if kind == "poster"
+                               else "그림 속 글자는 베트남어만 (HANJUNGSUN 제외)") + ". 한국어로 받은 문구는 베트남어로 바꿔 넣기",
+             **({"headline_max_syllables": POSTER_HEADLINE_WORDS} if kind == "poster" else {}),
              "style_options": STYLES,
              "prompt_max_chars": IMAGE_PROMPT_MAX, "texts_per_page_max": IMAGE_TEXTS_MAX,
              "local_guidelines": rules,
@@ -932,59 +922,18 @@ def build_design_brief(doc, options):
     return persona, brief, bool(rules)
 
 
-# ---------- 포스터 문구 (베이스 템플릿용, 2026-10-27 유진 결정) ----------
-# 포스터 그림은 유진 higgsfield.py 베이스 템플릿(레이아웃 A·B·C, 제품별 톤, 제품 유지 규칙)으로 조립합니다.
-# 도우미는 시안마다 짧은 베트남어 문구 {eyebrow_vi, headline_vi, sub_vi, badge_vi}(+ 한국어 뜻)만 씁니다.
-POSTER_LAYOUTS = {"A": "재료 프레이밍", "B": "플로팅", "C": "페이퍼컷 윈도우"}  # 키는 higgsfield.py POSTER_LAYOUT_KEYS와 같음
-POSTER_COPY_KEYS = ("headline", "eyebrow", "sub", "badge")  # 화면·검수에 보여 줄 순서
-POSTER_TEXT_MAX = 60       # 칸마다 글자 수 (higgsfield.py POSTER_TEXT_MAX와 같음)
-POSTER_HEADLINE_WORDS = 3  # 제목은 1~2단어, 최대 3단어 (긴 제목은 그림에서 글자가 깨짐)
-POSTER_HEADLINE_ERROR = "AI가 제목을 너무 길게 써서 적용하지 않았어요. 다시 만들어 주세요. (그림 크레딧은 쓰지 않았어요)"
+# ---------- 문구 규칙에 걸려 멈춤 (2026-10-27 유진 요청) ----------
+# 포스터 제목이 길거나(긴 제목은 그림에서 글자가 깨짐) 그림 글자에 한글·한자가 섞이면 그림을 만들기 전에 멈춥니다.
+# routes_media.py design-assistant는 이 오류일 때만 RULE_RETRY_NOTE를 덧붙여 한 번 다시 요청하고, 또 걸리면 이유를 보여 줍니다.
+POSTER_HEADLINE_WORDS = 7  # 포스터 제목 최대 음절 수 (베트남어는 띄어 쓴 한 덩어리가 1음절, 2~5음절 권장)
+POSTER_HEADLINE_ERROR = (f"AI가 포스터 제목을 {POSTER_HEADLINE_WORDS}음절보다 길게 써서 적용하지 않았어요. "
+                         "다시 만들어 주세요. (그림 크레딧은 쓰지 않았어요)")
+RULE_RETRY_NOTE = (f"\n\n[다시 요청 - 지난 답이 규칙에 걸렸다] 포스터 제목(texts의 첫 번째)은 {POSTER_HEADLINE_WORDS}음절 이내, "
+                   "그림에 넣는 글자(vi)와 prompt_en 속 글자는 베트남어만 쓴다. 한글·한자는 ko에만.")
 
 
-def poster_layouts(layout=""):
-    """시안 3개의 레이아웃 순서: ""면 A·B·C 하나씩, "A"|"B"|"C"면 그 레이아웃으로 3안."""
-    return [layout] * 3 if layout else list(POSTER_LAYOUTS)
-
-
-def poster_copy_schema():
-    """포스터 시안 3개 × 문구 칸(_vi · _ko). 배지·글자 없는 포스터 때문에 문구 칸은 빈 값을 허용합니다."""
-    def obj(properties):
-        return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
-
-    def string(limit, empty=False):
-        return {"type": "string", "minLength": 0 if empty else 1, "maxLength": limit}
-
-    fields = {}
-    for key in POSTER_COPY_KEYS:
-        fields[f"{key}_vi"] = string(POSTER_TEXT_MAX, empty=True)
-        fields[f"{key}_ko"] = string(160, empty=True)
-    proposal = obj({"name": string(80), "concept_ko": string(300), **fields})
-    return obj({"proposals": {"type": "array", "minItems": 3, "maxItems": 3, "items": proposal}})
-
-
-def finish_poster_copy(proposals, layouts):
-    """검사를 마친 포스터 문구 → 시안 [{name, concept_ko, layout, style_label, texts, pages: [{prompt_en: "", texts}]}].
-    texts는 유진 design-images API에 그대로 보내는 {badge_vi, eyebrow_vi, headline_vi, sub_vi},
-    pages[0].texts는 화면·검수용 [{vi, ko}] (빈 칸 제외). 프롬프트 전문은 생성 응답(prompts)으로 채웁니다.
-    한글·한자가 섞이거나 제목이 3단어를 넘으면 ValueError (그림을 만들기 전에 멈춤)."""
-    finished = []
-    for item, layout in zip(proposals, layouts):
-        vi = {key: " ".join(item[f"{key}_vi"].split()) for key in POSTER_COPY_KEYS}
-        ko = {key: " ".join(item[f"{key}_ko"].split()) for key in POSTER_COPY_KEYS}
-        if any(FOREIGN_SCRIPT_RE.search(value) for value in vi.values()):
-            raise ValueError(VIETNAMESE_ONLY_ERROR)
-        if len(vi["headline"].split()) > POSTER_HEADLINE_WORDS:
-            raise ValueError(POSTER_HEADLINE_ERROR)
-        if not vi["headline"]:  # 글자 없는 포스터: 다른 칸도 비웁니다 (템플릿이 제목이 없으면 글자를 넣지 않음)
-            vi = dict.fromkeys(POSTER_COPY_KEYS, "")
-        vi["eyebrow"] = vi["eyebrow"].upper()
-        label = f"레이아웃 {layout} · {POSTER_LAYOUTS[layout]}"
-        finished.append({"name": item["name"], "concept_ko": item["concept_ko"], "layout": layout, "style_label": label,
-                         "texts": {f"{key}_vi": vi[key] for key in POSTER_COPY_KEYS},
-                         "pages": [{"prompt_en": "", "texts": [{"vi": vi[key], "ko": ko[key]}
-                                                               for key in POSTER_COPY_KEYS if vi[key]]}]})
-    return finished
+class CopyRuleError(ValueError):
+    """그림 글자 규칙(베트남어만 · 포스터 제목 길이)에 걸림 — 문장은 화면에 그대로 보여 줄 안내."""
 
 
 def image_proposal_schema(count):
@@ -1004,10 +953,11 @@ def image_proposal_schema(count):
     return obj({"proposals": {"type": "array", "minItems": 3, "maxItems": 3, "items": proposal}})
 
 
-def finish_image_proposals(proposals):
+def finish_image_proposals(proposals, kind="cardnews"):
     """검사를 마친 시안에 스타일 이름을 붙이고, 넣을 문구가 프롬프트에 그대로 들어 있게 맞춥니다.
     (검수는 texts 원문으로 하므로, 프롬프트에 빠진 문구는 끝에 정확한 글자로 붙입니다)
-    그림 속 글자는 베트남어만: 넣을 문구나 프롬프트에 한글·한자가 있으면 ValueError (그림을 만들기 전에 멈춤),
+    그림 속 글자는 베트남어만: 넣을 문구나 프롬프트에 한글·한자가 있으면 CopyRuleError (그림을 만들기 전에 멈춤),
+    포스터는 제목(texts 첫 번째)이 POSTER_HEADLINE_WORDS음절을 넘어도 CopyRuleError.
     모든 장 프롬프트 끝에 다른 글자를 넣지 말라는 줄을 붙입니다."""
     finished = []
     for item in proposals:
@@ -1015,7 +965,9 @@ def finish_image_proposals(proposals):
         for page in item["pages"]:
             prompt = page["prompt_en"].strip()
             if FOREIGN_SCRIPT_RE.search(prompt) or any(FOREIGN_SCRIPT_RE.search(text["vi"]) for text in page["texts"]):
-                raise ValueError(VIETNAMESE_ONLY_ERROR)
+                raise CopyRuleError(VIETNAMESE_ONLY_ERROR)
+            if kind == "poster" and len(page["texts"][0]["vi"].split()) > POSTER_HEADLINE_WORDS:
+                raise CopyRuleError(POSTER_HEADLINE_ERROR)
             missing = [text["vi"] for text in page["texts"] if text["vi"] not in prompt]
             if missing:
                 prompt += " Render this exact Vietnamese text with correct tone marks: " + "; ".join(f'"{vi}"' for vi in missing) + "."
