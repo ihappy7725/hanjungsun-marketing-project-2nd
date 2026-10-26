@@ -107,8 +107,7 @@ function validStore(s) {
 if (typeof document !== 'undefined') initialize();
 function setupPanelResize(root) {
   const side = root.querySelector('.home-side-panels');
-  const reset = root.querySelector('#reset-panel-sizes');
-  if (!side || !reset) return;
+  if (!side) return;
   const panels = [...side.children];
   // 브라우저의 크기 조절 손잡이는 inline 높이를 바꿉니다. 해당 행만 고정하고 나머지 공간을 나눕니다.
   const updateRows = () => {
@@ -121,13 +120,6 @@ function setupPanelResize(root) {
   };
   const observer = new MutationObserver(updateRows);
   panels.forEach(panel => observer.observe(panel, { attributes: true, attributeFilter: ['style'] }));
-  reset.onclick = () => {
-    root.querySelectorAll('.home-resizable').forEach(panel => {
-      panel.style.removeProperty('width');
-      panel.style.removeProperty('height');
-    });
-    updateRows();
-  };
 }
 async function initialize() {
   const root = document.querySelector('.home-page');
@@ -415,7 +407,7 @@ async function initialize() {
       const left = [addDays(dated[0].due_date, -3), ...starts].sort()[0], right = addDays(dated[dated.length - 1].due_date, 3), span = Math.max(1, dayDiff(right, left));
       const position = date => Math.max(0, Math.min(100, dayDiff(date, left) / span * 100));
       const todayLine = today >= left && today <= right ? `<span class="home-gantt-today" style="left:${position(today)}%" title="업무 기준일 ${today}"></span>` : '';
-      $('#gantt').innerHTML = `<div class="home-gantt"><div class="home-gantt-row"><span class="home-gantt-label">마케팅 업무</span><div class="home-gantt-axis">${[0, .5, 1].map(n => `<span>${shortDate(addDays(left, Math.round(span * n)))}</span>`).join('')}</div><span class="home-gantt-label">마감·상태</span></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${ganttTone(t, starts[i], today)}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div><span class="home-gantt-label">${shortDate(t.due_date)}<br>${TASK_STATES[t.status]}${unfinished(t) && t.due_date < today ? '<span class="home-gantt-overdue">기한 초과</span>' : ''}</span></div>`).join('')}</div>`;
+      $('#gantt').innerHTML = `<div class="home-gantt"><div class="home-gantt-row home-gantt-head"><span class="home-gantt-label">마케팅 업무</span><span class="home-gantt-label" title="시작일이 없으면 앞 업무 마감일을 기준으로 표시합니다.">시작 기준</span><span class="home-gantt-label">마감일</span><span class="home-gantt-label">상태</span><div class="home-gantt-axis">${[0, .25, .5, .75, 1].map(n => `<span>${shortDate(addDays(left, Math.round(span * n)))}</span>`).join('')}</div></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><time class="home-gantt-label" datetime="${esc(starts[i])}">${shortDate(starts[i])}</time><time class="home-gantt-label" datetime="${esc(t.due_date)}">${shortDate(t.due_date)}</time><span class="home-gantt-label">${TASK_STATES[t.status]}${unfinished(t) && t.due_date < today ? '<span class="home-gantt-overdue">기한 초과</span>' : ''}</span><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${ganttTone(t, starts[i], today)}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div></div>`).join('')}</div>`;
     } else $('#gantt').innerHTML = empty('날짜가 있는 업무를 등록하면 일정이 표시됩니다.');
   }
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
@@ -768,6 +760,8 @@ async function initialize() {
     const token = ++searchNumber;
     newsError('');
     const results = $('#news-search-list');
+    results.closest('.is-search').classList.remove('is-idle');
+    $('#news-search-hint').hidden = true;
     results.setAttribute('aria-busy', 'true');
     results.innerHTML = '<div class="home-news-loading" role="status"><span class="home-spinner" aria-hidden="true"></span><div><strong>뉴스를 불러오고 있습니다</strong><p>' + (translateOn ? '기사 검색과 제목 번역을 진행하고 있습니다.' : '관련 기사 목록을 확인하고 있습니다.') + '</p></div></div>';
     $('#news-search-form button[type="submit"]').disabled = true;
@@ -834,7 +828,6 @@ async function initialize() {
       if (button) searchNews({ preset: button.dataset.preset });
     };
     newsForm.onsubmit = event => { event.preventDefault(); searchNews({ q: $('#news-query').value }); };
-    $('#news-search-list').innerHTML = empty('검색 항목을 고르거나 검색어를 입력하면 현지 기사를 찾아봅니다.');
     (async () => {
       try {
         const response = await fetch(newsForm.dataset.presetsUrl);
