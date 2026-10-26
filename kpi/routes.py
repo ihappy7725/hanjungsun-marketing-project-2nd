@@ -44,8 +44,12 @@ DEMO_CHANNELS = [
 
 # GA4 시연 값. kpi/data/ga4_demo.csv(GA4 공식 데모 계정 내보내기)가 있으면 세션·참여 세션은 그 파일 값을 씁니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
-DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_clicks": 1_540, "pamphlet_sessions": 1_180}
+# 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
+# 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
+DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
 GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
+# 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
+SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
 DEMO_CREATORS = [
     {"creator": "@danang.foodie", "platform": "TikTok", "clicks": 3_120, "conversions": 248},
@@ -62,65 +66,181 @@ KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "기타")
 DEMO_REVIEWS = [
     {"review_id": "demo_voc_01", "platform": "Shopee_VN",
      "raw_text_vn": "Bánh mochi dâu rất tươi, vị ngọt vừa phải, cả nhà đều thích.",
-     "translated_kr": "딸기 찹쌀떡이 아주 신선하고 단맛이 적당해서 가족 모두 좋아해요.",
+     "translated_kr": "딸기 찹쌀떡 처음 사 봤는데 딸기가 진짜 신선하더라고요! 단맛도 과하지 않아서 온 가족이 다 잘 먹었어요.",
      "sentiment": "Positive", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_02", "platform": "Shopee_VN",
      "raw_text_vn": "Trời nóng quá nên trên đường mua về nhà phần kem bên trong hơi bị chảy.",
-     "translated_kr": "날씨가 너무 더워서 사서 집에 오는 동안 안쪽 크림이 조금 녹았어요.",
+     "translated_kr": "날씨가 너무 더워서 그런지 사 들고 집에 오는 길에 안에 크림이 살짝 녹았더라고요..",
      "sentiment": "Negative", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_03", "platform": "Instagram",
      "raw_text_vn": "Hộp quà gói bằng vải bojagi nhìn sang trọng, rất hợp để biếu tặng.",
-     "translated_kr": "보자기로 싼 선물 상자가 고급스러워 보여서 선물하기 딱 좋아요.",
+     "translated_kr": "보자기로 싸 주신 선물 상자가 고급스러워 보여서 선물용으로 딱이에요!",
      "sentiment": "Positive", "keyword_tag": "선물용"},
     {"review_id": "demo_voc_04", "platform": "TikTok",
      "raw_text_vn": "Giá hơi cao so với bánh mochi bình thường, nhưng chất lượng tốt.",
-     "translated_kr": "일반 찹쌀떡보다 가격이 조금 비싸지만 품질은 좋아요.",
+     "translated_kr": "일반 찹쌀떡보다 가격이 좀 있는 편이긴 한데.. 먹어 보니 품질은 확실히 좋네요.",
      "sentiment": "Neutral", "keyword_tag": "가격"},
     {"review_id": "demo_voc_05", "platform": "Shopee_VN",
      "raw_text_vn": "Vỏ bánh dẻo mềm, nhân xoài thơm, sẽ mua lại.",
-     "translated_kr": "떡피가 쫀득하고 부드럽고 망고 소가 향긋해요. 재구매할게요.",
+     "translated_kr": "떡이 쫀득하면서도 부드럽고 망고 소가 향긋해서 계속 생각나요. 재구매 의사 있습니다!",
      "sentiment": "Positive", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_06", "platform": "Instagram",
      "raw_text_vn": "Mua ở cửa hàng nhưng không có túi giữ lạnh, cầm về một tiếng là bánh bị mềm nhũn.",
-     "translated_kr": "매장에서 샀는데 보냉백이 없어서 1시간 들고 오니 떡이 너무 물러졌어요.",
+     "translated_kr": "매장에서 샀는데 보냉백이 없어서 한 시간쯤 들고 왔더니 떡이 완전 흐물흐물해졌어요ㅠ",
      "sentiment": "Negative", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_07", "platform": "TikTok",
      "raw_text_vn": "Mình mua làm quà Tết cho sếp, ai cũng khen đẹp.",
-     "translated_kr": "상사에게 뗏(설) 선물로 샀는데 다들 예쁘다고 칭찬했어요.",
+     "translated_kr": "뗏(설) 선물로 상사분께 드리려고 샀는데 보는 사람마다 예쁘다고 칭찬하더라고요.",
      "sentiment": "Positive", "keyword_tag": "선물용"},
     {"review_id": "demo_voc_08", "platform": "Shopee_VN",
      "raw_text_vn": "Vị sầu riêng hơi gắt, không hợp khẩu vị của mình.",
-     "translated_kr": "두리안 맛이 좀 강해서 제 입맛에는 안 맞았어요.",
+     "translated_kr": "두리안 맛은 향이 생각보다 강하더라고요.. 제 입맛에는 좀 안 맞았어요.",
      "sentiment": "Negative", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_09", "platform": "Instagram",
      "raw_text_vn": "Bánh ăn được, không có gì đặc biệt lắm.",
-     "translated_kr": "먹을 만하지만 특별한 건 없어요.",
+     "translated_kr": "무난하게 먹을 만했어요. 특별히 기억에 남는 맛은 아니었네요.",
      "sentiment": "Neutral", "keyword_tag": "당도/맛"},
     {"review_id": "demo_voc_10", "platform": "TikTok",
      "raw_text_vn": "Mong có hộp nhỏ 4 cái để giá mềm hơn.",
-     "translated_kr": "4개짜리 작은 상자가 나와서 가격이 좀 더 부담 없었으면 좋겠어요.",
+     "translated_kr": "4개짜리 작은 박스도 나오면 좋겠어요. 그러면 가격 부담이 좀 덜할 것 같아요.",
      "sentiment": "Neutral", "keyword_tag": "가격"},
     # Zalo_OA: 제품 팜플렛 QR → 한정선 Zalo 공식 계정 1:1 문의 (한국 본사 카카오톡 채널 CS의 베트남 현지화)
     {"review_id": "demo_voc_11", "platform": "Zalo_OA",
      "raw_text_vn": "Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",
-     "translated_kr": "보냉 상자가 좋아서 다낭 집에 도착했을 때도 떡이 말랑했어요.",
+     "translated_kr": "보냉 박스가 좋아서 다낭 집까지 들고 왔는데도 떡이 말랑말랑했어요!",
      "sentiment": "Positive", "keyword_tag": "포장/보냉"},
     {"review_id": "demo_voc_12", "platform": "Zalo_OA",
      "raw_text_vn": "Cho mình hỏi bánh để tủ lạnh được mấy ngày?",
-     "translated_kr": "냉장고에 며칠 보관할 수 있나요?",
+     "translated_kr": "혹시 냉장고에 넣어 두면 며칠까지 괜찮을까요?",
      "sentiment": "Neutral", "keyword_tag": "기타"},
     {"review_id": "demo_voc_13", "platform": "Zalo_OA",
      "raw_text_vn": "Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",
-     "translated_kr": "매장에서 받을 때 상자 한쪽이 찌그러져 있었어요. 포장을 더 꼼꼼히 해 주세요.",
+     "translated_kr": "매장에서 받았을 때 상자 한쪽이 찌그러져 있었어요.. 포장 조금만 더 꼼꼼히 해 주시면 좋겠어요.",
      "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    # Shopee 판매 페이지 리뷰
+    {"review_id": "demo_voc_14", "platform": "Shopee_VN",
+     "raw_text_vn": "Mua vị khoai môn, béo bùi mà không ngấy. Rất ngon!",
+     "translated_kr": "토란 맛 샀는데 고소하면서도 안 느끼해요. 진짜 맛있어요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_15", "platform": "Shopee_VN",
+     "raw_text_vn": "Hộp có đá khô, mang đi xa vẫn lạnh, bánh không bị chảy.",
+     "translated_kr": "드라이아이스를 넣어 주셔서 멀리 들고 가도 차갑고 하나도 안 녹았어요.",
+     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_16", "platform": "Shopee_VN",
+     "raw_text_vn": "Túi giữ lạnh hơi mỏng, trời 35 độ cầm 30 phút là bánh mềm.",
+     "translated_kr": "보냉백이 좀 얇아요. 35도 날씨에 30분 들고 다녔더니 떡이 물러졌어요ㅠ",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_17", "platform": "Shopee_VN",
+     "raw_text_vn": "Bánh ngon nhưng mua 6 cái hơn 300 nghìn thì hơi xót.",
+     "translated_kr": "맛은 있는데 6개에 30만 동 넘으니까 좀 아깝긴 하네요..",
+     "sentiment": "Neutral", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_18", "platform": "Shopee_VN",
+     "raw_text_vn": "Vỏ mochi dẻo, nhân kem phô mai mặn ngọt rất cuốn.",
+     "translated_kr": "떡이 쫀득하고 크림치즈 소가 단짠이라 계속 들어가요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_19", "platform": "Shopee_VN",
+     "raw_text_vn": "Đặt làm quà sinh nhật cho mẹ, mẹ khen hộp đẹp và bánh ngon.",
+     "translated_kr": "엄마 생신 선물로 샀는데 상자도 예쁘고 맛있다고 좋아하셨어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_20", "platform": "Shopee_VN",
+     "raw_text_vn": "Vị dâu lần này hơi chua, không ngọt như lần trước.",
+     "translated_kr": "이번 딸기 맛은 좀 시더라고요. 지난번만큼 달지 않았어요..",
+     "sentiment": "Negative", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_21", "platform": "Shopee_VN",
+     "raw_text_vn": "Hạn sử dụng ghi rõ, có hướng dẫn bảo quản bằng tiếng Việt, rất tiện.",
+     "translated_kr": "유통기한이 잘 적혀 있고 베트남어 보관 안내도 있어서 편했어요.",
+     "sentiment": "Positive", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_22", "platform": "Shopee_VN",
+     "raw_text_vn": "Ăn ổn, nhưng mình thích bánh truyền thống của Việt Nam hơn.",
+     "translated_kr": "먹을 만은 한데 저는 베트남 전통 떡이 더 입에 맞네요.",
+     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_23", "platform": "Shopee_VN",
+     "raw_text_vn": "Mua combo 2 hộp được giảm giá, quá hời.",
+     "translated_kr": "두 박스 묶음으로 사니까 할인돼서 완전 이득이었어요.",
+     "sentiment": "Positive", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_24", "platform": "Shopee_VN",
+     "raw_text_vn": "Giá tăng so với tháng trước mà hộp lại ít bánh hơn.",
+     "translated_kr": "지난달보다 가격은 올랐는데 개수는 줄었어요..",
+     "sentiment": "Negative", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_25", "platform": "Shopee_VN",
+     "raw_text_vn": "Con mình 5 tuổi rất thích vị chuối, ngày nào cũng đòi.",
+     "translated_kr": "다섯 살 아이가 바나나 맛을 너무 좋아해서 매일 달라고 해요ㅋㅋ",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    # Instagram 게시물 댓글
+    {"review_id": "demo_voc_26", "platform": "Instagram",
+     "raw_text_vn": "Hộp quà màu pastel lên hình rất xinh, chụp story ai cũng hỏi mua ở đâu.",
+     "translated_kr": "파스텔 톤 선물 상자가 사진이 너무 예쁘게 나와서 스토리 올렸더니 다들 어디서 샀냐고 물어봐요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_27", "platform": "Instagram",
+     "raw_text_vn": "Lần đầu ăn mochi Hàn Quốc, nhân đậu đỏ không quá ngọt, rất thích.",
+     "translated_kr": "한국 찹쌀떡 처음 먹어 봤는데 팥소가 너무 달지 않아서 좋았어요.",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_28", "platform": "Instagram",
+     "raw_text_vn": "Hộp đẹp nhưng hơi to, mang theo không tiện lắm.",
+     "translated_kr": "상자는 예쁜데 좀 커서 들고 다니기엔 불편했어요.",
+     "sentiment": "Neutral", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_29", "platform": "Instagram",
+     "raw_text_vn": "Cửa hàng ở Quận 1 đông quá, xếp hàng gần 20 phút.",
+     "translated_kr": "1군 매장 사람이 너무 많아서 20분 가까이 줄 섰어요.",
+     "sentiment": "Negative", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_30", "platform": "Instagram",
+     "raw_text_vn": "Bánh gói từng cái riêng, mang đi làm ăn rất tiện.",
+     "translated_kr": "하나씩 개별 포장이라 회사에 가져가서 먹기 편해요.",
+     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_31", "platform": "Instagram",
+     "raw_text_vn": "Mua làm quà Trung thu thay bánh nướng, khách hàng rất thích.",
+     "translated_kr": "추석(쭝투) 선물로 월병 대신 드렸는데 거래처분들이 정말 좋아하셨어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_32", "platform": "Instagram",
+     "raw_text_vn": "Bánh ngon, chỉ mong có thêm nhiều vị với giá mềm hơn.",
+     "translated_kr": "맛있어요. 다만 맛 종류가 더 많아지고 가격이 조금 내려가면 좋겠어요.",
+     "sentiment": "Neutral", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_33", "platform": "Instagram",
+     "raw_text_vn": "Nhân viên cửa hàng giới thiệu từng vị rất dễ thương.",
+     "translated_kr": "매장 직원분이 맛마다 하나하나 친절하게 설명해 주셔서 좋았어요.",
+     "sentiment": "Positive", "keyword_tag": "기타"},
+    # TikTok 영상 댓글
+    {"review_id": "demo_voc_34", "platform": "TikTok",
+     "raw_text_vn": "Xem review trên TikTok nên mua thử, ăn đúng là ngon thật.",
+     "translated_kr": "틱톡 리뷰 보고 사 봤는데 진짜 맛있네요.",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_35", "platform": "TikTok",
+     "raw_text_vn": "Mở hộp ra thấy bánh bị dính vào nhau, nhìn không đẹp.",
+     "translated_kr": "상자를 열어 보니 떡끼리 달라붙어 있어서 모양이 별로였어요.",
+     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
+    {"review_id": "demo_voc_36", "platform": "TikTok",
+     "raw_text_vn": "Vị xoài siêu thơm, ăn lạnh như kem luôn.",
+     "translated_kr": "망고 맛 진짜 향긋하고 차갑게 먹으니까 아이스크림 같아요!",
+     "sentiment": "Positive", "keyword_tag": "당도/맛"},
+    {"review_id": "demo_voc_37", "platform": "TikTok",
+     "raw_text_vn": "Bánh để được mấy ngày vậy shop? Mình mua nhiều sợ ăn không kịp.",
+     "translated_kr": "며칠까지 보관할 수 있나요? 많이 샀는데 다 못 먹을까 봐 걱정이에요.",
+     "sentiment": "Neutral", "keyword_tag": "기타"},
+    {"review_id": "demo_voc_38", "platform": "TikTok",
+     "raw_text_vn": "Giá trên TikTok Shop với ở cửa hàng khác nhau, hơi khó hiểu.",
+     "translated_kr": "틱톡샵 가격이랑 매장 가격이 달라서 좀 헷갈려요.",
+     "sentiment": "Negative", "keyword_tag": "가격"},
+    {"review_id": "demo_voc_39", "platform": "TikTok",
+     "raw_text_vn": "Mua tặng bạn gái dịp 20/10, bạn ấy rất vui.",
+     "translated_kr": "10월 20일 여성의 날에 여자친구 선물로 줬는데 엄청 좋아했어요.",
+     "sentiment": "Positive", "keyword_tag": "선물용"},
+    {"review_id": "demo_voc_40", "platform": "TikTok",
+     "raw_text_vn": "Vị gốc ngon, còn vị sầu riêng thì tùy người.",
+     "translated_kr": "기본 맛은 맛있고 두리안 맛은 호불호가 있을 것 같아요.",
+     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
 ]
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
 DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_responses": 186}
+# 응답자 186명이 문항마다 1~5점 중 하나를 고른 인원 수(dist = [1점, 2점, 3점, 4점, 5점]).
+# 평균·긍정 비율은 이 분포에서 계산합니다(_survey_block).
 DEMO_SURVEY = [
-    {"item": "맛", "score": 4.5},
-    {"item": "포장", "score": 3.6},
-    {"item": "매장 응대", "score": 3.8},
+    {"item": "맛", "dist": [2, 3, 12, 55, 114]},
+    {"item": "식감", "dist": [3, 5, 18, 68, 92]},
+    {"item": "포장/보냉", "dist": [6, 14, 41, 72, 53]},
+    {"item": "가격", "dist": [9, 21, 58, 61, 37]},
+    {"item": "매장 응대", "dist": [4, 9, 38, 79, 56]},
+    {"item": "재구매 의향", "dist": [5, 8, 27, 63, 83]},
 ]
 
 FX_STALE_DAYS = 7  # 환율 기준일이 이보다 오래되면 화면에 주의 표시
@@ -156,7 +276,8 @@ ECOS_LOOKBACK_DAYS = 14  # 주말·공휴일이면 직전 영업일 값을 씁�
 FALLBACK_FX_URL = "https://open.er-api.com/v6/latest/VND"
 FX_CACHE_SECONDS = 60 * 60
 _fx_cache = {"fetched_at": 0.0, "data": None}
-_ecos_item_cache = {"item": None}
+_usd_cache = {"fetched_at": 0.0, "data": None}
+_ecos_item_cache = {}  # 찾는 말("베트남", "미국달러") → ECOS 항목
 
 
 def _get_json(url, timeout=8):
@@ -174,23 +295,43 @@ def _ecos_rows(payload, service):
     raise ValueError(result.get("CODE") or "ECOS_UNKNOWN")
 
 
-def _find_ecos_vnd_item(api_key):
-    if _ecos_item_cache["item"]:
-        return _ecos_item_cache["item"]
+def _find_ecos_item(api_key, keyword, prefer="매매기준율"):
+    """ECOS 일별 환율 통계표에서 이름에 keyword가 들어간 항목을 찾습니다. 여러 개면 prefer가 들어간 항목."""
+    if keyword in _ecos_item_cache:
+        return _ecos_item_cache[keyword]
     for stat_code in ECOS_STAT_CODES:
         url = f"{ECOS_BASE}/StatisticItemList/{api_key}/json/kr/1/500/{stat_code}"
-        for row in _ecos_rows(_get_json(url), "StatisticItemList"):
-            if "베트남" in (row.get("ITEM_NAME") or "") and (row.get("CYCLE") or "D") == "D":
-                item = {
-                    "stat_code": stat_code,
-                    "stat_name": row.get("STAT_NAME") or "",
-                    "item_code": row.get("ITEM_CODE"),
-                    "item_name": row.get("ITEM_NAME") or "",
-                    "unit_name": row.get("UNIT_NAME") or "",
-                }
-                _ecos_item_cache["item"] = item
-                return item
-    raise LookupError("ECOS_VND_ITEM_NOT_FOUND")
+        matches = [
+            row for row in _ecos_rows(_get_json(url), "StatisticItemList")
+            if keyword in (row.get("ITEM_NAME") or "") and (row.get("CYCLE") or "D") == "D"
+        ]
+        if matches:
+            row = next((r for r in matches if prefer in (r.get("ITEM_NAME") or "")), matches[0])
+            item = {
+                "stat_code": stat_code,
+                "stat_name": row.get("STAT_NAME") or "",
+                "item_code": row.get("ITEM_CODE"),
+                "item_name": row.get("ITEM_NAME") or "",
+                "unit_name": row.get("UNIT_NAME") or "",
+            }
+            _ecos_item_cache[keyword] = item
+            return item
+    raise LookupError("ECOS_VND_ITEM_NOT_FOUND" if keyword == "베트남" else "ECOS_USD_ITEM_NOT_FOUND")
+
+
+def _ecos_latest(api_key, item):
+    """최근 ECOS_LOOKBACK_DAYS일 중 가장 최근 고시값 (값, 'YYYYMMDD')."""
+    end = time.localtime()
+    start = time.localtime(time.time() - ECOS_LOOKBACK_DAYS * 86400)
+    url = (
+        f"{ECOS_BASE}/StatisticSearch/{api_key}/json/kr/1/100/{item['stat_code']}/D/"
+        f"{time.strftime('%Y%m%d', start)}/{time.strftime('%Y%m%d', end)}/{item['item_code']}"
+    )
+    rows = [r for r in _ecos_rows(_get_json(url), "StatisticSearch") if r.get("DATA_VALUE") not in (None, "", "-")]
+    if not rows:
+        raise LookupError("ECOS_NO_RECENT_DATA")
+    latest = max(rows, key=lambda r: r.get("TIME") or "")
+    return float(str(latest["DATA_VALUE"]).replace(",", "")), latest["TIME"]
 
 
 def _to_rate_per_100_vnd(value, item):
@@ -202,21 +343,11 @@ def _to_rate_per_100_vnd(value, item):
 
 
 def _fetch_ecos_rate(api_key):
-    item = _find_ecos_vnd_item(api_key)
-    end = time.localtime()
-    start = time.localtime(time.time() - ECOS_LOOKBACK_DAYS * 86400)
-    url = (
-        f"{ECOS_BASE}/StatisticSearch/{api_key}/json/kr/1/100/{item['stat_code']}/D/"
-        f"{time.strftime('%Y%m%d', start)}/{time.strftime('%Y%m%d', end)}/{item['item_code']}"
-    )
-    rows = [r for r in _ecos_rows(_get_json(url), "StatisticSearch") if r.get("DATA_VALUE") not in (None, "", "-")]
-    if not rows:
-        raise LookupError("ECOS_NO_RECENT_DATA")
-    latest = max(rows, key=lambda r: r.get("TIME") or "")
-    day = latest["TIME"]
+    item = _find_ecos_item(api_key, "베트남")
+    value, day = _ecos_latest(api_key, item)
     return {
         "ok": True,
-        "rate_per_100_vnd": _to_rate_per_100_vnd(float(latest["DATA_VALUE"]), item),
+        "rate_per_100_vnd": _to_rate_per_100_vnd(value, item),
         "updated_at": f"{day[:4]}-{day[4:6]}-{day[6:8]} 고시",
         "as_of": f"{day[:4]}-{day[4:6]}-{day[6:8]}",
         "source": "한국은행 ECOS",
@@ -258,15 +389,50 @@ def _fetch_exchange_rate():
     else:
         try:
             data = _fetch_ecos_rate(api_key)
-        except urllib.error.HTTPError as exc:
-            data = _fetch_fallback_rate(f"ECOS 호출 실패(HTTP {exc.code})로 대체 출처를 씁니다.")
-        except (urllib.error.URLError, TimeoutError) as exc:
-            data = _fetch_fallback_rate(f"ECOS 서버에 연결하지 못해({exc.__class__.__name__}) 대체 출처를 씁니다.")
-        except (ValueError, LookupError, KeyError, TypeError) as exc:
-            code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
-            data = _fetch_fallback_rate(f"ECOS 응답 오류({code})로 대체 출처를 씁니다.")
+        except ECOS_ERRORS as exc:
+            data = _fetch_fallback_rate(_ecos_error_reason(exc))
     if data.get("ok"):
         _fx_cache.update(fetched_at=now, data=data)
+    return data
+
+
+ECOS_ERRORS = (urllib.error.URLError, TimeoutError, ValueError, LookupError, KeyError, TypeError)
+
+
+def _ecos_error_reason(exc):
+    """ECOS 실패 이유 (키가 든 주소·예외 메시지는 넣지 않습니다)."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return f"ECOS 호출 실패(HTTP {exc.code})로 대체 출처를 씁니다."
+    if isinstance(exc, (urllib.error.URLError, TimeoutError)):
+        return f"ECOS 서버에 연결하지 못해({exc.__class__.__name__}) 대체 출처를 씁니다."
+    code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
+    return f"ECOS 응답 오류({code})로 대체 출처를 씁니다."
+
+
+def _fetch_usd_rate():
+    """원/미국달러 고시 환율(1달러당 원). ROAS 블록 달러 표시용 — 공식 계산에는 쓰지 않습니다."""
+    now = time.time()
+    if _usd_cache["data"] and now - _usd_cache["fetched_at"] < FX_CACHE_SECONDS:
+        return _usd_cache["data"]
+    api_key = os.environ.get("ECOS_API_KEY", "").strip()
+    reason = "ECOS_API_KEY가 없어 대체 출처를 씁니다."
+    data = None
+    if api_key:
+        try:
+            item = _find_ecos_item(api_key, "미국달러")
+            value, day = _ecos_latest(api_key, item)
+            data = {"ok": True, "krw_per_usd": round(value, 2), "as_of": f"{day[:4]}-{day[4:6]}-{day[6:8]}",
+                    "source": "한국은행 ECOS", "is_fallback": False}
+        except ECOS_ERRORS as exc:
+            reason = _ecos_error_reason(exc)
+    if data is None:
+        try:
+            rates = _get_json(FALLBACK_FX_URL, timeout=5)["rates"]  # 1 VND 기준 → 1달러당 원 = KRW ÷ USD
+            data = {"ok": True, "krw_per_usd": round(float(rates["KRW"]) / float(rates["USD"]), 2), "as_of": None,
+                    "source": "open.er-api.com", "is_fallback": True, "note": reason}
+        except (urllib.error.URLError, TimeoutError, ValueError, KeyError, TypeError, ZeroDivisionError) as exc:
+            return {"ok": False, "error": f"달러 환율을 불러오지 못했습니다 ({exc.__class__.__name__})."}
+    _usd_cache.update(fetched_at=now, data=data)
     return data
 
 
@@ -337,6 +503,36 @@ def _simulator_influencers():
     if skipped:
         note += f" (VND 금액이 없는 {skipped}건 제외)"
     return {"status": status, "note": note, "options": options}
+
+
+def _simulator_influencer_list():
+    """인플루언서 탭 리스트(get_collaborations) — 단가가 없는 인플루언서도 계정 자동완성에 보여 주기 위함.
+
+    이름 · 대표 매체 · 팔로워 · 진행 상태만 씁니다(같은 이름은 한 번만). 실패하거나 비어 있으면 빈 목록이고,
+    그때 화면은 단가 목록(get_quote_summary 또는 시연 후보)만으로 동작합니다.
+    """
+    try:
+        from influencer_marketing.public import get_collaborations
+
+        rows = list(get_collaborations(include_demo=True) or [])
+    except Exception:  # 주인 탭 오류로 내 화면이 멈추지 않게 (README 10장)
+        return []
+    out, seen = [], set()
+    for r in rows:
+        r = r or {}
+        name = str(r.get("influencer") or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        followers = r.get("followers")
+        out.append({
+            "influencer": name,
+            "platform": r.get("main_platform") or "",
+            "followers": followers if isinstance(followers, int) else None,
+            "status_label": r.get("status_label") or "",
+            "is_demo": bool(r.get("is_demo")),
+        })
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -462,10 +658,10 @@ def _build_ga4():
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
     )
-    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다.
-    ga4["shopee_clicks"] = DEMO_GA4["shopee_clicks"]
-    ga4["shopee_ctr_percent"] = _pct(DEMO_GA4["shopee_clicks"], DEMO_GA4["sessions"])
-    ga4["pamphlet_sessions"] = DEMO_GA4["pamphlet_sessions"]
+    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다(시연 비율 × 같은 세션 수).
+    ga4["shopee_clicks"] = round(ga4["sessions"] * DEMO_GA4["shopee_click_rate"])
+    ga4["shopee_ctr_percent"] = _pct(ga4["shopee_clicks"], ga4["sessions"])
+    ga4["pamphlet_sessions"] = round(ga4["sessions"] * DEMO_GA4["pamphlet_share"])
     return ga4
 
 
@@ -566,6 +762,8 @@ def _build_summary():
         "channels": channels,
         "roas_bep_percent": ROAS_BEP_PERCENT,
         "fx": fx_block,
+        # ROAS 블록 통화 전환용: 원화 = 편성 기준 환율, 달러 = 그 원화 ÷ 현재 원/달러 고시 (A안)
+        "usd": _fetch_usd_rate(),
         "ga4": _build_ga4(),
         "creators": [
             {**c, "cvr_percent": _pct(c["conversions"], c["clicks"])} for c in DEMO_CREATORS
@@ -590,6 +788,62 @@ def _voc_stats(reviews):
     }
 
 
+def _read_survey_comments(path=SURVEY_COMMENTS_CSV):
+    """QR 설문 주관식 한 줄 의견(응답자 1명당 1줄)을 읽습니다. '#'로 시작하는 줄은 설명입니다.
+
+    시연 데이터는 응답자의 문항 점수와 맞게 작성했고(scores 열), 감성은 6문항 평균
+    4점 이상 Positive / 3점 이상 Neutral / 3점 미만 Negative 입니다. 파일이 없으면 빈 목록.
+    """
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = [line for line in f if not line.startswith("#")]
+    rows = []
+    for row in csv.DictReader(lines):
+        rows.append({
+            "review_id": row["review_id"],
+            "platform": row["platform"],
+            "raw_text_vn": row["raw_text_vn"],
+            "translated_kr": row["translated_kr"],
+            "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
+            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else "기타",
+        })
+    return rows
+
+
+def _survey_voc(comments):
+    """설문 의견을 VOC 감성 도넛·키워드에 더할 수 있게 셉니다."""
+    sentiment_counts = {s: 0 for s in SENTIMENTS}
+    keyword_counts = {}
+    for c in comments:
+        if c["sentiment"] in sentiment_counts:
+            sentiment_counts[c["sentiment"]] += 1
+        keyword_counts[c["keyword_tag"]] = keyword_counts.get(c["keyword_tag"], 0) + 1
+    return {"respondents": len(comments), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
+
+
+def _survey_block(survey):
+    """문항별 점수 분포(1~5점 인원)로 응답 수·평균·긍정(4~5점) 비율을 계산합니다."""
+    items = []
+    for s in survey:
+        dist = s["dist"]
+        n = sum(dist)
+        score_sum = sum((i + 1) * c for i, c in enumerate(dist))
+        items.append({
+            "item": s["item"],
+            "dist": dist,
+            "responses": n,
+            "avg": round(score_sum / n, 2) if n else None,
+            "top2_percent": _pct(dist[3] + dist[4], n),
+        })
+    scored = [x["avg"] for x in items if x["avg"] is not None]
+    return {
+        "items": items,
+        "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
+        "voc": _survey_voc(_read_survey_comments()),  # VOC 감성 도넛·키워드에 더하는 설문 의견 집계
+    }
+
+
 def _qr_block():
     q = DEMO_QR
     return {
@@ -597,7 +851,7 @@ def _qr_block():
         "scan_rate_percent": _pct(q["qr_scans"], q["pamphlets"]),
         "follow_rate_percent": _pct(q["zalo_follows"], q["qr_scans"]),
         "response_rate_percent": _pct(q["survey_responses"], q["qr_scans"]),
-        "survey": DEMO_SURVEY,
+        "survey": _survey_block(DEMO_SURVEY),
     }
 
 
@@ -611,12 +865,16 @@ _voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
 아래 JSON 배열은 베트남어 고객 리뷰입니다. 각 리뷰를 한국어로 자연스럽게 번역하고,
-감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어 한 문장으로 요약하세요.
+감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어로 짧게 요약하세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
 - keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
 - review_id는 입력 값을 그대로 사용
-- 과장하지 말고 리뷰에 있는 내용만 근거로 요약
+- translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
+  (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
+- summary_kr는 짧은 평서문 2문장 이하. 첫 문장은 가장 많이 나온 긍정 요인, 둘째 문장은 가장 많이 나온 불만 요인
+  각 문장은 40자 이내, "~입니다/~습니다"로 끝내고 쉼표로 여러 내용을 잇지 말 것
+  수식어·추측·과장 없이 리뷰에 있는 내용만 근거로 작성 (예: "맛과 식감에 대한 만족이 가장 많습니다. 포장 상태와 가격에 대한 불만이 있습니다.")
 
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],
@@ -711,6 +969,7 @@ def api_simulator():
         ],
         "ad_channels": [c["channel"] for c in DEMO_CHANNELS if c["channel"] != "Influencer"],
         "influencers": _simulator_influencers(),
+        "influencer_list": _simulator_influencer_list(),
     })
 
 
@@ -720,8 +979,12 @@ def api_voc():
         "is_demo": True,
         "reviews": DEMO_REVIEWS,
         **_voc_stats(DEMO_REVIEWS),
+        # 설문 의견은 AI 정제 대상이 아니라 데이터의 한국어를 그대로 씁니다(리뷰 목록에 함께 표시).
+        "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
         "ai": _voc_ai_cache["result"],
+        # 키가 있으면 화면이 처음 열릴 때 AI 정제를 한 번 자동 실행합니다(결과는 서버 메모리에 보관).
+        "ai_available": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
     })
 
 

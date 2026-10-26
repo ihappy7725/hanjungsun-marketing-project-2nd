@@ -37,7 +37,6 @@ BUDGETS = {"small": "작게(테스트)", "medium": "보통", "large": "크게"}
 MEMO_MAX = 200
 FRUIT_PICKS = 2
 MAX_OPINIONS = 4  # AI 종합 의견 최대 개수 (의견마다 근거 태그 2개 이상)
-CARD_KEYS = ("flavor", "price", "channel")
 LAUNCH_LEAD_MONTHS = 2  # 한정판은 검색 피크 2개월 전 출시
 
 DATA_LIMITS = [
@@ -241,7 +240,7 @@ SYSTEM_PROMPT = """너는 한정선(한국 찹쌀떡·모찌 브랜드) 베트�
 5. 모든 문장은 한국어 명사형 또는 짧은 평서문. 결론을 먼저 쓴다.
 6. 목표(goal)의 focus와 data를 결론·인사이트의 중심으로 삼는다. 선택한 채널만 channels에 쓴다.
 8. 근거가 있으면 판단과 추천을 분명하게 쓴다(무엇을 먼저, 무엇은 피할지). D- 태그(의사결정 카드 계산)를 적극 인용한다.
-9. card_opinions는 카드별 AI 의견 2~3문장: flavor=어떤 맛을 먼저·나중에, price=우리 가격을 어디에 둘지, channel=어떤 채널을 먼저.
+9. D- 카드에서 나온 판단(어떤 맛을 먼저, 가격을 어디에, 어떤 채널을 먼저)은 opinions에 쓴다.
 7. budget이 없으면 예산이 드는 방식에는 "예산 확인 필요"를 붙인다.
 JSON만 출력한다. 형식:
 {"conclusion": "다음 N개월 동안 가장 먼저 할 일 한 문장",
@@ -253,7 +252,6 @@ JSON만 출력한다. 형식:
  "positioning": {"text": "", "tags": []},
  "swot": {"S": [{"text": "", "tags": []}], "W": [...], "O": [...], "T": [{"text": "", "tags": [], "response": ""}]},
  "checks": [{"text": "", "tags": []}],
- "card_opinions": {"flavor": {"text": "", "tags": []}, "price": {"text": "", "tags": []}, "channel": {"text": "", "tags": []}},
  "opinions": [{"text": "", "tags": []}] (최대 4개, 의견마다 태그 2개 이상)}"""
 
 
@@ -343,9 +341,7 @@ def validate(raw, evidence, picks, months):
                  "O": check.facts(swot.get("O"), "text"),
                  "T": threats or [{"text": "근거 부족 · 위협 항목을 만들 데이터가 없음", "tags": [], "response": ""}]},
         "checks": check.facts(raw.get("checks"), "text"),
-        "opinions": check.facts(raw.get("opinions"), "text", min_tags=2, limit=MAX_OPINIONS),
-        "card_opinions": {key: (check.facts([value], "text") or [None])[0] for key, value in
-                          (raw.get("card_opinions") or {}).items() if key in CARD_KEYS and isinstance(value, dict)},
+        "opinions": check.facts(raw.get("opinions"), "text", min_tags=2, limit=MAX_OPINIONS)
     }
     for item in result["channels"]:
         item["tags"] = check.tags(item)

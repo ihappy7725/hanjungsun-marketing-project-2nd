@@ -111,6 +111,35 @@ class MetricSnapshot(db.Model):
                 "createdAt": self.created_at}
 
 
+# ---------------------------------------------------------------- 예전 로컬 DB 자동 보완
+# init-db(db.create_all)는 없는 표만 만들고, 이미 있는 표에 새 칸은 추가하지 않습니다.
+# 그래서 새 칸이 생긴 버전을 받은 팀원이 DB를 지우지 않아도 되도록, 빠진 칸만 골라 추가합니다(기존 데이터 유지).
+# 칸을 새로 만들면 여기에 (표 이름, 칸 이름, 칸 정의)를 한 줄 추가합니다.
+ADDED_COLUMNS = [
+    ("influencer_marketing_influencers", "segment", "VARCHAR(60) DEFAULT ''"),  # Ver_011A 타깃 그룹
+]
+
+
+def ensure_columns():
+    """빠진 칸을 추가하고, 추가한 칸 목록을 돌려줍니다. 표가 아직 없으면(init-db 전) 아무것도 하지 않습니다."""
+    from sqlalchemy import inspect, text
+    added = []
+    insp = inspect(db.engine)
+    for table, column, ddl in ADDED_COLUMNS:
+        if not insp.has_table(table):
+            continue
+        if column in {c["name"] for c in insp.get_columns(table)}:
+            continue
+        try:
+            with db.engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+            added.append(f"{table}.{column}")
+        except Exception as e:  # 동시에 두 요청이 추가한 경우 등: 이미 있으면 괜찮음
+            if "duplicate" not in str(e).lower():
+                raise
+    return added
+
+
 class Setting(db.Model):
     """캠페인 정보·환율 같은 설정값. key='campaign' 한 줄을 씁니다."""
 
