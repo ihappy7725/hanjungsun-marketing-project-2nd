@@ -329,7 +329,9 @@
 .home-page .home-resizable { box-sizing: border-box; resize: both; overflow: auto; width: 100%; max-width: 100%; min-width: min(260px, 100%); min-height: 240px; }
 .home-page .home-resizable::-webkit-resizer { background: linear-gradient(135deg, transparent 45%, var(--line-strong) 45%, var(--line-strong) 55%, transparent 55%, transparent 70%, var(--line-strong) 70%, var(--line-strong) 80%, transparent 80%); }
 .home-page .home-main-column > .home-card { flex: 0 0 auto; }
-.home-page .home-mainpanel { height: clamp(560px, 68vh, 780px); max-height: none; min-height: 420px; background: var(--page-bg); border-color: color-mix(in srgb, var(--teal) 28%, var(--line)); }
+.home-page .home-mainpanel { height: clamp(560px, 68vh, 780px); max-height: none; min-height: 420px; background: var(--white); }
+.home-page #calendar-panel { background: var(--page-bg); }
+.home-page #tab-calendar[aria-selected="true"] { background: var(--page-bg); border-bottom-color: var(--page-bg); }
 .home-page .home-calendar-body { background: var(--page-bg); }
 .home-page .home-day.is-today { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); }
 .home-page .home-resize-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
