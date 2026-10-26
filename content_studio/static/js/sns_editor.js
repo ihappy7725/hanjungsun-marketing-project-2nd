@@ -31,7 +31,8 @@ const BG_QUOTE_API = "/content_studio/media/api/design-bg/quote";  // AI 배경 
 const BG_API = "/content_studio/media/api/design-bg";              // AI 배경 그림 만들기 (유료, OpenAI 이미지 모델)
 const BG_ROLE = "background";  // designs.py BG_ROLE: 장 전체를 덮는 배경 그림. 고르거나 옮기지 않고 바탕처럼 둡니다.
 const RATIO_API = "/content_studio/media/api/design-ratio";        // 비율 바꾸기 (무료)
-const DESIGN_RATIOS = { poster: ["4:5", "3:4", "9:16", "1:1", "4:3", "16:9"], cardnews: ["4:5", "3:4", "1:1"] };  // designs.py DESIGN_RATIOS
+// designs.py DESIGN_RATIOS: 3:4 · 4:3 · 9:16 · 16:9 · 1:1 + 4:5(이미 만든 작업용)
+const DESIGN_RATIOS = { poster: ["3:4", "4:3", "9:16", "16:9", "1:1", "4:5"], cardnews: ["3:4", "4:3", "9:16", "16:9", "1:1", "4:5"] };
 const CARD_PAGES = [3, 6];  // 카드뉴스 장수 (designs.py MIN_PAGES, MAX_PAGES)
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
@@ -314,10 +315,12 @@ function fillUsage(node, data) {
 //   ④ [이 시안으로 확정] → onCreate(design, { product_id, product_ids }) (저장은 sns.js POST /api/chats, 실패하면 throw)
 // style: 스타일 버튼 값(designs.py STYLE_HINTS key, AI 추천은 ""). pages: 카드뉴스 장수(3~6).
 // productIds: 여러 제품(라인업). 유진 API가 product_id 하나만 받는 동안 첫 제품을 product_id로도 보냅니다.
+// refs: 레퍼런스 이미지 [{file_id, url}] (없으면 []). 견적·생성 API에 ref_images로 그대로 넘깁니다.
 export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", pages = 5,
-  request = "", onCreate } = {}) {
+  request = "", refs = [], onCreate } = {}) {
   const ids = (Array.isArray(productIds) && productIds.length ? productIds : [productId]).filter(Boolean);
-  const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages };
+  const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages,
+    ref_images: Array.isArray(refs) ? refs : [] };
   const label = kind === "poster" ? "포스터" : "카드뉴스";
   const wrap = el("div", "studio-editor studio-editor-choices");
   const msg = el("p", "studio-hint");
