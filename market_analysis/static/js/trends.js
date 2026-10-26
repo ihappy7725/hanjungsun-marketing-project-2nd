@@ -59,10 +59,7 @@ function renderNotices() {
   if (dashboard.data_status === "delayed") {
     notices.push(["warn", "최근 데이터 갱신이 지연되고 있습니다. 마지막 확인일을 확인해 주세요."]);
   }
-  const failed = Object.entries(dashboard.sections).filter(([, s]) => s.error);
-  if (failed.length) {
-    notices.push(["warn", `최근 수집에 실패한 영역이 있어 마지막 정상 데이터를 표시합니다: ${failed.map(([name]) => name).join(", ")}`]);
-  }
+  // 수집 실패 영역(sections[].error)은 화면에 안내하지 않습니다. 마지막 확인일은 출처 줄에 있습니다(2026-10-26 담당자 결정)
   $("notices").innerHTML = notices.map(([kind, text]) => `<div class="notice trend-notice ${kind}">${esc(text)}</div>`).join("");
 }
 
@@ -99,18 +96,12 @@ function rankBadges(row) {
     row.is_rising ? `<span class="rate-rising">급상승</span>` : ""].join("");
 }
 
-const RANKING_NOTE = {
-  interest: "상품 검색어 중 최근 12주 평균 관심도 상위 5개 · 판매량 순위가 아닙니다",
-  related: "출발 검색어의 Google 연관 검색어 중 식품 · 최근 3개월 인기 순 (1위 = 100) · 판매량 순위가 아닙니다",
-  fruit_flavors: "베트남 과일 맛 검색 관심도 상위 5개 (최근 12주) · 판매량 순위가 아닙니다",
-};
 const RANKING_TITLE = { interest: "카테고리별 상품 관심도 순위", related: "카테고리별 인기 메뉴 순위", fruit_flavors: "과일 맛 관심도 순위" };
 
 function renderRanking(category) {
   // related = 출발 검색어의 연관 검색어 인기값 순위(주간 관심도·증감률 없음, 급상승 목록에 있으면 상승률 표시)
   const related = category.ranking_metric === "related";
-  const metric = RANKING_NOTE[category.ranking_metric] ? category.ranking_metric : "interest";
-  $("ranking-note").textContent = RANKING_NOTE[metric];
+  const metric = RANKING_TITLE[category.ranking_metric] ? category.ranking_metric : "interest";
   $("ranking-title").textContent = RANKING_TITLE[metric];
   if (!category.ranking.length) {
     $("ranking").innerHTML = emptyState(`${category.label} 상품 검색어 데이터가 아직 없습니다.`);
@@ -129,21 +120,17 @@ function renderRanking(category) {
     <div class="table-wrap"><table class="trend-table">
       <caption class="visually-hidden">${esc(category.label)} 상품 관심도 상위 ${RANK_LIMIT}개</caption>
       <thead><tr><th scope="col" class="nowrap">순위</th><th scope="col">상품명 · 검색어</th><th scope="col" class="num">${related ? "최근 3개월<br>연관 검색 인기" : "최근 12주<br>평균 관심도"}</th>
-        <th scope="col" class="num">${related ? "급상승" : "전년 동기<br>대비"}</th></tr></thead>
+        ${related ? "" : `<th scope="col" class="num">전년 동기<br>대비</th>`}</tr></thead>
       <tbody>${top.map((row, index) => `
         <tr>
           <td class="rank">${index + 1}</td>
           <td><strong>${esc(row.name)}</strong> ${row.rank !== null ? rankBadges(row) : `<span class="ref-badge">${lowLabel(row)}</span>`}<small lang="vi">${esc(row.query)}</small></td>
           <td class="num">${num(row.recent_average)}</td>
-          <td class="num">${related ? (row.rising_value ? risingText(row.rising_value) : "-")
-            : row.rank !== null ? yoy(row) + shortTerm(row) : "-"}</td>
+          ${related ? "" : `<td class="num">${row.rank !== null ? yoy(row) + shortTerm(row) : "-"}</td>`}
         </tr>`).join("")}</tbody>
     </table></div>`;
   // 새로 뜨는 검색어(rising_products)는 API 응답에 남아 있으며 화면에는 표시하지 않습니다.
 }
-
-// 급상승 값: Google이 "급등"(Breakout, 베트남어 Đột phá)으로 주는 경우 한국어로 표시
-const risingText = (value) => (/^(breakout|đột phá)$/i.test(String(value ?? "").trim()) ? "급등" : esc(value ?? "-"));
 
 function sparkline(series) {
   const width = 200, height = 40, values = series.map((p) => p.interest).filter((v) => v !== null);
@@ -177,7 +164,7 @@ function renderCategoryTrend() {
         ${sparkline(lastYear)}
         <span class="spark-value">${num(category.recent_average)}</span>
         <span class="spark-rate">${category.data_status === "insufficient" ? badge("insufficient")
-          : yoy(category) + shortTerm(category)}</span>
+          : `<span class="${rateClass(category.short_change_rate)}">4주 ${rate(category.short_change_rate)}</span>`}</span>
       </button></li>`;
     }).join("")}
     </ul>`;
@@ -334,6 +321,7 @@ function renderAds() {
 const meterRow = (label, count, total) => `
   <li class="meter-row">
     <span class="meter-label">${esc(label)}</span>
+    <span class="meter-value">${Math.round((count / total) * 100)}%</span>
     <span class="bar-track"><span class="bar-fill" style="width:${(count / total) * 100}%"></span></span>
   </li>`;
 const chips = (items, cls = "") => `<div class="chip-list">${items.map((item) => `<span class="chip ${cls}">${item}</span>`).join("")}</div>`;
@@ -378,7 +366,7 @@ function renderCaseSummary(ads) {
     <div class="ad-grid">
       <div><h3>많이 관찰된 광고 형식 TOP 5</h3>
         ${barRows(s.formats.map((row, i) => ({ ...row, rank: i + 1 })), {
-          label: (row) => row.label, value: (row) => row.share, extra: (row) => `${row.count}건`,
+          label: (row) => row.label, value: (row) => row.share,
         })}
         <p class="source">조사 사례 ${ads.case_count}개 중 관찰 비중(%)</p>
       </div>

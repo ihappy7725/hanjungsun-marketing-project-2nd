@@ -28,7 +28,7 @@ from .public import get_content_guidelines
 
 _DATA_DIR = Path(__file__).parent / "data"
 
-TABS = ("trend", "competitor", "culture", "insight")
+TABS = ("culture", "trend", "competitor", "insight")  # 화면 탭 순서, 첫 번째가 기본 탭
 
 # (파일 키, 화면 이름, 판단에 쓰는 곳) — README 3장
 TREND_CATEGORIES = [

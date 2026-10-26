@@ -1,0 +1,74 @@
+{
+  "search_metadata": {
+    "id": "6aded5335423e11cf721782d",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/Wp93XvefpfpicfO34KTTj0Fm1TY4F8VPAoiTvkxyBvw/6aded5335423e11cf721782d.md",
+    "created_at": "2026-10-26 04:21:07 UTC",
+    "processed_at": "2026-10-26 04:21:07 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/GEO_MAP?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22b%C3%A1nh+h%C3%A0n+qu%E1%BB%91c%5C%22+%2B+%5C%22b%C3%A1nh+m%C3%AC+h%C3%A0n+qu%E1%BB%91c%5C%22+%2B+%5C%22b%C3%A1nh+g%E1%BA%A1o+h%C3%A0n+qu%E1%BB%91c%5C%22+%2B+%5C%22b%C3%A1nh+m%C3%A8+h%C3%A0n+qu%E1%BB%91c%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/Wp93XvefpfpicfO34KTTj0Fm1TY4F8VPAoiTvkxyBvw/6aded5335423e11cf721782d.html",
+    "prettify_html_file": "https://serpapi.com/searches/Wp93XvefpfpicfO34KTTj0Fm1TY4F8VPAoiTvkxyBvw/6aded5335423e11cf721782d.prettify",
+    "total_time_taken": 2.47
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"bánh hàn quốc\" + \"bánh mì hàn quốc\" + \"bánh gạo hàn quốc\" + \"bánh mè hàn quốc\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "GEO_MAP_0",
+    "region": "REGION"
+  },
+  "interest_by_region": [
+    {
+      "geo": "VN-51",
+      "location": "Trà Vinh",
+      "max_value_index": 0,
+      "value": "100",
+      "extracted_value": 100
+    },
+    {
+      "geo": "VN-CT",
+      "location": "Cần Thơ",
+      "max_value_index": 0,
+      "value": "41",
+      "extracted_value": 41
+    },
+    {
+      "geo": "VN-SG",
+      "location": "Hồ Chí Minh",
+      "max_value_index": 0,
+      "value": "11",
+      "extracted_value": 11
+    },
+    {
+      "geo": "VN-HN",
+      "location": "Hà Nội",
+      "max_value_index": 0,
+      "value": "9",
+      "extracted_value": 9
+    },
+    {
+      "geo": "VN-HP",
+      "location": "Hải Phòng",
+      "max_value_index": 0,
+      "value": "1",
+      "extracted_value": 1
+    },
+    {
+      "geo": "VN-DN",
+      "location": "Đà Nẵng",
+      "max_value_index": 0,
+      "value": "1",
+      "extracted_value": 1
+    },
+    {
+      "geo": "VN-57",
+      "location": "Bình Dương",
+      "max_value_index": 0,
+      "value": "<1",
+      "extracted_value": 0
+    }
+  ]
+}
