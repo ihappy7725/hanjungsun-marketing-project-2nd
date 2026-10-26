@@ -137,9 +137,6 @@
 .influencer-page .im-drawer .im-body{overflow-y:auto;padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);flex:1}
 .influencer-page .im-drawer footer{display:flex;gap:var(--space-4);padding:var(--space-5) var(--space-6);border-top:1px solid var(--im-line);flex-wrap:wrap}
 .influencer-page .im-drawer footer .im-grow{flex:1}
-.influencer-page .im-pfgrid{display:grid;grid-template-columns:96px minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:var(--space-3) var(--space-4);align-items:center}
-.influencer-page .im-pfgrid .im-h{font-size:var(--fs-body);color:var(--im-muted);font-weight:600}
-@media (max-width:480px){.influencer-page .im-pfgrid{grid-template-columns:80px minmax(0,1fr) minmax(0,1fr)}.influencer-page .im-pfgrid .im-u{grid-column:2/-1}}
 
 /* 메일 */
 .influencer-page .im-mail{border:1px solid var(--im-line);border-radius:var(--im-r);background:var(--im-sunk);overflow:hidden}
@@ -168,13 +165,11 @@
 .influencer-page .im-ev.clash{box-shadow:inset 0 0 0 2px var(--im-bad)}
 
 /* 단가 */
-.influencer-page .im-chart svg{width:100%;height:auto;display:block}
+.influencer-page .im-chart svg{width:70%;height:auto;display:block}
+@media (max-width:760px){.influencer-page .im-chart svg{width:100%}}
+.influencer-page .im-chart text.im-axl{font-size:calc(var(--fs-body) - 3px);font-family:inherit}
 .influencer-page .im-chart text{fill:var(--im-muted);font-size:var(--fs-body);font-family:var(--im-mono)}
 .influencer-page .im-chart .im-ax{stroke:var(--im-line)}
-.influencer-page .im-cmp{font-size:var(--fs-body);font-weight:600;padding:var(--space-1) var(--space-3);border-radius:var(--radius)}
-.influencer-page .im-cmp.in{background:var(--im-ok-soft);color:var(--im-ok)}
-.influencer-page .im-cmp.hi{background:var(--im-bad-soft);color:var(--im-bad)}
-.influencer-page .im-cmp.lo{background:var(--im-accent-soft);color:var(--im-accent)}
 
 /* 알림 */
 .influencer-page .im-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--im-ink);color:var(--on-dark);padding:var(--space-4) var(--space-6);border-radius:var(--radius);z-index:1100;font-size:var(--fs-body);max-width:calc(100% - 32px)}
@@ -212,17 +207,15 @@
 .influencer-page .im-seg.is-compact button{padding:var(--space-2) var(--space-4)}
 .influencer-page .im-fold{margin-top:var(--space-4)}
 .influencer-page .im-fold>summary{font-weight:500;color:var(--im-muted)}
-/* 인플루언서 기준 한 줄 */
-.influencer-page .im-crit{margin:0 0 var(--space-5);padding:var(--space-3) var(--space-5);background:var(--im-sunk);border-radius:var(--radius);font-size:var(--fs-body);line-height:var(--line-height)}
-.influencer-page .im-crit b{margin-right:var(--space-3)}
-/* 요약: 진행 단계 */
-.influencer-page .im-funnel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-6)}
-@media (max-width:900px){.influencer-page .im-funnel{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.influencer-page .im-fstep{position:relative;background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-5)}
+/* 요약: 진행 단계 4칸 (Ver_023: 칸 사이 화살표, 오른쪽 위 % 없앰, 상자 폭은 칸의 90%·가운데 정렬) */
+/* 3차: 상자 폭은 글자에 맞게(최소 140px), 높이는 위아래 10%씩 줄임(안쪽 여백·숫자 줄 높이 축소) */
+.influencer-page .im-funnel{display:flex;flex-wrap:wrap;gap:var(--space-5) calc(var(--space-7) * 2);margin-bottom:var(--space-6)}
+.influencer-page .im-fstep{position:relative;flex:0 0 auto;min-width:140px;display:flex;align-items:baseline;gap:var(--space-4);background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-4) var(--space-6)}
+.influencer-page .im-fstep+.im-fstep::before{content:"→";position:absolute;left:calc(var(--space-7) * -1);top:50%;transform:translate(-50%,-50%);color:var(--im-faint);font-size:var(--fs-body)}
+@media (max-width:900px){.influencer-page .im-funnel{column-gap:var(--space-5)}.influencer-page .im-fstep{min-width:128px}.influencer-page .im-fstep+.im-fstep::before{display:none}}
 .influencer-page .im-fstep span{font-size:var(--fs-body);color:var(--im-muted)}
-.influencer-page .im-fstep b{display:block;font-size:var(--fs-h1);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
-.influencer-page .im-fstep em{font-style:normal;font-size:var(--fs-body);color:var(--im-faint);display:block}
-.influencer-page .im-fconv{position:absolute;top:var(--space-4);right:var(--space-4);font-style:normal;font-size:var(--fs-body);color:var(--im-accent);font-family:var(--im-mono)}
+.influencer-page .im-fstep b{display:inline-block;font-size:var(--fs-h1);line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
+.influencer-page .im-fstep b small{font-size:var(--fs-body);font-weight:500;margin-left:var(--space-1);color:var(--im-muted)}
 .influencer-page .im-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6);margin-bottom:var(--space-6)}
 @media (max-width:1160px){.influencer-page .im-grid3{grid-template-columns:minmax(0,1fr)}}
 .influencer-page .im-panel.is-tight h2{margin-bottom:var(--space-4)}
@@ -231,36 +224,64 @@
 .influencer-page .im-mini b{display:block;font-size:var(--fs-panel-title);font-weight:700;font-variant-numeric:tabular-nums}
 .influencer-page .im-mini em{font-style:normal;font-size:var(--fs-body);color:var(--im-faint)}
 .influencer-page .im-todo.is-dense li{padding:var(--space-3) 0;align-items:center}
-/* 발굴: API 한 줄 상태 · 하위 탭 */
-.influencer-page .im-apiline{display:flex;gap:var(--space-4);align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-5);border:1px solid var(--im-line);border-radius:var(--radius);background:var(--im-surface);margin-bottom:var(--space-5);font-size:var(--fs-body)}
-.influencer-page .im-apiline .is-ok{color:var(--im-ok)}
-.influencer-page .im-apiline .is-bad{color:var(--im-bad)}
-.influencer-page .im-apiline .is-off{color:var(--im-muted)}
-.influencer-page .im-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-bottom:var(--space-5)}
+/* 발굴: 하위 탭 */
+.influencer-page .im-subtabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin-bottom:var(--space-5)}
 @media (max-width:760px){.influencer-page .im-subtabs{grid-template-columns:minmax(0,1fr)}}
 .influencer-page .im-subtabs button{appearance:none;text-align:left;border:1px solid var(--im-line);background:var(--im-surface);border-radius:var(--im-r);padding:var(--space-4) var(--space-5);cursor:pointer;display:flex;flex-direction:column;gap:var(--space-1)}
 .influencer-page .im-subtabs button b{font-weight:600}
-.influencer-page .im-subtabs button span{font-size:var(--fs-body);color:var(--im-muted)}
 .influencer-page .im-subtabs button[aria-selected="true"]{border-color:var(--im-accent);background:var(--im-accent-soft);box-shadow:inset 0 -3px 0 var(--im-accent)}
 .influencer-page .im-subtabs button[aria-selected="true"] b{color:var(--im-accent)}
-.influencer-page .im-saved{display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4) var(--space-5);border-radius:var(--radius);background:var(--im-ok-soft);font-size:var(--fs-body)}
-.influencer-page .im-saved b{color:var(--im-ok)}
-.influencer-page .im-saved span{color:var(--im-muted)}
-/* 광고 단가: 첫 칸 관리 버튼 · 산출 기준 카드 */
+/* 광고 단가: 첫 칸 관리 버튼 */
 .influencer-page .im-acts{display:flex;gap:var(--space-2)}
 .influencer-page .im-tblwrap tr.is-editing td{background:var(--im-accent-soft)}
-.influencer-page .im-basis{display:grid;grid-template-columns:56px minmax(0,1fr);gap:var(--space-4) var(--space-5);margin:0;font-size:var(--fs-body)}
-.influencer-page .im-basis dt{color:var(--im-muted);font-weight:600}
-.influencer-page .im-basis dd{margin:0;min-width:0}
-.influencer-page .im-basis input[type=number]{padding:var(--space-2) var(--space-3)}
-.influencer-page .im-tiers{display:grid;grid-template-columns:max-content max-content max-content;gap:var(--space-1) var(--space-5);align-items:baseline}
-.influencer-page .im-tiers span{font-family:var(--im-mono);font-variant-numeric:tabular-nums}
-.influencer-page .im-tiers em{font-style:normal;color:var(--im-faint)}
 .influencer-page .im-tblwrap.is-short{max-height:46vh}
 .influencer-page .im-bars.is-wide .im-bar{grid-template-columns:minmax(0,200px) minmax(0,1fr) 44px}
-.influencer-page .im-basis.is-2col{grid-template-columns:56px minmax(0,1fr) 56px minmax(0,1fr)}
-@media (max-width:1160px){.influencer-page .im-basis.is-2col{grid-template-columns:56px minmax(0,1fr)}}
 /* Ver_018: 요약 계산 범위 띠 (시연 데이터 포함 / 실제 데이터만) */
 .influencer-page .im-ovmode{display:flex;gap:var(--space-4);align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-5);border-radius:var(--radius);background:var(--im-sunk);margin-bottom:var(--space-5);font-size:var(--fs-body)}
 .influencer-page .im-ovmode.is-demo{background:var(--im-warn-soft)}
 .influencer-page .im-ovmode.is-demo b{color:var(--im-warn)}
+/* ---------- Ver_021 ---------- */
+/* 할 일·14일 일정 공통 색 태그: 연한 바탕 + 진한 글자 (팀 색 토큰을 섞어 밝게, 새 색 코드 없음) */
+.influencer-page .im-tag{display:inline-flex;align-items:center;flex:none;padding:var(--space-1) var(--space-4);border-radius:999px;font-size:var(--fs-body);font-weight:600;white-space:nowrap;
+  --tc:var(--im-muted);color:var(--tc);background:color-mix(in srgb,var(--tc) 13%,var(--im-surface));border:1px solid color-mix(in srgb,var(--tc) 28%,transparent)}
+.influencer-page .im-tag.t-warn{--tc:var(--im-warn)}
+.influencer-page .im-tag.t-shoot{--tc:var(--im-fb)}
+.influencer-page .im-tag.t-send{--tc:var(--im-tt)}
+.influencer-page .im-tag.t-ok{--tc:var(--im-ok)}
+.influencer-page .im-tag.t-bad{--tc:var(--im-bad)}
+.influencer-page .im-tag.t-mute{--tc:var(--im-muted)}
+/* 편집 창의 [제안 메일]·[회신] 칸 */
+.influencer-page .im-dsecs{display:flex;flex-direction:column;gap:var(--space-4)}
+.influencer-page .im-dsec{border:1px solid var(--im-line);border-radius:var(--im-r);background:var(--im-sunk)}
+.influencer-page .im-dsec>summary{padding:var(--space-4) var(--space-5);display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;list-style:none}
+.influencer-page .im-dsec>summary::-webkit-details-marker{display:none}
+.influencer-page .im-dsec>summary::before{content:"▸";color:var(--im-muted)}
+.influencer-page .im-dsec[open]>summary::before{content:"▾"}
+.influencer-page .im-dsec-body{padding:0 var(--space-5) var(--space-5)}
+.influencer-page .im-dsec .im-mail pre{max-height:260px}
+/* 인플루언서 필터: 검색 · 타깃 · 대표 플랫폼 · 규모 · 상태 (Ver_023) */
+.influencer-page .im-filters{grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr)) auto}
+@media (max-width:1360px){.influencer-page .im-filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:640px){.influencer-page .im-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* ---------- Ver_022 ---------- */
+/* 편집 창 접힘 제목(미리보기 열기·보내는 사람 정보)은 진하게 */
+.influencer-page .im-dsec .im-fold>summary{color:var(--im-ink);font-weight:600}
+/* 대시보드 안 번역 결과 */
+.influencer-page .im-tr-swap{min-width:36px;justify-content:center}
+.influencer-page .im-tr-box{margin-top:var(--space-4);border:1px solid var(--im-line);border-radius:var(--radius);background:var(--im-surface);padding:var(--space-4)}
+.influencer-page .im-tr-box pre{margin:0 0 var(--space-3);white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:var(--fs-body);line-height:var(--line-height);max-height:260px;overflow:auto}
+/* Ver_023 4차: 요약 아래 3칸(예산 현황·오늘의 할 일·촬영일 확정)을 같은 크기 정사각형으로 */
+.influencer-page .im-ovgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6)}
+.influencer-page .im-ovgrid>.im-panel{aspect-ratio:1/1;overflow:auto}
+.influencer-page #ovTodo .im-grow{min-width:0}
+.influencer-page .im-ovgrid .im-todo li{padding:var(--space-3) 0;align-items:center;gap:var(--space-4)}
+.influencer-page .im-ovgrid .im-todo .im-btn.is-sm{min-height:32px;padding-top:var(--space-1);padding-bottom:var(--space-1)}
+.influencer-page #ovTodo .im-grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.influencer-page #ovTodo .im-grow .im-muted{display:none}  /* 할 일 안내 문장은 마우스를 올리면(title) */
+@media (max-width:1360px){.influencer-page .im-ovgrid>.im-panel{aspect-ratio:auto}}  /* 좁으면 정사각형 대신 세 칸 높이만 같게(칸 안 스크롤 없음) */
+@media (max-width:1160px){.influencer-page .im-ovgrid{grid-template-columns:minmax(0,1fr)}}
+/* 인플루언서 표: 열 폭 고정·머리글 대문자 해제·숫자는 본문 글꼴의 같은 폭 숫자 → 줄이 가지런하게 */
+.influencer-page .im-ltable{table-layout:fixed;min-width:820px}
+.influencer-page .im-ltable th{text-transform:none;letter-spacing:0}
+.influencer-page .im-ltable td,.influencer-page .im-ltable td>div{overflow:hidden;text-overflow:ellipsis}
+.influencer-page .im-ltable .im-num{font-family:inherit}

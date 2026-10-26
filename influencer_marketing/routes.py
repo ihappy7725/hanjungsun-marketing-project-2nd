@@ -921,6 +921,13 @@ def api_phyllo_test():
     return _ext(ext.phyllo_test)
 
 
+@bp.post("/api/translate")
+def api_translate():
+    """대시보드 안 번역 (MyMemory, 무료·키 없음). 입력: text, source, target (ko·en·vi). 긴 글은 서버가 나눠 보냅니다."""
+    d = request.get_json(silent=True) or {}
+    return _ext(ext.mymemory_translate, str(d.get("text") or ""), str(d.get("source") or ""), str(d.get("target") or ""))
+
+
 @bp.post("/api/youtube/channel")
 def api_youtube_channel():
     return _ext(ext.youtube_channel, str((request.get_json(silent=True) or {}).get("ref") or ""))

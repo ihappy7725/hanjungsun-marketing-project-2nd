@@ -259,7 +259,7 @@ def _ref_load(src):
     head = next(csv.reader(io.StringIO(text)), [])
     rows = []
     as_of = src["as_of"] or date.today().isoformat()
-    provider = f"{src['label']}({as_of.replace('-', '/')} 기준)"[:60]
+    provider = f"{src['label']}({as_of[2:].replace('-', '/')} 기준)"[:60]  # Ver_023: 26/10/24 기준
     if "레코드 ID" in head and "분류" in head:  # Ver_003 실제 자료 형식
         for r in csv.DictReader(io.StringIO(text)):
             pf = _PF_BY_NAME.get((r.get("플랫폼") or "").strip().lower())
@@ -318,7 +318,7 @@ def ref_providers():
     for i, src in enumerate(_ref_manifest()):
         rows, err = _ref_load(src)
         pfs = sorted({r["platform"] for r in rows})
-        as_of = src["as_of"].replace("-", "/") if src["as_of"] else "기준일 미기재"
+        as_of = src["as_of"][2:].replace("-", "/") if src["as_of"] else "기준일 미기재"  # Ver_023: 26/10/24
         demo = src["kind"] == "demo"
         out.append({"key": f"ref:{src['file']}", "name": src["label"], "configured": bool(rows), "platforms": pfs or ["tt", "ig", "yt"],
                     "source_type": "demo" if demo else "saas_estimate", "search": True, "ref": True, "kind": src["kind"],
