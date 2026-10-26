@@ -19,7 +19,8 @@ from platform_core.extensions import db
 
 from . import bp
 from . import higgsfield
-from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
+from .designs import (DESIGN_REVISE_HINT, apply_design_ai, design_ai_messages, make_cardnews, make_poster,
+                      revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
@@ -147,17 +148,24 @@ def _openai_json(messages):
         return None, "OpenAI 응답 형식 오류"
 
 
-def _call_ai(kind, text, doc):
-    """AI로 요청을 이해합니다 (README 6장). 지금은 영상만 연결했고, 포스터·카드뉴스는 None(단어 규칙).
-    영상: 이해했으면 (새 문서, 바꾼 것 목록), 아니면 None → 부른 쪽이 단어 규칙(videos.py)을 씁니다.
+def _call_ai(kind, text, doc, page=None):
+    """AI로 고치기 요청을 이해합니다 (README 6장). 이미 있는 문서를 고칠 때만 씁니다(첫 생성은 None).
+    영상: videos.py ai_messages / apply_ai, 포스터·카드뉴스: 희주 designs.py design_ai_messages / apply_design_ai
+    (page = 지금 보는 장, 0부터). 이해했으면 (새 문서, 바꾼 것 목록), 아니면 None → 부른 쪽이 단어 규칙을 씁니다.
     키는 있는데 쓰지 못했으면(한도·실패) g.ai_note에 이유를 남겨 답장에 붙입니다."""
-    if kind != "video" or doc is None or not os.environ.get("OPENAI_API_KEY", "").strip():
+    if doc is None or not os.environ.get("OPENAI_API_KEY", "").strip():
+        return None
+    if kind == "video":
+        messages, apply = ai_messages(doc, text), (lambda data: apply_ai(doc, data))
+    elif kind in DESIGN_KINDS:
+        messages, apply = design_ai_messages(doc, text, page), (lambda data: apply_design_ai(doc, data, page))
+    else:
         return None
     if not _ai_take_turn():
         g.ai_note = f"오늘 AI 사용 한도({AI_DAILY_LIMIT}회)를 넘었어요"
         return None
-    data, error = _openai_json(ai_messages(doc, text))
-    result = apply_ai(doc, data) if error is None else None
+    data, error = _openai_json(messages)
+    result = apply(data) if error is None else None
     if result is None:
         g.ai_note = error or "AI 답을 읽지 못했어요"
         current_app.logger.warning("콘텐츠 스튜디오 AI 실패: %s", g.ai_note)
@@ -265,14 +273,15 @@ def post_message():
         if kind in DESIGN_KINDS:
             # page: 화면에서 보고 있는 장(0부터). 없으면 1장 기준이고, "3장 배경 파랗게"처럼 말하면 그 장을 고칩니다.
             page = body.get("page")
-            doc = _call_ai(kind, text, current)
-            if doc is None:
-                doc, changes = revise_design(current, text, page=page if isinstance(page, int) else None)
+            page = page if isinstance(page, int) and not isinstance(page, bool) else None
+            ai = _call_ai(kind, text, current, page)  # AI가 없거나 실패하면 단어 규칙
+            doc, changes = ai if ai else revise_design(current, text, page=page)
             if changes:
                 chat.design.push(doc)
                 reply = "바꿨어요: " + ", ".join(changes)
             else:
                 reply = f"어떻게 고칠지 알아듣지 못했어요. {DESIGN_REVISE_HINT}"
+            reply = _with_ai_note(reply)
         else:
             ai = _call_ai(kind, text, current)
             doc, changes = ai if ai else revise_draft(current, text)
@@ -507,9 +516,11 @@ REF_IMAGES_MAX = 7  # 제품 4종 × 단면·포장 = 8장 중 제품 사진 칸
 
 
 def _today_used():
-    """오늘(한국 시간 0시부터) 대시보드에서 쓴 크레딧."""
+    """오늘(한국 시간 0시부터) 대시보드에서 쓴 Higgsfield 크레딧. 미리보기 이미지·영상 기록만 셉니다
+    (희주 AI 배경 그림 job_kind="design_bg"는 달러 금액이라 이 한도에 섞지 않음)."""
     start = datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
-    rows = SnsCreditLog.query.filter(SnsCreditLog.created_at >= start).all()
+    rows = SnsCreditLog.query.filter(SnsCreditLog.created_at >= start,
+                                     SnsCreditLog.job_kind.in_(("image", "video"))).all()
     return round(sum(row.credits for row in rows), 2)
 
 
