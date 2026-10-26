@@ -657,15 +657,8 @@ def campaign_report(campaign_id):
     today = date.today()
     done = [t for t in tasks if t.status == "done"]
     overdue = [t for t in tasks if t.status != "done" and t.due_date and t.due_date < today]
-    dated = [t.due_date for t in tasks if t.due_date]
-    start = min(dated + [campaign.target_date])
-    end = max(dated + [campaign.target_date])
-
-    # 준비 기간에 걸치는 현지 일정. 등록 자료를 읽지 못해도 보고서는 계속 만듭니다.
-    try:
-        events = _load_events(start, end)
-    except Exception:
-        events = None
+    schedules = (HomeSchedule.query.filter_by(campaign_id=campaign_id)
+                 .order_by(HomeSchedule.date, HomeSchedule.id).all())
 
     # 협업은 원본 탭의 공개 함수로만 읽습니다. 실패해도 나머지 항목은 그대로 보여 줍니다.
     try:
@@ -678,11 +671,28 @@ def campaign_report(campaign_id):
     except Exception:
         collaborations = None
 
+    # 준비부터 게시·후속 업무까지 보고서에 담긴 전체 날짜를 관리 기간으로 삼습니다.
+    dated = ([t.due_date for t in tasks if t.due_date]
+             + [t.start_date for t in tasks if t.start_date] + [s.date for s in schedules])
+    for item in collaborations or []:
+        for field in ("shoot_date", "post_date"):
+            try:
+                dated.append(date.fromisoformat(item.get(field) or ""))
+            except (ValueError, TypeError):
+                pass  # 날짜가 미정이거나 형식이 다르면 기간을 추측하지 않습니다.
+    start = min(dated + [campaign.target_date])
+    end = max(dated + [campaign.target_date])
+    try:
+        events = _load_events(start, end)
+    except Exception:
+        events = None
+
     return render_template(
         "home/home_report.html", campaign=campaign, tasks=tasks, today=today,
         done_count=len(done), overdue=overdue, events=events, collaborations=collaborations,
         content_tasks=[t for t in tasks if t.related_tab == "content_studio"],
         remaining=[t for t in tasks if t.status != "done"],
+        schedules=schedules,
         percent=round(len(done) / len(tasks) * 100) if tasks else 0,
         period_start=start, period_end=end, categories=TASK_CATEGORIES,
     )

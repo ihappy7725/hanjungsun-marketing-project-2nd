@@ -114,14 +114,40 @@ function validStore(s) {
 }
 
 if (typeof document !== 'undefined') initialize();
+function setupPanelResize(root) {
+  const side = root.querySelector('.home-side-panels');
+  const reset = root.querySelector('#reset-panel-sizes');
+  if (!side || !reset) return;
+  const panels = [...side.children];
+  // 브라우저의 크기 조절 손잡이는 inline 높이를 바꿉니다. 해당 행만 고정하고 나머지 공간을 나눕니다.
+  const updateRows = () => {
+    if (panels.every(panel => !panel.style.height)) {
+      side.style.removeProperty('grid-template-rows');
+      return;
+    }
+    side.style.gridTemplateRows = panels.map(panel => /^\d+(?:\.\d+)?px$/.test(panel.style.height)
+      ? `minmax(240px, ${panel.style.height})` : 'minmax(240px, 1fr)').join(' ');
+  };
+  const observer = new MutationObserver(updateRows);
+  panels.forEach(panel => observer.observe(panel, { attributes: true, attributeFilter: ['style'] }));
+  reset.onclick = () => {
+    root.querySelectorAll('.home-resizable').forEach(panel => {
+      panel.style.removeProperty('width');
+      panel.style.removeProperty('height');
+    });
+    updateRows();
+  };
+}
 async function initialize() {
   const root = document.querySelector('.home-page');
   if (!root) return;
+  setupPanelResize(root);
   const $ = selector => root.querySelector(selector);
   let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
   const TIMELINE_FROM = 7, TIMELINE_TO = 21, TIMEZONE_LABEL = 'KST';
   let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
   let mode = 'work', store = blankStore(), loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
+  let renderedNewsMarkup = null;
   let serverToken = null, serverBaseline = null, storageBusy = false;
   let taskCategoriesAvailable = false;
   const categoriesEnabled = () => mode === 'demo' || taskCategoriesAvailable;
@@ -235,8 +261,10 @@ async function initialize() {
         { event_id: 'demo_local_holiday', name: '지역 행사 준비', date: addDays(anchor, 42), type: 'anniversary', region: '다낭', source_name: '가상 행사', is_demo: true },
       ] },
       collaborations: { state: 'ok', items: [
-        { collaboration_id: 'demo_creator_a', influencer: '크리에이터 A', status: 'negotiating', status_label: '협상 중', shoot_date: addDays(anchor, 3), post_date: addDays(anchor, 6), requires_attention: true, next_action: '촬영 가능일과 제안 내용을 확인해주세요.', event_id: 'demo_gift_day', is_demo: true },
-        { collaboration_id: 'demo_creator_b', influencer: '크리에이터 B', status: 'shot', status_label: '촬영 완료', post_date: addDays(anchor, 5), next_action: '게시 일정과 링크를 확인해주세요.', event_id: 'demo_gift_day', is_demo: true },
+        // 협업 예시는 오늘 기준으로 배치해 오래된 브라우저 예시에서도 시연할 수 있게 합니다.
+        { collaboration_id: 'demo_creator_a', influencer: '예시 크리에이터 A', main_platform: 'Instagram', status: 'confirmed', status_label: '계약 확정', shoot_date: addDays(today, 10), post_date: addDays(today, 17), requires_attention: true, next_action: '제품 전달 시간 확인', event_id: 'demo_gift_day', is_demo: true },
+        { collaboration_id: 'demo_creator_b', influencer: '예시 크리에이터 B', main_platform: 'TikTok', status: 'shot', status_label: '촬영 완료', shoot_date: addDays(today, -1), post_date: addDays(today, 3), next_action: '최종 영상과 게시 예약 확인', event_id: 'demo_gift_day', is_demo: true },
+        { collaboration_id: 'demo_creator_c', influencer: '예시 크리에이터 C', main_platform: 'YouTube', status: 'sent', status_label: '회신 대기', shoot_date: '', post_date: addDays(today, 5), requires_attention: true, next_action: '제안 회신 요청·촬영 가능일 확인', event_id: 'demo_gift_day', is_demo: true },
       ] }, attention: { state: 'ok', items: [] },
       news: { state: 'ok', items: [
         ['선물 구매 고객을 위한 제품 소개', '선물 목적과 구매 상황을 나누어 고객 반응을 정리하는 가상 조사 자료입니다.', '선물세트 포장과 구성품을 보여주는 카드뉴스를 준비합니다.'],
@@ -417,8 +445,12 @@ async function initialize() {
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
-    report.href = c ? `/home/report/${encodeURIComponent(c.id)}` : '#';
-    report.setAttribute('aria-disabled', String(!c));
+    const canReport = Boolean(c) && mode === 'work';
+    report.href = canReport ? `/home/report/${encodeURIComponent(c.id)}` : '#';
+    report.setAttribute('aria-disabled', String(!canReport));
+    report.onclick = event => {
+      if (!canReport) { event.preventDefault(); toast('보고서는 서버에 저장된 ‘내 업무’ 이벤트에서 열 수 있습니다.'); }
+    };
     report.hidden = !c;
     $('#retrospective').hidden = !c;
     if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }
@@ -440,36 +472,50 @@ async function initialize() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
     $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
     const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
-    const rows = creators().filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
-    $('#collaboration-list').innerHTML = rows.map(c => {
+    const scopedCreators = creators();
+    const rows = scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
+    const collaborationSummary = signals?.collaborations.state === 'ok' ? `<div class="home-collab-summary">${mode === 'demo' ? badge('예시 데이터 (DEMO)') : ''}<span>촬영 예정 <strong>${scopedCreators.filter(c => !['shot', 'posted'].includes(c.status) && validDate(c.shoot_date) && c.shoot_date >= today).length}</strong></span><span>게시 예정 <strong>${scopedCreators.filter(c => c.status !== 'posted' && validDate(c.post_date) && c.post_date >= today).length}</strong></span><span>확인 필요 <strong>${scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id))).length}</strong></span></div>` : '';
+    $('#collaboration-list').innerHTML = collaborationSummary + (rows.map(c => {
       const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
       // 촬영일만 지났는데 게시일이 지난 것처럼 알리지 않습니다. 날짜가 없으면 경과로 보지 않습니다.
       const postLate = validDate(c.post_date) && c.post_date < today;
       const shootLate = validDate(c.shoot_date) && c.shoot_date < today && !['shot', 'posted'].includes(c.status);
       const state = needs ? '확인 필요' : postLate ? '게시일 경과' : shootLate ? '촬영일 경과' : validDate(c.post_date) ? '게시 임박' : '일정 미정';
-      return `<article class="home-collaboration"><div class="home-task-top"><h3>${esc(c.influencer)}</h3>${badge(state, Boolean(needs) || postLate || shootLate)}</div><p class="home-creator-status">${esc(c.status_label || c.status || '상태 미제공')}</p><p class="home-signal-meta">촬영 ${esc(c.shoot_date || '미정')} · 게시 ${esc(c.post_date || '미정')}</p><p>${esc(c.next_action || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
-    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.'));
+      return `<article class="home-collaboration"><div class="home-task-top"><div><h3>${esc(c.influencer)}</h3><span class="home-signal-meta">${esc(c.main_platform || '채널 미정')} · ${esc(c.status_label || c.status || '상태 미제공')}</span></div>${badge(state, Boolean(needs) || postLate || shootLate)}</div><dl class="home-collab-dates"><div><dt>촬영</dt><dd>${esc(c.shoot_date || '미정')}</dd></div><div><dt>게시</dt><dd>${esc(c.post_date || '미정')}</dd></div></dl><p class="home-collab-action"><strong>다음 할 일</strong> ${esc(c.next_action || task?.detail || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
+    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.')));
     if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
-    $('#news-list').innerHTML = news.map(n => {
-      // 화면에는 원문으로 가는 링크 하나만 둡니다. 교차 출처와 확인 범위는 자료 파일에 그대로 보관합니다.
+    const newsMarkup = news.map(n => {
+      // 등록된 출처·대조 내용·확인 범위를 표시합니다. 이 화면이 원문을 새로 검증하는 것은 아닙니다.
       const sources = Array.isArray(n.sources) ? n.sources : [];
       const link = safeUrl(n.url) || safeUrl(sources[0]?.url);
       const evidence = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : esc(n.source || '출처 미제공');
-      return `<article class="home-news-item">
+      const sourceDetails = sources.map(source => {
+        const address = safeUrl(source.url);
+        const label = source.role === 'primary' ? '원문' : source.role === 'independent_corrob' ? '교차 출처' : '참고 출처';
+        return `<li><strong>${label} · ${esc(source.publisher)}</strong>${source.title ? `<span>${esc(source.title)}</span>` : ''}${source.supports ? `<p>${esc(source.supports)}</p>` : ''}${address ? `<a href="${esc(address)}" target="_blank" rel="noopener noreferrer">자료 열기 ↗</a>` : ''}</li>`;
+      }).join('');
+      return `<article class="home-news-item home-resizable">
         <div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}</div>
         <h3>${esc(n.title)}</h3>
         ${n.is_demo ? badge('예시 데이터 (DEMO)') : `<p class="home-news-brief">${esc(newsPreview(n.summary))}</p>`}
         ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion))}</p><span class="home-news-caution">참여·제품 적용 여부는 별도 확인이 필요합니다.</span></div>` : ''}
-        <details class="home-news-details"><summary>자세히 보기</summary>
+        <details class="home-news-details"><summary>자세히 보기 · 출처와 확인 범위</summary>
           ${n.is_demo ? '' : `<h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>`}
           ${n.suggestion ? `<h4>적용 제안 · 전체 내용</h4><p>${esc(n.suggestion)}</p>` : ''}
           ${n.verified_at ? `<p class="home-signal-meta">담당자 확인 ${esc(n.verified_at)}</p>` : ''}
+          ${sourceDetails ? `<h4>어디서 확인했나요?</h4><ul class="home-news-sources">${sourceDetails}</ul>` : ''}
+          ${n.verification_notes ? `<h4>등록 당시 확인한 내용과 한계</h4><p>${esc(n.verification_notes)}</p>` : ''}
         </details>
         <div class="home-news-links">${n.is_demo ? '' : evidence}${n.suggestion ? '<a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a>' : ''}</div>
       </article>`;
     }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
+    // 업무 체크처럼 뉴스 내용이 바뀌지 않은 갱신에서는 사용자가 조절한 크기와 펼침 상태를 유지합니다.
+    if (newsMarkup !== renderedNewsMarkup) {
+      $('#news-list').innerHTML = newsMarkup;
+      renderedNewsMarkup = newsMarkup;
+    }
   }
   function render() {
     $('#reference-date').value = today;
