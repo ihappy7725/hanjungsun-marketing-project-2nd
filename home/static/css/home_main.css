@@ -512,3 +512,24 @@
 @media (max-width: 760px) {
   .home-page .home-search-heading .home-news-help { text-align: left; }
 }
+
+/* STEP 1: 캘린더 카드의 공통 헤더만 정돈합니다. 날짜 칸·시간표·간트 내부는 유지합니다. */
+.home-page .home-calendar-widget { padding: var(--space-6); min-width: 0; }
+.home-page .home-calendar-widget > .home-paneltabs { flex: 0 0 auto; align-items: stretch; gap: var(--space-2); margin: 0; padding: 0; border: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.home-page .home-calendar-widget .home-paneltab { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--control-height); margin: 0; padding: var(--space-4) var(--space-5); border: 0; background: transparent; box-shadow: none; color: var(--muted); font-family: var(--font-body); font-size: var(--fs-body); font-weight: 500; line-height: var(--line-height-heading); white-space: nowrap; }
+.home-page .home-calendar-widget .home-paneltab:hover { background: color-mix(in srgb, var(--teal) 5%, var(--white)); color: var(--ink); filter: none; }
+.home-page .home-calendar-widget .home-paneltab[aria-selected="true"] { background: color-mix(in srgb, var(--teal) 7%, var(--white)); box-shadow: inset 0 2px 0 var(--teal); color: var(--teal); font-weight: var(--title-weight); }
+.home-page .home-calendar-widget .home-paneltab:focus-visible { outline: 2px solid var(--teal); outline-offset: -3px; }
+.home-page .home-calendar-widget > .home-panel-actions { margin: 0; padding: var(--space-5) 0; }
+.home-page .home-calendar-widget .home-calendar-navigation { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: var(--space-4); max-width: 100%; min-width: 0; }
+.home-page .home-calendar-widget .home-calendar-navigation .home-icon-btn { display: grid; place-items: center; flex: 0 0 var(--control-height); width: var(--control-height); height: var(--control-height); min-width: var(--control-height); min-height: var(--control-height); padding: 0; border: 0; background: transparent; color: var(--teal); }
+.home-page .home-calendar-widget .home-calendar-navigation .home-icon-btn:hover { background: color-mix(in srgb, var(--teal) 7%, var(--white)); filter: none; }
+.home-page .home-calendar-widget .home-calendar-navigation .home-icon-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: -3px; }
+.home-page .home-calendar-widget .home-calendar-navigation svg { width: var(--space-7); height: var(--space-7); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.home-page .home-calendar-widget #calendar-period, .home-page .home-calendar-widget #planner-title { margin: 0; font-family: var(--font-title); font-size: calc(var(--fs-subheading) * 1.1); font-weight: var(--title-weight); line-height: var(--line-height-heading); }
+.home-page .home-calendar-widget #calendar-period { min-inline-size: 12ch; text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.home-page .home-calendar-widget > #calendar-panel, .home-page .home-calendar-widget > #campaign-panel { padding: 0; min-width: 0; }
+@media (max-width: 480px) {
+  .home-page .home-calendar-widget .home-calendar-navigation { width: 100%; }
+  .home-page .home-calendar-widget #calendar-period { flex: 1 1 auto; min-inline-size: 0; white-space: normal; overflow-wrap: anywhere; font-size: var(--fs-subheading); }
+}

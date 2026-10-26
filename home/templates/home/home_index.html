@@ -19,14 +19,14 @@
   <p id="storage-error" class="home-error" role="alert" hidden></p>
   <div class="home-grid">
     <div class="home-main-column">
-      <section class="home-card home-mainpanel home-resizable" aria-label="캘린더와 디데이 업무 관리">
+      <section class="home-card home-mainpanel home-calendar-widget home-resizable" aria-label="캘린더와 디데이 업무 관리">
         <div class="home-paneltabs" role="tablist" aria-label="화면 전환">
           <button class="home-paneltab" id="tab-calendar" type="button" role="tab" aria-selected="true" aria-controls="calendar-panel" tabindex="0">월간 일정</button>
           <button class="home-paneltab" id="tab-week" type="button" role="tab" aria-selected="false" aria-controls="calendar-panel" tabindex="-1">주간 일정</button>
           <button class="home-paneltab" id="tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="campaign-panel" tabindex="-1">디데이 업무 관리</button>
         </div>
         <div id="calendar-actions" class="home-panel-actions">
-          <div class="home-inline"><button class="home-icon-btn" id="calendar-prev" aria-label="이전 기간">‹</button><h2 id="calendar-period"></h2><button class="home-icon-btn" id="calendar-next" aria-label="다음 기간">›</button></div>
+          <div class="home-inline home-calendar-navigation"><button class="home-icon-btn" id="calendar-prev" type="button" aria-label="이전 기간"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6" /></svg></button><h2 id="calendar-period" aria-live="polite" aria-atomic="true"></h2><button class="home-icon-btn" id="calendar-next" type="button" aria-label="다음 기간"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 6 6 6-6 6" /></svg></button></div>
         </div>
         <div id="campaign-actions" class="home-panel-actions" hidden>
           <div class="home-campaign-heading">
