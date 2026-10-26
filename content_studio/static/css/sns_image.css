@@ -305,6 +305,17 @@
   width: min(720px, 92vw);
 }
 
+/* 편집 화면 2단: 왼쪽(장 번호 + 포스터) · 오른쪽(프롬프트 · 문구 · 검수 · Figma) [희주] */
+.studio-editor .studio-editor-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr); gap: var(--space-8); align-items: start; }
+.studio-editor .studio-editor-left { display: flex; gap: var(--space-4); align-items: flex-start; min-width: 0; }
+.studio-editor .studio-editor-left > .studio-editor-view { flex: 1; min-width: 0; }
+.studio-editor .studio-editor-left > .studio-editor-pages { flex-direction: column; flex-wrap: nowrap; } /* 장 번호 세로 한 줄 */
+.studio-editor .studio-editor-side { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.studio-editor .studio-editor-prompt-panel { display: flex; flex-direction: column; gap: var(--space-5); width: auto; padding: var(--space-6); background: var(--paper); border-radius: var(--radius); }
+.studio-editor .studio-editor-prompt-panel h2 { margin: 0; font-size: var(--fs-subheading); font-weight: 600; }
+.studio-editor .studio-editor-prompt-panel > p { margin: 0; }
+@media (max-width: 1100px) { .studio-editor .studio-editor-body { grid-template-columns: minmax(0, 1fr); } }
+
 .studio-editor .studio-editor-prompt .studio-editor-field {
   display: flex;
   flex-direction: column;
