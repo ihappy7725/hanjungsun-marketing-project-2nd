@@ -1070,7 +1070,10 @@ def design_images():
         kind, ratio, products, pages = _design_target(body)
         exact = kind == "poster" and body.get("proposals") is not None
         if exact:
-            prompts = [[higgsfield.design_poster_prompt(products, item["layout"], ratio, item["texts"])]
+            style = body.get("style") or ""  # 스타일 버튼 값 ("" = AI 추천)
+            if style not in higgsfield.POSTER_STYLE_KEYS:
+                raise ValueError("스타일 값이 올바르지 않습니다.")
+            prompts = [[higgsfield.design_poster_prompt(products, item["layout"], ratio, item["texts"], style)]
                        for item in _poster_proposals(body.get("proposals"))]
         else:
             prompts = _design_prompts(body.get("prompts"), pages)

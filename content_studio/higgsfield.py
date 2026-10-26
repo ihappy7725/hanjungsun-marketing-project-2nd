@@ -208,7 +208,7 @@ Do not draw any logo, emblem, seal or brand name there or anywhere else.
 
 [MOOD]
 Quiet luxury, elegant and calm, like a premium department-store dessert boutique
-campaign. Generous negative space around every element.
+campaign. Generous negative space around every element.{style_line}
 
 [STRICT RULES]
 - The product must look exactly like the reference photos: no warping, melting,
@@ -244,6 +244,17 @@ POSTER_LAYOUTS = {
         "{accent_color} tones scattered loosely from two corners.")},
 }
 POSTER_LAYOUT_KEYS = tuple(POSTER_LAYOUTS)
+
+# 새로 만들기 스타일 버튼(희주 designs.py STYLE_HINTS key)별 한 줄. [MOOD] 끝에 붙입니다. ""(AI 추천)은 붙이지 않음.
+POSTER_STYLE_LINES = {
+    "bold": "Style: very large, heavy headline with strong contrast between text and background.",
+    "editorial": "Style: magazine editorial look with a refined serif headline, thin lines and wide margins.",
+    "menu": "Style: neat cafe-menu look, tidy and organized, with small divider lines.",
+    "pop": "Style: cheerful social-media pop look with brighter accents and a few small sticker shapes; "
+           "the product stays realistic.",
+    "minimal": "Style: ultra-minimal, very wide empty space, small headline and very few props.",
+}
+POSTER_STYLE_KEYS = ("", *POSTER_STYLE_LINES)
 
 # 제품별 톤 (products.py id). 제품을 고르면 자동으로 정해집니다. 여러 제품이면 "lineup".
 POSTER_TONES = {
@@ -289,9 +300,10 @@ def _poster_text_block(texts, accent_color):
     return "\n".join(lines)
 
 
-def design_poster_prompt(products, layout, ratio, texts=None):
+def design_poster_prompt(products, layout, ratio, texts=None, style=""):
     """포스터 베이스 템플릿 조립. products: products.py 제품 목록(1개 이상), layout: "A"|"B"|"C",
-    ratio: IMAGE_RATIOS 키, texts: {badge_vi, eyebrow_vi, headline_vi, sub_vi} (headline이 없으면 글자 없는 포스터)."""
+    ratio: IMAGE_RATIOS 키, texts: {badge_vi, eyebrow_vi, headline_vi, sub_vi} (headline이 없으면 글자 없는 포스터),
+    style: 스타일 버튼 값(POSTER_STYLE_LINES key, ""은 AI 추천)."""
     tone = POSTER_TONES["lineup" if len(products) > 1 else products[0]["id"]]
     if len(products) > 1:
         product_line = ("Hanjungsun chapssal-tteok in " + str(len(products)) + " flavors, one of each: "
@@ -303,9 +315,10 @@ def design_poster_prompt(products, layout, ratio, texts=None):
     layout_block = POSTER_LAYOUTS[layout]["block"].format(props=tone["props"], Props=tone["props"][:1].upper() + tone["props"][1:],
                                                          accent_color=tone["accent_color"])
     text_block = _poster_text_block(texts, tone["accent_color"]) or POSTER_NO_TEXT
+    style_line = f"\n{POSTER_STYLE_LINES[style]}" if style in POSTER_STYLE_LINES else ""
     return POSTER_BASE.format(product_line=product_line, orientation=orientation, ratio=ratio, frame=frame,
                               bg_color=tone["bg_color"], layout_block=layout_block,
-                              accent_color=tone["accent_color"], text_block=text_block)
+                              accent_color=tone["accent_color"], text_block=text_block, style_line=style_line)
 
 
 # ---------- 무료 확인 ----------
