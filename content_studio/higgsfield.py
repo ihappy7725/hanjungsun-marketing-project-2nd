@@ -16,6 +16,10 @@ from .videos import COMMON_AVOID, FOOD_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, 
 VIDEO_MODEL = "kling4_0"            # Kling 4.0
 VIDEO_RESOLUTION = "720p"
 IMAGE_MODEL = "nano_banana_flash"   # Nano Banana 2 (미리보기 이미지)
+# 포스터·카드뉴스 시안 그림 (2026-10-27 유진 결정): 글자 표현·화질이 나은 Nano Banana Pro 2k, 장당 2크레딧(generate cost 확인)
+DESIGN_IMAGE_MODEL = "nano_banana_pro"
+DESIGN_IMAGE_LABEL = "Nano Banana Pro"
+DESIGN_IMAGE_RESOLUTION = "2k"
 DAILY_LIMIT = 200                   # 대시보드에서 쓰는 크레딧, 하루(한국 시간) 한도
 
 DONE, FAILED = "completed", ("failed", "nsfw", "canceled", "cancelled")
@@ -140,13 +144,20 @@ def image_args(doc, photos=(), index=0):
 
 def design_image_args(prompt, ratio, photos=()):
     """포스터·카드뉴스 시안 한 장 그림 요청. prompt: 희주 design-assistant가 쓴 장 프롬프트(영어, 넣을 베트남어 문구 포함).
-    photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고, 제품이 사진과 같아야 한다는 문장을 프롬프트 끝에 붙입니다."""
+    photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고, 사진은 생김새 참고일 뿐 새로 그리라는 문장을 끝에 붙입니다.
+    ("사진과 정확히 같게"라고 쓰면 사진을 그대로 오려 붙여서, 2026-10-27 시험 뒤 바꿈)"""
     photos = list(photos)[:IMAGE_REFS]
     text = prompt.strip()
     if photos:
         text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
-                 + ". The product must match these photos exactly.")
-    args = [IMAGE_MODEL, "--prompt", text, "--aspect_ratio", IMAGE_RATIOS[ratio]]
+                 + ". Use the attached photos only to understand what the product looks like (round shape, soft white "
+                   "rice-flour skin, filling color and texture). Do not paste, cut out or collage the photos: draw the "
+                   "product fresh so it fits this scene's composition, camera angle and lighting. Do not copy props from "
+                   "the photos (wrapping paper, tags, plates or backgrounds) unless the prompt asks for them. "
+                   "Never draw any text, letters, labels or tags seen in the photos; the only text in the image is the "
+                   "text written in this prompt.")
+    args = [DESIGN_IMAGE_MODEL, "--prompt", text, "--aspect_ratio", IMAGE_RATIOS[ratio],
+            "--resolution", DESIGN_IMAGE_RESOLUTION]
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 

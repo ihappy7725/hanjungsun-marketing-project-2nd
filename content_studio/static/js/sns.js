@@ -367,12 +367,12 @@ function startRequest(params) {
 // ---------- 작업 화면 ----------
 // choosing: 포스터·카드뉴스 초안 전에 [보내기]로 시안 3개(희주 renderChoices)를 보고 있는 중
 const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false, choosing: false };
-// product_ids: 설정 줄의 [제품] 고르기. 영상은 전체·여러 개(비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다),
-//   포스터·카드뉴스는 한 개.
+// product_ids: 설정 줄의 [제품] 고르기(전체·여러 개). 영상은 비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다.
+//   포스터·카드뉴스는 한 개 이상 골라야 시안을 만듭니다(여러 개면 라인업 시안).
 // title: 영상 제목(직접 입력). 비우면 서버가 "기념일 - 제품" 규칙 제목을 씁니다.
 // user_refs·ref_video: 처음 만들 때 올린 레퍼런스 이미지(최대 4장)·참고 영상(1개). 초안 뒤에는 작업 문서에 저장합니다.
 // style·pages: 포스터·카드뉴스 새로 만들기의 스타일(designs.py STYLE_HINTS key, ""은 AI 추천)·카드뉴스 장수
-const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
+const settings = { ratio: DESIGN_KINDS.includes(kind) ? "3:4" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
   user_refs: [], ref_video: null, style: "", pages: 5 };
 const USER_REFS_MAX = 4;
 
@@ -504,12 +504,11 @@ function renderWork() {
       button.setAttribute("aria-pressed", String(button.dataset.value === value));
     }
   }
-  // 제품 고르기: 초안 전에만. 영상 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다. 포스터·카드뉴스는 한 개라 [전체]를 숨깁니다.
+  // 제품 고르기: 초안 전에만. 영상 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
   const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
     : settings.product_ids;
   // 영상 초안 뒤에는 제품을 바꿀 수 없어 버튼을 숨기고, 제목 왼쪽 · 비율·초·↶ ↷ 오른쪽 한 줄로(is-video-edit, sns.css)
   $("set-product").hidden = Boolean(doc);
-  $("set-product").querySelector('[data-value="all"]').hidden = kind !== "video";
   $("work-screen").classList.toggle("is-video-edit", kind === "video" && Boolean(doc));
   // 영상 제목: 초안 전에는 입력값, 초안 뒤에는 그 작업 제목으로 고정해 보여 주고, 누르면 고칠 수 있습니다(이름 바꾸기).
   // 포스터·카드뉴스 제목: 초안 전에만 입력하고, 확정할 때 작업 이름으로 저장합니다(비우면 1장 제목 글자).
@@ -602,7 +601,8 @@ function showProductChoices(reply) {
 // 포스터·카드뉴스 초안 전 [보내기]: /api/messages 대신 가운데 칸에 시안 3개(희주 renderChoices).
 // 다시 누르면 지금 버튼 조건·입력 글로 3개를 다시 만듭니다. 확정하면 기존 POST /api/chats로 새 작업을 저장합니다.
 function startChoices(text) {
-  const productId = settings.product_ids[0];
+  const productIds = [...settings.product_ids];
+  const productId = productIds[0];
   if (!productId) return feedback("ask", "제품을 먼저 골라 주세요");
   feedback("", "");
   work.choosing = true;
@@ -611,6 +611,7 @@ function startChoices(text) {
     kind,
     ratio: settings.ratio,
     productId,
+    productIds,                  // 여러 제품(라인업) → design-images API의 product_ids
     style: settings.style || "",
     pages: settings.pages || 5,  // 카드뉴스만 씀
     request: text.trim(),
@@ -863,12 +864,11 @@ function bindWork() {
     event.target.select();
   });
   $("set-title").addEventListener("blur", (event) => { if (work.doc && kind === "video") event.target.readOnly = true; });
-  // 영상: [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다. 포스터·카드뉴스: 한 개만.
+  // [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다(세 탭 같음).
   for (const button of $("set-product").children) {
     button.addEventListener("click", () => {
       const ids = PRODUCTS.map((item) => item.id), value = button.dataset.value;
-      if (DESIGN_KINDS.includes(kind)) settings.product_ids = [value];
-      else if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
+      if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
       else if (settings.product_ids.includes(value)) settings.product_ids = settings.product_ids.filter((id) => id !== value);
       else settings.product_ids = ids.filter((id) => id === value || settings.product_ids.includes(id));
       renderWork();
