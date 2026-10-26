@@ -164,8 +164,10 @@
                     <option value="도달">도달</option>
                   </select>
                 </label>
+                <!-- 예상 ROAS: 손익분기 기준 손해 · 본전 · 이익 묶음 드롭다운, '직접 입력…'을 고르면 숫자 칸이 나옵니다 -->
                 <label class="field">예상 ROAS(%)
-                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 300" data-kpi="sim-roas">
+                  <select name="roasPick" data-kpi="sim-roas-pick"></select>
+                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 320" aria-label="예상 ROAS 직접 입력(%)" data-kpi="sim-roas" hidden>
                   <small class="kpi-sim-help" data-kpi="sim-roas-help"></small>
                 </label>
                 <div class="kpi-sim-row">
