@@ -617,6 +617,106 @@
   line-height: var(--line-height);
 }
 
+/* ---------- 새로 만들기 시안 3개 고르기 (renderChoices): 확인 칸 · 그림 카드 3개 · 진행 표시 [희주] ---------- */
+.studio-editor.studio-editor-choices {
+  gap: var(--space-6);
+  padding-bottom: var(--space-8);
+}
+
+.studio-editor.studio-editor-choices h2 {
+  margin: 0;
+  font-size: var(--fs-subheading);
+  font-weight: 600;
+}
+
+.studio-editor.studio-editor-choices > [role="status"] {
+  margin: 0;
+}
+
+.studio-editor.studio-editor-choices > [role="status"]:empty,
+.studio-editor .studio-editor-quote[hidden],
+.studio-editor .studio-editor-cost[hidden] {
+  display: none;
+}
+
+/* 크레딧 확인 칸 */
+.studio-editor .studio-editor-quote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  max-width: 640px;
+  padding: var(--space-6) var(--space-7);
+  border-left: 3px solid var(--gold);
+  background: var(--paper);
+  line-height: var(--line-height);
+}
+
+.studio-editor .studio-editor-quote p {
+  margin: 0;
+}
+
+.studio-editor .studio-editor-quote .is-warn {
+  color: var(--badge-red-ink);
+}
+
+/* 시안 카드 3개를 한 줄에 크게 */
+.studio-editor.studio-editor-choices .studio-editor-candidates {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-editor .studio-editor-image-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+/* 카드뉴스: 1장은 크게, 나머지 장은 아래에 작게 */
+.studio-editor .studio-editor-image-strip.is-pages {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-editor .studio-editor-image-strip.is-pages > :first-child {
+  grid-column: 1 / -1;
+}
+
+.studio-editor .studio-editor-image-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  text-align: center;
+}
+
+.studio-editor .studio-editor-image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-editor .studio-editor-image-frame.is-failed {
+  color: var(--badge-red-ink);
+}
+
+.studio-editor .studio-editor-image-no {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: 0 var(--space-3);
+  background: var(--white);
+  color: var(--ink);
+  font-size: var(--fs-min);
+}
+
+@media (max-width: 1100px) {
+  .studio-editor.studio-editor-choices .studio-editor-candidates { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* 썸네일 canvas (renderThumb): 틀 안에 비율대로 맞춥니다 */
 .studio-editor .studio-editor-thumb {
   display: block;

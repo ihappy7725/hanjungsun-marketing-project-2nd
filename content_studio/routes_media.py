@@ -23,9 +23,9 @@ from werkzeug.exceptions import NotFound
 from platform_core.extensions import db
 
 from . import bp
-from .designs import (SIZES, STYLES, background_element, background_photos, background_prompt,
-                      build_cardnews_prompt, build_design_brief, change_ratio, design_proposal_schema, design_texts,
-                      proposal_design, validate_proposals)
+from .designs import (SIZES, background_element, background_photos, background_prompt, build_cardnews_prompt,
+                      build_design_brief, change_ratio, design_texts, finish_image_proposals, image_proposal_schema,
+                      validate_proposals)
 from .models_sns import SnsChat, SnsCreditLog
 from .products import get_product
 
@@ -272,39 +272,31 @@ def _cost_note(cost):
     return f" (이번 요청 {cost['total_tokens']:,} 토큰 · 예상 ${cost['usd']:.4f})" if cost else ""
 
 
-@bp.route("/media/api/design-brief", methods=["POST"])
-def design_brief():
-    try:
-        doc, options = _design_request(_media_body())
-        persona, brief, ready = build_design_brief(doc, options)
-    except (ValueError, TypeError, KeyError):
-        return _error("제품·요청·규격·장수를 확인해 주세요.")
-    return jsonify({"ok": True, "prompt": persona + "\n\n[제작 요청]\n" + json.dumps(brief, ensure_ascii=False, indent=2),
-                    "rules_ready": ready,
-                    "ai_ready": bool(current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY"))})
-
-
+# 새로 만들기 시안 3개의 그림 프롬프트 (sns_editor.js renderChoices). 그림은 유진 쪽 Higgsfield API가 만듭니다.
+# 돌려주는 proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
 @bp.route("/media/api/design-assistant", methods=["POST"])
 def design_assistant():
     try:
         body = _media_body()
         doc, options = _design_request(body)
         persona, brief, ready = build_design_brief(doc, options)
-    except (ValueError, TypeError, KeyError):
+    except ValueError as error:
+        return _error(str(error))
+    except (TypeError, KeyError):
         return _error("제품·요청·규격·장수를 확인해 주세요.")
     if body.get("confirm_paid") is not True:
         return _error("유료 AI 제안 생성 버튼으로 실행해 주세요.")
     key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not key:
         return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
-    schema = design_proposal_schema(brief["pages"])
+    schema = image_proposal_schema(brief["pages"])
     cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다.
     try:
         response = _api_json("https://api.openai.com/v1/responses",
                              {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                              {"model": ASSISTANT_MODEL, "store": False, "instructions": persona,
-                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 9000,
-                              "text": {"format": {"type": "json_schema", "name": "design_proposals",
+                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 12000,
+                              "text": {"format": {"type": "json_schema", "name": "design_image_proposals",
                                                    "strict": True, "schema": schema}}})
         cost = _usage_cost(ASSISTANT_MODEL, response.get("usage"))
         if response.get("status") != "completed":
@@ -313,8 +305,7 @@ def design_assistant():
                          for part in item.get("content", []) if part.get("type") == "output_text")
         result = json.loads(output)
         validate_proposals(result, schema)
-        proposals = [{**item, "style_label": STYLES[item["style"]], "design": proposal_design(doc, item, options)}
-                     for item in result["proposals"]]
+        proposals = finish_image_proposals(result["proposals"])
         return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
                         "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
     except HTTPError as error:
