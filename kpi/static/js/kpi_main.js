@@ -15,7 +15,7 @@ const API = {
 const charts = {};
 // 화면 선택 상태: ROAS 통화(기본 원화), 리뷰 언어(기본 한국어), 감성 필터(기본 전체)
 // surveyComments: 설문 주관식 의견(응답자 1명당 1줄, platform = 설문을 받은 창구) — 1:1 문의 뒤로 이어 붙여 함께 집계
-// channels: VOC 창구(팜플렛 QR 3개) · vocAiChannels: AI 창구별 요약(없으면 자동 집계)
+// channels: VOC 창구(팜플렛 QR 3개) · vocAiChannels: AI 창구별 요약([AI로 분석] 전에는 비어 있음)
 const view = {
   currency: "KRW", summary: null,
   reviewLang: "ko", reviewFilter: "all", reviewChannel: "all", reviewPage: 1, reviews: [],
@@ -640,39 +640,27 @@ function renderVocKeywords() {
   });
 }
 
-// 확대 화면: 창구별 요약 카드(요약 · 유지할 점 · 개선할 점).
-// AI 결과(channel_summaries)가 있으면 그것을, 없으면 데이터로 자동 집계한 요약을 'AI 아님'으로 표시합니다.
-function autoChannelSummary(ch) {
-  const list = channelList(ch);
-  // 만족 글에서 많이 나온 주제 2개 = 유지, 불만 글(없으면 보통)에서 많이 나온 주제 2개 = 개선
-  const topTags = (sentiment) => Object.entries(countBy(list.filter((r) => r.sentiment === sentiment), "keyword_tag"))
-    .sort((a, b) => b[1] - a[1]).slice(0, 2);
-  const keep = topTags("Positive");
-  const bad = topTags("Negative");
-  const improve = bad.length ? bad : topTags("Neutral");
-  const neg = list.length ? Math.round((list.filter((r) => r.sentiment === "Negative").length / list.length) * 100) : 0;
-  return {
-    channel: ch,
-    // 요약 = 잘되는 점(만족 비율 · 가장 많은 칭찬 주제), 유의할 점(caution) = 가장 많은 불만
-    summary: !list.length ? "의견이 없습니다."
-      : `만족 ${positivePct(list)}% · 불만 ${neg}% · ${keep.length ? `'${keep[0][0]}' 칭찬이 가장 많습니다.` : "칭찬 의견이 적습니다."}`,
-    keep: keep.map(([k, n]) => `${k} ${num(n)}건`),
-    improve: improve.map(([k, n]) => `${k} ${num(n)}건`),
-    caution: bad.length ? `'${bad[0][0]}' 불만 ${num(bad[0][1])}건` : improve.length ? `'${improve[0][0]}' 보통 의견 ${num(improve[0][1])}건` : "",
-  };
-}
+// 창구별 요약은 [AI로 분석]을 누른 결과(channel_summaries)만 씁니다. 누르기 전(결과 없음)에는 null.
+// 마지막 AI 결과는 서버가 보관하므로, 한 번 누른 뒤에는 페이지를 다시 열어도 분석 시각과 함께 보입니다.
+const AI_PENDING = "[AI로 분석]을 누르면 창구별 요약이 나옵니다.";
+const channelSummary = (ch) => (view.vocAiChannels || []).find((x) => x.channel === ch) || null;
 
-// AI 요약 창(기본 화면 위): 창구마다 한 줄 요약 + ⚠ 유의할 점.
-// AI로 분석하기 전에는 데이터로 센 자동 집계를, 분석 후에는 AI 결과를 보여 줍니다(두 화면이 다르게 보임).
+// AI 요약 창(기본 화면 위): 창구마다 한 줄 요약 + ⚠ 유의할 점. 누르기 전에는 안내 한 줄만 두고 보고서(PDF)에서는 뺍니다.
 function renderVocSummaryBox() {
   const ai = view.vocAiChannels || [];
   const meta = view.vocAiMeta;
-  const isAi = ai.length > 0;
+  const box = $("voc-summary");
   // 제목은 왼쪽 세로 라벨로 두어 기본 화면에서 한 줄을 아낍니다. 안내 문구는 라벨에 마우스를 올리면 보입니다.
-  const head = el("strong", { className: "kpi-ai-head", text: isAi ? "AI 요약" : "자동 집계" });
-  head.title = isAi ? "AI가 창구별 문의·설문을 요약한 결과(사람 검수 전)" : "데이터로 센 값입니다. [AI로 분석]을 누르면 AI 요약으로 바뀝니다.";
+  const head = el("strong", { className: "kpi-ai-head", text: "AI 요약" });
+  box.toggleAttribute("data-report-skip", !ai.length);
+  if (!ai.length) {
+    head.title = "[AI로 분석]을 누르면 AI가 창구별 문의·설문을 요약합니다.";
+    box.replaceChildren(head, el("div", { className: "kpi-ai-rows" }, [el("span", { className: "kpi-note", text: AI_PENDING })]));
+    return;
+  }
+  head.title = "AI가 창구별 문의·설문을 요약한 결과(사람 검수 전)";
   const rows = view.channels.map((ch) => {
-    const s = (isAi && ai.find((x) => x.channel === ch)) || autoChannelSummary(ch);
+    const s = channelSummary(ch) || { summary: "—" };
     const caution = s.caution || (s.improve || [])[0] || "";
     return el("div", { className: "kpi-ai-row" }, [
       el("b", { text: PLATFORM_LABEL[ch] || ch }),
@@ -680,15 +668,22 @@ function renderVocSummaryBox() {
       el("span", { className: "kpi-ai-caution", text: caution ? `⚠ ${caution}` : "" }),
     ]);
   });
-  const foot = isAi && meta ? [el("div", { className: "kpi-ai-meta", text: `${meta.model} · ${meta.analyzed_at} 분석 · 사람 검수 전` })] : [];
-  $("voc-summary").replaceChildren(head, el("div", { className: "kpi-ai-rows" }, [...rows, ...foot]));
+  const foot = meta ? [el("div", { className: "kpi-ai-meta", text: `${meta.model} · ${meta.analyzed_at} 분석 · 사람 검수 전` })] : [];
+  box.replaceChildren(head, el("div", { className: "kpi-ai-rows" }, [...rows, ...foot]));
 }
 
+// 확대 화면: 창구별 요약 카드(요약 · 유지할 점 · 개선할 점). AI 분석 전에는 안내 한 줄, 보고서(PDF)에서는 뺍니다.
 function renderVocSummaries() {
   const ai = view.vocAiChannels || [];
-  setText("voc-summary-source", ai.length ? "AI 분석" : "자동 집계 (AI 분석 전)");
+  setText("voc-summary-source", ai.length ? "AI 분석" : "AI 분석 전");
+  $("voc-summary-source").parentElement.toggleAttribute("data-report-skip", !ai.length);
+  $("voc-ch-summaries").toggleAttribute("data-report-skip", !ai.length);
+  if (!ai.length) {
+    $("voc-ch-summaries").replaceChildren(el("p", { className: "kpi-note", text: AI_PENDING }));
+    return;
+  }
   $("voc-ch-summaries").replaceChildren(...view.channels.map((ch) => {
-    const s = ai.find((x) => x.channel === ch) || autoChannelSummary(ch);
+    const s = channelSummary(ch) || { summary: "—" };
     const list = channelList(ch);
     const line = (label, items, tone) => el("p", { className: `kpi-voc-sum-line is-${tone}` }, [
       el("b", { text: label }),
@@ -1340,9 +1335,6 @@ function setExportMenu(open) {
   root.querySelector('[data-kpi-action="export-menu"]').setAttribute("aria-expanded", String(open));
 }
 
-// 창구별 요약(AI가 있으면 AI, 없으면 자동 집계) — 보고서 핵심 요약 · 엑셀에서 같이 씁니다.
-const channelSummary = (ch) => ((view.vocAiChannels || []).find((x) => x.channel === ch)) || autoChannelSummary(ch);
-
 // 보고서 1쪽 '핵심 요약': 화면에 있는 숫자로만 만든 문장(새로 지어내는 내용 없음)
 function reportHighlights() {
   const d = view.summary;
@@ -1364,13 +1356,13 @@ function reportHighlights() {
   if (view.reviews.length) {
     const neg = Math.round((view.reviews.filter((r) => r.sentiment === "Negative").length / view.reviews.length) * 100);
     lines.push(`고객 의견 ${num(view.reviews.length)}건(팜플렛 QR 창구 문의 + 설문) · 만족 ${positivePct(view.reviews)}% · 불만 ${neg}%`);
-    const src = view.vocAiChannels?.length ? "AI 요약, 검수 전" : "자동 집계";
+    // 유의할 점은 [AI로 분석] 결과가 있을 때만(누르기 전에는 넣지 않음)
     const cautions = view.channels.map((ch) => {
       const s = channelSummary(ch);
-      const c = s.caution || (s.improve || [])[0];
+      const c = s && (s.caution || (s.improve || [])[0]);
       return c ? `${PLATFORM_LABEL[ch] || ch} — ${c}` : "";
     }).filter(Boolean);
-    if (cautions.length) lines.push(`유의할 점(${src}): ${cautions.join(" / ")}`);
+    if (cautions.length) lines.push(`유의할 점(AI 요약, 검수 전): ${cautions.join(" / ")}`);
   }
   const g = d?.ga4;
   if (g && !$("ga4-panel").hidden) {
@@ -1807,14 +1799,15 @@ function exportXlsx() {
 
   // 고객 의견(VOC): 창구별 만족도 표 + 누적 막대
   if (view.reviews.length) {
-    section(sum, r, 1, 8, `고객 의견(VOC) · 창구별 만족도 · ${view.vocAiChannels?.length ? "AI 요약(검수 전)" : "자동 집계"}`);
+    const aiDone = Boolean(view.vocAiChannels?.length);
+    section(sum, r, 1, 8, `고객 의견(VOC) · 창구별 만족도${aiDone ? " · 유의할 점 AI 요약(검수 전)" : ""}`);
     r += 1;
     const vocRows = view.channels.map((ch) => {
       const list = channelList(ch);
       const cnt = countBy(list, "sentiment");
       const s = channelSummary(ch);
       return [PLATFORM_LABEL[ch] || ch, list.length, cnt.Positive || 0, cnt.Neutral || 0, cnt.Negative || 0,
-        round1(((cnt.Positive || 0) / (list.length || 1)) * 100), s.caution || (s.improve || [])[0] || ""];
+        round1(((cnt.Positive || 0) / (list.length || 1)) * 100), s ? s.caution || (s.improve || [])[0] || "" : "AI 분석 전"];
     });
     const vt = table(sum, r, 1, ["창구", "건수", "만족", "보통", "불만", "만족 비율", "유의할 점"], vocRows,
       ["text", "int", "int", "int", "int", "pct", "wrap"], { height: 30 });
@@ -1920,7 +1913,7 @@ function exportXlsx() {
     vs.put(r, 1, "고객 의견(VOC) 상세", S.title).merge(r, 1, r, 9).height(r, 28);
     vs.put(r + 1, 1, `팜플렛 QR 창구(Zalo · 카카오톡 · WhatsApp) 1:1 문의 ${num(view.reviews.length - view.surveyComments.length)}건 + 설문 의견 ${num(view.surveyComments.length)}건 · 시연 데이터`, S.sub).merge(r + 1, 1, r + 1, 9);
     r += 3;
-    section(vs, r, 1, 9, `창구별 요약 · ${view.vocAiChannels?.length ? "AI 요약(사람 검수 전)" : "자동 집계(AI 분석 전)"}`);
+    section(vs, r, 1, 9, `창구별 요약 · ${view.vocAiChannels?.length ? "AI 요약(사람 검수 전)" : "AI 분석 전"}`);
     r += 1;
     const sr = table(vs, r, 1, ["창구", "건수", "만족 비율", "불만 비율", "요약", "유의할 점", "유지", "개선", "출처"],
       view.channels.map((ch) => {
@@ -1929,7 +1922,7 @@ function exportXlsx() {
         const s = channelSummary(ch);
         const n = list.length || 1;
         return [PLATFORM_LABEL[ch] || ch, list.length, round1(((cnt.Positive || 0) / n) * 100), round1(((cnt.Negative || 0) / n) * 100),
-          s.summary, s.caution || "", (s.keep || []).join(" · "), (s.improve || []).join(" · "), view.vocAiChannels?.length ? "AI(검수 전)" : "자동 집계"];
+          s ? s.summary : "AI 분석 전", s?.caution || "", (s?.keep || []).join(" · "), (s?.improve || []).join(" · "), s ? "AI(검수 전)" : "—"];
       }), ["text", "int", "pct", "pct", "wrap", "wrap", "wrap", "wrap", "center"], { height: 36 });
     r = sr.last + 2;
 
@@ -2184,7 +2177,7 @@ async function loadVoc() {
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
     else renderVoc(vocReviews, { text: "시연 분류", status: "demo", meta: "시연 문의·시연 분류" });
-    // AI 분석은 [AI로 분석]을 눌렀을 때만 실행합니다(그 전에는 자동 집계). 마지막 AI 결과는 서버가 보관합니다.
+    // AI 분석은 [AI로 분석]을 눌렀을 때만 실행합니다(그 전에는 요약 없이 안내만). 마지막 AI 결과는 서버가 보관합니다.
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }
@@ -2258,6 +2251,7 @@ root.addEventListener("dragend", () => {
 async function analyzeVoc(button) {
   button.disabled = true;
   button.textContent = "분석 중…";
+  $("voc-summary").querySelector(".kpi-ai-rows > .kpi-note")?.remove();  // 분석 전 안내 대신 진행 문구
   $("voc-summary").querySelector(".kpi-ai-rows")?.append(el("div", { className: "kpi-ai-meta is-loading", text: "AI가 창구별 문의·설문을 분석하는 중… (최대 2분)" }));
   showError("voc-error", "");
   try {
