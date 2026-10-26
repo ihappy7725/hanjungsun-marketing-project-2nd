@@ -1,0 +1,182 @@
+{
+  "search_metadata": {
+    "id": "6ade6a356b036f3e999b81c1",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/kGQTVEy7qHuPS4wZ8F5M-ixpvVW2TGrGF2MjvaL-2uo/6ade6a356b036f3e999b81c1.md",
+    "created_at": "2026-10-25 20:44:37 UTC",
+    "processed_at": "2026-10-25 20:44:37 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22b%C3%A1nh+mochi%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/kGQTVEy7qHuPS4wZ8F5M-ixpvVW2TGrGF2MjvaL-2uo/6ade6a356b036f3e999b81c1.html",
+    "prettify_html_file": "https://serpapi.com/searches/kGQTVEy7qHuPS4wZ8F5M-ixpvVW2TGrGF2MjvaL-2uo/6ade6a356b036f3e999b81c1.prettify",
+    "total_time_taken": 3.64
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"bánh mochi\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "bánh mochi đậu đỏ",
+        "value": "Đột phá",
+        "extracted_value": 206100,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+%C4%91%E1%BA%ADu+%C4%91%E1%BB%8F&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+%C4%91%E1%BA%ADu+%C4%91%E1%BB%8F&tz=-420"
+      },
+      {
+        "query": "bánh mochi sweet",
+        "value": "Đột phá",
+        "extracted_value": 155150,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+sweet&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+sweet&tz=-420"
+      },
+      {
+        "query": "cách làm bánh mochi chấm kem sữa",
+        "value": "Đột phá",
+        "extracted_value": 5150,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi+ch%E1%BA%A5m+kem+s%E1%BB%AFa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi+ch%E1%BA%A5m+kem+s%E1%BB%AFa&tz=-420"
+      },
+      {
+        "query": "bánh mochi kem lạnh",
+        "value": "+90%",
+        "extracted_value": 90,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+kem+l%E1%BA%A1nh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+kem+l%E1%BA%A1nh&tz=-420"
+      },
+      {
+        "query": "bánh mochi nướng",
+        "value": "+70%",
+        "extracted_value": 70,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+n%C6%B0%E1%BB%9Bng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+n%C6%B0%E1%BB%9Bng&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "làm bánh mochi",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+b%C3%A1nh+mochi&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+b%C3%A1nh+mochi&tz=-420"
+      },
+      {
+        "query": "cách làm bánh mochi",
+        "value": "47",
+        "extracted_value": 47,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi&tz=-420"
+      },
+      {
+        "query": "bánh mochi nhật",
+        "value": "38",
+        "extracted_value": 38,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+nh%E1%BA%ADt&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+nh%E1%BA%ADt&tz=-420"
+      },
+      {
+        "query": "bánh mochi kem lạnh",
+        "value": "23",
+        "extracted_value": 23,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+kem+l%E1%BA%A1nh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+kem+l%E1%BA%A1nh&tz=-420"
+      },
+      {
+        "query": "bánh mochi nhật bản",
+        "value": "17",
+        "extracted_value": 17,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+nh%E1%BA%ADt+b%E1%BA%A3n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+nh%E1%BA%ADt+b%E1%BA%A3n&tz=-420"
+      },
+      {
+        "query": "bánh mochi dẻo",
+        "value": "14",
+        "extracted_value": 14,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+d%E1%BA%BBo&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+d%E1%BA%BBo&tz=-420"
+      },
+      {
+        "query": "bánh mochi đài loan",
+        "value": "11",
+        "extracted_value": 11,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+%C4%91%C3%A0i+loan&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+%C4%91%C3%A0i+loan&tz=-420"
+      },
+      {
+        "query": "bánh mochi đậu đỏ",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+%C4%91%E1%BA%ADu+%C4%91%E1%BB%8F&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+%C4%91%E1%BA%ADu+%C4%91%E1%BB%8F&tz=-420"
+      },
+      {
+        "query": "bánh mochi nướng",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+n%C6%B0%E1%BB%9Bng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+n%C6%B0%E1%BB%9Bng&tz=-420"
+      },
+      {
+        "query": "bánh mochi chấm kem",
+        "value": "7",
+        "extracted_value": 7,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+ch%E1%BA%A5m+kem&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+ch%E1%BA%A5m+kem&tz=-420"
+      },
+      {
+        "query": "bánh mochi bao nhiêu calo",
+        "value": "7",
+        "extracted_value": 7,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+bao+nhi%C3%AAu+calo&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+bao+nhi%C3%AAu+calo&tz=-420"
+      },
+      {
+        "query": "bánh mochi sweet",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+sweet&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+sweet&tz=-420"
+      },
+      {
+        "query": "mochi sweet",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=mochi+sweet&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=mochi+sweet&tz=-420"
+      },
+      {
+        "query": "bánh mochi hàn quốc",
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "công thức làm bánh mochi",
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%B4ng+th%E1%BB%A9c+l%C3%A0m+b%C3%A1nh+mochi&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%B4ng+th%E1%BB%A9c+l%C3%A0m+b%C3%A1nh+mochi&tz=-420"
+      },
+      {
+        "query": "bánh mochi trung quốc",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+trung+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+trung+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "cách làm bánh mochi chấm kem sữa",
+        "value": "<1",
+        "extracted_value": 0,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi+ch%E1%BA%A5m+kem+s%E1%BB%AFa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+b%C3%A1nh+mochi+ch%E1%BA%A5m+kem+s%E1%BB%AFa&tz=-420"
+      }
+    ]
+  }
+}

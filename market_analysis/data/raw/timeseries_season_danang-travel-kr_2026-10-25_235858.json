@@ -1,0 +1,3171 @@
+{
+  "search_metadata": {
+    "id": "6ade355234b8a5b9b89b41f6",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/JiH8DVHZjtT-W8BFg3jZMwt2pFjVRfaDZdsV26Yxcm4/6ade355234b8a5b9b89b41f6.md",
+    "created_at": "2026-10-25 16:58:58 UTC",
+    "processed_at": "2026-10-25 16:58:58 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/TIMESERIES?hl=ko&tz=-540&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%EB%8B%A4%EB%82%AD+%EC%97%AC%ED%96%89+%2B+%EB%8B%A4%EB%82%AD%22%2C%22geo%22%3A%22KR%22%2C%22time%22%3A%22today+5-y%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/JiH8DVHZjtT-W8BFg3jZMwt2pFjVRfaDZdsV26Yxcm4/6ade355234b8a5b9b89b41f6.html",
+    "prettify_html_file": "https://serpapi.com/searches/JiH8DVHZjtT-W8BFg3jZMwt2pFjVRfaDZdsV26Yxcm4/6ade355234b8a5b9b89b41f6.prettify",
+    "total_time_taken": 1.45
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "다낭 여행 + 다낭",
+    "hl": "ko",
+    "geo": "KR",
+    "date": "today 5-y",
+    "tz": "-540",
+    "data_type": "TIMESERIES"
+  },
+  "interest_over_time": {
+    "timeline_data": [
+      {
+        "date": "2021년 10월 24일~30일",
+        "timestamp": "1635033600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "10",
+            "extracted_value": 10
+          }
+        ]
+      },
+      {
+        "date": "2021년 10월 31일~11월 6일",
+        "timestamp": "1635638400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          }
+        ]
+      },
+      {
+        "date": "2021년 11월 7일~13일",
+        "timestamp": "1636243200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          }
+        ]
+      },
+      {
+        "date": "2021년 11월 14일~20일",
+        "timestamp": "1636848000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          }
+        ]
+      },
+      {
+        "date": "2021년 11월 21일~27일",
+        "timestamp": "1637452800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2021년 11월 28일~12월 4일",
+        "timestamp": "1638057600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          }
+        ]
+      },
+      {
+        "date": "2021년 12월 5일~11일",
+        "timestamp": "1638662400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "10",
+            "extracted_value": 10
+          }
+        ]
+      },
+      {
+        "date": "2021년 12월 12일~18일",
+        "timestamp": "1639267200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          }
+        ]
+      },
+      {
+        "date": "2021년 12월 19일~25일",
+        "timestamp": "1639872000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          }
+        ]
+      },
+      {
+        "date": "2021년 12월 26일~2022년 1월 1일",
+        "timestamp": "1640476800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "10",
+            "extracted_value": 10
+          }
+        ]
+      },
+      {
+        "date": "2022년 1월 2일~8일",
+        "timestamp": "1641081600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          }
+        ]
+      },
+      {
+        "date": "2022년 1월 9일~15일",
+        "timestamp": "1641686400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "5",
+            "extracted_value": 5
+          }
+        ]
+      },
+      {
+        "date": "2022년 1월 16일~22일",
+        "timestamp": "1642291200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 1월 23일~29일",
+        "timestamp": "1642896000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 1월 30일~2월 5일",
+        "timestamp": "1643500800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 2월 6일~12일",
+        "timestamp": "1644105600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 2월 13일~19일",
+        "timestamp": "1644710400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "10",
+            "extracted_value": 10
+          }
+        ]
+      },
+      {
+        "date": "2022년 2월 20일~26일",
+        "timestamp": "1645315200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          }
+        ]
+      },
+      {
+        "date": "2022년 2월 27일~3월 5일",
+        "timestamp": "1645920000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 3월 6일~12일",
+        "timestamp": "1646524800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          }
+        ]
+      },
+      {
+        "date": "2022년 3월 13일~19일",
+        "timestamp": "1647129600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "12",
+            "extracted_value": 12
+          }
+        ]
+      },
+      {
+        "date": "2022년 3월 20일~26일",
+        "timestamp": "1647734400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          }
+        ]
+      },
+      {
+        "date": "2022년 3월 27일~4월 2일",
+        "timestamp": "1648339200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "14",
+            "extracted_value": 14
+          }
+        ]
+      },
+      {
+        "date": "2022년 4월 3일~9일",
+        "timestamp": "1648944000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "15",
+            "extracted_value": 15
+          }
+        ]
+      },
+      {
+        "date": "2022년 4월 10일~16일",
+        "timestamp": "1649548800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "15",
+            "extracted_value": 15
+          }
+        ]
+      },
+      {
+        "date": "2022년 4월 17일~23일",
+        "timestamp": "1650153600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "18",
+            "extracted_value": 18
+          }
+        ]
+      },
+      {
+        "date": "2022년 4월 24일~30일",
+        "timestamp": "1650758400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "17",
+            "extracted_value": 17
+          }
+        ]
+      },
+      {
+        "date": "2022년 5월 1일~7일",
+        "timestamp": "1651363200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "19",
+            "extracted_value": 19
+          }
+        ]
+      },
+      {
+        "date": "2022년 5월 8일~14일",
+        "timestamp": "1651968000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "16",
+            "extracted_value": 16
+          }
+        ]
+      },
+      {
+        "date": "2022년 5월 15일~21일",
+        "timestamp": "1652572800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "26",
+            "extracted_value": 26
+          }
+        ]
+      },
+      {
+        "date": "2022년 5월 22일~28일",
+        "timestamp": "1653177600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "25",
+            "extracted_value": 25
+          }
+        ]
+      },
+      {
+        "date": "2022년 5월 29일~6월 4일",
+        "timestamp": "1653782400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "26",
+            "extracted_value": 26
+          }
+        ]
+      },
+      {
+        "date": "2022년 6월 5일~11일",
+        "timestamp": "1654387200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "31",
+            "extracted_value": 31
+          }
+        ]
+      },
+      {
+        "date": "2022년 6월 12일~18일",
+        "timestamp": "1654992000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "30",
+            "extracted_value": 30
+          }
+        ]
+      },
+      {
+        "date": "2022년 6월 19일~25일",
+        "timestamp": "1655596800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "40",
+            "extracted_value": 40
+          }
+        ]
+      },
+      {
+        "date": "2022년 6월 26일~7월 2일",
+        "timestamp": "1656201600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "45",
+            "extracted_value": 45
+          }
+        ]
+      },
+      {
+        "date": "2022년 7월 3일~9일",
+        "timestamp": "1656806400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "42",
+            "extracted_value": 42
+          }
+        ]
+      },
+      {
+        "date": "2022년 7월 10일~16일",
+        "timestamp": "1657411200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "51",
+            "extracted_value": 51
+          }
+        ]
+      },
+      {
+        "date": "2022년 7월 17일~23일",
+        "timestamp": "1658016000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "45",
+            "extracted_value": 45
+          }
+        ]
+      },
+      {
+        "date": "2022년 7월 24일~30일",
+        "timestamp": "1658620800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "46",
+            "extracted_value": 46
+          }
+        ]
+      },
+      {
+        "date": "2022년 7월 31일~8월 6일",
+        "timestamp": "1659225600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "48",
+            "extracted_value": 48
+          }
+        ]
+      },
+      {
+        "date": "2022년 8월 7일~13일",
+        "timestamp": "1659830400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2022년 8월 14일~20일",
+        "timestamp": "1660435200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "47",
+            "extracted_value": 47
+          }
+        ]
+      },
+      {
+        "date": "2022년 8월 21일~27일",
+        "timestamp": "1661040000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "38",
+            "extracted_value": 38
+          }
+        ]
+      },
+      {
+        "date": "2022년 8월 28일~9월 3일",
+        "timestamp": "1661644800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "41",
+            "extracted_value": 41
+          }
+        ]
+      },
+      {
+        "date": "2022년 9월 4일~10일",
+        "timestamp": "1662249600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "35",
+            "extracted_value": 35
+          }
+        ]
+      },
+      {
+        "date": "2022년 9월 11일~17일",
+        "timestamp": "1662854400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "44",
+            "extracted_value": 44
+          }
+        ]
+      },
+      {
+        "date": "2022년 9월 18일~24일",
+        "timestamp": "1663459200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "47",
+            "extracted_value": 47
+          }
+        ]
+      },
+      {
+        "date": "2022년 9월 25일~10월 1일",
+        "timestamp": "1664064000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "44",
+            "extracted_value": 44
+          }
+        ]
+      },
+      {
+        "date": "2022년 10월 2일~8일",
+        "timestamp": "1664668800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2022년 10월 9일~15일",
+        "timestamp": "1665273600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "43",
+            "extracted_value": 43
+          }
+        ]
+      },
+      {
+        "date": "2022년 10월 16일~22일",
+        "timestamp": "1665878400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "44",
+            "extracted_value": 44
+          }
+        ]
+      },
+      {
+        "date": "2022년 10월 23일~29일",
+        "timestamp": "1666483200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "49",
+            "extracted_value": 49
+          }
+        ]
+      },
+      {
+        "date": "2022년 10월 30일~11월 5일",
+        "timestamp": "1667088000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "41",
+            "extracted_value": 41
+          }
+        ]
+      },
+      {
+        "date": "2022년 11월 6일~12일",
+        "timestamp": "1667692800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "43",
+            "extracted_value": 43
+          }
+        ]
+      },
+      {
+        "date": "2022년 11월 13일~19일",
+        "timestamp": "1668297600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "48",
+            "extracted_value": 48
+          }
+        ]
+      },
+      {
+        "date": "2022년 11월 20일~26일",
+        "timestamp": "1668902400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "45",
+            "extracted_value": 45
+          }
+        ]
+      },
+      {
+        "date": "2022년 11월 27일~12월 3일",
+        "timestamp": "1669507200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "47",
+            "extracted_value": 47
+          }
+        ]
+      },
+      {
+        "date": "2022년 12월 4일~10일",
+        "timestamp": "1670112000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2022년 12월 11일~17일",
+        "timestamp": "1670716800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2022년 12월 18일~24일",
+        "timestamp": "1671321600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2022년 12월 25일~31일",
+        "timestamp": "1671926400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2023년 1월 1일~7일",
+        "timestamp": "1672531200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "69",
+            "extracted_value": 69
+          }
+        ]
+      },
+      {
+        "date": "2023년 1월 8일~14일",
+        "timestamp": "1673136000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "68",
+            "extracted_value": 68
+          }
+        ]
+      },
+      {
+        "date": "2023년 1월 15일~21일",
+        "timestamp": "1673740800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2023년 1월 22일~28일",
+        "timestamp": "1674345600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2023년 1월 29일~2월 4일",
+        "timestamp": "1674950400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "68",
+            "extracted_value": 68
+          }
+        ]
+      },
+      {
+        "date": "2023년 2월 5일~11일",
+        "timestamp": "1675555200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "69",
+            "extracted_value": 69
+          }
+        ]
+      },
+      {
+        "date": "2023년 2월 12일~18일",
+        "timestamp": "1676160000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2023년 2월 19일~25일",
+        "timestamp": "1676764800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2023년 2월 26일~3월 4일",
+        "timestamp": "1677369600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2023년 3월 5일~11일",
+        "timestamp": "1677974400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 3월 12일~18일",
+        "timestamp": "1678579200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 3월 19일~25일",
+        "timestamp": "1679184000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 3월 26일~4월 1일",
+        "timestamp": "1679788800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 4월 2일~8일",
+        "timestamp": "1680393600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2023년 4월 9일~15일",
+        "timestamp": "1680998400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2023년 4월 16일~22일",
+        "timestamp": "1681603200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2023년 4월 23일~29일",
+        "timestamp": "1682208000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2023년 4월 30일~5월 6일",
+        "timestamp": "1682812800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2023년 5월 7일~13일",
+        "timestamp": "1683417600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2023년 5월 14일~20일",
+        "timestamp": "1684022400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2023년 5월 21일~27일",
+        "timestamp": "1684627200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 5월 28일~6월 3일",
+        "timestamp": "1685232000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2023년 6월 4일~10일",
+        "timestamp": "1685836800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 6월 11일~17일",
+        "timestamp": "1686441600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2023년 6월 18일~24일",
+        "timestamp": "1687046400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2023년 6월 25일~7월 1일",
+        "timestamp": "1687651200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2023년 7월 2일~8일",
+        "timestamp": "1688256000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2023년 7월 9일~15일",
+        "timestamp": "1688860800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2023년 7월 16일~22일",
+        "timestamp": "1689465600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2023년 7월 23일~29일",
+        "timestamp": "1690070400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2023년 7월 30일~8월 5일",
+        "timestamp": "1690675200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2023년 8월 6일~12일",
+        "timestamp": "1691280000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "51",
+            "extracted_value": 51
+          }
+        ]
+      },
+      {
+        "date": "2023년 8월 13일~19일",
+        "timestamp": "1691884800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 8월 20일~26일",
+        "timestamp": "1692489600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 8월 27일~9월 2일",
+        "timestamp": "1693094400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2023년 9월 3일~9일",
+        "timestamp": "1693699200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2023년 9월 10일~16일",
+        "timestamp": "1694304000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2023년 9월 17일~23일",
+        "timestamp": "1694908800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 9월 24일~30일",
+        "timestamp": "1695513600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "51",
+            "extracted_value": 51
+          }
+        ]
+      },
+      {
+        "date": "2023년 10월 1일~7일",
+        "timestamp": "1696118400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2023년 10월 8일~14일",
+        "timestamp": "1696723200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 10월 15일~21일",
+        "timestamp": "1697328000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2023년 10월 22일~28일",
+        "timestamp": "1697932800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2023년 10월 29일~11월 4일",
+        "timestamp": "1698537600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 11월 5일~11일",
+        "timestamp": "1699142400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2023년 11월 12일~18일",
+        "timestamp": "1699747200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2023년 11월 19일~25일",
+        "timestamp": "1700352000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2023년 11월 26일~12월 2일",
+        "timestamp": "1700956800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "64",
+            "extracted_value": 64
+          }
+        ]
+      },
+      {
+        "date": "2023년 12월 3일~9일",
+        "timestamp": "1701561600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2023년 12월 10일~16일",
+        "timestamp": "1702166400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2023년 12월 17일~23일",
+        "timestamp": "1702771200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2023년 12월 24일~30일",
+        "timestamp": "1703376000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2023년 12월 31일~2024년 1월 6일",
+        "timestamp": "1703980800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2024년 1월 7일~13일",
+        "timestamp": "1704585600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2024년 1월 14일~20일",
+        "timestamp": "1705190400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2024년 1월 21일~27일",
+        "timestamp": "1705795200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2024년 1월 28일~2월 3일",
+        "timestamp": "1706400000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2024년 2월 4일~10일",
+        "timestamp": "1707004800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2024년 2월 11일~17일",
+        "timestamp": "1707609600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2024년 2월 18일~24일",
+        "timestamp": "1708214400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2024년 2월 25일~3월 2일",
+        "timestamp": "1708819200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "47",
+            "extracted_value": 47
+          }
+        ]
+      },
+      {
+        "date": "2024년 3월 3일~9일",
+        "timestamp": "1709424000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "48",
+            "extracted_value": 48
+          }
+        ]
+      },
+      {
+        "date": "2024년 3월 10일~16일",
+        "timestamp": "1710028800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2024년 3월 17일~23일",
+        "timestamp": "1710633600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2024년 3월 24일~30일",
+        "timestamp": "1711238400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2024년 3월 31일~4월 6일",
+        "timestamp": "1711843200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "49",
+            "extracted_value": 49
+          }
+        ]
+      },
+      {
+        "date": "2024년 4월 7일~13일",
+        "timestamp": "1712448000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "49",
+            "extracted_value": 49
+          }
+        ]
+      },
+      {
+        "date": "2024년 4월 14일~20일",
+        "timestamp": "1713052800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2024년 4월 21일~27일",
+        "timestamp": "1713657600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2024년 4월 28일~5월 4일",
+        "timestamp": "1714262400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2024년 5월 5일~11일",
+        "timestamp": "1714867200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2024년 5월 12일~18일",
+        "timestamp": "1715472000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2024년 5월 19일~25일",
+        "timestamp": "1716076800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2024년 5월 26일~6월 1일",
+        "timestamp": "1716681600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2024년 6월 2일~8일",
+        "timestamp": "1717286400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2024년 6월 9일~15일",
+        "timestamp": "1717891200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2024년 6월 16일~22일",
+        "timestamp": "1718496000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "68",
+            "extracted_value": 68
+          }
+        ]
+      },
+      {
+        "date": "2024년 6월 23일~29일",
+        "timestamp": "1719100800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2024년 6월 30일~7월 6일",
+        "timestamp": "1719705600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "64",
+            "extracted_value": 64
+          }
+        ]
+      },
+      {
+        "date": "2024년 7월 7일~13일",
+        "timestamp": "1720310400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2024년 7월 14일~20일",
+        "timestamp": "1720915200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2024년 7월 21일~27일",
+        "timestamp": "1721520000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2024년 7월 28일~8월 3일",
+        "timestamp": "1722124800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2024년 8월 4일~10일",
+        "timestamp": "1722729600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2024년 8월 11일~17일",
+        "timestamp": "1723334400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2024년 8월 18일~24일",
+        "timestamp": "1723939200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "61",
+            "extracted_value": 61
+          }
+        ]
+      },
+      {
+        "date": "2024년 8월 25일~31일",
+        "timestamp": "1724544000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2024년 9월 1일~7일",
+        "timestamp": "1725148800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2024년 9월 8일~14일",
+        "timestamp": "1725753600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2024년 9월 15일~21일",
+        "timestamp": "1726358400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2024년 9월 22일~28일",
+        "timestamp": "1726963200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2024년 9월 29일~10월 5일",
+        "timestamp": "1727568000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2024년 10월 6일~12일",
+        "timestamp": "1728172800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2024년 10월 13일~19일",
+        "timestamp": "1728777600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2024년 10월 20일~26일",
+        "timestamp": "1729382400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2024년 10월 27일~11월 2일",
+        "timestamp": "1729987200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2024년 11월 3일~9일",
+        "timestamp": "1730592000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2024년 11월 10일~16일",
+        "timestamp": "1731196800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2024년 11월 17일~23일",
+        "timestamp": "1731801600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2024년 11월 24일~30일",
+        "timestamp": "1732406400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2024년 12월 1일~7일",
+        "timestamp": "1733011200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "67",
+            "extracted_value": 67
+          }
+        ]
+      },
+      {
+        "date": "2024년 12월 8일~14일",
+        "timestamp": "1733616000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2024년 12월 15일~21일",
+        "timestamp": "1734220800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2024년 12월 22일~28일",
+        "timestamp": "1734825600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "67",
+            "extracted_value": 67
+          }
+        ]
+      },
+      {
+        "date": "2024년 12월 29일~2025년 1월 4일",
+        "timestamp": "1735430400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "75",
+            "extracted_value": 75
+          }
+        ]
+      },
+      {
+        "date": "2025년 1월 5일~11일",
+        "timestamp": "1736035200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2025년 1월 12일~18일",
+        "timestamp": "1736640000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2025년 1월 19일~25일",
+        "timestamp": "1737244800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2025년 1월 26일~2월 1일",
+        "timestamp": "1737849600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2025년 2월 2일~8일",
+        "timestamp": "1738454400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "61",
+            "extracted_value": 61
+          }
+        ]
+      },
+      {
+        "date": "2025년 2월 9일~15일",
+        "timestamp": "1739059200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "66",
+            "extracted_value": 66
+          }
+        ]
+      },
+      {
+        "date": "2025년 2월 16일~22일",
+        "timestamp": "1739664000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "64",
+            "extracted_value": 64
+          }
+        ]
+      },
+      {
+        "date": "2025년 2월 23일~3월 1일",
+        "timestamp": "1740268800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "72",
+            "extracted_value": 72
+          }
+        ]
+      },
+      {
+        "date": "2025년 3월 2일~8일",
+        "timestamp": "1740873600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "67",
+            "extracted_value": 67
+          }
+        ]
+      },
+      {
+        "date": "2025년 3월 9일~15일",
+        "timestamp": "1741478400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2025년 3월 16일~22일",
+        "timestamp": "1742083200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2025년 3월 23일~29일",
+        "timestamp": "1742688000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2025년 3월 30일~4월 5일",
+        "timestamp": "1743292800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2025년 4월 6일~12일",
+        "timestamp": "1743897600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "57",
+            "extracted_value": 57
+          }
+        ]
+      },
+      {
+        "date": "2025년 4월 13일~19일",
+        "timestamp": "1744502400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2025년 4월 20일~26일",
+        "timestamp": "1745107200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2025년 4월 27일~5월 3일",
+        "timestamp": "1745712000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "60",
+            "extracted_value": 60
+          }
+        ]
+      },
+      {
+        "date": "2025년 5월 4일~10일",
+        "timestamp": "1746316800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "61",
+            "extracted_value": 61
+          }
+        ]
+      },
+      {
+        "date": "2025년 5월 11일~17일",
+        "timestamp": "1746921600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "65",
+            "extracted_value": 65
+          }
+        ]
+      },
+      {
+        "date": "2025년 5월 18일~24일",
+        "timestamp": "1747526400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "66",
+            "extracted_value": 66
+          }
+        ]
+      },
+      {
+        "date": "2025년 5월 25일~31일",
+        "timestamp": "1748131200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "73",
+            "extracted_value": 73
+          }
+        ]
+      },
+      {
+        "date": "2025년 6월 1일~7일",
+        "timestamp": "1748736000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "66",
+            "extracted_value": 66
+          }
+        ]
+      },
+      {
+        "date": "2025년 6월 8일~14일",
+        "timestamp": "1749340800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "67",
+            "extracted_value": 67
+          }
+        ]
+      },
+      {
+        "date": "2025년 6월 15일~21일",
+        "timestamp": "1749945600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "69",
+            "extracted_value": 69
+          }
+        ]
+      },
+      {
+        "date": "2025년 6월 22일~28일",
+        "timestamp": "1750550400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "80",
+            "extracted_value": 80
+          }
+        ]
+      },
+      {
+        "date": "2025년 6월 29일~7월 5일",
+        "timestamp": "1751155200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "85",
+            "extracted_value": 85
+          }
+        ]
+      },
+      {
+        "date": "2025년 7월 6일~12일",
+        "timestamp": "1751760000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "88",
+            "extracted_value": 88
+          }
+        ]
+      },
+      {
+        "date": "2025년 7월 13일~19일",
+        "timestamp": "1752364800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2025년 7월 20일~26일",
+        "timestamp": "1752969600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "94",
+            "extracted_value": 94
+          }
+        ]
+      },
+      {
+        "date": "2025년 7월 27일~8월 2일",
+        "timestamp": "1753574400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "91",
+            "extracted_value": 91
+          }
+        ]
+      },
+      {
+        "date": "2025년 8월 3일~9일",
+        "timestamp": "1754179200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "88",
+            "extracted_value": 88
+          }
+        ]
+      },
+      {
+        "date": "2025년 8월 10일~16일",
+        "timestamp": "1754784000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "97",
+            "extracted_value": 97
+          }
+        ]
+      },
+      {
+        "date": "2025년 8월 17일~23일",
+        "timestamp": "1755388800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "98",
+            "extracted_value": 98
+          }
+        ]
+      },
+      {
+        "date": "2025년 8월 24일~30일",
+        "timestamp": "1755993600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2025년 8월 31일~9월 6일",
+        "timestamp": "1756598400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "80",
+            "extracted_value": 80
+          }
+        ]
+      },
+      {
+        "date": "2025년 9월 7일~13일",
+        "timestamp": "1757203200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "77",
+            "extracted_value": 77
+          }
+        ]
+      },
+      {
+        "date": "2025년 9월 14일~20일",
+        "timestamp": "1757808000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "76",
+            "extracted_value": 76
+          }
+        ]
+      },
+      {
+        "date": "2025년 9월 21일~27일",
+        "timestamp": "1758412800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "74",
+            "extracted_value": 74
+          }
+        ]
+      },
+      {
+        "date": "2025년 9월 28일~10월 4일",
+        "timestamp": "1759017600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2025년 10월 5일~11일",
+        "timestamp": "1759622400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "83",
+            "extracted_value": 83
+          }
+        ]
+      },
+      {
+        "date": "2025년 10월 12일~18일",
+        "timestamp": "1760227200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2025년 10월 19일~25일",
+        "timestamp": "1760832000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2025년 10월 26일~11월 1일",
+        "timestamp": "1761436800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "73",
+            "extracted_value": 73
+          }
+        ]
+      },
+      {
+        "date": "2025년 11월 2일~8일",
+        "timestamp": "1762041600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "76",
+            "extracted_value": 76
+          }
+        ]
+      },
+      {
+        "date": "2025년 11월 9일~15일",
+        "timestamp": "1762646400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "74",
+            "extracted_value": 74
+          }
+        ]
+      },
+      {
+        "date": "2025년 11월 16일~22일",
+        "timestamp": "1763251200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "80",
+            "extracted_value": 80
+          }
+        ]
+      },
+      {
+        "date": "2025년 11월 23일~29일",
+        "timestamp": "1763856000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "91",
+            "extracted_value": 91
+          }
+        ]
+      },
+      {
+        "date": "2025년 11월 30일~12월 6일",
+        "timestamp": "1764460800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "86",
+            "extracted_value": 86
+          }
+        ]
+      },
+      {
+        "date": "2025년 12월 7일~13일",
+        "timestamp": "1765065600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "87",
+            "extracted_value": 87
+          }
+        ]
+      },
+      {
+        "date": "2025년 12월 14일~20일",
+        "timestamp": "1765670400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "82",
+            "extracted_value": 82
+          }
+        ]
+      },
+      {
+        "date": "2025년 12월 21일~27일",
+        "timestamp": "1766275200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "83",
+            "extracted_value": 83
+          }
+        ]
+      },
+      {
+        "date": "2025년 12월 28일~2026년 1월 3일",
+        "timestamp": "1766880000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "88",
+            "extracted_value": 88
+          }
+        ]
+      },
+      {
+        "date": "2026년 1월 4일~10일",
+        "timestamp": "1767484800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "88",
+            "extracted_value": 88
+          }
+        ]
+      },
+      {
+        "date": "2026년 1월 11일~17일",
+        "timestamp": "1768089600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "92",
+            "extracted_value": 92
+          }
+        ]
+      },
+      {
+        "date": "2026년 1월 18일~24일",
+        "timestamp": "1768694400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "100",
+            "extracted_value": 100
+          }
+        ]
+      },
+      {
+        "date": "2026년 1월 25일~31일",
+        "timestamp": "1769299200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "93",
+            "extracted_value": 93
+          }
+        ]
+      },
+      {
+        "date": "2026년 2월 1일~7일",
+        "timestamp": "1769904000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2026년 2월 8일~14일",
+        "timestamp": "1770508800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "76",
+            "extracted_value": 76
+          }
+        ]
+      },
+      {
+        "date": "2026년 2월 15일~21일",
+        "timestamp": "1771113600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "74",
+            "extracted_value": 74
+          }
+        ]
+      },
+      {
+        "date": "2026년 2월 22일~28일",
+        "timestamp": "1771718400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "82",
+            "extracted_value": 82
+          }
+        ]
+      },
+      {
+        "date": "2026년 3월 1일~7일",
+        "timestamp": "1772323200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "83",
+            "extracted_value": 83
+          }
+        ]
+      },
+      {
+        "date": "2026년 3월 8일~14일",
+        "timestamp": "1772928000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "78",
+            "extracted_value": 78
+          }
+        ]
+      },
+      {
+        "date": "2026년 3월 15일~21일",
+        "timestamp": "1773532800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "75",
+            "extracted_value": 75
+          }
+        ]
+      },
+      {
+        "date": "2026년 3월 22일~28일",
+        "timestamp": "1774137600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2026년 3월 29일~4월 4일",
+        "timestamp": "1774742400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2026년 4월 5일~11일",
+        "timestamp": "1775347200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "53",
+            "extracted_value": 53
+          }
+        ]
+      },
+      {
+        "date": "2026년 4월 12일~18일",
+        "timestamp": "1775952000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "50",
+            "extracted_value": 50
+          }
+        ]
+      },
+      {
+        "date": "2026년 4월 19일~25일",
+        "timestamp": "1776556800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2026년 4월 26일~5월 2일",
+        "timestamp": "1777161600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "52",
+            "extracted_value": 52
+          }
+        ]
+      },
+      {
+        "date": "2026년 5월 3일~9일",
+        "timestamp": "1777766400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "56",
+            "extracted_value": 56
+          }
+        ]
+      },
+      {
+        "date": "2026년 5월 10일~16일",
+        "timestamp": "1778371200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2026년 5월 17일~23일",
+        "timestamp": "1778976000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2026년 5월 24일~30일",
+        "timestamp": "1779580800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "54",
+            "extracted_value": 54
+          }
+        ]
+      },
+      {
+        "date": "2026년 5월 31일~6월 6일",
+        "timestamp": "1780185600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "58",
+            "extracted_value": 58
+          }
+        ]
+      },
+      {
+        "date": "2026년 6월 7일~13일",
+        "timestamp": "1780790400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2026년 6월 14일~20일",
+        "timestamp": "1781395200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "64",
+            "extracted_value": 64
+          }
+        ]
+      },
+      {
+        "date": "2026년 6월 21일~27일",
+        "timestamp": "1782000000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "61",
+            "extracted_value": 61
+          }
+        ]
+      },
+      {
+        "date": "2026년 6월 28일~7월 4일",
+        "timestamp": "1782604800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "70",
+            "extracted_value": 70
+          }
+        ]
+      },
+      {
+        "date": "2026년 7월 5일~11일",
+        "timestamp": "1783209600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "77",
+            "extracted_value": 77
+          }
+        ]
+      },
+      {
+        "date": "2026년 7월 12일~18일",
+        "timestamp": "1783814400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "68",
+            "extracted_value": 68
+          }
+        ]
+      },
+      {
+        "date": "2026년 7월 19일~25일",
+        "timestamp": "1784419200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "79",
+            "extracted_value": 79
+          }
+        ]
+      },
+      {
+        "date": "2026년 7월 26일~8월 1일",
+        "timestamp": "1785024000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "97",
+            "extracted_value": 97
+          }
+        ]
+      },
+      {
+        "date": "2026년 8월 2일~8일",
+        "timestamp": "1785628800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "99",
+            "extracted_value": 99
+          }
+        ]
+      },
+      {
+        "date": "2026년 8월 9일~15일",
+        "timestamp": "1786233600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "71",
+            "extracted_value": 71
+          }
+        ]
+      },
+      {
+        "date": "2026년 8월 16일~22일",
+        "timestamp": "1786838400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "96",
+            "extracted_value": 96
+          }
+        ]
+      },
+      {
+        "date": "2026년 8월 23일~29일",
+        "timestamp": "1787443200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "69",
+            "extracted_value": 69
+          }
+        ]
+      },
+      {
+        "date": "2026년 8월 30일~9월 5일",
+        "timestamp": "1788048000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2026년 9월 6일~12일",
+        "timestamp": "1788652800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          }
+        ]
+      },
+      {
+        "date": "2026년 9월 13일~19일",
+        "timestamp": "1789257600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "63",
+            "extracted_value": 63
+          }
+        ]
+      },
+      {
+        "date": "2026년 9월 20일~26일",
+        "timestamp": "1789862400",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "74",
+            "extracted_value": 74
+          }
+        ]
+      },
+      {
+        "date": "2026년 9월 27일~10월 3일",
+        "timestamp": "1790467200",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "61",
+            "extracted_value": 61
+          }
+        ]
+      },
+      {
+        "date": "2026년 10월 4일~10일",
+        "timestamp": "1791072000",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          }
+        ]
+      },
+      {
+        "date": "2026년 10월 11일~17일",
+        "timestamp": "1791676800",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "64",
+            "extracted_value": 64
+          }
+        ]
+      },
+      {
+        "date": "2026년 10월 18일~24일",
+        "timestamp": "1792281600",
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "62",
+            "extracted_value": 62
+          }
+        ]
+      },
+      {
+        "date": "2026년 10월 25일~31일",
+        "timestamp": "1792886400",
+        "partial_data": true,
+        "values": [
+          {
+            "query": "다낭 여행   다낭",
+            "query_index": 0,
+            "value": "46",
+            "extracted_value": 46
+          }
+        ]
+      }
+    ]
+  }
+}

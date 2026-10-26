@@ -1,0 +1,144 @@
+{
+  "country": "VN",
+  "created_at": "2026-10-25T22:46:29+07:00",
+  "period": "2025-06-22 2026-10-25",
+  "categories": [
+    {
+      "id": "k-dessert",
+      "label": "한국 디저트",
+      "current": [
+        "bingsu",
+        "hotteok",
+        "yakgwa",
+        "injeolmi",
+        "bungeoppang"
+      ],
+      "proposed": [
+        {
+          "query": "bingsu",
+          "source": "현재 후보",
+          "recent_average": 50.2,
+          "change_rate": 123.0,
+          "is_new": false,
+          "data_status": "normal"
+        },
+        {
+          "query": "hotteok",
+          "source": "현재 후보",
+          "recent_average": 25.2,
+          "change_rate": 2230.8,
+          "is_new": false,
+          "data_status": "normal"
+        },
+        {
+          "query": "yakgwa",
+          "source": "현재 후보",
+          "recent_average": 22.2,
+          "change_rate": null,
+          "is_new": true,
+          "data_status": "normal"
+        },
+        {
+          "query": "bánh mì hàn quốc",
+          "source": "연관 인기",
+          "related_value": "100",
+          "recent_average": 1.8,
+          "change_rate": -60.4,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh gạo hàn quốc",
+          "source": "연관 인기",
+          "related_value": "91",
+          "recent_average": 2.6,
+          "change_rate": -27.9,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh mè hàn quốc",
+          "source": "연관 인기",
+          "related_value": "59",
+          "recent_average": 0.6,
+          "change_rate": 75.0,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh kem hàn quốc",
+          "source": "연관 인기",
+          "related_value": "36",
+          "recent_average": 0.2,
+          "change_rate": null,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh trung thu hàn quốc",
+          "source": "연관 인기",
+          "related_value": "32",
+          "recent_average": 0.9,
+          "change_rate": -15.4,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh mè đen hàn quốc",
+          "source": "연관 인기",
+          "related_value": "28",
+          "recent_average": 0.2,
+          "change_rate": null,
+          "is_new": false,
+          "data_status": "insufficient"
+        }
+      ],
+      "excluded": [
+        {
+          "query": "bánh gạo",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "bánh trung thu",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "bánh yonsei",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "vua bánh mì",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "phim vua bánh mì hàn quốc trọn bộ",
+          "reason": "다른 의미"
+        },
+        {
+          "query": "cách làm bánh gạo cay hàn quốc",
+          "reason": "만드는 법"
+        },
+        {
+          "query": "kem chống nắng",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem dưỡng ẩm",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem trị nám",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem ốc sên",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "phim hàn quốc",
+          "reason": "다른 의미"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{# 이벤트 실행 계획서 인쇄용 화면. [주연]
+   공통 레이아웃을 쓰지 않습니다. 메뉴·사이드바가 인쇄물에 섞이지 않게 하기 위함입니다. #}
+<!doctype html>
+<html lang="ko" data-theme="beige">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if campaign %}{{ campaign.name }} 실행계획·진행현황서{% else %}이벤트를 찾지 못했습니다{% endif %}</title>
+<link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/base.css') }}">
+<link rel="stylesheet" href="{{ url_for('home.static', filename='css/home_report.css') }}">
+</head>
+<body class="home-report-page">
+{% if not campaign %}
+  <main class="home-report">
+    <h1>이벤트를 찾지 못했습니다</h1>
+    <p>주소의 이벤트 번호를 확인해주세요. HOME에서 이벤트를 고른 뒤 보고서를 다시 열어주세요.</p>
+    <p><a href="{{ url_for('home.index') }}">HOME으로 돌아가기</a></p>
+  </main>
+{% else %}
+  <div class="home-report-bar">
+    <a href="{{ url_for('home.index') }}">← HOME</a>
+    <button type="button" onclick="window.print()">인쇄 · PDF로 저장</button>
+  </div>
+  <main class="home-report">
+    <header class="home-report-head">
+      <p class="home-report-kicker">한정선 베트남 마케팅 · 이벤트 실행계획·진행현황서</p>
+      <h1>{{ campaign.name }}</h1>
+      <p class="home-report-sub">
+        목표일 {{ campaign.target_date }}
+        · {% set gap = (campaign.target_date - today).days %}
+        {% if gap > 0 %}D-{{ gap }}{% elif gap == 0 %}D-DAY{% else %}D+{{ -gap }}{% endif %}
+        · 작성일 {{ today }}
+      </p>
+      <p class="home-report-muted">이벤트를 위해 어떤 업무를 언제까지 하고, 현재 어디까지 끝냈는지 팀이 함께 확인하는 문서입니다.</p>
+    </header>
+
+    <section>
+      <h2>1. 개요</h2>
+      <table class="home-report-facts">
+        <tr><th>제품</th><td>{{ campaign.product or '미입력' }}</td></tr>
+        <tr><th>타깃</th><td>{{ campaign.audience or '미입력' }}</td></tr>
+        <tr><th>채널</th><td>{{ campaign.channel or '미입력' }}</td></tr>
+        <tr><th>업무 관리 기간</th><td>{{ period_start }} ~ {{ period_end }} (준비·운영·후속 일정)</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>2. 현지 일정과 적용 범위</h2>
+      {% if events is none %}
+        <p class="home-report-warn">현지 일정 자료를 불러오지 못했습니다. 이 항목은 비어 있습니다.</p>
+      {% elif events %}
+        <ul class="home-report-list">
+          {% for e in events %}
+            <li>
+              <span class="home-report-date">{{ e.start_date }}{% if e.end_date != e.start_date %} ~ {{ e.end_date }}{% endif %}</span>
+              {{ e.name }}
+              {% if e.provisional %}<span class="home-report-tag">연휴 기간 미확정</span>{% endif %}
+              {% if e.applies_to %}<p class="home-report-muted">{{ e.applies_to }}</p>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="home-report-muted">이 기간에 등록된 현지 일정이 없습니다.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>3. 진행 현황</h2>
+      <p class="home-report-progress"><strong>{{ percent }}%</strong> 완료 · 전체 {{ tasks|length }}건 중 {{ done_count }}건 완료</p>
+      {% if overdue %}
+        <p class="home-report-warn">마감일이 지난 미완료 업무 {{ overdue|length }}건이 있습니다.</p>
+      {% endif %}
+      <p class="home-report-muted">남은 업무 {{ remaining|length }}건 · 마감일 미정 {{ tasks|rejectattr('due_date')|list|length }}건 · 보류 {{ tasks|selectattr('status', 'equalto', 'blocked')|list|length }}건</p>
+    </section>
+
+    <section>
+      <h2>4. 업무 일정</h2>
+      {% if tasks %}
+        <table class="home-report-table">
+          <thead><tr><th>업무 기간·마감</th><th>업무</th><th>구분</th><th>상태</th></tr></thead>
+          <tbody>
+          {% for t in tasks %}
+            <tr{% if t.status != 'done' and t.due_date and t.due_date < today %} class="is-late"{% endif %}>
+              <td>{% if t.start_date %}{{ t.start_date }} ~ {% endif %}{{ t.due_date or '미정' }}{% if t.due_time %} {{ t.due_time }}{% endif %}</td>
+              <td>{{ t.title }}{% if t.memo %}<p class="home-report-muted">{{ t.memo }}</p>{% endif %}</td>
+              <td>{{ categories.get(t.category, '미지정') }}</td>
+              <td>{% if t.status == 'done' %}완료{% elif t.status == 'doing' %}진행 중{% elif t.status == 'blocked' %}보류{% else %}예정{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="home-report-muted">등록된 준비 업무가 없습니다.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>5. 콘텐츠 준비·직접 일정·협업 일정</h2>
+      <h3>인플루언서 협업</h3>
+      {% if collaborations is none %}
+        <p class="home-report-warn">인플루언서 자료를 불러오지 못했습니다. 인플루언서 마케팅 탭에서 직접 확인해주세요.</p>
+      {% elif collaborations %}
+        <table class="home-report-table">
+          <thead><tr><th>인플루언서</th><th>촬영</th><th>게시 예정</th><th>상태</th></tr></thead>
+          <tbody>
+          {% for c in collaborations %}
+            <tr>
+              <td>{{ c.influencer }}</td>
+              <td>{{ c.shoot_date or '미정' }}</td>
+              <td>{{ c.post_date or '미정' }}</td>
+              <td>{{ c.status_label or c.status or '상태 미제공' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="home-report-muted">이 이벤트에 연결된 협업이 없습니다.</p>
+      {% endif %}
+
+      <h3>자체 콘텐츠 준비 업무</h3>
+      {% if content_tasks %}
+        <ul class="home-report-list">
+          {% for t in content_tasks %}
+            <li><span class="home-report-date">{{ t.due_date or '미정' }}</span> {{ t.title }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="home-report-muted">콘텐츠 스튜디오와 연결된 업무가 없습니다.</p>
+      {% endif %}
+      <p class="home-report-muted">위 자체 콘텐츠 목록은 HOME 준비 업무의 마감일입니다. 콘텐츠 스튜디오의 전체 게시 일정은 아닙니다. 콘텐츠의 내용·형식·문구는 콘텐츠 스튜디오 탭에서 관리합니다.</p>
+      <h3>HOME에 직접 등록한 일정</h3>
+      {% if schedules %}
+        <ul class="home-report-list">
+          {% for s in schedules %}
+            <li><span class="home-report-date">{{ s.date }}</span> {{ s.title or s.name or '이름 미입력' }}{% if s.memo %}<p class="home-report-muted">{{ s.memo }}</p>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="home-report-muted">이 이벤트에 직접 등록한 일정이 없습니다.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>6. 남은 일과 팀 확인 사항</h2>
+      {% if remaining %}
+        <ul class="home-report-list">
+          {% for t in remaining %}
+            <li><span class="home-report-date">{{ t.due_date or '미정' }}</span> {{ t.title }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="home-report-muted">남은 업무가 없습니다.</p>
+      {% endif %}
+      {% if tasks|selectattr('status', 'equalto', 'blocked')|list %}<p class="home-report-warn">보류 업무는 진행을 막는 사유와 다시 시작할 조건을 관련 담당자와 확인해주세요.</p>{% endif %}
+      {% if tasks|rejectattr('due_date')|list %}<p class="home-report-warn">마감일이 없는 업무는 날짜를 정해야 달력에 배치할 수 있습니다.</p>{% endif %}
+      {% if campaign.review %}<h3>이벤트 회고·다음 회차 메모</h3><p>{{ campaign.review }}</p>{% endif %}
+    </section>
+
+    <footer class="home-report-foot">
+      <p>성과·예산·소비자 반응은 KPI 탭이 원본입니다. 이 보고서에는 옮겨 적지 않았습니다.
+        <a href="{{ url_for('kpi.index') }}">KPI 탭에서 확인</a></p>
+      <p class="home-report-muted">이 문서는 HOME에 등록된 자료로 자동 작성했습니다. 작성 시점은 {{ today }}입니다.</p>
+    </footer>
+  </main>
+{% endif %}
+</body>
+</html>

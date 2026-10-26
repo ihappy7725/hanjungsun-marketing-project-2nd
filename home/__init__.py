@@ -9,4 +9,4 @@ bp = Blueprint(
     static_folder="static",
 )
 
-from . import models, routes  # noqa: E402,F401  (bp를 먼저 만든 뒤 불러옵니다)
+from . import cli, models, routes  # noqa: E402,F401  (bp를 먼저 만든 뒤 불러옵니다)

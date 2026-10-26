@@ -1,0 +1,237 @@
+{
+  "search_metadata": {
+    "id": "6ade5a94c0714ee4a35e0f42",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/v1_87elYOrN9wisGD1kqvw0t8fox6sqvBafSnEQqawg/6ade5a94c0714ee4a35e0f42.md",
+    "created_at": "2026-10-25 19:37:56 UTC",
+    "processed_at": "2026-10-25 19:37:56 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_TOPICS?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22hoa+qu%E1%BA%A3+d%E1%BA%A7m%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/v1_87elYOrN9wisGD1kqvw0t8fox6sqvBafSnEQqawg/6ade5a94c0714ee4a35e0f42.html",
+    "prettify_html_file": "https://serpapi.com/searches/v1_87elYOrN9wisGD1kqvw0t8fox6sqvBafSnEQqawg/6ade5a94c0714ee4a35e0f42.prettify",
+    "total_time_taken": 2.42
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"hoa quả dầm\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_TOPICS"
+  },
+  "related_topics": {
+    "rising": [
+      {
+        "topic": {
+          "value": "/g/11jt1zrhw_",
+          "title": "Hoa Quả Dầm - Hoa Béo Tô Tịch (Hà Nội) cơ sở Hải Phòng",
+          "type": "Cửa hàng kem ở Hải Phòng, Việt Nam"
+        },
+        "value": "Đột phá",
+        "extracted_value": 602350,
+        "link": "https://trends.google.com/trends/explore?q=/g/11jt1zrhw_&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11jt1zrhw_&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0jtt9",
+          "title": "Ớt",
+          "type": "Quả"
+        },
+        "value": "Đột phá",
+        "extracted_value": 55250,
+        "link": "https://trends.google.com/trends/explore?q=/m/0jtt9&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0jtt9&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11jwxr2rm3",
+          "title": "Hoa Quả Dầm 39 Hàng Mành",
+          "type": "Nhà hàng tráng miệng ở Hà Nội, Việt Nam"
+        },
+        "value": "Đột phá",
+        "extracted_value": 50200,
+        "link": "https://trends.google.com/trends/explore?q=/g/11jwxr2rm3&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11jwxr2rm3&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11vxllff_9",
+          "title": "HOA QUẢ DẦM 31 Hàm Long",
+          "type": "Cửa hàng thực phẩm thiên nhiên ở Hà Nội, Việt Nam"
+        },
+        "value": "+140%",
+        "extracted_value": 140,
+        "link": "https://trends.google.com/trends/explore?q=/g/11vxllff_9&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11vxllff_9&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/1tgnz8j4",
+          "title": "Phố Hàm Long",
+          "type": "Chủ đề"
+        },
+        "value": "+110%",
+        "extracted_value": 110,
+        "link": "https://trends.google.com/trends/explore?q=/g/1tgnz8j4&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F1tgnz8j4&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11h75jvw_g",
+          "title": "Hoa quả dầm - Chè khúc bạch MyMei",
+          "type": "Quán ăn nhỏ ở Hà Nội, Việt Nam"
+        },
+        "value": "+80%",
+        "extracted_value": 80,
+        "link": "https://trends.google.com/trends/explore?q=/g/11h75jvw_g&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11h75jvw_g&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "topic": {
+          "value": "/m/02xwb",
+          "title": "Quả",
+          "type": "Thực phẩm"
+        },
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=/m/02xwb&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F02xwb&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/014l8n",
+          "title": "Sữa chua",
+          "type": "Chế phẩm sữa"
+        },
+        "value": "47",
+        "extracted_value": 47,
+        "link": "https://trends.google.com/trends/explore?q=/m/014l8n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F014l8n&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/04zpv",
+          "title": "Sữa",
+          "type": "Sản phẩm từ sữa"
+        },
+        "value": "47",
+        "extracted_value": 47,
+        "link": "https://trends.google.com/trends/explore?q=/m/04zpv&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F04zpv&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11vxllff_9",
+          "title": "HOA QUẢ DẦM 31 Hàm Long",
+          "type": "Cửa hàng thực phẩm thiên nhiên ở Hà Nội, Việt Nam"
+        },
+        "value": "39",
+        "extracted_value": 39,
+        "link": "https://trends.google.com/trends/explore?q=/g/11vxllff_9&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11vxllff_9&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/1tgnz8j4",
+          "title": "Phố Hàm Long",
+          "type": "Chủ đề"
+        },
+        "value": "33",
+        "extracted_value": 33,
+        "link": "https://trends.google.com/trends/explore?q=/g/1tgnz8j4&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F1tgnz8j4&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11h75jvw_g",
+          "title": "Hoa quả dầm - Chè khúc bạch MyMei",
+          "type": "Quán ăn nhỏ ở Hà Nội, Việt Nam"
+        },
+        "value": "25",
+        "extracted_value": 25,
+        "link": "https://trends.google.com/trends/explore?q=/g/11h75jvw_g&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11h75jvw_g&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/1tn4vn4t",
+          "title": "Phố Thái Phiên",
+          "type": "Chủ đề"
+        },
+        "value": "25",
+        "extracted_value": 25,
+        "link": "https://trends.google.com/trends/explore?q=/g/1tn4vn4t&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F1tn4vn4t&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11jt1zrhw_",
+          "title": "Hoa Quả Dầm - Hoa Béo Tô Tịch (Hà Nội) cơ sở Hải Phòng",
+          "type": "Cửa hàng kem ở Hải Phòng, Việt Nam"
+        },
+        "value": "17",
+        "extracted_value": 17,
+        "link": "https://trends.google.com/trends/explore?q=/g/11jt1zrhw_&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11jt1zrhw_&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11k3f11vq9",
+          "title": "Hoa quả dầm Nhung Khoát",
+          "type": "Nhà hàng ở Hà Nội, Việt Nam"
+        },
+        "value": "16",
+        "extracted_value": 16,
+        "link": "https://trends.google.com/trends/explore?q=/g/11k3f11vq9&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11k3f11vq9&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11hzxj_z6j",
+          "title": "Hoa Quả Dầm Tô Tịch",
+          "type": "Chủ đề"
+        },
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=/g/11hzxj_z6j&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11hzxj_z6j&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/05g0_z",
+          "title": "Muối ăn",
+          "type": "Phụ gia"
+        },
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=/m/05g0_z&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F05g0_z&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0jtt9",
+          "title": "Ớt",
+          "type": "Quả"
+        },
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=/m/0jtt9&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0jtt9&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11jwxr2rm3",
+          "title": "Hoa Quả Dầm 39 Hàng Mành",
+          "type": "Nhà hàng tráng miệng ở Hà Nội, Việt Nam"
+        },
+        "value": "1",
+        "extracted_value": 1,
+        "link": "https://trends.google.com/trends/explore?q=/g/11jwxr2rm3&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11jwxr2rm3&tz=-420"
+      }
+    ]
+  }
+}

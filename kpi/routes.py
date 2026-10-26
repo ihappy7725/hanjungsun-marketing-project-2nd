@@ -42,10 +42,14 @@ DEMO_CHANNELS = [
      "conversions": 610, "landing_clicks": 7_900},
 ]
 
-# GA4 시연 값. kpi/data/ga4_demo.csv(GA4 공식 데모 계정 내보내기)가 있으면 세션·참여 세션은 그 파일 값을 씁니다.
-# 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
-DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_clicks": 1_540, "pamphlet_sessions": 1_180}
-GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
+# GA4 시연 값. kpi/data/ga4_demo.json(GA4 공식 데모 계정 화면을 옮겨 적음)이 있으면 세션·참여·전환은 그 파일 값을 씁니다.
+# 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
+# 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
+# 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
+DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "store_action_rate": 0.124, "pamphlet_share": 0.0952}
+GA4_DEMO_JSON = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.json")
+# 팜플렛 QR 설문 주관식 한 줄 의견 (시연, 응답자 186명 · platform = 설문을 받은 창구)
+SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
 DEMO_CREATORS = [
     {"creator": "@danang.foodie", "platform": "TikTok", "clicks": 3_120, "conversions": 248},
@@ -56,71 +60,48 @@ DEMO_CREATORS = [
 ]
 
 SENTIMENTS = ("Positive", "Neutral", "Negative")
-# 한정선은 배송을 하지 않습니다. 포장·보냉(매장 구매 후 휴대) 반응만 다룹니다.
-KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "기타")
+# 한정선은 현지 배달·온라인 배송이 없습니다(매장 구매·예약 후 매장 픽업만). 포장·보냉(휴대) 반응만 다룹니다.
+# 1:1 문의 창구라 보관 방법·매장 위치·단체 주문 같은 문의가 많아 "문의/기타"로 묶습니다.
+KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "문의/기타")
+OTHER_TAG = "문의/기타"
 
-DEMO_REVIEWS = [
-    {"review_id": "demo_voc_01", "platform": "Shopee_VN",
-     "raw_text_vn": "Bánh mochi dâu rất tươi, vị ngọt vừa phải, cả nhà đều thích.",
-     "translated_kr": "딸기 찹쌀떡이 아주 신선하고 단맛이 적당해서 가족 모두 좋아해요.",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_02", "platform": "Shopee_VN",
-     "raw_text_vn": "Trời nóng quá nên trên đường mua về nhà phần kem bên trong hơi bị chảy.",
-     "translated_kr": "날씨가 너무 더워서 사서 집에 오는 동안 안쪽 크림이 조금 녹았어요.",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_03", "platform": "Instagram",
-     "raw_text_vn": "Hộp quà gói bằng vải bojagi nhìn sang trọng, rất hợp để biếu tặng.",
-     "translated_kr": "보자기로 싼 선물 상자가 고급스러워 보여서 선물하기 딱 좋아요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_04", "platform": "TikTok",
-     "raw_text_vn": "Giá hơi cao so với bánh mochi bình thường, nhưng chất lượng tốt.",
-     "translated_kr": "일반 찹쌀떡보다 가격이 조금 비싸지만 품질은 좋아요.",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_05", "platform": "Shopee_VN",
-     "raw_text_vn": "Vỏ bánh dẻo mềm, nhân xoài thơm, sẽ mua lại.",
-     "translated_kr": "떡피가 쫀득하고 부드럽고 망고 소가 향긋해요. 재구매할게요.",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_06", "platform": "Instagram",
-     "raw_text_vn": "Mua ở cửa hàng nhưng không có túi giữ lạnh, cầm về một tiếng là bánh bị mềm nhũn.",
-     "translated_kr": "매장에서 샀는데 보냉백이 없어서 1시간 들고 오니 떡이 너무 물러졌어요.",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_07", "platform": "TikTok",
-     "raw_text_vn": "Mình mua làm quà Tết cho sếp, ai cũng khen đẹp.",
-     "translated_kr": "상사에게 뗏(설) 선물로 샀는데 다들 예쁘다고 칭찬했어요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_08", "platform": "Shopee_VN",
-     "raw_text_vn": "Vị sầu riêng hơi gắt, không hợp khẩu vị của mình.",
-     "translated_kr": "두리안 맛이 좀 강해서 제 입맛에는 안 맞았어요.",
-     "sentiment": "Negative", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_09", "platform": "Instagram",
-     "raw_text_vn": "Bánh ăn được, không có gì đặc biệt lắm.",
-     "translated_kr": "먹을 만하지만 특별한 건 없어요.",
-     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_10", "platform": "TikTok",
-     "raw_text_vn": "Mong có hộp nhỏ 4 cái để giá mềm hơn.",
-     "translated_kr": "4개짜리 작은 상자가 나와서 가격이 좀 더 부담 없었으면 좋겠어요.",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    # Zalo_OA: 제품 팜플렛 QR → 한정선 Zalo 공식 계정 1:1 문의 (한국 본사 카카오톡 채널 CS의 베트남 현지화)
-    {"review_id": "demo_voc_11", "platform": "Zalo_OA",
-     "raw_text_vn": "Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",
-     "translated_kr": "보냉 상자가 좋아서 다낭 집에 도착했을 때도 떡이 말랑했어요.",
-     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_12", "platform": "Zalo_OA",
-     "raw_text_vn": "Cho mình hỏi bánh để tủ lạnh được mấy ngày?",
-     "translated_kr": "냉장고에 며칠 보관할 수 있나요?",
-     "sentiment": "Neutral", "keyword_tag": "기타"},
-    {"review_id": "demo_voc_13", "platform": "Zalo_OA",
-     "raw_text_vn": "Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",
-     "translated_kr": "매장에서 받을 때 상자 한쪽이 찌그러져 있었어요. 포장을 더 꼼꼼히 해 주세요.",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-]
+# VOC 1:1 문의·후기 (시연). CS 창구는 제품 팜플렛 하단 QR 3개: Zalo OA · 카카오톡 채널 · WhatsApp
+# raw_text_vn은 고객이 쓴 원문이고 lang(vi/ko)으로 언어를 구분합니다. 파일이 없으면 빈 목록.
+REVIEWS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_reviews_demo.csv")
+REVIEW_CHANNELS = ("Zalo_OA", "KakaoTalk", "WhatsApp")
+
+
+def _read_demo_reviews(path=REVIEWS_CSV):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = [line for line in f if not line.startswith("#")]
+    return [{
+        "review_id": row["review_id"],
+        "platform": row["platform"],
+        "raw_text_vn": row["raw_text_vn"],
+        "translated_kr": row["translated_kr"],
+        "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
+        "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
+        "lang": row.get("lang") or "vi",
+        "source": "message",
+    } for row in csv.DictReader(lines)]
+
+
+DEMO_REVIEWS = _read_demo_reviews()
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
-DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_responses": 186}
+# follows: 팜플렛 QR로 채널을 추가한 수(Zalo OA 친구 추가 · WhatsApp 대화 시작 · 카카오톡 채널 추가). 베트남은 Zalo 이용자가 가장 많음
+DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "follows": {"Zalo_OA": 410, "WhatsApp": 150, "KakaoTalk": 90}, "survey_responses": 186}
+# 응답자 186명이 문항마다 1~5점 중 하나를 고른 인원 수(dist = [1점, 2점, 3점, 4점, 5점]).
+# 평균·긍정 비율은 이 분포에서 계산합니다(_survey_block).
 DEMO_SURVEY = [
-    {"item": "맛", "score": 4.5},
-    {"item": "포장", "score": 3.6},
-    {"item": "매장 응대", "score": 3.8},
+    {"item": "맛", "dist": [2, 3, 12, 55, 114]},
+    {"item": "식감", "dist": [3, 5, 18, 68, 92]},
+    {"item": "포장/보냉", "dist": [6, 14, 41, 72, 53]},
+    {"item": "가격", "dist": [9, 21, 58, 61, 37]},
+    {"item": "매장 응대", "dist": [4, 9, 38, 79, 56]},
+    {"item": "재구매 의향", "dist": [5, 8, 27, 63, 83]},
 ]
 
 FX_STALE_DAYS = 7  # 환율 기준일이 이보다 오래되면 화면에 주의 표시
@@ -156,7 +137,8 @@ ECOS_LOOKBACK_DAYS = 14  # 주말·공휴일이면 직전 영업일 값을 씁�
 FALLBACK_FX_URL = "https://open.er-api.com/v6/latest/VND"
 FX_CACHE_SECONDS = 60 * 60
 _fx_cache = {"fetched_at": 0.0, "data": None}
-_ecos_item_cache = {"item": None}
+_usd_cache = {"fetched_at": 0.0, "data": None}
+_ecos_item_cache = {}  # 찾는 말("베트남", "미국달러") → ECOS 항목
 
 
 def _get_json(url, timeout=8):
@@ -174,23 +156,43 @@ def _ecos_rows(payload, service):
     raise ValueError(result.get("CODE") or "ECOS_UNKNOWN")
 
 
-def _find_ecos_vnd_item(api_key):
-    if _ecos_item_cache["item"]:
-        return _ecos_item_cache["item"]
+def _find_ecos_item(api_key, keyword, prefer="매매기준율"):
+    """ECOS 일별 환율 통계표에서 이름에 keyword가 들어간 항목을 찾습니다. 여러 개면 prefer가 들어간 항목."""
+    if keyword in _ecos_item_cache:
+        return _ecos_item_cache[keyword]
     for stat_code in ECOS_STAT_CODES:
         url = f"{ECOS_BASE}/StatisticItemList/{api_key}/json/kr/1/500/{stat_code}"
-        for row in _ecos_rows(_get_json(url), "StatisticItemList"):
-            if "베트남" in (row.get("ITEM_NAME") or "") and (row.get("CYCLE") or "D") == "D":
-                item = {
-                    "stat_code": stat_code,
-                    "stat_name": row.get("STAT_NAME") or "",
-                    "item_code": row.get("ITEM_CODE"),
-                    "item_name": row.get("ITEM_NAME") or "",
-                    "unit_name": row.get("UNIT_NAME") or "",
-                }
-                _ecos_item_cache["item"] = item
-                return item
-    raise LookupError("ECOS_VND_ITEM_NOT_FOUND")
+        matches = [
+            row for row in _ecos_rows(_get_json(url), "StatisticItemList")
+            if keyword in (row.get("ITEM_NAME") or "") and (row.get("CYCLE") or "D") == "D"
+        ]
+        if matches:
+            row = next((r for r in matches if prefer in (r.get("ITEM_NAME") or "")), matches[0])
+            item = {
+                "stat_code": stat_code,
+                "stat_name": row.get("STAT_NAME") or "",
+                "item_code": row.get("ITEM_CODE"),
+                "item_name": row.get("ITEM_NAME") or "",
+                "unit_name": row.get("UNIT_NAME") or "",
+            }
+            _ecos_item_cache[keyword] = item
+            return item
+    raise LookupError("ECOS_VND_ITEM_NOT_FOUND" if keyword == "베트남" else "ECOS_USD_ITEM_NOT_FOUND")
+
+
+def _ecos_latest(api_key, item):
+    """최근 ECOS_LOOKBACK_DAYS일 중 가장 최근 고시값 (값, 'YYYYMMDD')."""
+    end = time.localtime()
+    start = time.localtime(time.time() - ECOS_LOOKBACK_DAYS * 86400)
+    url = (
+        f"{ECOS_BASE}/StatisticSearch/{api_key}/json/kr/1/100/{item['stat_code']}/D/"
+        f"{time.strftime('%Y%m%d', start)}/{time.strftime('%Y%m%d', end)}/{item['item_code']}"
+    )
+    rows = [r for r in _ecos_rows(_get_json(url), "StatisticSearch") if r.get("DATA_VALUE") not in (None, "", "-")]
+    if not rows:
+        raise LookupError("ECOS_NO_RECENT_DATA")
+    latest = max(rows, key=lambda r: r.get("TIME") or "")
+    return float(str(latest["DATA_VALUE"]).replace(",", "")), latest["TIME"]
 
 
 def _to_rate_per_100_vnd(value, item):
@@ -202,21 +204,11 @@ def _to_rate_per_100_vnd(value, item):
 
 
 def _fetch_ecos_rate(api_key):
-    item = _find_ecos_vnd_item(api_key)
-    end = time.localtime()
-    start = time.localtime(time.time() - ECOS_LOOKBACK_DAYS * 86400)
-    url = (
-        f"{ECOS_BASE}/StatisticSearch/{api_key}/json/kr/1/100/{item['stat_code']}/D/"
-        f"{time.strftime('%Y%m%d', start)}/{time.strftime('%Y%m%d', end)}/{item['item_code']}"
-    )
-    rows = [r for r in _ecos_rows(_get_json(url), "StatisticSearch") if r.get("DATA_VALUE") not in (None, "", "-")]
-    if not rows:
-        raise LookupError("ECOS_NO_RECENT_DATA")
-    latest = max(rows, key=lambda r: r.get("TIME") or "")
-    day = latest["TIME"]
+    item = _find_ecos_item(api_key, "베트남")
+    value, day = _ecos_latest(api_key, item)
     return {
         "ok": True,
-        "rate_per_100_vnd": _to_rate_per_100_vnd(float(latest["DATA_VALUE"]), item),
+        "rate_per_100_vnd": _to_rate_per_100_vnd(value, item),
         "updated_at": f"{day[:4]}-{day[4:6]}-{day[6:8]} 고시",
         "as_of": f"{day[:4]}-{day[4:6]}-{day[6:8]}",
         "source": "한국은행 ECOS",
@@ -258,15 +250,50 @@ def _fetch_exchange_rate():
     else:
         try:
             data = _fetch_ecos_rate(api_key)
-        except urllib.error.HTTPError as exc:
-            data = _fetch_fallback_rate(f"ECOS 호출 실패(HTTP {exc.code})로 대체 출처를 씁니다.")
-        except (urllib.error.URLError, TimeoutError) as exc:
-            data = _fetch_fallback_rate(f"ECOS 서버에 연결하지 못해({exc.__class__.__name__}) 대체 출처를 씁니다.")
-        except (ValueError, LookupError, KeyError, TypeError) as exc:
-            code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
-            data = _fetch_fallback_rate(f"ECOS 응답 오류({code})로 대체 출처를 씁니다.")
+        except ECOS_ERRORS as exc:
+            data = _fetch_fallback_rate(_ecos_error_reason(exc))
     if data.get("ok"):
         _fx_cache.update(fetched_at=now, data=data)
+    return data
+
+
+ECOS_ERRORS = (urllib.error.URLError, TimeoutError, ValueError, LookupError, KeyError, TypeError)
+
+
+def _ecos_error_reason(exc):
+    """ECOS 실패 이유 (키가 든 주소·예외 메시지는 넣지 않습니다)."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return f"ECOS 호출 실패(HTTP {exc.code})로 대체 출처를 씁니다."
+    if isinstance(exc, (urllib.error.URLError, TimeoutError)):
+        return f"ECOS 서버에 연결하지 못해({exc.__class__.__name__}) 대체 출처를 씁니다."
+    code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
+    return f"ECOS 응답 오류({code})로 대체 출처를 씁니다."
+
+
+def _fetch_usd_rate():
+    """원/미국달러 고시 환율(1달러당 원). ROAS 블록 달러 표시용 — 공식 계산에는 쓰지 않습니다."""
+    now = time.time()
+    if _usd_cache["data"] and now - _usd_cache["fetched_at"] < FX_CACHE_SECONDS:
+        return _usd_cache["data"]
+    api_key = os.environ.get("ECOS_API_KEY", "").strip()
+    reason = "ECOS_API_KEY가 없어 대체 출처를 씁니다."
+    data = None
+    if api_key:
+        try:
+            item = _find_ecos_item(api_key, "미국달러")
+            value, day = _ecos_latest(api_key, item)
+            data = {"ok": True, "krw_per_usd": round(value, 2), "as_of": f"{day[:4]}-{day[4:6]}-{day[6:8]}",
+                    "source": "한국은행 ECOS", "is_fallback": False}
+        except ECOS_ERRORS as exc:
+            reason = _ecos_error_reason(exc)
+    if data is None:
+        try:
+            rates = _get_json(FALLBACK_FX_URL, timeout=5)["rates"]  # 1 VND 기준 → 1달러당 원 = KRW ÷ USD
+            data = {"ok": True, "krw_per_usd": round(float(rates["KRW"]) / float(rates["USD"]), 2), "as_of": None,
+                    "source": "open.er-api.com", "is_fallback": True, "note": reason}
+        except (urllib.error.URLError, TimeoutError, ValueError, KeyError, TypeError, ZeroDivisionError) as exc:
+            return {"ok": False, "error": f"달러 환율을 불러오지 못했습니다 ({exc.__class__.__name__})."}
+    _usd_cache.update(fetched_at=now, data=data)
     return data
 
 
@@ -339,93 +366,73 @@ def _simulator_influencers():
     return {"status": status, "note": note, "options": options}
 
 
-# ---------------------------------------------------------------------------
-# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) CSV를 읽습니다.
-# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_csv만 GA4 Data API 호출로 바꿉니다.
-# (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 쇼피 이동은 '이탈 클릭' 이벤트)
-# ---------------------------------------------------------------------------
+def _simulator_influencer_list():
+    """인플루언서 탭 리스트(get_collaborations) — 단가가 없는 인플루언서도 계정 자동완성에 보여 주기 위함.
 
-GA4_COLUMNS = {
-    "sessions": ("세션수", "세션", "Sessions"),
-    "engaged_sessions": ("참여 세션수", "참여 세션", "Engaged sessions"),
-    "purchases": ("거래", "구매", "Transactions", "Purchases", "Ecommerce purchases"),
-}
-GA4_DATE_KEYS = {"start": ("시작 날짜", "Start date"), "end": ("종료 날짜", "End date")}
-
-
-def _ga4_number(text):
-    text = (text or "").replace(",", "").replace("%", "").strip()
+    이름 · 대표 매체 · 팔로워 · 진행 상태만 씁니다(같은 이름은 한 번만). 실패하거나 비어 있으면 빈 목록이고,
+    그때 화면은 단가 목록(get_quote_summary 또는 시연 후보)만으로 동작합니다.
+    """
     try:
-        return float(text)
-    except ValueError:
-        return None
+        from influencer_marketing.public import get_collaborations
+
+        rows = list(get_collaborations(include_demo=True) or [])
+    except Exception:  # 주인 탭 오류로 내 화면이 멈추지 않게 (README 10장)
+        return []
+    out, seen = [], set()
+    for r in rows:
+        r = r or {}
+        name = str(r.get("influencer") or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        followers = r.get("followers")
+        out.append({
+            "influencer": name,
+            "platform": r.get("main_platform") or "",
+            "followers": followers if isinstance(followers, int) else None,
+            "status_label": r.get("status_label") or "",
+            "is_demo": bool(r.get("is_demo")),
+        })
+    return out
 
 
-def _ga4_date(text):
-    text = (text or "").strip()
-    return f"{text[:4]}-{text[4:6]}-{text[6:8]}" if len(text) == 8 and text.isdigit() else text
+# ---------------------------------------------------------------------------
+# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) 화면을 옮겨 적은 JSON을 읽습니다(데모 계정은 CSV 다운로드 불가).
+# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_json만 GA4 Data API 호출로 바꿉니다(같은 키 이름으로 돌려주면 됨).
+# (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 매장 예약·길찾기는 클릭 이벤트)
+# ---------------------------------------------------------------------------
+
+GA4_CHANNEL_FIELDS = (
+    "sessions", "engaged_sessions", "avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd",
+)
 
 
-def _read_ga4_demo_csv(path=GA4_DEMO_CSV):
-    """GA4 보고서 '내보내기 → CSV' 파일을 읽어 합계를 돌려줍니다. 파일이 없으면 None, 형식 오류는 ValueError."""
+def _read_ga4_demo_json(path=GA4_DEMO_JSON):
+    """GA4 데모 JSON(totals · channels · top_events)을 읽습니다. 파일이 없으면 None, 형식 오류는 ValueError."""
     if not os.path.exists(path):
         return None
-    period = {}
-    table = []
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        for line in f:
-            stripped = line.strip()
-            if stripped.startswith("#"):
-                key, _, value = stripped.lstrip("#").partition(":")
-                for name, labels in GA4_DATE_KEYS.items():
-                    if key.strip() in labels:
-                        period[name] = _ga4_date(value)
-                continue
-            if not stripped:
-                if table:
-                    break  # 첫 번째 표만 읽습니다.
-                continue
-            table.append(line)
-    rows = list(csv.reader(table))
-    if len(rows) < 2:
-        raise ValueError("GA4_CSV_EMPTY")
-    header = [h.strip() for h in rows[0]]
-    index = {}
-    for field, labels in GA4_COLUMNS.items():
-        for i, h in enumerate(header):
-            if h in labels:
-                index[field] = i
-                break
-    if "sessions" not in index:
-        raise ValueError("GA4_CSV_NO_SESSIONS")
-
-    data_rows = [r for r in rows[1:] if r]
-    is_total = lambda r: any(t in r[0] for t in ("총계", "합계", "Total", "Grand total"))  # noqa: E731
-    total_rows = [r for r in data_rows if is_total(r)]
-    use_rows = total_rows[:1] or data_rows
-    totals = {}
-    for field, i in index.items():
-        values = [_ga4_number(r[i]) for r in use_rows if len(r) > i]
-        values = [v for v in values if v is not None]
-        totals[field] = round(sum(values)) if values else None
-
-    # 채널별 줄 (확대 화면의 채널별 참여율 표·차트용)
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    totals = data.get("totals") or {}
+    if not isinstance(totals.get("sessions"), (int, float)):
+        raise ValueError("GA4_JSON_NO_SESSIONS")
     channels = []
-    for r in data_rows:
-        if is_total(r) or len(r) <= index["sessions"]:
+    for c in data.get("channels") or []:
+        if not isinstance(c, dict) or not c.get("channel") or not isinstance(c.get("sessions"), (int, float)):
             continue
-        sessions = _ga4_number(r[index["sessions"]])
-        engaged = _ga4_number(r[index["engaged_sessions"]]) if "engaged_sessions" in index and len(r) > index["engaged_sessions"] else None
-        if sessions is None:
-            continue
-        channels.append({
-            "channel": r[0].strip(),
-            "sessions": round(sessions),
-            "engaged_sessions": round(engaged) if engaged is not None else None,
-            "engagement_rate_percent": _pct(engaged, sessions) if engaged is not None else None,
-        })
+        row = {"channel": str(c["channel"]), **{k: c.get(k) for k in GA4_CHANNEL_FIELDS}}
+        row["engagement_rate_percent"] = _pct(row["engaged_sessions"], row["sessions"]) if row["engaged_sessions"] is not None else None
+        channels.append(row)
     channels.sort(key=lambda c: c["sessions"], reverse=True)
-    return {"period": period, **totals, "channels": channels}
+    meta = data.get("meta") or {}
+    events = data.get("top_events") or {}
+    return {
+        "period": meta.get("period") or {},
+        **{k: totals.get(k) for k in ("sessions", *GA4_CHANNEL_FIELDS[1:], "event_count")},
+        "channels": channels,
+        "top_events": [e for e in events.get("rows") or [] if isinstance(e, dict) and e.get("event")],
+        "top_events_note": events.get("note") or "",
+    }
 
 
 def _build_ga4():
@@ -437,16 +444,16 @@ def _build_ga4():
         "source": "시연 값",
         "period": None,
         "scope": "가상 한정선 사이트",
-        "note": "kpi/data/ga4_demo.csv가 없어 시연 값을 씁니다.",
-        "purchase_rate_percent": None,
+        "note": "kpi/data/ga4_demo.json이 없어 시연 값을 씁니다.",
         "channels": [],
+        "top_events": [],
     }
     try:
-        demo = _read_ga4_demo_csv()
-    except (OSError, ValueError, csv.Error) as exc:
+        demo = _read_ga4_demo_json()
+    except (OSError, ValueError) as exc:
         code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
         demo = None
-        ga4["note"] = f"GA4 데모 CSV를 읽지 못해({code}) 시연 값을 씁니다."
+        ga4["note"] = f"GA4 데모 JSON을 읽지 못해({code}) 시연 값을 씁니다."
     if demo and demo.get("sessions"):
         ga4.update(
             sessions=demo["sessions"],
@@ -456,16 +463,19 @@ def _build_ga4():
             period=demo["period"] or None,
             scope="글로벌 데모 (한정선 데이터 아님)",
             note="GA4 데이터 형식 검증용 공개 데모 데이터입니다.",
-            purchase_rate_percent=_pct(demo["purchases"], demo["sessions"]) if demo.get("purchases") is not None else None,
             channels=demo.get("channels") or [],
+            top_events=demo.get("top_events") or [],
+            top_events_note=demo.get("top_events_note") or "",
+            # 전환 대체 지표(데모 매장 값): 주요 이벤트 · 세션 주요 이벤트 비율 · 평균 참여 시간 · 수익(USD)
+            **{k: demo.get(k) for k in ("avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd", "event_count")},
         )
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
     )
-    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다.
-    ga4["shopee_clicks"] = DEMO_GA4["shopee_clicks"]
-    ga4["shopee_ctr_percent"] = _pct(DEMO_GA4["shopee_clicks"], DEMO_GA4["sessions"])
-    ga4["pamphlet_sessions"] = DEMO_GA4["pamphlet_sessions"]
+    # 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다(시연 비율 × 같은 세션 수).
+    ga4["store_action_clicks"] = round(ga4["sessions"] * DEMO_GA4["store_action_rate"])
+    ga4["store_action_ctr_percent"] = _pct(ga4["store_action_clicks"], ga4["sessions"])
+    ga4["pamphlet_sessions"] = round(ga4["sessions"] * DEMO_GA4["pamphlet_share"])
     return ga4
 
 
@@ -566,6 +576,8 @@ def _build_summary():
         "channels": channels,
         "roas_bep_percent": ROAS_BEP_PERCENT,
         "fx": fx_block,
+        # ROAS 블록 통화 전환용: 원화 = 편성 기준 환율, 달러 = 그 원화 ÷ 현재 원/달러 고시 (A안)
+        "usd": _fetch_usd_rate(),
         "ga4": _build_ga4(),
         "creators": [
             {**c, "cvr_percent": _pct(c["conversions"], c["clicks"])} for c in DEMO_CREATORS
@@ -580,7 +592,7 @@ def _voc_stats(reviews):
     for r in reviews:
         if r.get("sentiment") in sentiment_counts:
             sentiment_counts[r["sentiment"]] += 1
-        tag = r.get("keyword_tag") or "기타"
+        tag = r.get("keyword_tag") or OTHER_TAG
         keyword_counts[tag] = keyword_counts.get(tag, 0) + 1
     top_keywords = sorted(keyword_counts.items(), key=lambda kv: kv[1], reverse=True)[:5]
     return {
@@ -590,14 +602,65 @@ def _voc_stats(reviews):
     }
 
 
+def _read_survey_comments(path=SURVEY_COMMENTS_CSV):
+    """QR 설문 주관식 한 줄 의견(응답자 1명당 1줄)을 읽습니다. '#'로 시작하는 줄은 설명입니다.
+
+    시연 데이터는 응답자의 문항 점수와 맞게 작성했고(scores 열), 감성은 6문항 평균
+    4점 이상 Positive / 3점 이상 Neutral / 3점 미만 Negative 입니다. 파일이 없으면 빈 목록.
+    """
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = [line for line in f if not line.startswith("#")]
+    rows = []
+    for row in csv.DictReader(lines):
+        rows.append({
+            "review_id": row["review_id"],
+            "platform": row["platform"],
+            "raw_text_vn": row["raw_text_vn"],
+            "translated_kr": row["translated_kr"],
+            "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
+            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
+            "source": "survey",
+        })
+    return rows
+
+
+def _survey_block(survey):
+    """문항별 점수 분포(1~5점 인원)로 응답 수·평균·긍정(4~5점) 비율을 계산합니다."""
+    items = []
+    for s in survey:
+        dist = s["dist"]
+        n = sum(dist)
+        score_sum = sum((i + 1) * c for i, c in enumerate(dist))
+        items.append({
+            "item": s["item"],
+            "dist": dist,
+            "responses": n,
+            "avg": round(score_sum / n, 2) if n else None,
+            "top2_percent": _pct(dist[3] + dist[4], n),
+        })
+    scored = [x["avg"] for x in items if x["avg"] is not None]
+    return {
+        "items": items,
+        "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
+    }
+
+
 def _qr_block():
     q = DEMO_QR
+    follows = sum(q["follows"].values())
+    survey_by_channel = {}
+    for c in _read_survey_comments():
+        survey_by_channel[c["platform"]] = survey_by_channel.get(c["platform"], 0) + 1
     return {
         **q,
+        "follows_total": follows,
+        "survey_by_channel": survey_by_channel,
         "scan_rate_percent": _pct(q["qr_scans"], q["pamphlets"]),
-        "follow_rate_percent": _pct(q["zalo_follows"], q["qr_scans"]),
+        "follow_rate_percent": _pct(follows, q["qr_scans"]),
         "response_rate_percent": _pct(q["survey_responses"], q["qr_scans"]),
-        "survey": DEMO_SURVEY,
+        "survey": _survey_block(DEMO_SURVEY),
     }
 
 
@@ -607,31 +670,46 @@ def _qr_block():
 
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
-_voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
-아래 JSON 배열은 베트남어 고객 리뷰입니다. 각 리뷰를 한국어로 자연스럽게 번역하고,
-감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어 한 문장으로 요약하세요.
+고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
+한정선은 현지 배달 서비스와 온라인 배송 서비스가 모두 없습니다. 고객은 매장에서 사서 직접 들고 가거나, 예약한 뒤 매장에서 찾아갑니다.
+글을 배송·배달 상황으로 해석하지 말고, 번역·요약에 "배송", "배달", "~해서 왔다", "도착했다", "찌그러져 왔다" 같은 표현을 쓰지 마세요.
+아래 JSON의 messages는 1:1 문의·후기(대부분 베트남어, 일부 한국어)이고, survey는 설문 주관식 의견(한국어)입니다.
+messages의 각 글을 한국어로 자연스럽게 번역하고 감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤,
+창구별 요약을 한국어로 작성하세요. survey는 번역하지 말고 요약 근거로만 쓰세요.
+요약은 반드시 이번 입력의 글에서 실제로 많이 나온 내용만 근거로 하고, 이 지시문의 표현을 그대로 옮겨 쓰지 마세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
-- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
+- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 문의/기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉,
+  보관 방법·매장 정보·예약·응대 속도 같은 문의는 문의/기타)
 - review_id는 입력 값을 그대로 사용
-- 과장하지 말고 리뷰에 있는 내용만 근거로 요약
+- translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
+  (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
+- channel_summaries는 Zalo_OA, KakaoTalk, WhatsApp 세 창구 각각 하나씩(그 창구의 messages + survey 근거)
+  summary: 그 창구에서 가장 많이 나온 의견을 한 문장(40자 이내, "~입니다/~습니다", 창구마다 다른 내용)
+  caution: 마케터가 유의해야 할 점 한 문장(40자 이내). 반복되는 불만·요청이나 응대 문제 중 가장 시급한 것
+  keep: 고객이 만족해 계속 유지할 점 1~2개를 짧은 명사구로
+  improve: 불만·요청이 많아 개선할 점 1~2개를 짧은 명사구로
+  근거가 없으면 빈 문자열·빈 배열, 원문에 없는 내용·수치는 만들지 말 것
 
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],
- "summary_kr": "..."}
+ "channel_summaries": [{"channel": "Zalo_OA", "summary": "...", "caution": "...", "keep": ["..."], "improve": ["..."]}]}
 
-리뷰:
+입력:
 """
 
 
-def _call_openai(reviews):
+def _call_openai(reviews, survey=()):
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
         return None, "OPENAI_API_KEY 환경변수가 없어 AI 분석을 실행하지 못했습니다."
     model = OPENAI_MODEL
-    source = [{"review_id": r["review_id"], "platform": r["platform"], "text": r["raw_text_vn"]} for r in reviews]
+    source = {
+        "messages": [{"review_id": r["review_id"], "channel": r["platform"], "text": r["raw_text_vn"]} for r in reviews],
+        "survey": [{"channel": c["platform"], "text_kr": c["translated_kr"]} for c in survey],
+    }
     body = {
         "model": model,
         "temperature": 0.2,
@@ -645,7 +723,7 @@ def _call_openai(reviews):
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:  # 문의 75건 번역 + 설문 186건 요약
             payload = json.loads(resp.read().decode("utf-8"))
         text = payload["choices"][0]["message"]["content"]
         parsed = json.loads(text)
@@ -663,7 +741,7 @@ def _call_openai(reviews):
         if not isinstance(item, dict) or item.get("review_id") not in known_ids:
             continue
         sentiment = item.get("sentiment") if item.get("sentiment") in SENTIMENTS else None
-        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else "기타"
+        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else OTHER_TAG
         analyzed.append({
             "review_id": item["review_id"],
             "translated_kr": str(item.get("translated_kr") or ""),
@@ -672,11 +750,18 @@ def _call_openai(reviews):
         })
     if not analyzed:
         return None, "OpenAI 응답에 분석 결과가 없습니다."
+    as_list = lambda v: [str(x) for x in v][:2] if isinstance(v, list) else []  # noqa: E731
+    channel_summaries = [
+        {"channel": c["channel"], "summary": str(c.get("summary") or ""), "caution": str(c.get("caution") or ""),
+         "keep": as_list(c.get("keep")), "improve": as_list(c.get("improve"))}
+        for c in parsed.get("channel_summaries") or []
+        if isinstance(c, dict) and c.get("channel") in REVIEW_CHANNELS
+    ]
     return {
         "model": model,
         "reviewed": False,  # AI 번역·분류는 사람이 검수하기 전 결과입니다.
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
-        "summary_kr": str(parsed.get("summary_kr") or ""),
+        "channel_summaries": channel_summaries,
         "reviews": analyzed,
         **_voc_stats(analyzed),
     }, None
@@ -710,7 +795,9 @@ def api_simulator():
             for c in summary["channels"]
         ],
         "ad_channels": [c["channel"] for c in DEMO_CHANNELS if c["channel"] != "Influencer"],
+        "roas_bep_percent": ROAS_BEP_PERCENT,  # 본전 매출 · 이익/손해 판정 기준
         "influencers": _simulator_influencers(),
+        "influencer_list": _simulator_influencer_list(),
     })
 
 
@@ -719,16 +806,18 @@ def api_voc():
     return jsonify({
         "is_demo": True,
         "reviews": DEMO_REVIEWS,
+        "channels": list(REVIEW_CHANNELS),
         **_voc_stats(DEMO_REVIEWS),
+        # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
+        "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
-        "ai": _voc_ai_cache["result"],
+        # AI 결과는 보내지 않습니다. AI 요약은 화면에서 [AI로 분석]을 눌렀을 때 /api/voc/analyze 응답으로만 보입니다.
     })
 
 
 @bp.post("/api/voc/analyze")
 def api_voc_analyze():
-    result, error = _call_openai(DEMO_REVIEWS)
+    result, error = _call_openai(DEMO_REVIEWS, _read_survey_comments())
     if error:
         return jsonify({"ok": False, "error": error}), 502
-    _voc_ai_cache["result"] = result
     return jsonify({"ok": True, "ai": result})

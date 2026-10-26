@@ -54,7 +54,8 @@
         "content_studio/static/css/sns_image.css",
         "content_studio/static/js/sns_editor.js",
         "content_studio/static/js/sns_fonts.js",
-        "content_studio/static/js/sns_image.js"
+        "content_studio/static/js/sns_image.js",
+        "content_studio/figma_plugin/*"
       ]
     },
     "minji": {

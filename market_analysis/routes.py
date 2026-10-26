@@ -20,7 +20,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from flask import jsonify, render_template, request
+from flask import jsonify, render_template, request, url_for
 
 from . import bp
 from .countries import COUNTRIES, DEFAULT_COUNTRY
@@ -28,7 +28,7 @@ from .public import get_content_guidelines
 
 _DATA_DIR = Path(__file__).parent / "data"
 
-TABS = ("trend", "competitor", "culture", "insight")
+TABS = ("culture", "trend", "competitor", "insight")  # 화면 탭 순서, 첫 번째가 기본 탭
 
 # (파일 키, 화면 이름, 판단에 쓰는 곳) — README 3장
 TREND_CATEGORIES = [
@@ -88,6 +88,35 @@ def index():
 @bp.route("/api/dashboard")
 def api_dashboard():
     return jsonify(build_dashboard(_country_arg()))
+
+
+@bp.route("/api/insight", methods=["GET", "POST"])
+def api_insight():
+    """AI 인사이트. GET = 입력 선택지, POST = 생성(저장하지 않음). 현재 베트남만 지원합니다."""
+    from .repositories.trend_repository import TrendRepository
+    from .services import insight_service
+    from .services.decision_cards import build_cards
+    from .services.trend_service import TrendService
+
+    country = _country_arg()
+    if country != "VN":
+        return jsonify(error="현재 AI 인사이트는 베트남만 지원합니다."), 404
+    repository = TrendRepository()
+    config = repository.get_keywords(country)
+    trend = TrendService(repository).get_dashboard(country) or {}
+    guidelines = _load_culture(country)["guidelines"] or {}
+    competitors = _load_competitors(country)
+    # 의사결정 카드(맛 기회·가격 위치·채널 기회): 서버 계산, AI 없이 바로 표시
+    cards = build_cards(trend, competitors["items"],
+                        (guidelines.get("culture_dashboard") or {}).get("ecommerce_facts"), competitors.get("as_of"))
+    if request.method == "GET":
+        return jsonify({**insight_service.options(config), "cards": cards})
+    try:
+        payload = insight_service.generate(request.get_json(silent=True), config, trend=trend, guidelines=guidelines,
+                                           competitors=competitors["items"], cards=cards)
+    except insight_service.InsightError as error:
+        return jsonify(error=str(error)), error.status
+    return jsonify(payload)
 
 
 def _country_arg():
@@ -274,6 +303,10 @@ def _parse_value(text):
 # ---------- 경쟁사 (수동 조사 CSV) ----------
 
 def _load_competitors(country):
+    catalog = _load_competitor_catalog(country)
+    if catalog is not None:
+        return catalog
+
     path = _DATA_DIR / f"competitors_{country.lower()}.csv"
     result = {
         "file": f"market_analysis/data/competitors_{country.lower()}.csv",
@@ -314,6 +347,140 @@ def _load_competitors(country):
     result["items"] = items
     result["as_of"] = max((i["surveyed_at"] for i in items if i["surveyed_at"]), default=None)
     return result
+
+
+def _load_competitor_catalog(country):
+    """제품과 판매처를 분리한 정규화 CSV를 화면 계약으로 변환한다."""
+    code = country.lower()
+    product_path = _DATA_DIR / f"competitor_products_{code}.csv"
+    listing_path = _DATA_DIR / f"competitor_listings_{code}.csv"
+    product_text, listing_text = _read_text(product_path), _read_text(listing_path)
+    if not product_text or not listing_text:
+        return None
+
+    products = [
+        {(key or "").strip(): (value or "").strip() for key, value in row.items() if key}
+        for row in csv.DictReader(io.StringIO(product_text))
+    ]
+    listing_rows = [
+        {(key or "").strip(): (value or "").strip() for key, value in row.items() if key}
+        for row in csv.DictReader(io.StringIO(listing_text))
+    ]
+    grouped = {}
+    for row in listing_rows:
+        grouped.setdefault(row.get("product_id", ""), []).append(row)
+
+    def evidence(rows):
+        levels = {row.get("verification_level") for row in rows}
+        if "direct_product_page" in levels:
+            return "개별 상품 확인"
+        if "indexed_product_page" in levels:
+            return "색인 상품 확인"
+        if "platform_search_page" in levels:
+            return "검색 결과 확인"
+        if "third_party_lazada_index" in levels:
+            return "제3자 색인"
+        if "historical_indexed_product_page" in levels:
+            return "과거 자료"
+        return "확인 필요"
+
+    items = []
+    for product in products:
+        rows = grouped.get(product.get("product_id", ""), [])
+        if not rows:
+            continue
+        prices = [_number(row.get("current_price_vnd")) for row in rows]
+        prices = [value for value in prices if isinstance(value, (int, float))]
+        maximums = [_number(row.get("price_max_vnd")) for row in rows]
+        maximums = [value for value in maximums if isinstance(value, (int, float))]
+        weight = _number(product.get("net_weight_g"))
+        pack = _number(product.get("piece_count"))
+        price_min = min(prices) if prices else None
+        price_max = max(maximums or prices) if (maximums or prices) else None
+        channels = sorted({row.get("platform") for row in rows if row.get("platform")})
+        sellers = sorted({row.get("seller") for row in rows if row.get("seller")})
+        checked = [row.get("checked_at") for row in rows if row.get("checked_at")]
+        current_rows = [
+            row for row in rows
+            if row.get("verification_level") != "historical_indexed_product_page"
+            and row.get("stock_status") not in {"sold_out", "shop_paused", "historical_listing"}
+        ]
+        observations = [row.get("marketing_observation") for row in rows if row.get("marketing_observation")]
+        discounts = [_number(row.get("discount_percent")) for row in rows]
+        discounts = [value for value in discounts if isinstance(value, (int, float))]
+        image_path = product.get("image_path", "")
+        item = {
+            "product_id": product.get("product_id", ""),
+            "brand": product.get("brand", ""),
+            "product": product.get("product_name", ""),
+            "segment": product.get("segment", ""),
+            "origin": product.get("origin", ""),
+            "pack_count": pack,
+            "unit_weight_g": round(weight / pack, 1) if weight and pack else None,
+            "net_weight_g": weight,
+            "price_vnd": price_min,
+            "price_min_vnd": price_min,
+            "price_max_vnd": price_max,
+            "price_per_100g_min": round(price_min / weight * 100) if price_min and weight else None,
+            "price_per_100g_max": round(price_max / weight * 100) if price_max and weight else None,
+            "monthly_sales": None,
+            "channels": "; ".join(channels),
+            "channel_count": len(channels),
+            "seller_count": len(sellers),
+            "listing_count": len(rows),
+            "verified_listing_count": len(current_rows),
+            "is_core": False,
+            "region": "; ".join(sorted({row.get("seller_location") for row in rows if row.get("seller_location")})),
+            "source_url": next((row.get("source_url") for row in current_rows if row.get("source_url")), rows[0].get("source_url", "")),
+            "surveyed_at": max(checked, default=""),
+            "promotion": f"최대 {round(max(discounts))}% 할인 확인" if discounts else "",
+            "sns_influencer": "",
+            "seasonal_limited": "",
+            "packaging": f"{product.get('piece_count')}개입" if product.get("piece_count") else (f"{product.get('net_weight_g')}g" if product.get("net_weight_g") else ""),
+            "key_message": observations[0] if observations else "",
+            "sales_event": "",
+            "review_keywords": "",
+            "takeaway": f"{len(channels)}개 채널·{len(sellers)}개 판매자 확인. 동일 규격 가격과 최신 판매 여부를 함께 비교하세요.",
+            "flavors": product.get("flavors", ""),
+            "storage": product.get("storage", ""),
+            "evidence_status": evidence(rows),
+            "image_url": url_for("market_analysis.static", filename=image_path) if image_path else "",
+            "image_source_url": product.get("image_source_url", ""),
+            "image_status": product.get("image_status", ""),
+            "history": [],
+            "listings": [
+                {
+                    **row,
+                    "current_price_vnd": _number(row.get("current_price_vnd")),
+                    "price_max_vnd": _number(row.get("price_max_vnd")),
+                    "regular_price_vnd": _number(row.get("regular_price_vnd")),
+                    "discount_percent": _number(row.get("discount_percent")),
+                    "product_rating": _number(row.get("product_rating")),
+                    "review_count": _number(row.get("review_count")),
+                    "sold_count": _number(row.get("sold_count")),
+                }
+                for row in rows
+            ],
+        }
+        items.append(item)
+
+    items.sort(key=lambda item: (item["brand"].lower(), item["product"].lower()))
+    as_of = max((item["surveyed_at"] for item in items if item["surveyed_at"]), default=None)
+    return {
+        "file": f"market_analysis/data/competitor_products_{code}.csv",
+        "listing_file": f"market_analysis/data/competitor_listings_{code}.csv",
+        "columns": COMPETITOR_COLUMNS,
+        "marketing_labels": COMPETITOR_MARKETING,
+        "as_of": as_of,
+        "items": items,
+        "summary": {
+            "product_count": len(items),
+            "listing_count": len(listing_rows),
+            "channel_count": len({row.get("platform") for row in listing_rows if row.get("platform")}),
+            "priced_product_count": sum(item["price_min_vnd"] is not None for item in items),
+            "imaged_product_count": sum(bool(item["image_url"]) for item in items),
+        },
+    }
 
 
 def _number(text):
@@ -396,3 +563,16 @@ def _safe(loader, path):
         return loader(path)
     except (csv.Error, ValueError, IndexError, OSError):
         return None
+
+
+@bp.get('/api/countries/<country_code>/trends')
+def trends_api(country_code):
+    from .repositories.trend_repository import TrendRepository
+    from .services.trend_service import TrendService
+    if country_code.upper() != 'VN':
+        return jsonify(error='현재 트렌드 분석은 베트남만 지원합니다.'), 404
+    try:
+        payload = TrendService(TrendRepository()).get_dashboard('VN')
+    except (ValueError, KeyError, TypeError, OSError):
+        return jsonify(error='트렌드 데이터를 읽지 못했습니다. 데이터 담당자에게 문의해 주세요.'), 503
+    return jsonify(payload)

@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "source": "GA4 공식 데모 계정 · Google Merchandise Store",
+    "property": "a54516992p213025502",
+    "period": { "start": "2026-09-28", "end": "2026-10-25" },
+    "period_note": "보고서 화면 그래프 축(9/28~10/25, 기본 '지난 28일') 기준. 날짜 선택 칸은 캡처에 없음",
+    "captured_on": "2026-10-26",
+    "method": "GA4 화면 캡처를 보고 옮겨 적음(데모 계정은 CSV 다운로드 불가)",
+    "is_demo": true,
+    "scope": "글로벌 데모 매장 (한정선 데이터 아님, 수익 단위 USD)",
+    "check": "채널 합계 = 총계 확인: 이벤트 수 1,995,096 · 주요 이벤트 164,340 · 총수익 $361,612.08 일치. 세션·참여 세션은 GA4가 총계에서 중복 세션을 빼서 채널 합(135,038 / 58,366)과 다름"
+  },
+  "totals": {
+    "sessions": 134359,
+    "engaged_sessions": 59132,
+    "engagement_rate_percent": 44.01,
+    "avg_engagement_sec": 55,
+    "events_per_session": 14.85,
+    "event_count": 1995096,
+    "key_events": 164340,
+    "session_key_event_rate_percent": 24.65,
+    "revenue_usd": 361612.08
+  },
+  "channels": [
+    { "channel": "Direct", "sessions": 81380, "engaged_sessions": 26429, "engagement_rate_percent": 32.48, "avg_engagement_sec": 46, "events_per_session": 12.21, "event_count": 993419, "key_events": 87671, "session_key_event_rate_percent": 17.75, "revenue_usd": 195514.85 },
+    { "channel": "Organic Search", "sessions": 32811, "engaged_sessions": 23004, "engagement_rate_percent": 70.11, "avg_engagement_sec": 77, "events_per_session": 18.62, "event_count": 610967, "key_events": 53312, "session_key_event_rate_percent": 38.68, "revenue_usd": 112244.77 },
+    { "channel": "Paid Search", "sessions": 8142, "engaged_sessions": 3894, "engagement_rate_percent": 47.83, "avg_engagement_sec": 19, "events_per_session": 7.04, "event_count": 57347, "key_events": 4069, "session_key_event_rate_percent": 20.33, "revenue_usd": 7396.22 },
+    { "channel": "Unassigned", "sessions": 7060, "engaged_sessions": 786, "engagement_rate_percent": 11.13, "avg_engagement_sec": 62, "events_per_session": 28.74, "event_count": 202915, "key_events": 6054, "session_key_event_rate_percent": 23.14, "revenue_usd": 4679.22 },
+    { "channel": "Referral", "sessions": 3191, "engaged_sessions": 2352, "engagement_rate_percent": 73.71, "avg_engagement_sec": 105, "events_per_session": 24.58, "event_count": 78443, "key_events": 8159, "session_key_event_rate_percent": 38.8, "revenue_usd": 24452.12 },
+    { "channel": "Cross-network", "sessions": 1177, "engaged_sessions": 897, "engagement_rate_percent": 76.21, "avg_engagement_sec": 79, "events_per_session": 19.74, "event_count": 23233, "key_events": 1790, "session_key_event_rate_percent": 34.07, "revenue_usd": 3159.08 },
+    { "channel": "Organic Social", "sessions": 710, "engaged_sessions": 536, "engagement_rate_percent": 75.49, "avg_engagement_sec": 109, "events_per_session": 26.2, "event_count": 18605, "key_events": 2044, "session_key_event_rate_percent": 40.7, "revenue_usd": 11193.17 },
+    { "channel": "Organic Shopping", "sessions": 463, "engaged_sessions": 383, "engagement_rate_percent": 82.72, "avg_engagement_sec": 83, "events_per_session": 17.61, "event_count": 8152, "key_events": 1010, "session_key_event_rate_percent": 73.22, "revenue_usd": 2308.4 },
+    { "channel": "Organic Video", "sessions": 68, "engaged_sessions": 56, "engagement_rate_percent": 82.35, "avg_engagement_sec": 109, "events_per_session": 23.88, "event_count": 1624, "key_events": 226, "session_key_event_rate_percent": 54.41, "revenue_usd": 664.25 },
+    { "channel": "Email", "sessions": 36, "engaged_sessions": 29, "engagement_rate_percent": 80.56, "avg_engagement_sec": 56, "events_per_session": 10.86, "event_count": 391, "key_events": 5, "session_key_event_rate_percent": 8.33, "revenue_usd": 0 }
+  ],
+  "top_events": {
+    "note": "이벤트 보고서 1~10위(전체 25개 중). add_to_cart · begin_checkout · purchase는 11위 이하라 아직 없음",
+    "total_users": 104157,
+    "rows": [
+      { "event": "view_item_list", "count": 544966, "users": 34901 },
+      { "event": "page_view", "count": 523327, "users": 97937 },
+      { "event": "view_item", "count": 137009, "users": 23863 },
+      { "event": "session_start", "count": 128413, "users": 95498 },
+      { "event": "select_item", "count": 97744, "users": 19067 },
+      { "event": "first_visit", "count": 86087, "users": 84740 },
+      { "event": "user_engagement", "count": 77442, "users": 37731 },
+      { "event": "view_promotion", "count": 70724, "users": 38521 },
+      { "event": "scroll", "count": 69975, "users": 38776 },
+      { "event": "predicted_top_spenders", "count": 46670, "users": 29091 }
+    ]
+  }
+}

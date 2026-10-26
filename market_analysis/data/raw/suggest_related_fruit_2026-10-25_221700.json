@@ -1,0 +1,40 @@
+{
+  "search_metadata": {
+    "id": "6ade1dd99ae49191418737c3",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/yWHy1aRtGgFowpGr8AWspfFLBTIfdr5ymIxOBJHl9Tg/6ade1dd99ae49191418737c3.md",
+    "created_at": "2026-10-25 15:18:49 UTC",
+    "processed_at": "2026-10-25 15:18:49 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22kem+s%E1%BB%AFa+d%E1%BB%ABa%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/yWHy1aRtGgFowpGr8AWspfFLBTIfdr5ymIxOBJHl9Tg/6ade1dd99ae49191418737c3.html",
+    "prettify_html_file": "https://serpapi.com/searches/yWHy1aRtGgFowpGr8AWspfFLBTIfdr5ymIxOBJHl9Tg/6ade1dd99ae49191418737c3.prettify",
+    "total_time_taken": 8.84
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "kem sữa dừa",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "top": [
+      {
+        "query": "làm kem sữa dừa",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem sữa dừa",
+        "value": "65",
+        "extracted_value": 65,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&tz=-420"
+      }
+    ]
+  }
+}

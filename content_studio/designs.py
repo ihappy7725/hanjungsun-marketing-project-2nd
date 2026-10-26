@@ -15,8 +15,11 @@ AI 연결 전에는 정해진 틀로 만들고 demo=True로 표시합니다.
 import copy
 import math
 import re
+from pathlib import Path
 
 from flask import url_for
+
+from .products import get_product
 
 SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080)}
 DEFAULT_RATIO = "4:5"
@@ -354,9 +357,13 @@ def make_cardnews(text, ratio=DEFAULT_RATIO, product=None, event=None, template=
 def _page_content(page):
     """템플릿을 바꿀 때 남길 글·사진. 편집기에서 고친 글이 원래 문구보다 우선합니다."""
     content = dict(page.get("content") or {})
+    points = [item.get("text", "") for item in page.get("elements", [])
+              if item.get("type") == "text" and item.get("role") == "point"]
+    if points:  # 스타일 틀의 번호 목록은 항목마다 글 요소가 따로 있습니다.
+        content["body"], content["checks"] = "\n".join(points), points
     for item in page.get("elements", []):
         role = item.get("role")
-        if item.get("type") == "text" and role in ("title", "subtitle", "body", "quote", "badge"):
+        if item.get("type") == "text" and role in ("title", "subtitle", "body", "quote", "badge", "label"):
             content[role] = item.get("text", "")
         elif item.get("type") == "text" and role == "checks":
             content["checks"] = [line.strip().lstrip("✓").strip() for line in item.get("text", "").split("\n")
@@ -371,23 +378,39 @@ def _doc_palette(doc):
     first = doc["pages"][0]
     palette.update(bg=first.get("bg", palette["bg"]), accent=first.get("accent", palette["accent"]))
     title = next((item for item in first.get("elements", []) if item.get("role") == "title"), None)
-    if title and title.get("color"):
+    if title and title.get("color") and "paint" not in title:  # 스타일 틀 글은 바탕에 맞춰 칠해 글자색 기준이 아닙니다.
         palette["text"] = title["color"]
     return palette
 
 
 def _switch_template(doc, template):
+    def build(contents, palette):
+        doc["template"] = template
+        for key in ("style", "fonts"):
+            doc.pop(key, None)
+        return _build_pages(template, doc.get("ratio", DEFAULT_RATIO), contents, palette)
+    _rebuild(doc, build)
+
+
+def _rebuild(doc, build):
+    """글·사진·색은 남기고 틀만 새로 짭니다. build(contents, palette) → 새 pages. 한국어 뜻도 같은 글에 다시 붙입니다."""
+    translations = [{item.get("text"): (item["text_ko"], item.get("translation_source"))
+                     for item in page.get("elements", []) if item.get("text_ko")}
+                    for page in doc["pages"]]
     contents = [_page_content(page) for page in doc["pages"]]
     palette = _doc_palette(doc)
-    doc["template"] = template
     doc["palette"] = palette
-    doc["pages"] = _build_pages(template, doc.get("ratio", DEFAULT_RATIO), contents, palette)
+    doc["pages"] = build(contents, palette)
+    for page, saved in zip(doc["pages"], translations):
+        for item in page["elements"]:
+            if item.get("text") in saved:
+                item["text_ko"], item["translation_source"] = saved[item["text"]]
 
 
 # ---------- 대화로 고치기 (단어 규칙, AI 연결 전) ----------
 # routes_sns.py(유진)가 부릅니다: doc, changes = revise_design(현재 문서, 요청 문장, page=지금 보는 장 번호(0부터))
 DESIGN_REVISE_HINT = ('예: "배경 파랗게", "제목 크게", "제목 \'Xin chào\'로 바꿔", "명조로", "하트 이모지 추가", '
-                      '"배지 빼줘", "사진 오른쪽으로", "색 조합 바꿔", "2장 배경 금색", "체크리스트형으로 바꿔"')
+                      '"배지 빼줘", "사진 오른쪽으로", "색 조합 바꿔", "2장 배경 금색", "매거진형으로 바꿔"')
 
 TEMPLATE_WORDS = {
     "clean": ("깔끔", "정보형"),
@@ -426,11 +449,11 @@ EMOJIS = {
     "하트": "❤️", "별": "⭐", "반짝": "✨", "꽃": "🌸", "선물": "🎁", "리본": "🎀", "축하": "🎉", "불꽃": "🔥",
     "웃음": "😊", "엄지": "👍", "떡": "🍡", "케이크": "🍰", "녹차": "🍵", "잎": "🍃", "망고": "🥭", "딸기": "🍓",
 }
-TEXT_ROLES = ("title", "subtitle", "body", "checks", "quote", "brand", "page_no")
+TEXT_ROLES = ("title", "subtitle", "body", "checks", "quote", "brand", "page_no", "label", "point", "number")
 ROLE_WORDS = [  # (단어, role들, 이름) 앞쪽이 먼저
     (("부제",), ("subtitle",), "부제"),
-    (("본문", "내용"), ("body", "checks", "quote"), "본문"),
-    (("배지", "뱃지"), ("badge",), "배지"),
+    (("본문", "내용"), ("body", "checks", "quote", "point"), "본문"),
+    (("배지", "뱃지", "머리말"), ("badge", "label"), "배지"),
     (("로고", "브랜드"), ("brand",), "로고"),
     (("제목", "타이틀"), ("title",), "제목"),
     (("글자", "글씨", "텍스트", "문구"), TEXT_ROLES, "글자"),
@@ -480,6 +503,9 @@ def _apply_palette(doc, palette, pages):
         page["bg"], page["accent"] = palette["bg"], palette["accent"]
         for item in page["elements"]:
             role = item.get("role")
+            if item.get("paint"):  # 스타일 틀 요소는 처음 칠한 자리 그대로 다시 칠합니다.
+                _apply_paint(item, palette)
+                continue
             if item.get("type") == "text":
                 if role == "badge":
                     item["color"], item["bg"] = palette["bg"], palette["accent"]
@@ -513,7 +539,12 @@ def _revise_clause(doc, clause, page, changes):
     all_pages, text_pages, prefix = _target_pages(doc, clause, page)
     clause = PAGE_RE.sub(" ", clause)
 
-    # 1) 템플릿 바꾸기 (카드뉴스)
+    # 1) 스타일 틀 바꾸기 (포스터·카드뉴스) · 템플릿 바꾸기 (카드뉴스)
+    style = next((key for key, words in STYLE_WORDS.items() if _has(clause, words)), None)
+    if style and style != doc.get("style"):
+        _switch_style(doc, style)
+        changes.append(f"스타일 {STYLES[style]}")
+        return
     template = _template_from_text(clause)
     if doc.get("kind") == "cardnews" and template and template != doc.get("template"):
         _switch_template(doc, template)
@@ -646,7 +677,7 @@ def _revise_clause(doc, clause, page, changes):
                     dx = (100 - photo["w"]) / 2 - photo["x"]
                 else:
                     dy = -5 if where == "up" else 5
-                for item in _items(doc, [index], ("photo", "deco")):
+                for item in _items(doc, [index], ("photo", "deco", "blob", "ring", "photo_back")):
                     item["x"], item["y"] = round(item["x"] + dx, 2), round(item["y"] + dy, 2)
                 moved = True
             if moved:
@@ -788,3 +819,595 @@ def build_cardnews_prompt(request, doc=None, language="vi"):
               "- 제목은 한 줄, 본문은 1~2문장으로 짧게 쓴다.",
               f"- {LANGUAGES[language]}"]
     return "\n".join(lines), bool(rules)
+
+
+def _option_product(options):
+    """첫 화면에서 고른 제품(options.product_id). 고르지 않았으면 None, 목록에 없는 id면 ValueError."""
+    product_id = options.get("product_id")
+    if product_id in (None, ""):
+        return None
+    product = get_product(product_id) if isinstance(product_id, str) else None
+    if not product:
+        raise ValueError("고른 제품을 찾을 수 없습니다.")
+    return product
+
+
+# 전문 AI도 기존 요소 문서와 저장·되돌리기 경로를 그대로 사용합니다.
+def build_design_brief(doc, options):
+    kind = doc.get("kind")
+    if kind not in ("poster", "cardnews") or doc.get("ratio") not in SIZES:
+        raise ValueError("포스터·카드뉴스와 지원 규격을 선택해 주세요.")
+    if kind == "cardnews" and doc["ratio"] not in CARDNEWS_RATIOS:
+        raise ValueError("카드뉴스는 4:5 또는 1:1 규격을 사용해 주세요.")
+    fields = {}
+    for key in ("request", "purpose", "audience", "mood", "density", "custom_prompt"):
+        value = options.get(key, "")
+        limit = 12000 if key == "custom_prompt" else 1500
+        if not isinstance(value, str) or len(value) > limit:
+            raise ValueError("요청 항목이 너무 길거나 형식이 올바르지 않습니다.")
+        fields[key] = value.strip()
+    if not fields["request"]:
+        raise ValueError("제품과 원하는 내용을 입력해 주세요.")
+    product = _option_product(options)
+    count = options.get("pages", DEFAULT_PAGES) if kind == "cardnews" else 1
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= MAX_PAGES:
+        raise ValueError("장수가 올바르지 않습니다.")
+    if kind == "cardnews" and count < MIN_PAGES:
+        raise ValueError("카드뉴스는 3~6장입니다.")
+    persona = (Path(__file__).parent / "prompts" / f"{kind}_base.md").read_text(encoding="utf-8")
+    rules = _guideline_rules()
+    brief = {**fields, "kind": kind, "ratio": doc["ratio"], "pages": count,
+             "product": product and {"id": product["id"], "name_ko": product["name_ko"],
+                                     "name_vi": product.get("name_vi", "")},
+             "style_options": STYLES, "font_options": list(VI_FONTS),
+             **({"page_layout_options": PAGE_LAYOUTS} if kind == "cardnews" else {}),
+             "reference_texts": design_texts(doc), "local_guidelines": rules,
+             "reference_is_demo": bool(doc.get("demo", True)),
+             "reference_notice": "기존 초안은 참고용입니다. 시연 문구의 제품 정보·효능·가격을 사실 근거로 사용하지 마세요.",
+             "guidelines_notice": "제공된 지침만 참고" if rules else "현지 검수 기준 준비 중"}
+    return persona, brief, bool(rules)
+
+
+# ---------- 스타일 틀 (카페·F&B 포스터와 인스타 캐러셀 포트폴리오에서 자주 쓰는 배치) ----------
+# AI가 제안마다 스타일·색 조합·글꼴을 고르고, 문구를 이 틀에 넣습니다. 색은 #rrggbb 아무 색이나 쓸 수 있고,
+# 글이 바탕에 묻히면 읽히는 색으로만 바꿉니다.
+# 요소에 붙는 선택 칸: rotate(도, 시계 방향) · opacity(0~1) · spacing(글자 간격 px) · stroke·stroke_w(도형 테두리, fill이 없으면 속이 빔)
+# paint: 색 조합의 어느 색을 칠했는지({"color": "text"} 등). 색 조합을 바꿀 때 이 정보로 다시 칠합니다.
+STYLES = {"bold": "큰 글자형", "editorial": "매거진형", "menu": "메뉴판형", "pop": "팝·스티커형", "minimal": "여백 미니멀형"}
+STYLE_WORDS = {"bold": ("큰 글자형", "큰글자형", "볼드"), "editorial": ("매거진",), "menu": ("메뉴판",),
+               "pop": ("팝형", "팝 스타일", "스티커형"), "minimal": ("미니멀", "여백형")}
+# 카드뉴스 장 역할. 표지는 첫 장, 마지막 장은 저장·팔로우 유도입니다.
+PAGE_LAYOUTS = {"cover": "표지", "menu": "메뉴 소개(큰 사진)", "list": "번호 목록(맛·식감 포인트, 즐기는 법)",
+                "quote": "감성 문구", "cta": "마지막 장(저장·공유·팔로우 유도)"}
+# 베트남어 성조를 지원하는 글꼴만 고릅니다. (sns_fonts.js key)
+VI_FONTS = ("be-vietnam-pro", "montserrat", "lexend", "nunito", "quicksand", "oswald", "playfair-display", "lora",
+            "noto-serif", "dancing-script", "pacifico", "bungee")
+STYLE_FONTS = {"bold": ("oswald", "be-vietnam-pro"), "editorial": ("playfair-display", "be-vietnam-pro"),
+               "menu": ("lora", "montserrat"), "pop": ("bungee", "nunito"), "minimal": ("lora", "be-vietnam-pro")}
+SINGLE_WEIGHT = ("pacifico", "bungee")  # 굵기가 하나뿐인 글꼴
+FONT_WIDTH = {"oswald": 0.46, "bungee": 0.78, "pacifico": 0.62, "dancing-script": 0.48, "playfair-display": 0.56}
+CTA_TEXTS = ("Lưu lại để thử nhé", "Chia sẻ cho bạn bè", f"Theo dõi {BRAND}")  # 원어민 검수 전 시연 문구
+SWIPE_TEXT = "Vuốt để xem →"
+HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def _luminance(value):
+    channels = [int(value[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    r, g, b = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contrast(a, b):
+    high, low = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def _readable(color, under, minimum=4.5):
+    """under 위에서 읽히지 않는 글자색이면 진한 갈색·흰색 중 더 잘 읽히는 색으로 바꿉니다."""
+    if not HEX_RE.match(str(color)) or not HEX_RE.match(str(under)) or _contrast(color, under) >= minimum:
+        return color
+    return max(("#1f1a17", "#ffffff"), key=lambda value: _contrast(value, under))
+
+
+def _clean_palette(value, fallback):
+    value = value if isinstance(value, dict) else {}
+    return {key: (value[key] if HEX_RE.match(str(value.get(key) or "")) else fallback[key]).lower()
+            for key in ("bg", "accent", "text", "soft")}
+
+
+def _apply_paint(item, palette):
+    paint = item["paint"]
+    for prop, key in paint.items():
+        if prop != "on":
+            item[prop] = palette[key]
+    if "color" in paint:
+        under = item["bg"] if "bg" in paint else palette[paint.get("on", "bg")]
+        item["color"] = _readable(item["color"], under, 3 if item.get("size", 0) >= 40 else 4.5)
+
+
+def _kit(W, H, palette, fonts, index, photo):
+    """틀 함수들이 같이 쓰는 값: 크기·색·글꼴·요소 id 앞머리·사진"""
+    return {"W": W, "H": H, "land": W > H, "P": palette, "F": (fonts["title"], fonts["body"]),
+            "p": f"p{index + 1}-", "photo": photo}
+
+
+def _sq(k, w):
+    """너비 w%인 정사각형의 높이(%)"""
+    return w * k["W"] / k["H"]
+
+
+def _est_h(k, text, size, w, font, spacing=0):
+    """글자 수로 줄 수를 어림한 글 상자 높이(%). 단어 단위 줄바꿈을 생각해 조금 넉넉하게 잡습니다."""
+    width_px = k["W"] * w / 100
+    char = (size * FONT_WIDTH.get(font, 0.55) + spacing) * (1.25 if str(text).isupper() else 1.08)  # 대문자는 더 넓음
+    lines = sum(max(1, math.ceil(len(part) * char / width_px)) for part in str(text).split("\n"))
+    return _line_h(size, k["H"], lines)
+
+
+def _t(k, name, text, box, size, paint, font=None, weight=None, align="left", z=4, role=None, **extra):
+    font = font or k["F"][1]
+    weight = 400 if font in SINGLE_WEIGHT else (weight or 700)
+    item = _text(k["p"] + name, text, box, size, "#000000", weight=weight, align=align, z=z, role=role or name,
+                 font=font)
+    item.update({key: value for key, value in extra.items() if value is not None})
+    item["paint"] = paint
+    _apply_paint(item, k["P"])
+    return item
+
+
+def _fit(k, name, text, x, y, w, max_h, size, paint, font=None, min_size=24, **extra):
+    """상자 높이 max_h(%) 안에 들어가도록 글자 크기를 줄입니다."""
+    font = font or k["F"][1]
+    spacing = extra.get("spacing") or 0
+    while size > min_size and _est_h(k, text, size, w, font, spacing) > max_h:
+        size -= 4
+    return _t(k, name, text, (x, y, w, _est_h(k, text, size, w, font, spacing)), size, paint, font=font, **extra)
+
+
+def _pill(k, name, text, x, y, size, paint, align="left", **extra):
+    """배경이 깔린 짧은 글. align은 x를 기준으로 상자를 놓는 방향입니다."""
+    w = min(88, (len(text) * size * 0.62 + size * 1.4) / k["W"] * 100)
+    x = x - w if align == "right" else x - w / 2 if align == "center" else x
+    return _t(k, name, text, (x, y, w, round(size * 2 / k["H"] * 100, 2)), size, paint, align="center", **extra)
+
+
+def _s(k, name, box, paint, shape="rect", z=1, role=None, **extra):
+    x, y, w, h = box
+    item = {"id": k["p"] + name, "role": role or name, "type": "shape", "shape": shape, "x": round(x, 2),
+            "y": round(y, 2), "w": round(w, 2), "h": round(h, 2), "z": z, "paint": paint}
+    item.update({key: value for key, value in extra.items() if value is not None})
+    _apply_paint(item, k["P"])
+    return item
+
+
+def _img(k, box, radius=0, z=2, **extra):
+    item = _box(k["p"] + "photo", "image", box, z, src=k["photo"], radius=round(radius, 1), role="photo")
+    item.update({key: value for key, value in extra.items() if value is not None})
+    return item
+
+
+def _circle_r(k, w):
+    """너비 w%인 사진을 동그랗게 자르는 모서리 값(px)"""
+    return w / 100 * k["W"] / 2
+
+
+def _bottom(item):
+    return item["y"] + item["h"]
+
+
+def _by_ratio(k, square, portrait, tall):
+    """세로 규격별 값: 1:1 · 4:5 · 9:16"""
+    ratio = k["H"] / k["W"]
+    return square if ratio < 1.1 else portrait if ratio < 1.5 else tall
+
+
+def _tag(k, x, y, d, rotate, text="K-\nDESSERT", z=5):
+    """동그란 스티커(도형 + 글). 가격 등 근거 없는 정보는 넣지 않습니다."""
+    h = _sq(k, d)
+    return [_s(k, "tag", (x, y, d, h), {"fill": "accent"}, shape="circle", z=z, rotate=rotate),
+            _t(k, "tag_text", text, (x, y, d, h), max(18, round(d / 100 * k["W"] * 0.16)),
+               {"color": "bg", "on": "accent"}, align="center", z=z + 1, rotate=rotate, spacing=1)]
+
+
+# ---- 포스터(= 카드뉴스 표지) 틀 5종. c: {title, body, label, photo} ----
+def _layout_bold(k, c):
+    """큰 글자형: 화면 위를 꽉 채운 제목 + 아래 큰 제품 사진과 동그란 스티커"""
+    tf, bf = k["F"]
+    els = [_t(k, "brand", BRAND, (6, 4, 50, _line_h(26, k["H"])), 26, {"color": "text"}, font=bf, spacing=8,
+              role="brand")]
+    if c.get("label"):
+        els.append(_pill(k, "label", c["label"], 94, 3.4, 26, {"color": "bg", "bg": "accent"}, align="right"))
+    tx, tw = (5, 46) if k["land"] else (6, 88)
+    title = _fit(k, "title", str(c.get("title", "")).upper(), tx, 15 if k["land"] else 10, tw,
+                 50 if k["land"] else 30, 170, {"color": "text"}, font=tf, min_size=48)
+    line = _s(k, "line", (tx, _bottom(title) + 1.5, 14, 0.7), {"fill": "accent"}, z=3)
+    body = _fit(k, "body", c.get("body", ""), tx, _bottom(line) + 2, tw, 16, 38, {"color": "text"}, weight=400)
+    els += [title, line, body]
+    if k["land"]:
+        pw = 34
+        px, py = 58, (100 - _sq(k, pw)) / 2
+    else:
+        top = _bottom(body) + 3
+        pw = min(64, (96 - top) * k["H"] / k["W"])
+        px, py = 100 - pw - 4, max(top, 96 - _sq(k, pw))
+    d = pw + 14
+    els += [_s(k, "blob", (px + pw / 2 - d / 2, py + _sq(k, pw) / 2 - _sq(k, d) / 2, d, _sq(k, d)),
+               {"fill": "soft"}, shape="circle"),
+            _img(k, (px, py, pw, _sq(k, pw)), radius=40),
+            *_tag(k, px - 4, py - 2, 18 if not k["land"] else 11, -12)]
+    return els
+
+
+def _layout_editorial(k, c):
+    """매거진형: 얇은 테두리 + 색 면 위 사진 + 큰 번호와 명조 제목"""
+    tf, bf = k["F"]
+    my = 4 * k["W"] / k["H"]
+    els = [_s(k, "frame", (4, my, 92, 100 - 2 * my), {"stroke": "text"}, z=6, stroke_w=2)]
+    if k["land"]:
+        els += [_s(k, "block", (50, 0, 50, 100), {"fill": "soft"}), _img(k, (56, 14, 36, 72))]
+        tx, tw, ty = 9, 38, 14
+    else:
+        block = _by_ratio(k, 36, 44, 44)
+        els += [_s(k, "block", (0, 0, 100, block), {"fill": "soft"}), _img(k, (10, 9, 80, block - 4))]
+        tx, tw, ty = 10, 80, block + 7
+    num_h = _line_h(110, k["H"])
+    els.append(_t(k, "number", c.get("number", "01"), (tx, ty, 22, num_h), 110, {"color": "accent"}, font=tf))
+    if c.get("label"):
+        els.append(_t(k, "label", str(c["label"]).upper(), (tx + 22, ty + num_h / 2 - _line_h(24, k["H"]) / 2,
+                                                             tw - 22, _line_h(24, k["H"])), 24,
+                      {"color": "text"}, spacing=6))
+    line = _s(k, "line", (tx, ty + num_h + 1, tw, 0.2), {"fill": "text"}, z=3)
+    title = _fit(k, "title", c.get("title", ""), tx, _bottom(line) + 2, tw, 18, 90, {"color": "text"}, font=tf)
+    brand_y = 100 - my - 5
+    body = _fit(k, "body", c.get("body", ""), tx, _bottom(title) + 1.5, tw, max(6, brand_y - _bottom(title) - 3),
+                34, {"color": "text"}, weight=400)
+    els += [line, title, body,
+            _t(k, "brand", BRAND, (tx, brand_y, 40, _line_h(22, k["H"])), 22, {"color": "text"}, spacing=6)]
+    return els
+
+
+def _layout_menu(k, c):
+    """메뉴판형: 이중 테두리 + 가운데 동그란 사진 + 메뉴 이름·설명"""
+    tf, bf = k["F"]
+    my = 4 * k["W"] / k["H"]
+    gap = 1.6 * k["W"] / k["H"]
+    els = [_s(k, "frame", (4, my, 92, 100 - 2 * my), {"stroke": "accent"}, z=6, stroke_w=6),
+           _s(k, "frame_in", (5.6, my + gap, 88.8, 100 - 2 * (my + gap)), {"stroke": "accent"}, z=6, stroke_w=2,
+              role="frame"),
+           _t(k, "label", str(c.get("label") or "MENU").upper(), (10, my + 4, 80, _line_h(28, k["H"])), 28,
+              {"color": "accent"}, align="center", spacing=10),
+           _t(k, "brand", BRAND, (10, my + 4 + _line_h(28, k["H"]) + 0.6, 80, _line_h(22, k["H"])), 22,
+              {"color": "text"}, align="center", spacing=6)]
+    if k["land"]:
+        pw = 30
+        px, py = 12, (100 - _sq(k, pw)) / 2 + 3
+        tx, tw, ty = 50, 40, 34
+    else:
+        pw = min(60, 40 * k["H"] / k["W"])
+        px, py = (100 - pw) / 2, _bottom(els[-1]) + 3
+        tx, tw, ty = 8, 84, py + _sq(k, pw) + 3
+    ring = pw + 6
+    els += [_s(k, "ring", (px - 3, py - _sq(k, 3), ring, _sq(k, ring)), {"stroke": "accent"}, shape="circle",
+               stroke_w=3),
+            _img(k, (px, py, pw, _sq(k, pw)), radius=_circle_r(k, pw)),
+            *_tag(k, px + pw - 10, py - 1, 16 if not k["land"] else 9, 12)]
+    title = _fit(k, "title", c.get("title", ""), tx, ty, tw, 14, 76, {"color": "text"}, font=tf, align="center")
+    line = _s(k, "line", (tx + tw / 2 - 5, _bottom(title) + 1.2, 10, 0.3), {"fill": "accent"}, z=3)
+    body = _fit(k, "body", c.get("body", ""), tx + 4, _bottom(line) + 1.5, tw - 8,
+                max(6, 100 - my - gap - 3 - _bottom(line) - 1.5), 32, {"color": "text"}, weight=400, align="center")
+    return els + [title, line, body]
+
+
+def _layout_pop(k, c):
+    """팝·스티커형: 기울어진 사진 카드 + 띠 위 제목 + 이모지 스티커"""
+    tf, bf = k["F"]
+    els = [_t(k, "brand", BRAND, (6, 4, 50, _line_h(26, k["H"])), 26, {"color": "text"}, spacing=4)]
+    if k["land"]:
+        pw = 34
+        px, py = 7, (100 - _sq(k, pw)) / 2
+        tx, tw, ty = 48, 46, 30
+    else:
+        pw = _by_ratio(k, 52, 68, 74)
+        px, py = (100 - pw) / 2, 12
+        tx, tw, ty = 6, 88, py + _sq(k, pw) + 4
+    els += [_s(k, "photo_back", (px, py, pw, _sq(k, pw)), {"fill": "soft"}, radius=40, rotate=4),
+            _img(k, (px, py, pw, _sq(k, pw)), radius=40, rotate=-3),
+            *_tag(k, px + pw - 14, py - 3, 20 if not k["land"] else 12, 14, text=c.get("label") or "K-\nDESSERT"),
+            _sticker(k["p"] + "sticker", "✨", px - 4, py + _sq(k, pw) - 12, 12, k["W"], k["H"], z=6)]
+    title = _fit(k, "title", c.get("title", ""), tx + 2, ty + 1.6, tw - 4, 16, 88, {"color": "bg", "on": "accent"},
+                 font=tf, align="center", z=5, rotate=-3)
+    band = _s(k, "band", (tx - 10, ty, tw + 20, title["h"] + 3.2), {"fill": "accent"}, z=4, rotate=-3)
+    end = 89 if c.get("swipe") else 95  # 카드뉴스 표지는 아래 "넘겨 보기" 자리를 남깁니다.
+    body = _fit(k, "body", c.get("body", ""), tx + 2, _bottom(band) + 3, tw - 4, max(6, end - _bottom(band) - 3), 36,
+                {"color": "text"}, weight=400, align="center")
+    return els + [band, title, body]
+
+
+def _layout_minimal(k, c):
+    """여백 미니멀형: 넓은 여백 + 길쭉한 아치 사진 + 작은 명조 제목"""
+    tf, bf = k["F"]
+    if k["land"]:
+        ph = 76
+        pw = ph * k["H"] / k["W"] / 1.3
+        px, py, tx, tw, align = 12, 12, 50, 40, "left"
+    else:
+        pw = _by_ratio(k, 32, 40, 50)
+        ph = _sq(k, pw) * 1.3
+        px, py, tx, tw, align = (100 - pw) / 2, 13, 10, 80, "center"
+    els = [_img(k, (px, py, pw, ph), radius=_circle_r(k, pw))]
+    ty = 30 if k["land"] else py + ph + 4
+    if c.get("label"):
+        label = _t(k, "label", str(c["label"]).upper(), (tx, ty if k["land"] else 6.5, tw, _line_h(22, k["H"])), 22,
+                   {"color": "accent"}, align=align, spacing=8)
+        els.append(label)
+        if k["land"]:
+            ty = _bottom(label) + 2
+    title = _fit(k, "title", c.get("title", ""), tx, ty, tw, 14, 64, {"color": "text"}, font=tf, weight=400,
+                 align=align)
+    line_x = tx if k["land"] else 47
+    line = _s(k, "line", (line_x, _bottom(title) + 1.5, 6, 0.2), {"fill": "text"}, z=3)
+    body = _fit(k, "body", c.get("body", ""), tx if k["land"] else 16, _bottom(line) + 2, tw if k["land"] else 68,
+                max(6, 90 - _bottom(line) - 2), 28, {"color": "text"}, weight=400, align=align)
+    brand_align = "left" if c.get("swipe") else "center"
+    els += [title, line, body,
+            _t(k, "brand", BRAND, (6 if c.get("swipe") else 10, 94, 80, _line_h(20, k["H"])), 20, {"color": "text"},
+               align=brand_align if not k["land"] else "left", spacing=10)]
+    return els
+
+
+LAYOUTS = {"bold": _layout_bold, "editorial": _layout_editorial, "menu": _layout_menu, "pop": _layout_pop,
+           "minimal": _layout_minimal}
+
+
+# ---- 카드뉴스 안쪽 장 (스타일은 글꼴·색·장식으로 이어집니다) ----
+def _inner_header(k, style, index, total):
+    els = [_t(k, "brand", BRAND, (6, 4, 50, _line_h(24, k["H"])), 24, {"color": "text"}, spacing=6),
+           _t(k, "page", f"{index + 1:02d} / {total:02d}", (64, 4, 30, _line_h(24, k["H"])), 24, {"color": "accent"},
+              align="right", role="page_no", spacing=2)]
+    if style in ("editorial", "menu"):
+        my = 3 * k["W"] / k["H"]
+        els.append(_s(k, "frame", (3, my, 94, 100 - 2 * my), {"stroke": "accent" if style == "menu" else "text"},
+                      z=6, stroke_w=2))
+    return els
+
+
+def _inner_menu(k, style, c):
+    """메뉴 소개: 큰 사진 + 제목 + 설명"""
+    tf = k["F"][0]
+    ph = 40 if k["land"] else (48 if k["H"] > k["W"] else 40)
+    radius = {"editorial": 0, "minimal": _circle_r(k, 30)}.get(style, 36)
+    if k["land"]:
+        els = [_img(k, (6, 14, 42, 72), radius=radius)]
+        tx, tw, ty = 54, 40, 22
+    else:
+        els = [_img(k, (6, 11, 88, ph), radius=radius)]
+        tx, tw, ty = 6, 88, 11 + ph + 4
+    if style == "pop":
+        els.insert(0, _s(k, "photo_back", (els[0]["x"] + 2, els[0]["y"] + 2, els[0]["w"], els[0]["h"]),
+                         {"fill": "accent"}, radius=36))
+    if c.get("label"):
+        label = _pill(k, "label", c["label"], tx, ty, 24, {"color": "bg", "bg": "accent"})
+        els.append(label)
+        ty = _bottom(label) + 1.5
+    title = _fit(k, "title", c.get("title", ""), tx, ty, tw, 14, 72, {"color": "text"}, font=tf)
+    body = _fit(k, "body", c.get("body", ""), tx, _bottom(title) + 1.5, tw, max(6, 94 - _bottom(title) - 1.5), 34,
+                {"color": "text"}, weight=400)
+    return els + [title, body]
+
+
+def _inner_list(k, style, c):
+    """번호 목록: 제목 + 번호 원과 짧은 항목 3~4개 (+ 남는 자리에 작은 사진)"""
+    tf = k["F"][0]
+    tx, tw = (6, 56) if k["land"] else (6, 88)
+    els = []
+    y = 11
+    if c.get("label"):
+        label = _t(k, "label", str(c["label"]).upper(), (tx, y, tw, _line_h(24, k["H"])), 24, {"color": "accent"},
+                   spacing=6)
+        els.append(label)
+        y = _bottom(label) + 1
+    title = _fit(k, "title", c.get("title", ""), tx, y, tw, 16, 72, {"color": "text"}, font=tf)
+    els.append(title)
+    lines = [line.strip().lstrip("✓•-–0123456789.) ").strip() for line in str(c.get("body", "")).split("\n")]
+    lines = [line for line in lines if line][:4] or [str(c.get("body", ""))]
+    d = 9 if not k["land"] else 6
+    y = _bottom(title) + 4
+    size = 36
+    while size > 24 and sum(max(_sq(k, d), _est_h(k, line, size, tw - d - 4, k["F"][1])) + 3 for line in lines) > 92 - y:
+        size -= 2
+    for number, line in enumerate(lines, 1):
+        text_h = _est_h(k, line, size, tw - d - 4, k["F"][1])
+        row_h = max(_sq(k, d), text_h)
+        if style == "pop":
+            els.append(_s(k, f"card-{number}", (tx - 1.5, y - 1, tw + 3, row_h + 2), {"fill": "soft"}, radius=28,
+                          role="card"))
+        if style == "minimal":
+            els.append(_t(k, f"number-{number}", f"{number:02d}", (tx, y, d, row_h), 34, {"color": "accent"},
+                          font=tf, role="number", z=5))
+        else:
+            els += [_s(k, f"dot-{number}", (tx, y + row_h / 2 - _sq(k, d) / 2, d, _sq(k, d)), {"fill": "accent"},
+                       shape="circle", z=4, role="dot"),
+                    _t(k, f"number-{number}", str(number), (tx, y + row_h / 2 - _sq(k, d) / 2, d, _sq(k, d)), 36,
+                       {"color": "bg", "on": "accent"}, align="center", role="number", z=5)]
+        els.append(_t(k, f"point-{number}", line, (tx + d + 3, y, tw - d - 3, row_h), size, {"color": "text"},
+                      weight=400, role="point"))
+        y += row_h + 3
+    if k["land"]:
+        els.append(_img(k, (66, 18, 28, _sq(k, 28)), radius=_circle_r(k, 28)))
+    elif y < 66:
+        pw = min(34, (94 - y) * k["H"] / k["W"])
+        els.append(_img(k, (94 - pw, 94 - _sq(k, pw), pw, _sq(k, pw)), radius=_circle_r(k, pw)))
+    return els
+
+
+def _inner_quote(k, style, c):
+    """감성 문구: 큰 따옴표 + 가운데 문장 + 작은 제목"""
+    tf = k["F"][0]
+    quote = c.get("quote") or c.get("body", "")
+    els = [_t(k, "quote_mark", "“", (8, 10, 30, _line_h(220, k["H"])), 220, {"color": "accent"}, font="lora",
+              opacity=0.8)]
+    q = _fit(k, "quote", quote, 10, 28, 80, 36, 64, {"color": "text"}, font=tf, align="center", weight=400)
+    title = _fit(k, "title", c.get("title", ""), 10, _bottom(q) + 3, 80, 8, 30, {"color": "accent"}, align="center",
+                 spacing=2)
+    els += [q, title]
+    if not k["land"] and _bottom(title) < 70:
+        pw = 24
+        els.append(_img(k, ((100 - pw) / 2, 92 - _sq(k, pw), pw, _sq(k, pw)), radius=_circle_r(k, pw)))
+    return els
+
+
+def _inner_cta(k, style, c):
+    """마지막 장: 작은 사진 + 제목 + 저장·공유·팔로우 알약"""
+    tf = k["F"][0]
+    els = []
+    y = 12
+    if not k["land"]:
+        pw = 26
+        els.append(_img(k, ((100 - pw) / 2, y, pw, _sq(k, pw)), radius=_circle_r(k, pw)))
+        y += _sq(k, pw) + 3
+    title = _fit(k, "title", c.get("title", ""), 8, y, 84, 18, 80, {"color": "text"}, font=tf, align="center")
+    body = _fit(k, "body", c.get("body", ""), 12, _bottom(title) + 1.5, 76, 12, 32, {"color": "text"}, weight=400,
+                align="center")
+    els += [title, body]
+    y = _bottom(body) + 4
+    for number, text in enumerate(CTA_TEXTS, 1):
+        paint = {"color": "bg", "bg": "accent"} if number == 1 else {"color": "text", "bg": "soft"}
+        pill = _pill(k, f"cta-{number}", text, 50, y, 28, paint, align="center", role="cta")
+        els.append(pill)
+        y = _bottom(pill) + 1.6
+    return els
+
+
+INNER = {"menu": _inner_menu, "list": _inner_list, "quote": _inner_quote, "cta": _inner_cta}
+
+
+def _connectors(k, index, total):
+    """장 경계에 걸친 반원: 넘겨 볼 때 앞뒤 장이 한 장처럼 이어져 보입니다. (경계마다 위·아래를 번갈아)"""
+    d = 28
+    els = []
+    for boundary, x in ((index - 1, -d / 2), (index, 100 - d / 2)):
+        if 0 <= boundary < total - 1:
+            cy = 86 if boundary % 2 == 0 else 14
+            els.append(_s(k, f"connector-{boundary}", (x, cy - _sq(k, d) / 2, d, _sq(k, d)), {"fill": "soft"},
+                          shape="circle", z=0, role="connector", opacity=0.85))
+    return els
+
+
+def _build_styled_pages(style, ratio, contents, palette, fonts):
+    W, H = SIZES[ratio]
+    total = len(contents)
+    pages = []
+    for index, content in enumerate(contents):
+        k = _kit(W, H, palette, fonts, index, content.get("photo"))
+        layout = "cover" if index == 0 or content.get("layout") not in INNER else content["layout"]
+        if layout == "cover":
+            els = LAYOUTS[style](k, {**content, "swipe": total > 1})
+            if total > 1:
+                els.append(_pill(k, "swipe", SWIPE_TEXT, 94, 100 - 6.5 * W / H, 22, {"color": "bg", "bg": "accent"},
+                                 align="right", z=7))
+        else:
+            els = _inner_header(k, style, index, total) + INNER[layout](k, style, content)
+        if total > 1:
+            els += _connectors(k, index, total)
+        pages.append({"layout": layout, "bg": palette["bg"], "accent": palette["accent"],
+                      "content": {key: value for key, value in content.items() if key != "swipe"}, "elements": els})
+    return pages
+
+
+def _switch_style(doc, style):
+    """문구·사진·색은 남기고 스타일 틀만 바꿉니다. 글꼴은 그 스타일의 기본 글꼴로 바꿉니다."""
+    def build(contents, palette):
+        doc["style"] = style
+        doc["fonts"] = dict(zip(("title", "body"), STYLE_FONTS[style]))
+        doc.pop("template", None)
+        return _build_styled_pages(style, doc.get("ratio", DEFAULT_RATIO), contents, palette, doc["fonts"])
+    _rebuild(doc, build)
+
+
+def design_proposal_schema(count):
+    """API 출력과 서버 검증 모두 동일한 제한을 사용합니다."""
+    def obj(properties):
+        return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
+
+    def string(limit):
+        return {"type": "string", "minLength": 1, "maxLength": limit}
+
+    def enum(values):
+        return {"type": "string", "enum": list(values)}
+
+    color = {"type": "string", "pattern": HEX_RE.pattern}
+    page = obj({"layout": enum(PAGE_LAYOUTS), "label_vi": string(40), "label_ko": string(80),
+                "title_vi": string(90), "title_ko": string(150), "body_vi": string(350), "body_ko": string(600)})
+    proposal = obj({"name": string(80), "prompt": string(1500), "style": enum(STYLES),
+                    "palette": obj({"bg": color, "accent": color, "text": color, "soft": color}),
+                    "title_font": enum(VI_FONTS), "body_font": enum(VI_FONTS),
+                    "pages": {"type": "array", "minItems": count, "maxItems": count, "items": page}})
+    return obj({"proposals": {"type": "array", "minItems": 3, "maxItems": 3, "items": proposal}})
+
+
+def validate_proposals(value, schema):
+    """외부 AI 응답은 저장·그리기 전에 제한된 JSON 형식으로 검사합니다."""
+    type_ = schema["type"]
+    if type_ == "object":
+        if not isinstance(value, dict) or set(value) != set(schema["properties"]):
+            raise ValueError("AI 결과의 항목이 올바르지 않습니다.")
+        for key, child in schema["properties"].items():
+            validate_proposals(value[key], child)
+    elif type_ == "array":
+        if not isinstance(value, list) or not schema["minItems"] <= len(value) <= schema["maxItems"]:
+            raise ValueError("AI 결과의 제안 수 또는 장수가 올바르지 않습니다.")
+        for child in value:
+            validate_proposals(child, schema["items"])
+    elif not isinstance(value, str) or not value.strip() or len(value) > schema.get("maxLength", 4000):
+        raise ValueError("AI 결과의 문구가 비어 있거나 너무 깁니다.")
+    elif "enum" in schema and value not in schema["enum"]:
+        raise ValueError("AI 결과의 스타일·글꼴·장 구성이 올바르지 않습니다.")
+    elif "pattern" in schema and not re.fullmatch(schema["pattern"], value):
+        raise ValueError("AI 결과의 색 값이 올바르지 않습니다.")
+
+
+def proposal_design(source, proposal, options):
+    """AI는 문구·스타일·색 조합·글꼴을 제안하고, 사진은 기존 원본을 유지합니다.
+
+    사진은 같은 번호의 장 사진을 그대로 쓰고, 사진이 없는 장·늘어난 장은 표지 사진을 씁니다.
+    기존 사진이 하나도 없으면(첫 화면) 고른 제품의 대표 사진을 씁니다.
+    카드뉴스는 첫 장을 표지, 마지막 장을 저장·팔로우 유도 장으로 고정합니다.
+    """
+    product = _option_product(options) or {}
+    photos = [next((item.get("src") for item in page.get("elements", [])
+                    if item.get("type") == "image" and item.get("src")), None)
+              for page in source.get("pages", [])]
+    cover_photo = (photos[0] if photos else None) or next((src for src in photos if src), None) or _image_src(product)
+
+    def photo_of(index):
+        return (photos[index] if index < len(photos) else None) or cover_photo
+
+    texts = proposal["pages"]
+    style = proposal["style"]
+    palette = _clean_palette(proposal["palette"], PALETTES.get(product.get("color"), PALETTES["gold"]))
+    fonts = {"title": proposal["title_font"], "body": proposal["body_font"]}
+    contents = []
+    for index, item in enumerate(texts):
+        layout = item["layout"] if item["layout"] in INNER else "menu"
+        if index == len(texts) - 1 and len(texts) >= MIN_PAGES:
+            layout = "cta"
+        contents.append({"title": item["title_vi"], "body": item["body_vi"], "label": item["label_vi"],
+                         "photo": photo_of(index), "layout": "cover" if index == 0 else layout})
+    doc = {"kind": source["kind"], "ratio": source["ratio"], "style": style, "palette": palette, "fonts": fonts,
+           "pages": _build_styled_pages(style, source["ratio"], contents, palette, fonts)}
+    for page, words in zip(doc["pages"], texts):
+        first_point = True
+        for item in page["elements"]:
+            role = item.get("role")
+            key = {"title": "title_ko", "body": "body_ko", "quote": "body_ko", "label": "label_ko"}.get(role)
+            if role == "point" and first_point:
+                key, first_point = "body_ko", False
+            if item["type"] == "text" and key:
+                item["text_ko"] = words[key]
+                item["translation_source"] = item["text"]
+    doc["demo"] = source.get("demo", True)
+    doc["assistant"] = {"name": proposal["name"], "prompt": proposal["prompt"], "options": options,
+                        "notice": f"AI 초안 · {STYLES[style]} · 제품 정보와 번역은 검토해 주세요."}
+    if source.get("external_figma"):
+        doc["external_figma"] = copy.deepcopy(source["external_figma"])
+    return doc

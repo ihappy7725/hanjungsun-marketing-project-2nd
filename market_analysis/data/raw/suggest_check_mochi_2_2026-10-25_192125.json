@@ -1,0 +1,2605 @@
+{
+  "search_metadata": {
+    "id": "6addf44e6114bdd52b6232e8",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/mTToMWBigcVSxkzU1GumGQngGGHE9AE6XWVuPst0DAQ/6addf44e6114bdd52b6232e8.md",
+    "created_at": "2026-10-25 12:21:34 UTC",
+    "processed_at": "2026-10-25 12:21:34 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/TIMESERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22daifuku%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%222025-06-22+2026-10-25%22%7D%2C%7B%22keyword%22%3A%22mochi+nh%E1%BA%ADt%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%222025-06-22+2026-10-25%22%7D%2C%7B%22keyword%22%3A%22b%C3%A1nh+mochi+nh%E1%BA%ADt%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%222025-06-22+2026-10-25%22%7D%2C%7B%22keyword%22%3A%22b%C3%A1nh+mochi+d%E1%BA%BBo%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%222025-06-22+2026-10-25%22%7D%2C%7B%22keyword%22%3A%22b%C3%A1nh+mochi+nh%E1%BA%ADt+b%E1%BA%A3n%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%222025-06-22+2026-10-25%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/mTToMWBigcVSxkzU1GumGQngGGHE9AE6XWVuPst0DAQ/6addf44e6114bdd52b6232e8.html",
+    "prettify_html_file": "https://serpapi.com/searches/mTToMWBigcVSxkzU1GumGQngGGHE9AE6XWVuPst0DAQ/6addf44e6114bdd52b6232e8.prettify",
+    "total_time_taken": 1.83
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "daifuku,mochi nhật,bánh mochi nhật,bánh mochi dẻo,bánh mochi nhật bản",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "2025-06-22 2026-10-25",
+    "tz": "-420",
+    "data_type": "TIMESERIES"
+  },
+  "interest_over_time": {
+    "timeline_data": [
+      {
+        "date": "22 – 28 thg 6, 2025",
+        "timestamp": "1750550400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "29 thg 6 – 5 thg 7, 2025",
+        "timestamp": "1751155200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "6 – 12 thg 7, 2025",
+        "timestamp": "1751760000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "13 – 19 thg 7, 2025",
+        "timestamp": "1752364800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "20 – 26 thg 7, 2025",
+        "timestamp": "1752969600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "27 thg 7 – 2 thg 8, 2025",
+        "timestamp": "1753574400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "3 – 9 thg 8, 2025",
+        "timestamp": "1754179200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "10 – 16 thg 8, 2025",
+        "timestamp": "1754784000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "17 – 23 thg 8, 2025",
+        "timestamp": "1755388800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "24 – 30 thg 8, 2025",
+        "timestamp": "1755993600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "31 thg 8 – 6 thg 9, 2025",
+        "timestamp": "1756598400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "8",
+            "extracted_value": 8
+          }
+        ]
+      },
+      {
+        "date": "7 – 13 thg 9, 2025",
+        "timestamp": "1757203200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "11",
+            "extracted_value": 11
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "14 – 20 thg 9, 2025",
+        "timestamp": "1757808000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "10",
+            "extracted_value": 10
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "21 – 27 thg 9, 2025",
+        "timestamp": "1758412800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "28 thg 9 – 4 thg 10, 2025",
+        "timestamp": "1759017600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "5 – 11 thg 10, 2025",
+        "timestamp": "1759622400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "12 – 18 thg 10, 2025",
+        "timestamp": "1760227200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "19 – 25 thg 10, 2025",
+        "timestamp": "1760832000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "26 thg 10 – 1 thg 11, 2025",
+        "timestamp": "1761436800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "2 – 8 thg 11, 2025",
+        "timestamp": "1762041600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "9 – 15 thg 11, 2025",
+        "timestamp": "1762646400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "10",
+            "extracted_value": 10
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "16 – 22 thg 11, 2025",
+        "timestamp": "1763251200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "23 – 29 thg 11, 2025",
+        "timestamp": "1763856000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "30 thg 11 – 6 thg 12, 2025",
+        "timestamp": "1764460800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "7 – 13 thg 12, 2025",
+        "timestamp": "1765065600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "14 – 20 thg 12, 2025",
+        "timestamp": "1765670400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "21 – 27 thg 12, 2025",
+        "timestamp": "1766275200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "28 thg 12, 2025 – 3 thg 1, 2026",
+        "timestamp": "1766880000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "4 – 10 thg 1, 2026",
+        "timestamp": "1767484800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "11 – 17 thg 1, 2026",
+        "timestamp": "1768089600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "18 – 24 thg 1, 2026",
+        "timestamp": "1768694400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "25 – 31 thg 1, 2026",
+        "timestamp": "1769299200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "1 – 7 thg 2, 2026",
+        "timestamp": "1769904000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "14",
+            "extracted_value": 14
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "8 – 14 thg 2, 2026",
+        "timestamp": "1770508800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "46",
+            "extracted_value": 46
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "15 – 21 thg 2, 2026",
+        "timestamp": "1771113600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "100",
+            "extracted_value": 100
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "22 – 28 thg 2, 2026",
+        "timestamp": "1771718400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "16",
+            "extracted_value": 16
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "1 – 7 thg 3, 2026",
+        "timestamp": "1772323200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "8 – 14 thg 3, 2026",
+        "timestamp": "1772928000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "15 – 21 thg 3, 2026",
+        "timestamp": "1773532800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "22 – 28 thg 3, 2026",
+        "timestamp": "1774137600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "11",
+            "extracted_value": 11
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "29 thg 3 – 4 thg 4, 2026",
+        "timestamp": "1774742400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "5 – 11 thg 4, 2026",
+        "timestamp": "1775347200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "10",
+            "extracted_value": 10
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "12 – 18 thg 4, 2026",
+        "timestamp": "1775952000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "19 – 25 thg 4, 2026",
+        "timestamp": "1776556800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "26 thg 4 – 2 thg 5, 2026",
+        "timestamp": "1777161600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "3 – 9 thg 5, 2026",
+        "timestamp": "1777766400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "10 – 16 thg 5, 2026",
+        "timestamp": "1778371200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "8",
+            "extracted_value": 8
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "17 – 23 thg 5, 2026",
+        "timestamp": "1778976000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "24 – 30 thg 5, 2026",
+        "timestamp": "1779580800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "31 thg 5 – 6 thg 6, 2026",
+        "timestamp": "1780185600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "7 – 13 thg 6, 2026",
+        "timestamp": "1780790400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "14 – 20 thg 6, 2026",
+        "timestamp": "1781395200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "21 – 27 thg 6, 2026",
+        "timestamp": "1782000000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "7",
+            "extracted_value": 7
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "28 thg 6 – 4 thg 7, 2026",
+        "timestamp": "1782604800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "5 – 11 thg 7, 2026",
+        "timestamp": "1783209600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "12 – 18 thg 7, 2026",
+        "timestamp": "1783814400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "19 – 25 thg 7, 2026",
+        "timestamp": "1784419200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "26 thg 7 – 1 thg 8, 2026",
+        "timestamp": "1785024000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "35",
+            "extracted_value": 35
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "2 – 8 thg 8, 2026",
+        "timestamp": "1785628800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "73",
+            "extracted_value": 73
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "9 – 15 thg 8, 2026",
+        "timestamp": "1786233600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "85",
+            "extracted_value": 85
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "16 – 22 thg 8, 2026",
+        "timestamp": "1786838400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "48",
+            "extracted_value": 48
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "23 – 29 thg 8, 2026",
+        "timestamp": "1787443200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "23",
+            "extracted_value": 23
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "30 thg 8 – 5 thg 9, 2026",
+        "timestamp": "1788048000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "72",
+            "extracted_value": 72
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "6 – 12 thg 9, 2026",
+        "timestamp": "1788652800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "59",
+            "extracted_value": 59
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "13 – 19 thg 9, 2026",
+        "timestamp": "1789257600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "55",
+            "extracted_value": 55
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "20 – 26 thg 9, 2026",
+        "timestamp": "1789862400",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "27 thg 9 – 3 thg 10, 2026",
+        "timestamp": "1790467200",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "4 – 10 thg 10, 2026",
+        "timestamp": "1791072000",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "9",
+            "extracted_value": 9
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "6",
+            "extracted_value": 6
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      },
+      {
+        "date": "11 – 17 thg 10, 2026",
+        "timestamp": "1791676800",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "2",
+            "extracted_value": 2
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "4",
+            "extracted_value": 4
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "2",
+            "extracted_value": 2
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "1",
+            "extracted_value": 1
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "1",
+            "extracted_value": 1
+          }
+        ]
+      },
+      {
+        "date": "18 – 24 thg 10, 2026",
+        "timestamp": "1792281600",
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "2",
+            "extracted_value": 2
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "4",
+            "extracted_value": 4
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "2",
+            "extracted_value": 2
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "1",
+            "extracted_value": 1
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "1",
+            "extracted_value": 1
+          }
+        ]
+      },
+      {
+        "date": "25 – 31 thg 10, 2026",
+        "timestamp": "1792886400",
+        "partial_data": true,
+        "values": [
+          {
+            "query": "daifuku",
+            "query_index": 0,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "mochi nhật",
+            "query_index": 1,
+            "value": "5",
+            "extracted_value": 5
+          },
+          {
+            "query": "bánh mochi nhật",
+            "query_index": 2,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi dẻo",
+            "query_index": 3,
+            "value": "0",
+            "extracted_value": 0
+          },
+          {
+            "query": "bánh mochi nhật bản",
+            "query_index": 4,
+            "value": "0",
+            "extracted_value": 0
+          }
+        ]
+      }
+    ],
+    "averages": [
+      {
+        "query": "daifuku",
+        "value": 11
+      },
+      {
+        "query": "mochi nhật",
+        "value": 4
+      },
+      {
+        "query": "bánh mochi nhật",
+        "value": 1
+      },
+      {
+        "query": "bánh mochi dẻo",
+        "value": 0
+      },
+      {
+        "query": "bánh mochi nhật bản",
+        "value": 0
+      }
+    ]
+  }
+}

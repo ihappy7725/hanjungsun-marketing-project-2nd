@@ -10,8 +10,11 @@
 """
 import copy
 import difflib
+import json
 import math
 import re
+
+from .products import PRODUCTS
 
 RATIOS = ("9:16", "16:9", "1:1")
 MIN_DURATION, MAX_DURATION = 5, 30
@@ -21,8 +24,21 @@ MAX_MANUAL_SCENES = 12  # 컷 추가로 늘릴 수 있는 최대 (컷마다 1초
 CAMERAS = ("slow smooth dolly-in", "steady medium push-in", "dynamic quick cuts")
 LIGHTINGS = ("dim warm low-key lighting", "soft warm natural lighting", "bright airy high-key lighting")
 
-PRODUCT_EN = {"찹쌀떡": "Korean chapssal-tteok mochi", "망고스틴 찹쌀떡": "mangosteen mochi"}
-PRODUCT_VI = {"찹쌀떡": "Bánh mochi Hàn Quốc", "망고스틴 찹쌀떡": "Bánh mochi măng cụt"}
+# 제품 영어 이름(프롬프트용, mochi 대신 chapssal-tteok)·베트남어 이름(포장 태그 그대로). 맨 아래 두 줄은 예전 제품(기존 작업용).
+PRODUCT_EN = {
+    "망고 요거트 찹쌀떡": "mango yogurt chapssal-tteok",
+    "꿀 레드용과 찹쌀떡": "honey red dragon fruit chapssal-tteok",
+    "망고스틴 요거트 찹쌀떡": "mangosteen yogurt chapssal-tteok",
+    "두리안 찹쌀떡": "durian chapssal-tteok",
+    "찹쌀떡": "Korean chapssal-tteok", "망고스틴 찹쌀떡": "mangosteen chapssal-tteok",
+}
+PRODUCT_VI = {
+    "망고 요거트 찹쌀떡": "Chapssal-tteok Xoài",
+    "꿀 레드용과 찹쌀떡": "Chapssal-tteok Thanh Long Mật Ong",
+    "망고스틴 요거트 찹쌀떡": "Chapssal-tteok Măng Cụt",
+    "두리안 찹쌀떡": "Chapssal-tteok Sầu Riêng",
+    "찹쌀떡": "Bánh mochi Hàn Quốc", "망고스틴 찹쌀떡": "Bánh mochi măng cụt",
+}
 EVENT_VI = {
     "베트남 스승의 날": "Ngày Nhà giáo Việt Nam",
     "베트남 여성의 날": "Ngày Phụ nữ Việt Nam",
@@ -73,8 +89,20 @@ BACKGROUND_KO = {
     "a clean light wooden table": "깔끔하고 밝은 나무 테이블",
 }
 
-# 제품 겉모습 고정 문장. 매 컷 같은 모양·색이 나오게 합니다. (시연용 추정 — 실제 제품 사진으로 확인 필요)
+# 제품 겉모습 고정 문장. 매 컷 같은 모양·색이 나오게 합니다. (static/images/sns/ 단면 사진을 보고 씀, 2026-10-25)
 PRODUCT_LOOK = {
+    "망고 요거트 찹쌀떡": ("a round, soft white chapssal-tteok with a light rice-flour dusting; inside, white yogurt cream "
+                     "around a glossy golden mango chunk",
+                     "고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡, 속은 하얀 요거트 크림이 감싼 윤기 나는 노란 망고 과육"),
+    "꿀 레드용과 찹쌀떡": ("a round, soft white chapssal-tteok with a light rice-flour dusting; inside, magenta red dragon fruit "
+                     "with tiny black seeds in golden honey",
+                     "고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡, 속은 황금빛 꿀을 머금은 선명한 자홍색 레드용과 과육과 작은 검은 씨"),
+    "망고스틴 요거트 찹쌀떡": ("a round, soft white chapssal-tteok with a light rice-flour dusting; inside, pearly white mangosteen "
+                       "segments in white yogurt cream",
+                       "고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡, 속은 하얀 요거트 크림이 감싼 뽀얀 망고스틴 과육 조각"),
+    "두리안 찹쌀떡": ("a round, soft white chapssal-tteok with a light rice-flour dusting; inside, creamy pale-yellow durian filling",
+                "고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡, 속은 진하고 부드러운 연노랑 두리안 크림"),
+    # 예전 제품(기존 작업용)
     "찹쌀떡": ("round, soft white rice cakes dusted with fine rice flour, with a sweet red bean filling",
               "고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡, 속은 달콤한 팥소"),
     "망고스틴 찹쌀떡": ("round, soft rice cakes with a pale purple tint and a juicy white mangosteen filling",
@@ -86,21 +114,43 @@ COMMON_AVOID = ("no text, no letters, no subtitles, no logos, no watermarks, no 
 # 싸 보이는 결과를 막는 금지 (예시 프롬프트 분석)
 REALISM_AVOID = ("no artificial CGI look, no fake physics, no over-saturated plastic colors",
                  "인공적인 CGI 느낌·가짜 물리 효과·과하게 쨍한 플라스틱 같은 색 없음")
+# 먹음직스럽게: 떡이 이질적으로 길게 늘어나거나 식욕이 떨어지는 모습 금지 (길 때는 AVOID_SHORT 안의 짧은 구절)
+FOOD_AVOID = ("no rubbery over-long stretching, nothing unappetizing (slimy, melting, sagging or dull-colored)",
+              "고무처럼 길게 늘어나는 떡·미끈거림·녹아내림·처짐·칙칙한 색 등 식욕 떨어지는 모습 없음")
+
 # 제품이 갑자기 나타나거나 바뀌지 않게 (예시 프롬프트 분석)
 CONTINUITY = ("Continuity: everything changes gradually and naturally, nothing appears suddenly, "
               "and the rice cakes keep the same shape, color, size and filling in every shot",
               "연속성: 모든 변화는 단계적이고 자연스럽게, 갑자기 나타나는 것 없이, 모든 컷에서 찹쌀떡의 모양·색·크기·속 유지")
-PHOTO_MATCH = ("the final hero shot matches the attached product photo exactly", "마지막 히어로 컷은 첨부한 제품 사진과 정확히 일치")
+# 제품 사진은 컷 종류별로 보냅니다(routes_sns.py _photo_set): 겉모습 공통 사진 · 맛별 단면 · 선물세트
+PHOTO_MATCH = ("outside = the round white rice cake photo, filling = the cross-section photos",
+               "겉은 동그란 하얀 찹쌀떡 사진, 속은 단면 사진대로")
+PHOTO_GIFT = ("gift = the gift set photos", "선물은 선물세트 사진대로")
+# 속 컷(가르기·한입): 동그란 하얀 찹쌀떡에서 시작해 갈라지며 단면이 드러나게. 길이를 줄일 때(compact)는 뺍니다.
+START_WHOLE = ("starting from a whole round white rice cake", "동그란 하얀 찹쌀떡 그대로에서 시작")
+
+# 장면 글(영어)로 컷 종류를 정합니다: gift(선물·포장) → inside(가르기·단면·한입) → outside(겉모습)
+GIFT_WORDS = re.compile(r"\bgift|\bbox(es)?\b|wrap|bojagi|present\b|packag", re.I)
+INSIDE_WORDS = re.compile(r"\bhalf\b|halves|halved|apart|cross[- ]section|filling|inside|\bbit(e|es|ing|ten)\b|split|"
+                          r"\bcut (open|in half)|cream", re.I)
+
+
+def scene_kind(text):
+    """장면 글 → "gift" | "inside" | "outside". 어떤 제품 사진을 보낼지 정할 때 씁니다."""
+    if GIFT_WORDS.search(text or ""):
+        return "gift"
+    return "inside" if INSIDE_WORDS.search(text or "") else "outside"
 MUSIC_AVOID = ("no vocals, no lyrics, no familiar melodies", "보컬·가사·익숙한 멜로디 없음")
 # 프롬프트가 길면(PROMPT_LIMIT 초과) 금지 줄을 이 짧은 문장으로 씁니다.
-AVOID_SHORT = ("no text, logos or watermarks, no distorted hands, no product morphing, no CGI look or fake physics",
-               "글자·로고·워터마크·손 왜곡·제품 변형·CGI 느낌·가짜 물리 없음")
+AVOID_SHORT = ("no text, logos, watermarks, distorted hands, morphing, CGI look, fake physics, "
+               "over-stretched or unappetizing rice cake",
+               "글자·로고·워터마크·손 왜곡·제품 변형·CGI 느낌·가짜 물리·과하게 늘어나거나 식욕 떨어지는 떡 없음")
 # Kling 쪽 문서에 흔한 프롬프트 한도. Higgsfield에서 실제 한도는 확인 전입니다(2026-10-24).
 PROMPT_LIMIT = 2500
 
 # 찹쌀떡 질감 단어 모음. 디테일 컷(가운데 컷)에 차례로 붙입니다.
 TEXTURES = (
-    ("the soft mochi stretching into long chewy strands", "쫀득하게 길게 늘어나는 떡"),
+    ("the soft rice cake stretching just slightly, soft and chewy", "살짝 쫀득하게 늘어나는 떡"),
     ("fine rice flour drifting slowly through the light", "빛 사이로 천천히 흩날리는 고운 쌀가루"),
     ("the pillowy surface gently pressed and springing back", "말랑하게 눌렸다가 다시 돌아오는 표면"),
     ("the cut cross-section revealing the filling inside", "갈라진 단면 속으로 드러나는 소"),
@@ -134,8 +184,8 @@ STYLES = {
         "beats": (("Introduction", "소개"), ("Texture detail", "질감 디테일"), ("Climax", "클라이맥스"), ("Hero shot", "히어로 샷")),
         "actions": (("the rice cake lands softly in slow motion, fine flour puffing up into the golden light",
                      "찹쌀떡이 슬로모션으로 살며시 내려앉고, 고운 가루가 금빛 빛 속으로 피어오름"),
-                    ("the rice cake is pulled apart in slow motion, chewy strands stretching as flour swirls around it",
-                     "찹쌀떡이 슬로모션으로 갈라지며 쫀득하게 늘어나고, 주위로 쌀가루가 소용돌이침"),
+                    ("the rice cake is pulled apart in slow motion with a short chewy stretch as flour swirls around it",
+                     "찹쌀떡이 슬로모션으로 갈라지며 짧고 쫀득하게 늘어나고, 주위로 쌀가루가 소용돌이침"),
                     ("the flour settles and the rice cakes rest perfectly still on the glossy surface",
                      "가루가 가라앉고 찹쌀떡이 광택 있는 바닥 위에 완벽하게 멈춰 있음")),
         "shots": (("extreme macro close-up, slow dolly-in", "초접사 클로즈업, 천천히 다가가기"),
@@ -144,7 +194,7 @@ STYLES = {
                    ("top-down overhead shot", "위에서 내려다보는 샷")),
                   ("slow-motion macro, the camera gliding through drifting flour", "슬로모션 매크로, 흩날리는 가루 사이로 미끄러지는 카메라"),
                   ("slow pull-back to a centered hero shot", "천천히 빠지며 가운데 히어로 샷")),
-        "sfx": (("soft whoosh", "부드러운 바람 소리"), ("gentle squish of soft mochi", "말랑한 떡이 눌리는 소리"),
+        "sfx": (("soft whoosh", "부드러운 바람 소리"), ("gentle squish of soft rice cake", "말랑한 떡이 눌리는 소리"),
                 ("soft sticky stretch", "쫀득하게 늘어나는 소리"), ("subtle shimmer chime", "은은한 반짝임 소리")),
         "weights": (1, 1, 1.2, 1.6),
     },
@@ -182,7 +232,7 @@ STYLES = {
     "vlog": {
         "label": "브이로그·리뷰",
         "pattern": r"브이로그|일상|셀카|리뷰|후기",
-        "concept": ("Trying Hanjungsun Mochi", "한정선 찹쌀떡 먹어 보기"),
+        "concept": ("Trying Hanjungsun Chapssal-tteok", "한정선 찹쌀떡 먹어 보기"),
         "genre": ("Handheld social media vlog", "핸드헬드 SNS 브이로그"),
         "quality": ("realistic smartphone footage", "사실적인 휴대폰 영상"),
         "keywords": ("natural daylight, authentic and unpolished, real-time speed",
@@ -196,7 +246,7 @@ STYLES = {
         "avoid": ("no studio lighting, no cinematic color grading", "스튜디오 조명·영화 같은 색보정 없음"),
         "beats": (("Hook", "첫 마디"), ("Unboxing", "열어 보기"), ("First bite", "첫입"), ("Reaction", "리액션")),
         "actions": (("holding the box up to the camera in natural daylight", "자연광 아래 상자를 카메라에 들어 보임"),
-                    ("taking a big first bite, the mochi stretching naturally", "크게 한입 베어 물고 떡이 자연스럽게 늘어남"),
+                    ("taking a big first bite, the rice cake stretching slightly", "크게 한입 베어 물고 떡이 살짝 늘어남"),
                     ("a genuine happy reaction while holding the rice cake up", "찹쌀떡을 들어 보이며 진심으로 기뻐하는 리액션")),
         "shots": (("handheld selfie-style shot, natural micro shake", "셀카처럼 든 핸드헬드, 자연스러운 흔들림"),
                   (("quick handheld pan", "빠른 핸드헬드 패닝"),
@@ -253,7 +303,7 @@ STYLES = {
         "beats": (("Recording starts", "녹화 시작"), ("Around the table", "식탁 풍경"), ("Shared bite", "함께 한입"),
                   ("Last frame", "마지막 장면")),
         "actions": (("the camcorder powers on and the frame wobbles as it finds focus", "캠코더가 켜지고 초점을 찾으며 화면이 살짝 흔들림"),
-                    ("someone takes a bite and laughs, the mochi stretching", "누군가 한입 먹고 웃으며 떡이 늘어남"),
+                    ("someone takes a bite and laughs, the rice cake stretching slightly", "누군가 한입 먹고 웃으며 떡이 살짝 늘어남"),
                     ("the rice cakes on a plate as the exposure settles", "노출이 맞춰지며 접시 위 찹쌀떡이 보임")),
         "shots": (("handheld camcorder shot, autofocus hunting", "캠코더 핸드헬드, 초점이 살짝 헤맴"),
                   (("casual zoom with the camcorder zoom rocker", "캠코더 줌 버튼으로 당기는 줌"),),
@@ -298,7 +348,7 @@ STYLES = {
     "miniature": {
         "label": "미니어처 월드",
         "pattern": r"미니어처|디오라마|작은\s*사람|소인",
-        "concept": ("The Little Mochi Workshop", "작은 찹쌀떡 공방"),
+        "concept": ("The Little Chapssal-tteok Workshop", "작은 찹쌀떡 공방"),
         "genre": ("Cinematic miniature world film", "시네마틱 미니어처 월드 영상"),
         "quality": ("4K ultra-detailed", "4K 초정밀"),
         "keywords": ("tilt-shift miniature diorama, tiny people around giant rice cakes, intricate tiny props, cozy and whimsical realism",
@@ -341,8 +391,8 @@ STYLES = {
         "avoid": ("no background music, no fast cuts", "배경음악·빠른 컷 없음"),
         "beats": (("First touch", "첫 닿음"), ("Texture", "질감"), ("The pull", "늘어나는 순간"), ("Final bite", "마지막 한입")),
         "actions": (("a fingertip gently presses the soft surface, which slowly springs back", "손끝이 말랑한 표면을 살짝 누르고 천천히 돌아옴"),
-                    ("the rice cake is slowly pulled apart, chewy strands stretching and the filling revealed",
-                     "찹쌀떡을 천천히 갈라 쫀득하게 늘어나며 속이 드러남"),
+                    ("the rice cake is slowly pulled apart with a short chewy stretch and the filling revealed",
+                     "찹쌀떡을 천천히 갈라 짧고 쫀득하게 늘어나며 속이 드러남"),
                     ("a clean bite mark shows the soft cross-section as the flour settles", "깔끔한 한입 자국에 부드러운 단면이 보이고 가루가 가라앉음")),
         "shots": (("locked-off extreme macro", "고정된 초접사"),
                   (("ultra-slow macro slide", "아주 느린 매크로 슬라이드"),),
@@ -564,7 +614,8 @@ def _prompt_lines(doc, lang):
     """프롬프트 줄들. lang 0=영어(Higgsfield용), 1=한국어 보기. 두 언어는 줄 수가 같고 한 줄씩 짝입니다.
     순서: 콘셉트 → 스타일 → 편집 리듬 → 제품 고정 → 배경·분위기 → 구간별 컷 → 카메라 → 조명·색감 → 연속성 → 소리 → 금지.
     컷마다 구간 이름·카메라·움직임·효과음은 저장하지 않고, 분위기와 컷 자리(소개·디테일·클라이맥스·히어로)로 매번 만듭니다.
-    영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다. 한국어도 똑같이 줄입니다."""
+    영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·카메라·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다.
+    여러 제품이면 제품 줄의 맛별 속 문장도 뺍니다. 한국어도 똑같이 줄입니다."""
     compact = len("\n".join(_lines(doc, 0, False))) > PROMPT_LIMIT
     return _lines(doc, lang, compact)
 
@@ -572,10 +623,12 @@ def _prompt_lines(doc, lang):
 def _lines(doc, lang, compact):
     style = _style_of(doc)
     product = doc.get("product") or "찹쌀떡"
-    look = PRODUCT_LOOK.get(product, PRODUCT_LOOK["찹쌀떡"])[lang]
+    look = PRODUCT_LOOK.get(product, PRODUCT_LOOK["찹쌀떡"])[lang]  # 모르는 제품이면 기본 찹쌀떡 문장
+    names = doc.get("products") or [product]  # 여러 제품이면 라인업 문장
     ratio = RATIO_WORDS.get(doc["ratio"], (doc["ratio"], doc["ratio"]))[lang]
     count = len(doc["scenes"])
     has_photo = bool(doc.get("image"))
+    has_gift = any(scene_kind(scene.get("en")) == "gift" for scene in doc["scenes"])
 
     def ko(table, value):
         return table.get(value, value) if lang else value  # 대응표에 없으면 영어 그대로
@@ -584,26 +637,32 @@ def _lines(doc, lang, compact):
     for i, scene in enumerate(doc["scenes"]):
         shot, what = _shot(style, i, count)[lang], scene["ko" if lang else "en"]
         if compact and _slot(i, count) == DETAIL:
-            shots.append(f"{scene['time']} — {shot}; {what}.")
+            shots.append(f"{scene['time']} — {what}.")  # 긴 영상: 디테일 컷은 장면만 (카메라는 아래 카메라 줄을 따름)
             continue
         beat = style["beats"][_slot(i, count)][lang]
+        if not compact and scene_kind(scene.get("en")) == "inside":
+            what = f"{what}, {START_WHOLE[lang]}"
         line = f"{scene['time']} — {beat}: {shot}; {what}; {_action(style, i, count)[lang]}."
         if doc["sound"] and (i == 0 or _sfx(style, i, count) != _sfx(style, i - 1, count)):  # 앞 컷과 같은 효과음은 생략
             line += f" {'효과음' if lang else 'SFX'}: {_sfx(style, i, count)[lang]}."
         shots.append(line)
 
-    continuity = CONTINUITY[lang] + (f"; {PHOTO_MATCH[lang]}." if has_photo else ".")
+    photo = PHOTO_MATCH[lang] + (f", {PHOTO_GIFT[lang]}" if has_gift else "")
+    continuity = CONTINUITY[lang] + (f"; {photo}." if has_photo else ".")
     if lang:
         head = f"'{style['concept'][1]}' — 한정선 {style['genre'][1]}, {doc['duration']}초, {ratio}, {style['quality'][1]}."
-        lock = f"제품: 한정선 {product} — {look}."
+        lock = f"제품: 한정선 {product} — {look}." if len(names) == 1 else (
+            f"제품: 한정선 찹쌀떡 {len(names)}가지 맛 — {_lineup(names, 1, compact)}. {LINEUP_SHELL[1]}.")
         sound = (f"소리: {style['music'][1]}, 컷마다 적은 효과음, {MUSIC_AVOID[1]}." if doc["sound"]
                  else "소리: 무음, 음악·효과음 없음.")
         labels = ("스타일", "편집", "배경", "분위기", "컷 구성:", "카메라", "조명·색감", "금지")
     else:
         head = (f"'{style['concept'][0]}' — Hanjungsun {style['genre'][0]}, {doc['duration']} seconds, {ratio}, "
                 f"{style['quality'][0]}.")
-        name = PRODUCT_EN.get(product, "Korean rice cake mochi")
-        lock = f"Product: {name} by Hanjungsun — {look}."
+        name = PRODUCT_EN.get(product, "Korean chapssal-tteok")
+        lock = f"Product: {name} by Hanjungsun — {look}." if len(names) == 1 else (
+            f"Product: Hanjungsun chapssal-tteok in {len(names)} flavors — "
+            f"{_lineup(names, 0, compact)}. {LINEUP_SHELL[0]}.")
         sound = (f"Sound: {style['music'][0]}, plus the sound effects noted per shot, {MUSIC_AVOID[0]}." if doc["sound"]
                  else "Sound: silent, no music, no sound effects.")
         labels = ("Style", "Editing", "Setting", "Mood", "Shots:", "Camera", "Lighting and color", "Avoid")
@@ -613,16 +672,42 @@ def _lines(doc, lang, compact):
         f"{style_l}: {style['keywords'][lang]}.",
         f"{edit_l}: {style['pace'][lang]}.",
         lock,
-        f"{setting_l}: {ko(BACKGROUND_KO, doc['background'])}. {mood_l}: {ko(MOOD_KO, doc['mood'])}.",
+        f"{setting_l}: {doc.get('background_ko') if lang and doc.get('background_ko') else ko(BACKGROUND_KO, doc['background'])}. "
+        f"{mood_l}: {doc.get('mood_ko') if lang and doc.get('mood_ko') else ko(MOOD_KO, doc['mood'])}.",
         shots_l,
         *shots,
         f"{camera_l}: {ko(CAMERA_KO, doc['camera'])}; {style['camera'][lang]}.",
         f"{light_l}: {ko(LIGHTING_KO, doc['lighting'])}; {style['grade'][lang]}.",
         continuity,
-        *[f"{extra}." for extra in doc["extras"]],
+        *([f"{(REFERENCE_SHORT if compact else REFERENCE_NOTE)[lang]}."] if doc.get("user_refs") or doc.get("ref_video") else []),
+        *[f"{_extra(doc, i, lang)}." for i in range(len(doc["extras"]))],
         sound,
-        f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}'}, {style['avoid'][lang]}.",
+        f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}, {FOOD_AVOID[lang]}'}, {style['avoid'][lang]}.",
     ]
+
+
+def _short(name, lang):
+    """제품 짧은 이름: '망고 요거트 찹쌀떡' → '망고 요거트' / 'mango yogurt'."""
+    return name.replace(" 찹쌀떡", "") if lang else PRODUCT_EN.get(name, name).replace(" chapssal-tteok", "")
+
+
+def _lineup(names, lang, compact):
+    """여러 제품 줄의 맛 목록. 프롬프트가 길면(compact) 맛 이름만, 아니면 맛별 속 문장까지."""
+    if compact:
+        return ", ".join(_short(n, lang) for n in names)
+    return "; ".join(f"{_short(n, lang)}: {_filling(n, lang)}" for n in names)
+
+
+def _filling(name, lang):
+    """제품 겉모습 문장에서 속 부분만: 'inside, …' / '속은 …'."""
+    look = PRODUCT_LOOK.get(name, PRODUCT_LOOK["찹쌀떡"])[lang]
+    return look.split("속은 ", 1)[-1] if lang else look.split("inside, ", 1)[-1]
+
+
+def _extra(doc, index, lang):
+    """추가 문장(extras)은 영어로 저장하고, AI가 함께 준 한국어(extras_ko)가 있으면 한국어 보기에 씁니다."""
+    extras_ko = doc.get("extras_ko") or []
+    return extras_ko[index] if lang and index < len(extras_ko) and extras_ko[index] else doc["extras"][index]
 
 
 def build_prompt(doc):
@@ -645,6 +730,14 @@ def build_prompt_ko(doc):
 # ---------- 직접 고친 한국어 → 영어 (단어 규칙, AI 연결 전) ----------
 # 영어·한국어 프롬프트는 한 줄씩 짝입니다. 고친 줄만 아는 표현을 영어로 바꾸고,
 # 모르는 한국어가 남으면 영어를 바꾸지 않고 untranslated에 적습니다(영상 모델에 한국어를 보내지 않음).
+# 사용자가 올린 레퍼런스 이미지·참고 영상이 있을 때 넣는 줄 (분위기 참고용, 제품은 제품 사진 기준)
+REFERENCE_NOTE = ("References: use the attached reference images and video only for mood, composition, camera movement "
+                  "and color; the product must match the product photo exactly",
+                  "레퍼런스: 첨부한 레퍼런스 이미지·영상은 분위기·구도·카메라 움직임·색감만 참고, 제품은 제품 사진과 똑같이")
+REFERENCE_SHORT = ("References: mood, composition and color only", "레퍼런스: 분위기·구도·색감만 참고")  # 프롬프트가 길 때
+# 여러 제품(라인업) 영상의 제품 줄 끝 문장
+LINEUP_SHELL = ("Each is a round, soft white rice cake with a light rice-flour dusting",
+                "모두 고운 쌀가루를 묻힌 둥글고 하얀 찹쌀떡")
 KO_LABELS = (("조명·색감:", "Lighting and color:"), ("컷 구성:", "Shots:"), ("스타일:", "Style:"), ("배경:", "Setting:"),
              ("분위기:", "Mood:"), ("카메라:", "Camera:"), ("금지:", "Avoid:"), ("효과음:", "SFX:"), ("소리:", "Sound:"),
              ("제품:", "Product:"), ("편집:", "Editing:"))
@@ -653,8 +746,9 @@ KO_FIXED = (
     ("첨부한 제품 사진과 똑같이", "exactly matching the attached product photo"),
     ("컷마다 적은 효과음", "plus the sound effects noted per shot"),
     ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
-    CONTINUITY[::-1], PHOTO_MATCH[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
+    CONTINUITY[::-1], PHOTO_MATCH[::-1], PHOTO_GIFT[::-1], START_WHOLE[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], FOOD_AVOID[::-1], *[t[::-1] for t in TEXTURES],
     ("한정선", "Hanjungsun"),
+    LINEUP_SHELL[::-1], REFERENCE_NOTE[::-1], REFERENCE_SHORT[::-1],
 )
 HANGUL = re.compile(r"[가-힣ㄱ-ㆎ]")
 
@@ -673,15 +767,35 @@ def _ko_phrases(doc):
     pairs += [(ko, en) for en, ko in RATIO_WORDS.values()]
     pairs.append(COMMON_AVOID[::-1])
     for name, en in PRODUCT_EN.items():
+        pairs.append((_short(name, 1), _short(name, 0)))
+        pairs.append((_filling(name, 1), _filling(name, 0)))
         pairs.append((f"한정선 {name}", f"{en} by Hanjungsun"))
         pairs.append(PRODUCT_LOOK.get(name, ("", ""))[::-1])
+    pairs += [(doc.get("background_ko") or "", doc.get("background") or ""), (doc.get("mood_ko") or "", doc.get("mood") or "")]
+    pairs += [(_extra(doc, i, 1), doc["extras"][i]) for i in range(len(doc.get("extras") or []))]
     scenes = [TEXTURE_SCENE, BITE_SCENE, *EXTRA_SCENES, *doc.get("scenes", [])]
     pairs += [(scene["ko"], scene["en"]) for scene in scenes if scene.get("ko") and scene.get("en")]
-    return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: len(pair[0]), reverse=True)
+    # 긴 표현 먼저, 길이가 같으면 글자 순(실행할 때마다 순서가 바뀌지 않게)
+    return sorted({pair for pair in pairs if pair[0]}, key=lambda pair: (-len(pair[0]), pair))
+
+
+def phrase_pairs(doc):
+    """화면 강조용 (한국어, 영어) 표현: 지금 한국어·영어 프롬프트에 둘 다 들어 있는 것만. 한국어 칸에서 누른 표현을 영어 칸에서 찾습니다.
+    DB에는 저장하지 않고 화면에 보낼 때만 붙입니다(routes_sns.py _design_state)."""
+    ko, en = doc.get("prompt_ko") or "", doc.get("prompt") or ""
+    pairs = [*_ko_phrases(doc), *KO_LABELS]
+    # 쉼표 목록(스타일 키워드 등)은 한국어·영어 항목 수가 같으면 항목끼리도 짝지어 단어 단위로 강조합니다.
+    for k, e in list(pairs):
+        ks, es = k.split(", "), e.split(", ")
+        if 1 < len(ks) == len(es):
+            pairs += list(zip(ks, es))
+    return [[k, e] for k, e in dict.fromkeys(pairs) if k and e and k in ko and e in en]
 
 
 def _ko_line_to_en(line, phrases):
     """한국어 한 줄 → 영어. 한국어가 남으면 None."""
+    # 여러 제품 줄의 머리("한정선 찹쌀떡 4가지 맛")는 한 덩어리로 먼저 바꿉니다(제품 이름 짝과 겹치지 않게).
+    line = re.sub(r"한정선 찹쌀떡 (\d+)가지 맛", r"Hanjungsun chapssal-tteok in \1 flavors", line)
     for ko, en in phrases:
         line = line.replace(ko, en)
     for ko, en in KO_LABELS:
@@ -690,14 +804,16 @@ def _ko_line_to_en(line, phrases):
     return None if HANGUL.search(line) else line
 
 
-def korean_to_english(doc):
+def korean_to_english(doc, translate=None):
     """직접 고친 한국어(custom_ko) → (영어 프롬프트, 반영 못 한 한국어 줄들).
     자동 한국어와 줄마다 비교해, 같은 줄은 자동 영어 그대로 · 지운 줄은 영어도 지움 · 고친 줄은 아는 표현만 바꿉니다.
-    반영 못 한 고친 줄은 원래 영어를 남기고, 새로 쓴 줄은 영어에 넣지 않습니다."""
+    아는 표현만으로 못 바꾼 줄(새로 쓴 줄 포함)은 translate(한국어 줄들, 지금 영어 줄들) → 영어 줄들(AI 번역)로 한 번에 옮깁니다.
+    번역한 줄은 doc["ai_lines"]{한국어: 영어}에 남겨, 다시 저장할 때 같은 줄은 번역하지 않고 씁니다.
+    그래도 못 바꾼 고친 줄은 원래 영어를 남기고, 새로 쓴 줄은 영어에 넣지 않습니다."""
     ko_auto, en_auto = _prompt_lines(doc, 1), _prompt_lines(doc, 0)
     edited = [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()]
     phrases = _ko_phrases(doc)
-    out, untranslated = [], []
+    out, pending = [], []  # out: 영어 줄(글) 또는 [못 바꾼 한국어, 원래 영어 또는 None]
     for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ko_auto, edited, autojunk=False).get_opcodes():
         if tag == "equal":
             out += en_auto[i1:i2]
@@ -710,34 +826,62 @@ def korean_to_english(doc):
             if english:
                 out.append(english)
             else:
-                untranslated.append(news[k])
-                if k < len(olds):
-                    out.append(olds[k])
-    return "\n".join(out), untranslated
+                item = [news[k], olds[k] if k < len(olds) else None]
+                out.append(item)
+                pending.append(item)
+
+    # 전에 번역한 줄은 그대로 쓰고, 나머지만 AI로 번역합니다(줄 수가 맞고 한글이 없을 때만).
+    cache = {ko: en for ko, en in (doc.get("ai_lines") or {}).items()
+             if isinstance(ko, str) and isinstance(en, str) and en.strip() and not HANGUL.search(en)}
+    asked = list(dict.fromkeys(item[0] for item in pending if item[0] not in cache))
+    if asked and translate:
+        answers = translate(asked, en_auto)
+        if answers:
+            cache.update((ko, en) for ko, en in zip(asked, answers) if en)
+    lines, untranslated = [], []
+    for item in out:
+        if isinstance(item, str):
+            lines.append(item)
+        elif item[0] in cache:
+            lines.append(cache[item[0]])
+        else:
+            untranslated.append(item[0])
+            if item[1] is not None:
+                lines.append(item[1])
+    used = {item[0] for item in pending}
+    doc["ai_lines"] = {ko: en for ko, en in cache.items() if ko in used}
+    return "\n".join(lines), untranslated
 
 
-def refresh_prompts(doc):
-    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다. 직접 고친 한국어가 있으면 영어(custom)를 거기서 만듭니다."""
+def refresh_prompts(doc, translate=None):
+    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다. 직접 고친 한국어가 있으면 영어(custom)를 거기서 만듭니다.
+    translate: 아는 표현으로 못 바꾼 줄의 AI 번역 함수(korean_to_english 참고). 없으면 규칙만."""
     doc["untranslated"] = []
+    if not doc.get("custom_ko"):
+        doc.pop("ai_lines", None)
     if doc.get("custom_ko"):
         if [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()] == _prompt_lines(doc, 1):
             doc["custom_ko"] = doc["custom"] = ""  # 자동과 같으면 직접 고친 것이 아닙니다.
+            doc.pop("ai_lines", None)
         else:
-            english, doc["untranslated"] = korean_to_english(doc)
+            english, doc["untranslated"] = korean_to_english(doc, translate)
             doc["custom"] = "" if english == "\n".join(_prompt_lines(doc, 0)) else english
     doc["prompt"] = build_prompt(doc)
     doc["prompt_ko"] = build_prompt_ko(doc)
     return doc
 
 
-def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡", event=None):
-    """요청 문장 → 영상 문서 (README 8장 형식 + caption·demo·reviewed)."""
+def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡", event=None, products=None):
+    """요청 문장 → 영상 문서 (README 8장 형식 + caption·demo·reviewed).
+    products: 여러 제품 이름(라인업 영상). 주면 product는 그 첫 제품입니다."""
+    names = list(products or [product])
+    product = names[0]
     text = text or ""
     ratio = _pick(ratio, RATIOS, "9:16")
     duration = _duration(duration)
     setting = _setting(text)
-    product_en = PRODUCT_EN.get(product, "Korean rice cake mochi")
-    product_vi = PRODUCT_VI.get(product, "Bánh mochi Hanjungsun")
+    product_en = PRODUCT_EN.get(product, "Korean chapssal-tteok")
+    product_vi = PRODUCT_VI.get(product, "Chapssal-tteok Hanjungsun")
     event_vi = EVENT_VI.get(event)
 
     middle = BITE_SCENE if re.search(r"한입|먹는|베어", text) else TEXTURE_SCENE
@@ -750,7 +894,15 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         dict(middle),
         {"ko": "브랜드 마무리 컷", "en": "the rice cakes beautifully plated, final hero shot", "caption": BRAND_CAPTION},
     ]
-    if scene_count(duration) >= 4:
+    if len(names) > 1:
+        # 라인업: 첫 컷은 맛들이 나란히, 다음은 맛을 하나씩 클로즈업. 컷 수가 모자라면 뒤쪽 클로즈업부터 빠집니다(_retime).
+        lineup = {"ko": f"{len(names)}가지 맛 찹쌀떡이 나란히 놓인 모습",
+                  "en": f"{len(names)} flavors of Hanjungsun chapssal-tteok lined up side by side",
+                  "caption": f"Mừng {event_vi}" if event_vi else f"Chapssal-tteok {len(names)} vị"}
+        closeups = [{"ko": f"{name} 클로즈업", "en": f"extreme close-up of {PRODUCT_EN.get(name, 'Korean chapssal-tteok')}",
+                     "caption": PRODUCT_VI.get(name, "")} for name in names]
+        scenes = [lineup, *closeups, dict(middle), scenes[-1]]
+    elif scene_count(duration) >= 4:
         scenes.insert(0, {**setting["opening"], "caption": ""})
 
     # 분위기: 요청 단어 → 없으면 기념일 영상은 따뜻한 감성, 그 밖에는 프리미엄 광고
@@ -760,10 +912,13 @@ def make_draft(text, ratio="9:16", duration=5, sound=False, product="찹쌀떡",
         "ratio": ratio,
         "duration": duration,
         "sound": bool(sound),
-        "summary": " · ".join(filter(None, [f"{duration}초 {ratio}", product, event, STYLES[style]["label"]])),
+        "summary": " · ".join(filter(None, [f"{duration}초 {ratio}", product if len(names) == 1 else f"{len(names)}가지 맛",
+                                            event, STYLES[style]["label"]])),
         "scenes": _retime(scenes, duration, style),
         "style": style,
         "product": product,
+        "products": names,
+        "event": event,
         "camera": CAMERAS[2] if re.search(r"빠르|역동", text) else CAMERAS[1],
         "lighting": LIGHTINGS[STYLES[style]["lighting"]],
         "mood": setting["mood"],
@@ -875,7 +1030,7 @@ def revise_draft(doc, text):
             scene["caption"] = ""
         caption_changes.append("자막 빼기")
     elif re.search(r"자막\s*(넣|다시|추가)", text) and not any(scene.get("caption") for scene in new["scenes"]):
-        new["scenes"][0]["caption"] = PRODUCT_VI["찹쌀떡"]
+        new["scenes"][0]["caption"] = PRODUCT_VI.get(new.get("product"), BRAND_CAPTION)
         new["scenes"][-1]["caption"] = BRAND_CAPTION
         caption_changes.append("자막 넣기")
 
@@ -887,3 +1042,171 @@ def revise_draft(doc, text):
         new["reviewed"] = False
         refresh_prompts(new)
     return new, video_changes + caption_changes
+
+
+# ---------- AI(OpenAI)로 요청 이해하기 ----------
+# 단어 규칙(revise_draft)이 못 알아듣는 자유로운 요청("발렌타인 느낌으로, 장미꽃과 스위트하게")을 AI가 영상 문서의 칸으로 바꿉니다.
+# AI는 칸만 고치고, 프롬프트 문장은 지금처럼 _prompt_lines가 만듭니다(구조·길이 한도 유지). 호출은 routes_sns.py _call_ai.
+AI_TEXT_LIMIT = 200  # 칸 하나의 최대 글자 수
+TITLE_LIMIT = 30     # 작업 제목(화면에서 직접 입력) 최대 글자 수
+
+
+def video_title(doc, event=None):
+    """작업 목록에 보일 짧은 주제. 화면에서 직접 입력한 title이 있으면 그것, 없으면 "기념일 - 제품" / "제품 · 분위기".
+    (AI는 제목을 정하지 않습니다. 예전에 AI가 정해 둔 title은 그대로 보입니다.)
+    event: 문서에 기념일이 없을 때 쓸 작업의 기념일(SnsChat.event_id, 추천 카드로 만든 예전 작업)."""
+    if doc.get("title"):
+        return _no_tteok(doc["title"])
+    names = doc.get("products") or [doc.get("product") or ""]
+    if len(names) > 1:
+        product = "전체 제품" if set(names) >= {item["name_ko"] for item in PRODUCTS} else "·".join(_no_tteok(n) for n in names)
+    else:
+        product = _no_tteok(names[0])
+    event = doc.get("event") or event
+    if event:
+        return f"{event} - {product}" if product else event
+    return f"{product} · {_style_of(doc)['label']}" if product else _style_of(doc)["label"]
+
+
+def _no_tteok(text):
+    """제품이 모두 찹쌀떡이라 제목에서는 '찹쌀떡'을 뺍니다. ('발렌타인데이 - 망고스틴 찹쌀떡' → '발렌타인데이 - 망고스틴')"""
+    return re.sub(r"\s+", " ", re.sub(r"찹쌀떡", " ", text)).strip(" -·")
+
+AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드 '한정선'의 숏폼 광고 영상 기획자입니다.
+사용자의 요청을 읽고 아래 영상 문서(JSON)를 고쳐 주세요. 요청에 없는 칸은 그대로 두세요.
+
+규칙
+- style은 다음 중 하나: {styles}
+- duration은 5~30 정수, ratio는 "9:16" | "16:9" | "1:1", sound는 true/false
+- camera는 다음 중 하나: {cameras}
+- lighting은 다음 중 하나: {lightings}
+- background·mood는 영어, background_ko·mood_ko는 같은 뜻의 한국어
+- scenes는 1~{max_scenes}개. 각 장면은 ko(한국어 장면 설명), en(같은 뜻의 영어 화면 묘사, 20단어 이내), caption(베트남어 자막, 40자 이내, 없으면 "")
+- 장면 수는 영상 길이(초)보다 많을 수 없습니다. 첫 장면은 시작, 마지막 장면은 제품이 돋보이는 마무리로 둡니다.
+- extras는 추가로 지킬 영어 문장 0~3개, extras_ko는 같은 순서의 한국어
+- 화면에 글자·로고를 그리라는 묘사는 넣지 마세요. 글은 caption(자막)으로만 넣습니다.
+- 제품({product})과 그 모양은 바꾸지 마세요. 과장된 효능·건강 표현은 쓰지 마세요.
+- event는 관련 기념일 이름(한국어, 없으면 기존 값 그대로)
+- changes는 바꾼 내용을 한국어 짧은 구절로 나열합니다(예: "배경을 장미 꽃잎 테이블로"). 요청을 이해하지 못했거나 바꿀 것이 없으면 []
+
+다음 JSON 형식으로만 답하세요:
+{{"changes": ["..."], "doc": {{"style": "...", "duration": 10, "ratio": "9:16", "sound": false, "camera": "...", "lighting": "...",
+  "background": "...", "background_ko": "...", "mood": "...", "mood_ko": "...", "event": "...",
+  "extras": ["..."], "extras_ko": ["..."], "scenes": [{{"ko": "...", "en": "...", "caption": "..."}}]}}}}
+"""
+
+AI_FIELDS = ("style", "duration", "ratio", "sound", "camera", "lighting", "background", "background_ko", "mood", "mood_ko",
+             "event", "extras", "extras_ko", "scenes")
+
+
+def ai_messages(doc, text):
+    """AI에 보낼 메시지. 지금 문서에서 AI가 고칠 수 있는 칸만 보냅니다."""
+    current = {key: doc.get(key) for key in AI_FIELDS}
+    current["scenes"] = [{k: scene.get(k, "") for k in ("ko", "en", "caption")} for scene in doc["scenes"]]
+    instructions = AI_INSTRUCTIONS.format(
+        styles=", ".join(f"{key}({style['label']})" for key, style in STYLES.items()),
+        cameras=" | ".join(CAMERAS), lightings=" | ".join(LIGHTINGS),
+        max_scenes=MAX_MANUAL_SCENES, product=", ".join(doc.get("products") or [doc.get("product") or "찹쌀떡"]),
+    )
+    return [
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": f"지금 영상 문서:\n{json.dumps(current, ensure_ascii=False)}\n\n요청: {text}"},
+    ]
+
+
+# [저장] 때 아는 표현으로 못 바꾼 한국어 줄의 번역 (routes_sns.py _ai_translate)
+TRANSLATE_INSTRUCTIONS = """한국 찹쌀떡 브랜드 '한정선'의 숏폼 광고 영상 프롬프트(영상 생성 AI Kling용)를 영어로 옮깁니다.
+받은 한국어 줄(lines)을 줄마다 영어 한 줄로 옮겨 {{"lines": ["...", ...]}} JSON으로만 답하세요.
+- 줄 수와 순서를 그대로 지키고, 줄을 합치거나 나누지 마세요.
+- 줄 맨 앞 머리는 영어 머리로 바꿉니다({labels}). "0-1s —" 같은 시간 표시는 그대로 둡니다.
+- 찹쌀떡은 chapssal-tteok(mochi라고 쓰지 않음), 한정선은 Hanjungsun.
+- english_prompt(같은 영상의 지금 영어 프롬프트)의 말투·용어에 맞춰 짧고 구체적인 영어로 쓰고, 한글은 남기지 마세요."""
+
+
+def translate_messages(lines, context):
+    """AI 번역 메시지. context: 지금 영어 프롬프트 줄들(머리 모양·용어 참고)."""
+    labels = ", ".join(f"{ko} → {en}" for ko, en in KO_LABELS)
+    return [
+        {"role": "system", "content": TRANSLATE_INSTRUCTIONS.format(labels=labels)},
+        {"role": "user", "content": json.dumps({"english_prompt": context, "lines": lines}, ensure_ascii=False)},
+    ]
+
+
+TRANSLATE_LIMIT = 800  # 번역한 줄 하나의 최대 글자 수 (컷 줄은 200자를 넘기 쉬움)
+
+
+def apply_translation(data, lines):
+    """AI 번역 결과 검사: 줄 수가 같을 때만 영어 줄 목록, 아니면 None.
+    줄마다 따로 검사해, 비었거나 너무 길거나 한글이 남은 줄만 None(그 줄은 "반영하지 못한 줄"로 남음)."""
+    got = data.get("lines") if isinstance(data, dict) else None
+    if not isinstance(got, list) or len(got) != len(lines):
+        return None
+    ok = lambda line: isinstance(line, str) and line.strip() and len(line) <= TRANSLATE_LIMIT and not HANGUL.search(line)
+    return [line.strip() if ok(line) else None for line in got]
+
+
+def _ai_text(value, english=False):
+    """AI가 준 글 한 칸 검사. 문자열이 아니거나 너무 길거나, 영어 칸에 한글이 있으면 None."""
+    if not isinstance(value, str) or not value.strip() or len(value) > AI_TEXT_LIMIT:
+        return None
+    return None if english and HANGUL.search(value) else value.strip()
+
+
+def apply_ai(doc, data):
+    """AI 응답 → (새 문서, 바꾼 것 목록). 형식이 틀리면 None을 돌려주고, 부른 쪽은 단어 규칙(revise_draft)을 씁니다.
+    영상(자막 외)이 바뀌면 다시 검토가 필요합니다(reviewed=False). AI가 고친 문서는 시연(demo)이 아닙니다.
+    줄여도 프롬프트가 PROMPT_LIMIT을 넘으면(장면 묘사가 너무 긺) 쓰지 않습니다."""
+    if not isinstance(data, dict) or not isinstance(data.get("doc"), dict) or not isinstance(data.get("changes"), list):
+        return None
+    got, new = data["doc"], copy.deepcopy(doc)
+    changes = [str(item)[:60] for item in data["changes"] if isinstance(item, str) and item.strip()][:8]
+    if not changes:
+        return doc, []
+
+    new["style"] = got.get("style") if got.get("style") in STYLES else doc.get("style", DEFAULT_STYLE)
+    new["duration"] = _duration(got.get("duration"), doc["duration"])
+    new["ratio"] = _pick(got.get("ratio"), RATIOS, doc["ratio"])
+    new["sound"] = got["sound"] if isinstance(got.get("sound"), bool) else doc["sound"]
+    new["camera"] = _pick(got.get("camera"), CAMERAS, doc["camera"])
+    new["lighting"] = _pick(got.get("lighting"), LIGHTINGS, doc["lighting"])
+    for key in ("background", "mood"):
+        english, korean = _ai_text(got.get(key), english=True), _ai_text(got.get(f"{key}_ko"))
+        if english and korean:
+            new[key], new[f"{key}_ko"] = english, korean
+    if isinstance(got.get("event"), str) and len(got["event"]) <= 30:
+        new["event"] = got["event"].strip() or None
+
+    extras, extras_ko = got.get("extras"), got.get("extras_ko")
+    if isinstance(extras, list) and isinstance(extras_ko, list) and len(extras) == len(extras_ko) <= 3:
+        pairs = [(_ai_text(en, english=True), _ai_text(ko)) for en, ko in zip(extras, extras_ko)]
+        if all(en and ko for en, ko in pairs):
+            new["extras"], new["extras_ko"] = [en for en, _ in pairs], [ko for _, ko in pairs]
+
+    scenes = got.get("scenes")
+    if not isinstance(scenes, list) or not 1 <= len(scenes) <= min(new["duration"], MAX_MANUAL_SCENES):
+        return None
+    clean = []
+    for scene in scenes:
+        if not isinstance(scene, dict):
+            return None
+        ko, en, caption = _ai_text(scene.get("ko")), _ai_text(scene.get("en"), english=True), scene.get("caption") or ""
+        if not ko or not en or not isinstance(caption, str) or len(caption) > 80:
+            return None
+        clean.append({"ko": ko, "en": en, "caption": caption.strip()})
+    _apply_ends(clean, _weighted_ends(new["duration"], len(clean), new["style"]))
+    new["scenes"] = clean
+
+    # 자막만 바뀌었는지 보려고 자막을 뺀 영상 칸끼리 비교합니다.
+    def video_part(item):
+        part = {key: item.get(key) for key in AI_FIELDS if key != "scenes"}
+        part["scenes"] = [(s["ko"], s["en"], s["time"]) for s in item["scenes"]]
+        return part
+
+    if video_part(new) != video_part(doc):
+        new["custom"] = new["custom_ko"] = ""
+        new["reviewed"] = False
+    new["demo"] = False
+    new["summary"] = " · ".join(filter(None, [f"{new['duration']}초 {new['ratio']}", new.get("product"), new.get("event"),
+                                              STYLES[new["style"]]["label"]]))
+    refresh_prompts(new)
+    return (new, changes) if len(new["prompt"]) <= PROMPT_LIMIT else None
