@@ -350,7 +350,6 @@
 .home-page .home-collab-action { margin: var(--space-4) 0; }
 .home-page .home-collab-action strong { font-weight: var(--title-weight); color: var(--teal); }
 .home-page .home-task { padding-inline: var(--space-3); }
-.home-page .home-task:not(.is-done):has(.home-badge.warning) { background: color-mix(in srgb, var(--orange) 16%, var(--paper)); }
 
 /* 뉴스는 배경의 농도와 간격으로 나누고 바깥 테두리를 겹치지 않습니다. */
 .home-page .home-news .btn { border: 0; box-shadow: none; background: color-mix(in srgb, var(--teal) 7%, var(--paper)); color: var(--teal); }
