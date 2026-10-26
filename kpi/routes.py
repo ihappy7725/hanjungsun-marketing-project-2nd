@@ -43,10 +43,10 @@ DEMO_CHANNELS = [
 ]
 
 # GA4 시연 값. kpi/data/ga4_demo.json(GA4 공식 데모 계정 화면을 옮겨 적음)이 있으면 세션·참여·전환은 그 파일 값을 씁니다.
-# 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
-# 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
+# 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
+# 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
 # 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
-DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
+DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "store_action_rate": 0.124, "pamphlet_share": 0.0952}
 GA4_DEMO_JSON = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.json")
 # 팜플렛 QR 설문 주관식 한 줄 의견 (시연, 응답자 186명 · platform = 설문을 받은 창구)
 SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
@@ -399,7 +399,7 @@ def _simulator_influencer_list():
 # ---------------------------------------------------------------------------
 # GA4 — 지금은 공식 데모 계정(Google Merchandise Store) 화면을 옮겨 적은 JSON을 읽습니다(데모 계정은 CSV 다운로드 불가).
 # 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_json만 GA4 Data API 호출로 바꿉니다(같은 키 이름으로 돌려주면 됨).
-# (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 쇼피 이동은 '이탈 클릭' 이벤트)
+# (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 매장 예약·길찾기는 클릭 이벤트)
 # ---------------------------------------------------------------------------
 
 GA4_CHANNEL_FIELDS = (
@@ -472,9 +472,9 @@ def _build_ga4():
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
     )
-    # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다(시연 비율 × 같은 세션 수).
-    ga4["shopee_clicks"] = round(ga4["sessions"] * DEMO_GA4["shopee_click_rate"])
-    ga4["shopee_ctr_percent"] = _pct(ga4["shopee_clicks"], ga4["sessions"])
+    # 매장 예약·길찾기 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 항상 시연 값입니다(시연 비율 × 같은 세션 수).
+    ga4["store_action_clicks"] = round(ga4["sessions"] * DEMO_GA4["store_action_rate"])
+    ga4["store_action_ctr_percent"] = _pct(ga4["store_action_clicks"], ga4["sessions"])
     ga4["pamphlet_sessions"] = round(ga4["sessions"] * DEMO_GA4["pamphlet_share"])
     return ga4
 
@@ -670,7 +670,6 @@ def _qr_block():
 
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
-_voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
 고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
@@ -812,8 +811,7 @@ def api_voc():
         # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
         "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
-        # 마지막 AI 분석 결과(서버 메모리 보관). AI 분석은 화면의 [AI로 분석]을 눌렀을 때만 실행합니다.
-        "ai": _voc_ai_cache["result"],
+        # AI 결과는 보내지 않습니다. AI 요약은 화면에서 [AI로 분석]을 눌렀을 때 /api/voc/analyze 응답으로만 보입니다.
     })
 
 
@@ -822,5 +820,4 @@ def api_voc_analyze():
     result, error = _call_openai(DEMO_REVIEWS, _read_survey_comments())
     if error:
         return jsonify({"ok": False, "error": error}), 502
-    _voc_ai_cache["result"] = result
     return jsonify({"ok": True, "ai": result})

@@ -179,6 +179,8 @@
 .kpi-page .kpi-tip[hidden] { display: none; }
 /* 확대 화면에서는 ⓘ를 숨깁니다(상세 표와 겹치지 않게). */
 .kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
+/* 단, 확대 화면에만 있는 소제목(예: 설문 만족도)의 ⓘ는 계산식을 볼 곳이 그것뿐이라 보입니다. */
+.kpi-page .kpi-panel.is-expanded .kpi-detail-title .kpi-info { display: inline-grid; }
 
 /* ---------- 2×2 블록 ---------- */
 /* 4개 블록은 예산 블록(기본 화면) 높이 + 0.5cm에 맞춥니다. JS가 예산 블록 높이를 재서 --kpi-block-h로 넣습니다. */
@@ -626,7 +628,9 @@
 
 /* ---------- VOC 리뷰 보기 ---------- */
 /* 소통 창구 블록: 창구마다 건수 · 만족(녹)/보통(회)/불만(코랄) 비율 막대. 누르면 리뷰 목록을 그 창구로 거릅니다. */
-.kpi-page .kpi-voc-channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-5); }
+/* 카드(전체 + 창구)가 한 줄을 똑같이 나눠 채웁니다(auto-fit: 빈 칸 없이 늘어남). 좁으면 줄바꿈. */
+.kpi-page .kpi-voc-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-5); }
+@media (max-width: 900px) { .kpi-page .kpi-voc-channels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }  /* 좁으면 2 × 2(한 장만 남는 줄 방지) */
 .kpi-page .kpi-voc-ch {
   display: grid;
   gap: var(--space-2);
@@ -643,7 +647,8 @@
 .kpi-page .kpi-voc-ch-name { color: var(--muted); font-size: var(--fs-table); font-weight: 600; }
 .kpi-page .kpi-voc-ch strong { font-size: var(--fs-subheading); line-height: 1.2; }
 .kpi-page .kpi-voc-ch small { color: var(--muted); font-size: var(--fs-min); }
-.kpi-page .kpi-voc-ch-bar { display: flex; height: 6px; overflow: hidden; background: var(--line); }
+.kpi-page .kpi-voc-ch-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.kpi-page .kpi-voc-ch-bar { display: flex; height: 8px; overflow: hidden; background: var(--line); }
 .kpi-page .kpi-voc-ch-positive { background: var(--kpi-voc-good); }
 .kpi-page .kpi-voc-ch-neutral { background: var(--kpi-voc-mid); }
 .kpi-page .kpi-voc-ch-negative { background: var(--kpi-voc-bad); }
