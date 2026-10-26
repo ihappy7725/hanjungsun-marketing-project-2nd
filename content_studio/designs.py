@@ -13,13 +13,14 @@
 AI 연결 전에는 정해진 틀로 만들고 demo=True로 표시합니다.
 """
 import copy
+import json
 import math
 import re
 from pathlib import Path
 
 from flask import url_for
 
-from .products import get_product
+from .products import COMMON_IMAGES, get_product
 
 SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080)}
 DEFAULT_RATIO = "4:5"
@@ -368,7 +369,7 @@ def _page_content(page):
         elif item.get("type") == "text" and role == "checks":
             content["checks"] = [line.strip().lstrip("✓").strip() for line in item.get("text", "").split("\n")
                                  if line.strip()]
-        elif item.get("type") == "image" and item.get("src"):
+        elif item.get("type") == "image" and item.get("src") and role != BG_ROLE:  # AI 배경 그림은 제품 사진이 아닙니다.
             content["photo"] = item["src"]
     return content
 
@@ -398,6 +399,7 @@ def _rebuild(doc, build):
                      for item in page.get("elements", []) if item.get("text_ko")}
                     for page in doc["pages"]]
     contents = [_page_content(page) for page in doc["pages"]]
+    backgrounds = [_backgrounds(page) for page in doc["pages"]]
     palette = _doc_palette(doc)
     doc["palette"] = palette
     doc["pages"] = build(contents, palette)
@@ -405,6 +407,7 @@ def _rebuild(doc, build):
         for item in page["elements"]:
             if item.get("text") in saved:
                 item["text_ko"], item["translation_source"] = saved[item["text"]]
+    _keep_backgrounds(doc, backgrounds)
 
 
 # ---------- 대화로 고치기 (단어 규칙, AI 연결 전) ----------
@@ -1375,7 +1378,7 @@ def proposal_design(source, proposal, options):
     """
     product = _option_product(options) or {}
     photos = [next((item.get("src") for item in page.get("elements", [])
-                    if item.get("type") == "image" and item.get("src")), None)
+                    if item.get("type") == "image" and item.get("src") and item.get("role") != BG_ROLE), None)
               for page in source.get("pages", [])]
     cover_photo = (photos[0] if photos else None) or next((src for src in photos if src), None) or _image_src(product)
 
@@ -1411,3 +1414,238 @@ def proposal_design(source, proposal, options):
     if source.get("external_figma"):
         doc["external_figma"] = copy.deepcopy(source["external_figma"])
     return doc
+
+
+# ---------- 대화로 고치기 (AI · 텍스트 모델) ----------
+# routes_sns.py(유진) _call_ai가 영상과 같은 경로(gpt-4o-mini · JSON 답 · 하루 한도)로 부릅니다:
+#   messages = design_ai_messages(지금 문서, 요청, page) → AI 답 → apply_design_ai(지금 문서, 답, page)
+# AI는 둘 중 하나로 답합니다.
+# - edit: 요소 id마다 바꿀 칸만 → 그 요소만 바뀝니다.
+# - redesign: 3안 생성과 같은 스타일·색·글꼴·문구 한 벌 → 배치는 코드(스타일 틀)가 다시 짭니다. 사진·배경 그림은 그대로.
+# 형식이 틀리거나 바꿀 것이 없으면 None → 부른 쪽이 단어 규칙(revise_design)을 씁니다.
+DESIGN_AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드 '한정선(HANJUNGSUN)'의 SNS {label} 디자이너입니다.
+마케터의 수정 요청(한국어)을 받아 지금 디자인 문서를 고칩니다. JSON으로만 답하세요.
+
+답 형식: {{"mode": "edit" | "redesign" | "none", "changes": ["바꾼 것을 한국어로 짧게", ...], "edits": [...], "proposal": {{...}}}}
+
+1) mode "edit" — 일부만 고치는 요청 (예: "제목 더 크게", "본문 색 진하게", "부제 문구 바꿔")
+  edits: [{{"page": 장 번호(1부터), "id": "요소 id", "set": {{바꿀 칸만}}, "remove": false}}]
+  - 바꿀 수 있는 칸: text, text_ko(글의 한국어 뜻), size(px), color, bg(글 바탕색), fill(도형 색), weight(400 | 700),
+    font, align(left | center | right), x, y, w, h(페이지 대비 %, 0~100)
+  - 장 배경색은 "id": "@page", "set": {{"bg": "#rrggbb"}}
+  - 요소를 빼려면 "remove": true. 새 요소는 만들지 않습니다.
+  - 요청에 장 번호가 없으면 글 수정은 지금 보는 {current}장에, 색·글꼴처럼 전체 느낌은 모든 장에 적용합니다.
+  - 요청과 상관없는 요소는 edits에 넣지 않습니다.
+2) mode "redesign" — 전체 분위기·스타일을 새로 바꾸는 요청 (예: "크리스마스 느낌으로 확 바꿔", "더 고급스럽게 다시")
+  proposal: {{"name": 짧은 이름, "prompt": 디자인 설명(한국어 1~2문장), "style": {styles} 중 하나,
+    "palette": {{"bg", "accent", "text", "soft"}}(#rrggbb), "title_font", "body_font": {fonts} 중 하나,
+    "pages": [장마다 {{"layout": {layouts} 중 하나, "label_vi", "label_ko", "title_vi", "title_ko", "body_vi", "body_ko"}}]}}
+  - pages는 정확히 {count}개이고 첫 장 layout은 "cover"입니다. 배치·사진 위치는 코드가 정합니다.
+3) 알아듣지 못했거나 디자인과 상관없는 요청이면 mode "none".
+
+규칙
+- 디자인 속 글은 베트남어(성조 부호 정확히)입니다. 글을 바꾸면 text_ko에 한국어 뜻도 함께 적습니다.
+- 제품 이름·맛·효능·가격은 지금 문서에 있는 것만 씁니다. 지어내지 않습니다.
+- 색은 #rrggbb 6자리. 흰색·검정 위주는 피하고, 글자가 바탕에서 잘 읽히게 합니다.
+- 현지 기준(local_guidelines)이 있으면 지킵니다."""
+AI_EDIT_KEYS = ("text", "text_ko", "size", "color", "bg", "fill", "weight", "font", "align", "x", "y", "w", "h")
+AI_SUMMARY_KEYS = ("id", "role", "type") + AI_EDIT_KEYS + ("z",)
+AI_TEXT_MAX = 400
+AI_EDITS_MAX = 60
+AI_CHANGES_MAX = 8
+
+
+def design_ai_messages(doc, text, page=None):
+    """AI에 보낼 메시지. 사진 주소는 빼고, AI가 고칠 수 있는 칸만 보냅니다. page: 지금 보는 장(0부터)."""
+    count = len(doc["pages"])
+    current = page + 1 if isinstance(page, int) and 0 <= page < count else 1
+    summary = {
+        "kind": doc.get("kind"), "ratio": doc.get("ratio"), "style": doc.get("style"), "palette": doc.get("palette"),
+        "pages": [{"page": index + 1, "bg": data.get("bg"),
+                   "elements": [{key: item[key] for key in AI_SUMMARY_KEYS if key in item} for item in data["elements"]]}
+                  for index, data in enumerate(doc["pages"])],
+        "local_guidelines": _guideline_rules(),
+    }
+    instructions = DESIGN_AI_INSTRUCTIONS.format(
+        label="포스터" if doc.get("kind") == "poster" else "카드뉴스", current=current, count=count,
+        styles=" | ".join(STYLES), fonts=" | ".join(VI_FONTS), layouts=" | ".join(PAGE_LAYOUTS))
+    return [
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": f"지금 디자인 문서:\n{json.dumps(summary, ensure_ascii=False)}\n\n"
+                                    f"지금 보는 장: {current}장\n요청: {text}"},
+    ]
+
+
+def apply_design_ai(doc, data, page=None):
+    """AI 답 → (새 문서, 바꾼 것 목록). 형식이 틀리거나 바꾼 것이 없으면 None (부른 쪽이 revise_design을 씁니다)."""
+    if not isinstance(data, dict) or not doc or not doc.get("pages"):
+        return None
+    if data.get("mode") == "redesign":
+        new_doc = _ai_redesign(doc, data.get("proposal"))
+    elif data.get("mode") == "edit":
+        new_doc = _ai_edit(doc, data.get("edits"))
+    else:
+        return None
+    if new_doc is None:
+        return None
+    raw = data.get("changes") if isinstance(data.get("changes"), list) else []
+    changes = [item.strip()[:60] for item in raw if isinstance(item, str) and item.strip()][:AI_CHANGES_MAX]
+    return new_doc, changes or ["AI 수정"]
+
+
+def _ai_redesign(doc, proposal):
+    """스타일·색·글꼴·문구를 새로 받아 스타일 틀로 다시 그립니다. 3안 생성과 같은 형식 검사를 씁니다."""
+    schema = design_proposal_schema(len(doc["pages"]))["properties"]["proposals"]["items"]
+    if not isinstance(proposal, dict) or not isinstance(proposal.get("pages"), list):
+        return None
+    # AI가 덧붙인 모르는 칸은 버리고 검사합니다. (빠진 칸은 검사에서 걸립니다)
+    page_keys = schema["properties"]["pages"]["items"]["properties"]
+    proposal = {key: proposal.get(key) for key in schema["properties"]}
+    proposal["pages"] = [{key: item.get(key) for key in page_keys} if isinstance(item, dict) else item
+                         for item in proposal["pages"]]
+    if isinstance(proposal["palette"], dict):
+        proposal["palette"] = {key: proposal["palette"].get(key) for key in schema["properties"]["palette"]["properties"]}
+    try:
+        validate_proposals(proposal, schema)
+    except ValueError:
+        return None
+    rebuilt = proposal_design(doc, proposal, {})
+    rebuilt["assistant"]["notice"] = f"AI 수정 · {STYLES[proposal['style']]} · 제품 정보와 번역은 검토해 주세요."
+    # 문서의 다른 칸(제목·기념일 등)은 남기고, 틀과 관련된 칸만 바꿉니다.
+    new_doc = {key: copy.deepcopy(value) for key, value in doc.items() if key != "template"}
+    new_doc.update(rebuilt)
+    _keep_backgrounds(new_doc, [_backgrounds(page) for page in doc["pages"]])
+    return new_doc
+
+
+def _ai_edit(doc, edits):
+    """요소 id마다 받은 칸만 검사해서 바꿉니다. 하나도 못 바꾸면 None."""
+    if not isinstance(edits, list) or not edits:
+        return None
+    new_doc = copy.deepcopy(doc)
+    pages = new_doc["pages"]
+    applied = 0
+    for edit in edits[:AI_EDITS_MAX]:
+        if not isinstance(edit, dict):
+            continue
+        number = edit.get("page")
+        if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= len(pages):
+            continue
+        page = pages[number - 1]
+        values = edit.get("set") if isinstance(edit.get("set"), dict) else {}
+        if edit.get("id") == "@page":
+            if HEX_RE.match(str(values.get("bg") or "")):
+                page["bg"] = values["bg"].lower()
+                applied += 1
+            continue
+        item = next((one for one in page["elements"] if one.get("id") == edit.get("id")), None)
+        if item is None:
+            continue
+        if edit.get("remove") is True:
+            page["elements"].remove(item)
+            applied += 1
+            continue
+        for key, value in values.items():
+            clean = _ai_value(item, key, value)
+            if clean is not None and item.get(key) != clean:
+                item[key] = clean
+                applied += 1
+        ko = _ai_value(item, "text_ko", values.get("text_ko"))
+        if ko is not None and item.get("text_ko") == ko:
+            item["translation_source"] = item.get("text")  # 한국어 뜻을 같이 받았으면 확인한 글로 둡니다.
+        if item.get("font") in SINGLE_WEIGHT:
+            item["weight"] = 400
+    return new_doc if applied else None
+
+
+def _ai_value(item, key, value):
+    """AI가 준 값 하나를 검사합니다. 쓸 수 없으면 None."""
+    kind = item.get("type")
+    number = isinstance(value, (int, float)) and not isinstance(value, bool)
+    if key in ("text", "text_ko"):
+        ok = kind == "text" and isinstance(value, str) and 0 < len(value.strip()) <= AI_TEXT_MAX
+        return value.strip() if ok else None
+    if key == "size":
+        return int(round(value)) if kind == "text" and number and 8 <= value <= 400 else None
+    if key in ("color", "bg", "fill"):
+        allowed = kind == "shape" if key == "fill" else kind == "text"
+        return value.lower() if allowed and HEX_RE.match(str(value)) else None
+    if key == "weight":
+        return value if kind == "text" and value in (400, 700) and not isinstance(value, bool) else None
+    if key == "font":
+        return value if kind == "text" and value in VI_FONTS else None
+    if key == "align":
+        return value if kind == "text" and value in ("left", "center", "right") else None
+    if key in ("x", "y"):
+        return round(value, 2) if number and -50 <= value <= 100 else None
+    if key in ("w", "h"):
+        return round(value, 2) if number and 2 <= value <= 100 else None
+    return None
+
+
+# ---------- 배경 그림 (AI · 이미지 모델) ----------
+# routes_media.py가 OpenAI 이미지 모델로 글자 없는 배경 그림을 만들고, 장 맨 아래(z=-1)에 이미지 요소로 깝니다.
+# 베트남어 글은 지금처럼 글 요소로 얹습니다(이미지 모델은 성조 부호를 자주 틀림). 제품 모양은 등록된 사진을 참고로 보냅니다.
+BG_ROLE = "background"
+
+
+def _backgrounds(page):
+    return [copy.deepcopy(item) for item in page.get("elements", []) if item.get("role") == BG_ROLE]
+
+
+def _keep_backgrounds(doc, backgrounds):
+    """틀을 다시 짠 뒤 장마다 원래 배경 그림을 맨 아래에 다시 깝니다."""
+    for page, items in zip(doc["pages"], backgrounds):
+        page["elements"] = items + [item for item in page["elements"] if item.get("role") != BG_ROLE]
+
+
+def background_element(page_index, src):
+    """장 전체를 덮는 배경 그림 요소. 편집기에서는 고르거나 옮길 수 없고, [배경 그림 빼기]로만 뺍니다."""
+    return {"id": f"p{page_index + 1}-{BG_ROLE}", "role": BG_ROLE, "type": "image",
+            "x": 0, "y": 0, "w": 100, "h": 100, "z": -1, "src": src, "radius": 0}
+
+
+def background_photos(product, wish=""):
+    """참고로 보낼 제품 사진 [(static/images/sns 안 파일 이름, 사진 설명 영어)]. 영상 탭(_photo_set)과 같은 기준입니다.
+    겉모습은 항상, 고른 맛이 있으면 그 맛 단면, 요청에 선물이 있으면 선물세트·포장 사진을 더합니다."""
+    photos = [(COMMON_IMAGES["whole"],
+               "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")]
+    images = (product or {}).get("images") or {}
+    flavor = _flavor_en(product)
+    if images.get("cut"):
+        photos.append((images["cut"], f"the cross-section of the {flavor} rice cake, showing its filling"))
+    if _has(wish or "", ("선물", "세트", "gift")):
+        photos += [(COMMON_IMAGES["giftset_wrapped"], "the gift set box wrapped in pink bojagi cloth"),
+                   (COMMON_IMAGES["giftset_open"], "the opened gift set box with individually wrapped rice cakes")]
+        if images.get("pack"):
+            photos.append((images["pack"], f"the individual package of the {flavor} rice cake"))
+    return photos
+
+
+def _flavor_en(product):
+    return (product or {}).get("id", "").replace("_", " ") or "chapssal-tteok"
+
+
+def background_prompt(doc, page_index, product, wish, roles):
+    """글자 없는 배경 그림 프롬프트(영어). 지금 장의 글 자리는 단순하게 비워 두라고 적습니다.
+    roles: 첨부 사진마다 무엇인지(순서대로)."""
+    page = doc["pages"][page_index]
+    texts = [item for item in page["elements"] if item.get("type") == "text"]
+    kind = "Instagram poster" if doc.get("kind") == "poster" else "Instagram card news slide"
+    parts = [
+        f"Photorealistic advertising photo for an {kind} of Hanjungsun, a Korean chapssal-tteok (soft rice cake) "
+        f"dessert brand in Vietnam, featuring the {_flavor_en(product)} rice cake.",
+        ("Attached photos: " + "; ".join(f"{index + 1}) {role}" for index, role in enumerate(roles))
+         + ". The rice cakes must match these photos exactly in shape, color and filling. Do not invent other products.")
+        if roles else "",
+        f"Scene and mood requested by the marketer (may be Korean): {wish}." if wish
+        else "Scene and mood: warm, appetizing, premium dessert styling with soft natural light.",
+        f"Use colors that suit this design: background {page.get('bg', '')}, accent {page.get('accent', '')}.",
+    ]
+    if texts:
+        top = max(0, round(min(item["y"] for item in texts)))
+        bottom = min(100, round(max(item["y"] + item["h"] for item in texts)))
+        parts.append(f"Keep the area from {top}% to {bottom}% of the image height calm, simple and low-detail, "
+                     "because text will be placed there later. Put the product where it does not cover that area.")
+    parts.append("Absolutely no text, no letters, no numbers, no logos, no watermarks and no labels anywhere in the image.")
+    return " ".join(part for part in parts if part)
