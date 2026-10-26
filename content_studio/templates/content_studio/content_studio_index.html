@@ -98,10 +98,13 @@
           </div>
           <div class="studio-option">
             <span class="studio-option-label">비율</span>
+            {# 비율: 영상 9:16 · 16:9 · 1:1 / 포스터·카드뉴스 3:4 · 4:3 · 9:16 · 16:9 · 1:1 (designs.py DESIGN_RATIOS, 기존 4:5 작업은
+               편집 화면에서 위 툴바를 숨기므로 버튼 없음) #}
             <div class="studio-seg" data-role="set-ratio">
-              <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">4:5</button>
-              <button type="button" class="btn" data-value="9:16">9:16</button>
-              <button type="button" class="btn" data-value="16:9">16:9</button>
+              <button type="button" class="btn" data-value="3:4" data-kinds="poster cardnews">3:4</button>
+              <button type="button" class="btn" data-value="4:3" data-kinds="poster cardnews">4:3</button>
+              <button type="button" class="btn" data-value="9:16" data-kinds="video poster cardnews">9:16</button>
+              <button type="button" class="btn" data-value="16:9" data-kinds="video poster cardnews">16:9</button>
               <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
             </div>
           </div>

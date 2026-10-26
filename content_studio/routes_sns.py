@@ -19,8 +19,8 @@ from platform_core.extensions import db
 
 from . import bp
 from . import higgsfield
-from .designs import (DESIGN_REVISE_HINT, MAX_PAGES, MIN_PAGES, apply_design_ai, design_ai_messages, make_cardnews,
-                      make_poster, revise_design)
+from .designs import (DESIGN_RATIOS, DESIGN_REVISE_HINT, IMAGE_MODE, MAX_PAGES, MIN_PAGES, apply_design_ai,
+                      design_ai_messages, make_cardnews, make_poster, revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
@@ -28,7 +28,7 @@ from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_trans
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
-DEFAULT_RATIO = {"video": "9:16", "poster": "4:5", "cardnews": "4:5"}
+DEFAULT_RATIO = {"video": "9:16", "poster": "3:4", "cardnews": "3:4"}  # 포스터·카드뉴스 3:4 (2026-10-27, 4:5는 기존 작업용)
 DESIGN_KINDS = ("poster", "cardnews")  # 만들기·고치기 규칙은 희주 designs.py
 
 
@@ -270,7 +270,10 @@ def post_message():
         current = chat.design.doc if chat.design else None
         if current is None:
             return _error("이 작업에는 고칠 결과물이 없습니다.")
-        if kind in DESIGN_KINDS:
+        if kind in DESIGN_KINDS and current.get("mode") == IMAGE_MODE:
+            # 그림 시안(Higgsfield 그림 문서)은 말로 고치기(그림 다시 그리기)가 2단계라, AI를 부르지 않고 안내만 합니다.
+            reply = "그림 시안을 말로 고치기(그림 다시 그리기)는 준비 중이에요."
+        elif kind in DESIGN_KINDS:
             # page: 화면에서 보고 있는 장(0부터). 없으면 1장 기준이고, "3장 배경 파랗게"처럼 말하면 그 장을 고칩니다.
             page = body.get("page")
             page = page if isinstance(page, int) and not isinstance(page, bool) else None
@@ -302,8 +305,8 @@ def post_message():
 
 
 # ---------- 첫 화면 AI 초안으로 새 작업 (포스터·카드뉴스) ----------
-# 희주 편집기(sns_editor.js renderStart)가 만든 초안을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
-DESIGN_RATIOS = {"poster": ("4:5", "9:16", "16:9", "1:1"), "cardnews": ("4:5", "1:1")}
+# 희주 renderChoices가 만든 시안(그림 문서)을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
+# 쓸 수 있는 비율은 희주 designs.py DESIGN_RATIOS를 그대로 씁니다(3:4 · 4:3 · 9:16 · 16:9 · 1:1 + 기존 작업용 4:5).
 DESIGN_MAX_BYTES = 160 * 1024
 TAB_LABELS = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"}
 
@@ -951,21 +954,25 @@ DESIGN_IMAGE_NAME = re.compile(r"^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 
 def _design_target(body):
-    """(종류, 비율, 제품, 장수). 틀리면 ValueError(화면에 보여 줄 글)."""
+    """(종류, 비율, 제품 목록, 장수). 제품은 product_ids(여러 개, products.py 순서) → product_id(하나) 순서로 찾습니다.
+    틀리면 ValueError(화면에 보여 줄 글)."""
     kind, ratio = body.get("kind"), body.get("ratio")
     if kind not in DESIGN_KINDS:
         raise ValueError("포스터·카드뉴스만 시안 그림을 만들 수 있습니다.")
     if ratio not in higgsfield.IMAGE_RATIOS:
         raise ValueError("비율(ratio)이 올바르지 않습니다.")
-    product = get_product(body.get("product_id"))
-    if product is None:
+    ids = body.get("product_ids")
+    products = [item for item in PRODUCTS if item["id"] in ids] if isinstance(ids, list) else []
+    if not products and get_product(body.get("product_id")):
+        products = [get_product(body["product_id"])]
+    if not products:
         raise ValueError("제품을 골라 주세요.")
     pages = body.get("pages", 1)
     if kind == "poster":
         pages = 1
     elif isinstance(pages, bool) or not isinstance(pages, int) or not MIN_PAGES <= pages <= MAX_PAGES:
         raise ValueError(f"카드뉴스 장수는 {MIN_PAGES}~{MAX_PAGES}장입니다.")
-    return kind, ratio, product, pages
+    return kind, ratio, products, pages
 
 
 def _design_refs(value):
@@ -982,15 +989,24 @@ def _design_refs(value):
     return paths
 
 
-def _design_photos(product, refs=()):
-    """시안 그림에 보낼 사진 [(경로, 역할 영어)]: 제품 겉모습 · 고른 맛 단면 · 개별 포장 + 레퍼런스(분위기 참고)."""
-    en = PRODUCT_EN.get(product["name_ko"], product["name_ko"])
-    images = product.get("images") or {}
+# 장 프롬프트에 선물세트·포장 이야기가 있을 때만 보자기 선물세트 사진을 보냅니다. "gift mood"처럼 분위기만 말한 것에는
+# 걸리지 않게 물건을 가리키는 말만 찾습니다. 연 상자·개별 포장 사진은 꼬리표 글씨를 흉내 낸 가짜 글자가 생겨 보내지 않습니다.
+GIFT_WORDS = re.compile(r"gift\s*(box|set|basket)|packag|wrapped|wrapping|bojagi|h[ộo]p\s*qu[àa]|set\s*qu[àa]|"
+                        r"선물\s*(세트|상자|박스)|포장|보자기", re.I)
+
+
+def _design_photos(products, refs=(), with_gift=False):
+    """시안 그림에 보낼 사진 [(경로, 역할 영어)]. 중요한 순서로: 자르지 않은 찹쌀떡(겉모습) → 제품별 단면
+    → 레퍼런스(분위기 참고) → (with_gift일 때) 보자기 포장 선물세트.
+    Higgsfield 참고 이미지 한도(higgsfield.IMAGE_REFS)를 넘으면 뒤쪽부터 빠집니다."""
+    names = [(item, PRODUCT_EN.get(item["name_ko"], item["name_ko"])) for item in products]
     photos = [(_static_photo(COMMON_IMAGES["whole"]),
-               "the outside of the rice cakes: round, soft and white with rice-flour dusting"),
-              (_static_photo(images.get("cut")), f"the cross-section of {en}, showing its filling"),
-              (_static_photo(images.get("pack")), f"the individual wrapping of {en}")]
+               "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")]
+    photos += [(_static_photo((item.get("images") or {}).get("cut")), f"the cross-section of {en}, showing its filling")
+               for item, en in names]
     photos += [(path, "a mood reference (mood, composition and color only)") for path in refs]
+    if with_gift:
+        photos.append((_static_photo(COMMON_IMAGES["giftset_wrapped"]), "the gift set box wrapped in pink bojagi cloth"))
     return [(path, role) for path, role in photos if path]
 
 
@@ -1008,6 +1024,7 @@ def _design_quote(ratio, photos, pages):
     elif credits > balance:
         reason = "계정에 남은 크레딧이 모자랍니다."
     return {"credits": credits, "unit": unit, "count": count, "pages": pages, "proposals": DESIGN_PROPOSALS,
+            "model": higgsfield.DESIGN_IMAGE_LABEL,
             "balance": balance, "today_used": used, "daily_limit": higgsfield.DAILY_LIMIT,
             "allowed": reason is None, "reason": reason}
 
@@ -1017,8 +1034,8 @@ def design_images_quote():
     """무료. body: {kind, ratio, product_id, pages(카드뉴스만), ref_images(선택, [{file_id, url}] 4장까지)}"""
     body = request.get_json(silent=True) or {}
     try:
-        _, ratio, product, pages = _design_target(body)
-        photos = _design_photos(product, _design_refs(body.get("ref_images")))
+        _, ratio, products, pages = _design_target(body)
+        photos = _design_photos(products, _design_refs(body.get("ref_images")))
         return jsonify({"ok": True, "quote": _design_quote(ratio, photos, pages)})
     except ValueError as error:
         return _error(str(error))
@@ -1047,9 +1064,10 @@ def design_images():
     응답 jobs: [[{request_id, status} 또는 None(못 보냄)] × 3안]"""
     body = request.get_json(silent=True) or {}
     try:
-        _, ratio, product, pages = _design_target(body)
+        _, ratio, products, pages = _design_target(body)
         prompts = _design_prompts(body.get("prompts"), pages)
-        photos = _design_photos(product, _design_refs(body.get("ref_images")))
+        refs = _design_refs(body.get("ref_images"))
+        photos = _design_photos(products, refs)
         confirmed = body.get("credits")
         quote = _design_quote(ratio, photos, pages)
         if confirmed is None or float(confirmed) != quote["credits"]:
@@ -1066,7 +1084,9 @@ def design_images():
     for p, proposal in enumerate(prompts):
         for i, prompt in enumerate(proposal):
             try:
-                job = higgsfield.create(higgsfield.design_image_args(prompt, ratio, photos))
+                # 선물세트·포장 이야기가 있는 장만 선물세트 사진을 함께 보냅니다(참고 사진 수와 관계없이 장당 비용은 같음).
+                one = _design_photos(products, refs, with_gift=bool(GIFT_WORDS.search(prompt)))
+                job = higgsfield.create(higgsfield.design_image_args(prompt, ratio, one))
             except higgsfield.HiggsfieldError as error:  # CLI가 실패를 알림 → 이 건은 크레딧이 나가지 않음
                 failure = error
                 break
@@ -1086,7 +1106,7 @@ def design_images():
     spent = round(unit * len(sent), 2)
     try:
         for request_id in sent:
-            db.session.add(SnsCreditLog(chat_id=None, job_kind="image", model=higgsfield.IMAGE_MODEL, credits=unit,
+            db.session.add(SnsCreditLog(chat_id=None, job_kind="image", model=higgsfield.DESIGN_IMAGE_MODEL, credits=unit,
                                         request_id=str(request_id)[:64] if request_id else None))
         db.session.commit()
     except Exception:
