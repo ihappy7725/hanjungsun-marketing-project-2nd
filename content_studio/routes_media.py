@@ -23,9 +23,9 @@ from werkzeug.exceptions import NotFound
 from platform_core.extensions import db
 
 from . import bp
-from .designs import (SIZES, background_element, background_photos, background_prompt, build_cardnews_prompt,
-                      build_design_brief, change_ratio, design_texts, finish_image_proposals, finish_poster_copy,
-                      image_proposal_schema, poster_copy_schema, validate_proposals)
+from .designs import (RULE_RETRY_NOTE, SIZES, CopyRuleError, background_element, background_photos, background_prompt,
+                      build_cardnews_prompt, build_design_brief, change_ratio, design_texts, finish_image_proposals,
+                      image_proposal_schema, validate_proposals)
 from .models_sns import SnsChat, SnsCreditLog
 from .products import get_product
 
@@ -272,9 +272,18 @@ def _cost_note(cost):
     return f" (이번 요청 {cost['total_tokens']:,} 토큰 · 예상 ${cost['usd']:.4f})" if cost else ""
 
 
+def _sum_cost(first, second):
+    """두 번 요청했을 때 토큰 수·예상 비용을 합칩니다."""
+    if not first:
+        return second
+    total = {key: first[key] + second[key] for key in ("input_tokens", "cached_tokens", "output_tokens", "total_tokens")}
+    return {**total, "usd": round(first["usd"] + second["usd"], 6), "price_checked": PRICE_CHECKED}
+
+
 # 새로 만들기 시안 3개 (sns_editor.js renderChoices). 그림은 유진 쪽 Higgsfield API가 만듭니다.
-# 카드뉴스: 장별 그림 프롬프트 — proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
-# 포스터: 문구만 (그림은 유진 베이스 템플릿) — proposals: [{name, concept_ko, layout, style_label, texts, pages: [{prompt_en: "", texts}]}] × 3
+# 포스터·카드뉴스 모두 장면 프롬프트 — proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
+# (포스터 템플릿 방식은 2026-10-27 유진 결정으로 되돌림. 포스터는 1장)
+# 그림 글자 규칙(베트남어만 · 포스터 제목 7음절)에 걸리면 규칙을 덧붙여 한 번만 다시 요청합니다(글 단계라 그림 크레딧 없음).
 @bp.route("/media/api/design-assistant", methods=["POST"])
 def design_assistant():
     try:
@@ -290,34 +299,44 @@ def design_assistant():
     key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not key:
         return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
-    poster = brief["kind"] == "poster"
-    schema = poster_copy_schema() if poster else image_proposal_schema(brief["pages"])
-    cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다.
+    schema = image_proposal_schema(brief["pages"])
+    instructions = persona
+    cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다. (두 번 요청하면 합계)
     try:
-        response = _api_json("https://api.openai.com/v1/responses",
-                             {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                             {"model": ASSISTANT_MODEL, "store": False, "instructions": persona,
-                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 12000,
-                              "text": {"format": {"type": "json_schema",
-                                                   "name": "poster_copy" if poster else "design_image_proposals",
-                                                   "strict": True, "schema": schema}}})
-        cost = _usage_cost(ASSISTANT_MODEL, response.get("usage"))
-        if response.get("status") != "completed":
-            return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요." + _cost_note(cost), 502)
-        output = "".join(part.get("text", "") for item in response.get("output", [])
-                         for part in item.get("content", []) if part.get("type") == "output_text")
-        result = json.loads(output)
-        validate_proposals(result, schema)
-        proposals = (finish_poster_copy(result["proposals"], [item["key"] for item in brief["layouts"]]) if poster
-                     else finish_image_proposals(result["proposals"]))
-        return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
-                        "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
+        for attempt in range(2):
+            response = _api_json("https://api.openai.com/v1/responses",
+                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                                 {"model": ASSISTANT_MODEL, "store": False, "instructions": instructions,
+                                  "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 12000,
+                                  "text": {"format": {"type": "json_schema", "name": "design_image_proposals",
+                                                       "strict": True, "schema": schema}}})
+            cost = _sum_cost(cost, _usage_cost(ASSISTANT_MODEL, response.get("usage")))
+            if response.get("status") != "completed":
+                return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요." + _cost_note(cost), 502)
+            output = "".join(part.get("text", "") for item in response.get("output", [])
+                             for part in item.get("content", []) if part.get("type") == "output_text")
+            try:
+                result = json.loads(output)
+            except ValueError:  # JSON이 깨짐: 보여 줄 이유 문장이 없어 일반 안내
+                return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
+            validate_proposals(result, schema)
+            try:
+                proposals = finish_image_proposals(result["proposals"], brief["kind"])
+            except CopyRuleError as error:
+                if attempt == 0:  # 규칙을 덧붙여 한 번만 다시 요청
+                    instructions = persona + RULE_RETRY_NOTE
+                    continue
+                return _error(f"{error} 규칙을 덧붙여 한 번 더 요청했지만 또 걸렸어요." + _cost_note(cost), 502)
+            return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready, "retried": attempt > 0,
+                            "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
     except HTTPError as error:
         message = "API 키 또는 사용 권한을 확인해 주세요." if error.code in (401, 403) else "OpenAI 요청이 실패했습니다. 한도·잔액·모델 접근 권한을 확인해 주세요."
         return _error(message, 502)
     except (URLError, TimeoutError, OSError):
         return _error("AI 응답을 받지 못했습니다. 사용 내역 확인 후 다시 실행해 주세요. 자동 재시도하지 않았습니다.", 502)
-    except (ValueError, KeyError, TypeError, AttributeError):
+    except ValueError as error:  # 형식 검사(validate_proposals)에 걸림: 그 이유 문장을 그대로 보여 줍니다
+        return _error(f"{error} 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
+    except (KeyError, TypeError, AttributeError):
         return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
 
 
