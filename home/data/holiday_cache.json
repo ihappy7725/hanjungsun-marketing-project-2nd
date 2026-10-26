@@ -1,0 +1,685 @@
+{
+  "schema_version": 1,
+  "years": {
+    "2027": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2027-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2027-02-05",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-02-06",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-02-07",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-02-08",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-02-09",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-02-10",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2027-04-16",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2027-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2027-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2027-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2028": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2028-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2028-01-25",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-01-26",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-01-27",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-01-28",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-01-29",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-01-30",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2028-04-04",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2028-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2028-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2028-09-02",
+          "label": "국경일",
+          "group": "national"
+        },
+        {
+          "date": "2028-09-04",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2029": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2029-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2029-02-12",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-02-13",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-02-14",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-02-15",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-02-16",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-02-17",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2029-04-23",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2029-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2029-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2029-09-02",
+          "label": "국경일",
+          "group": "national"
+        },
+        {
+          "date": "2029-09-03",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2030": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2030-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2030-02-02",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-02-03",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-02-04",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-02-05",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-02-06",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-02-07",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2030-04-12",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2030-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2030-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2030-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2031": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2031-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2031-01-22",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-01-23",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-01-24",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-01-25",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-01-26",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-01-27",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2031-04-01",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2031-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2031-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2031-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2032": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2032-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2032-02-10",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-02-11",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-02-12",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-02-13",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-02-14",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-02-15",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2032-04-19",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2032-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2032-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2032-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2026": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2026-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2026-02-16",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-02-17",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-02-18",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-02-19",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-02-20",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-02-21",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2026-04-26",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2026-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2026-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2026-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2033": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2033-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2033-01-30",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-01-31",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-02-01",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-02-02",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-02-03",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-02-04",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2033-04-09",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2033-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2033-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2033-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2034": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2034-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2034-02-18",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-02-19",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-02-20",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-02-21",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-02-22",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-02-23",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2034-04-28",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2034-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2034-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2034-09-02",
+          "label": "국경일",
+          "group": "national"
+        },
+        {
+          "date": "2034-09-04",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2035": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2035-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2035-02-07",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-02-08",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-02-09",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-02-10",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-02-11",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-02-12",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2035-04-17",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2035-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2035-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2035-09-02",
+          "label": "국경일",
+          "group": "national"
+        },
+        {
+          "date": "2035-09-03",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    },
+    "2036": {
+      "fetched_at": "2026-10-25",
+      "days": [
+        {
+          "date": "2036-01-01",
+          "label": "신정",
+          "group": "newyear"
+        },
+        {
+          "date": "2036-01-27",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-01-28",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-01-29",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-01-30",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-01-31",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-02-01",
+          "label": "설 연휴",
+          "group": "tet"
+        },
+        {
+          "date": "2036-04-06",
+          "label": "훙왕 기일",
+          "group": "hung"
+        },
+        {
+          "date": "2036-04-30",
+          "label": "통일기념일",
+          "group": "reunification"
+        },
+        {
+          "date": "2036-05-01",
+          "label": "노동절",
+          "group": "labor"
+        },
+        {
+          "date": "2036-09-02",
+          "label": "국경일",
+          "group": "national"
+        }
+      ]
+    }
+  }
+}

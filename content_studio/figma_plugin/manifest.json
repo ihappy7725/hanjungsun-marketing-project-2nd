@@ -6,8 +6,10 @@
   "ui": "ui.html",
   "editorType": ["figma"],
   "documentAccess": "dynamic-page",
+  "enablePrivatePluginApi": true,
   "networkAccess": {
-    "allowedDomains": ["http://127.0.0.1:5000"],
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:5000"],
     "reasoning": "내 PC에서 켠 한정선 대시보드 서버에서 포스터·카드뉴스 요소 JSON과 사진만 읽어 옵니다. (README 3-4)"
   }
 }

@@ -1,5 +1,6 @@
 <!-- Figma 플러그인 창 [희주] README 3-4
-     대시보드 서버(127.0.0.1:5000)의 읽기 전용 창구 3개에서 디자인·사진을 받아 code.js로 넘깁니다.
+     대시보드 서버(localhost:5000)의 읽기 전용 창구 3개에서 디자인·사진을 받아 code.js로 넘기고,
+     가져온 뒤에는 Figma 주소를 /link 창구로 남깁니다.
      이 창은 Figma 안에서 열려 base.css를 불러올 수 없어, 색은 Figma 기본 화면에 맞춘 값을 씁니다. -->
 <style>
   .plugin-page { font: 12px/1.5 "Inter", system-ui, sans-serif; color: #222; margin: 0; padding: 12px; }
@@ -30,7 +31,7 @@
 
 <script type="module">
   // manifest.json의 networkAccess와 같은 주소만 씁니다.
-  const SERVER = "http://127.0.0.1:5000";
+  const SERVER = "http://localhost:5000";
   const API = `${SERVER}/content_studio/media/api/figma`;
   const KIND_NAME = { poster: "포스터", cardnews: "카드뉴스" };
 
@@ -50,7 +51,7 @@
     try {
       response = await fetch(url);
     } catch {
-      throw new Error("대시보드 서버에 연결하지 못했습니다. 내 PC에서 서버(127.0.0.1:5000)를 켜 주세요.");
+      throw new Error("대시보드 서버에 연결하지 못했습니다. 내 PC에서 서버(localhost:5000)를 켜 주세요.");
     }
     const data = await response.json().catch(() => null);
     if (!response.ok || !data?.ok) throw new Error(data?.error || `서버 오류 (${response.status})`);
@@ -133,10 +134,26 @@
     }
   }
 
-  window.addEventListener("message", (event) => {
+  // 가져온 Figma 주소를 대시보드에 남깁니다. text/plain이라 미리 묻기(preflight) 없이 보냅니다.
+  async function sendLink(chatId, link) {
+    if (!link) return " 대시보드 자동 연결은 하지 못했습니다. 대시보드의 ‘링크 직접 넣기’를 써 주세요.";
+    try {
+      const response = await fetch(`${API}/designs/${chatId}/link`, {
+        method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ url: link }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) throw new Error(data?.error || `서버 오류 (${response.status})`);
+      return " 대시보드로 돌아가면 Figma 창이 열립니다.";
+    } catch (error) {
+      return ` 대시보드 자동 연결 실패: ${error.message}`;
+    }
+  }
+
+  window.addEventListener("message", async (event) => {
     const message = event.data.pluginMessage;
     if (!message) return;
-    setStatus(message.message, message.type === "error");
+    const extra = message.type === "done" ? await sendLink(message.chatId, message.link) : "";
+    setStatus(message.message + extra, message.type === "error");
     importButton.disabled = selectedId === null;
   });
 

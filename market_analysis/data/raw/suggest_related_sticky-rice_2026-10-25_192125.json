@@ -1,0 +1,119 @@
+{
+  "search_metadata": {
+    "id": "6addf460122bd14b6196e60f",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/Fe9ge3Uz8RPqndXQaIq5pYH1fsOFOxtPQInC349xKUA/6addf460122bd14b6196e60f.md",
+    "created_at": "2026-10-25 12:21:52 UTC",
+    "processed_at": "2026-10-25 12:21:52 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/Fe9ge3Uz8RPqndXQaIq5pYH1fsOFOxtPQInC349xKUA/6addf460122bd14b6196e60f.html",
+    "prettify_html_file": "https://serpapi.com/searches/Fe9ge3Uz8RPqndXQaIq5pYH1fsOFOxtPQInC349xKUA/6addf460122bd14b6196e60f.prettify",
+    "total_time_taken": 4.5
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "chè trôi nước",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "công thức nấu chè trôi nước",
+        "value": "Đột phá",
+        "extracted_value": 6950,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%B4ng+th%E1%BB%A9c+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%B4ng+th%E1%BB%A9c+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "cách nấu chè trôi nước bằng bột nếp",
+        "value": "+300%",
+        "extracted_value": 300,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+b%E1%BA%B1ng+b%E1%BB%99t+n%E1%BA%BFp&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+b%E1%BA%B1ng+b%E1%BB%99t+n%E1%BA%BFp&tz=-420"
+      },
+      {
+        "query": "chè trôi nước bao nhiêu calo",
+        "value": "+140%",
+        "extracted_value": 140,
+        "link": "https://trends.google.com/trends/explore?q=ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+bao+nhi%C3%AAu+calo&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+bao+nhi%C3%AAu+calo&tz=-420"
+      },
+      {
+        "query": "cách nấu chè trôi nước ngon",
+        "value": "+70%",
+        "extracted_value": 70,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+ngon&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+ngon&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "nấu chè trôi nước",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "làm chè trôi nước",
+        "value": "91",
+        "extracted_value": 91,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "cách nấu chè trôi nước",
+        "value": "58",
+        "extracted_value": 58,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "bánh trôi nước",
+        "value": "32",
+        "extracted_value": 32,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "cách làm chè trôi nước",
+        "value": "31",
+        "extracted_value": 31,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      },
+      {
+        "query": "cách nấu chè trôi nước bằng bột nếp",
+        "value": "13",
+        "extracted_value": 13,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+b%E1%BA%B1ng+b%E1%BB%99t+n%E1%BA%BFp&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+b%E1%BA%B1ng+b%E1%BB%99t+n%E1%BA%BFp&tz=-420"
+      },
+      {
+        "query": "chè trôi nước bao nhiêu calo",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+bao+nhi%C3%AAu+calo&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+bao+nhi%C3%AAu+calo&tz=-420"
+      },
+      {
+        "query": "cách nấu chè trôi nước ngon",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+ngon&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc+ngon&tz=-420"
+      },
+      {
+        "query": "công thức nấu chè trôi nước",
+        "value": "<1",
+        "extracted_value": 0,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%B4ng+th%E1%BB%A9c+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%B4ng+th%E1%BB%A9c+n%E1%BA%A5u+ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc&tz=-420"
+      }
+    ]
+  }
+}

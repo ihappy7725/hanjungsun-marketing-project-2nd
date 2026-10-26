@@ -14,9 +14,14 @@ DELAY_GRACE = timedelta(hours=48)
 MIN_AD_CASES = 20
 PEAK_THRESHOLD = 90
 FLAT_MIN_INDEX = 80  # 모든 달이 이 값 이상이면 계절성이 없는 연중 수요로 봅니다
+WINDOW_RATIO = 0.5   # 주 단위 '수요 높은 기간' = 정점의 50% 이상이 이어지는 구간
+WINDOW_MAX_WEEKS = 26  # 그 구간이 반년을 넘으면 특정 시기를 타지 않는 것으로 봅니다
 MAX_PER_REQUEST = 5
 MAX_RANK_CANDIDATES = 9  # 카테고리별 상품 후보 최대 개수 (5개 초과분은 기준 검색어로 환산)
 MAX_RISING_PRODUCTS = 3  # 순위표 아래 "새로 뜨는 검색어" 최대 개수
+# 관련 주제 중 식품으로 보는 종류(Google이 붙이는 type, 소문자 부분 일치). 베트남어(hl=vi) 응답 기준
+FOOD_TOPIC_TYPES = ("món ăn", "thực phẩm", "thức ăn", "đồ ăn", "ẩm thực", "bánh", "kẹo", "tráng miệng",
+                    "đồ uống", "thức uống", "trái cây", "hoa quả", "kem", "food", "dish", "dessert", "confection")
 
 # 권장 갱신 주기 (주 2회 = 3.5일)
 REFRESH_INTERVALS = {
@@ -155,6 +160,42 @@ def peak_months(months, threshold=PEAK_THRESHOLD, limit=3):
     return peaks or [item["month"] for item in ranked[:1]]
 
 
+def weekly_window(dates, series, ratio=WINDOW_RATIO, max_weeks=WINDOW_MAX_WEEKS):
+    """연도와 관계없이 '몇 월 몇째 주'별 평균으로 수요가 높은 기간을 찾습니다.
+
+    정점 = 평균이 가장 높은 주. 시작·끝 = 정점에서 앞뒤로 정점의 ratio 이상이 이어지는 마지막 주.
+    연말에서 연초로 넘어가는 기간(예: 12월 1주 ~ 2월 2주)도 이어서 봅니다.
+    한 달은 4주로 나눕니다(29~31일은 4주). 5주차는 표본이 적어 값이 튀기 때문입니다.
+    기간이 max_weeks를 넘거나 모든 주가 ratio 이상이면 특정 시기를 타지 않으므로 year_round로 알립니다.
+    """
+    slots = defaultdict(list)
+    for day in dates:
+        if day in series:
+            slots[(day.month, min((day.day - 1) // 7 + 1, 4))].append(series[day])
+    if not slots:
+        return None
+    order = sorted(slots)
+    averages = [mean(slots[slot]) for slot in order]
+    peak_index = max(range(len(order)), key=lambda i: averages[i])
+    peak = averages[peak_index]
+    if not peak:
+        return None
+    if min(averages) >= peak * ratio:
+        return {"year_round": True}
+
+    def edge(step):
+        index = peak_index
+        while averages[(index + step) % len(order)] >= peak * ratio:
+            index += step
+        return index
+
+    start, end = edge(-1), edge(1)
+    if end - start + 1 > max_weeks:
+        return {"year_round": True}
+    as_dict = lambda index: {"month": order[index % len(order)][0], "week": order[index % len(order)][1]}
+    return {"start": as_dict(start), "peak": as_dict(peak_index), "end": as_dict(end), "ratio": ratio}
+
+
 def rank_items(items):
     """두 기준으로 순위를 매깁니다. 관심도 5 미만이거나 데이터가 부족한 항목은 순위에서 제외합니다.
 
@@ -224,9 +265,13 @@ def parse_regions(raw, region_labels):
 
 
 def combine_regions(by_category):
-    """카테고리별 지역 관심도(각 0~100) -> 지역별 평균으로 매긴 종합 순위.
+    """카테고리별 지역 관심도(각 1위 지역 = 100) -> 카테고리 등수의 평균으로 매긴 종합 순위.
 
-    모든 카테고리에 값이 있는 지역만 순위를 매깁니다. 빠진 카테고리를 0으로 채우지 않습니다.
+    카테고리마다 지수 높은 순으로 등수를 매기고(동점은 같은 등수들의 평균), 등수 평균이 낮을수록 상위입니다.
+    카테고리 크기·비중과 상관없이 모든 카테고리를 똑같이 반영해, 한 카테고리에 끌려가지 않습니다.
+    모든 카테고리에 값이 있는 지역만 비교하며, 빠진 카테고리를 0으로 채우지 않습니다.
+    interest = 막대 길이용 점수(모든 카테고리 1위 = 100, 모두 꼴찌 = 0), avg_rank = 표시용 평균 등수.
+    반환: (rows, {"method": "rank_average", "compared": 비교한 지역 수})
     """
     regions = {}
     for category in by_category:
@@ -234,21 +279,36 @@ def combine_regions(by_category):
             region = regions.setdefault(row["geo"], {
                 "geo": row["geo"], "name": row["name"], "location": row["location"], "categories": {}})
             region["categories"][category["id"]] = row["interest"]
-    ranked, rest = [], []
+    compared, rest = [], []
     for region in regions.values():
-        complete = len(region["categories"]) == len(by_category)
-        region["interest"] = round1(mean(region["categories"].values())) if complete else None
-        if complete and region["interest"] > 0:
-            region["data_status"] = "normal"
-            ranked.append(region)
+        if len(region["categories"]) == len(by_category) and any(region["categories"].values()):
+            compared.append(region)
         else:
-            region["data_status"] = "insufficient"
-            region["rank"] = None
+            region.update({"interest": None, "avg_rank": None, "rank": None, "data_status": "insufficient"})
             rest.append(region)
-    ranked.sort(key=lambda row: -row["interest"])
-    for rank, row in enumerate(ranked, start=1):
+
+    ranks = defaultdict(list)
+    for category in by_category:
+        order = sorted(compared, key=lambda row: -row["categories"][category["id"]])
+        position = 0
+        while position < len(order):
+            value = order[position]["categories"][category["id"]]
+            tied = [row for row in order[position:] if row["categories"][category["id"]] == value]
+            shared = position + (len(tied) + 1) / 2  # 동점이면 같은 등수들의 평균 (예: 2·3위 동점 = 2.5)
+            for row in tied:
+                ranks[row["geo"]].append(shared)
+            position += len(tied)
+
+    count = len(compared)
+    for region in compared:
+        region["avg_rank"] = mean(ranks[region["geo"]])
+        region["interest"] = round1((count - region["avg_rank"]) / (count - 1) * 100) if count > 1 else 100.0
+        region["data_status"] = "normal"
+    compared.sort(key=lambda row: row["avg_rank"])
+    for rank, row in enumerate(compared, start=1):
         row["rank"] = rank
-    return ranked + rest
+        row["avg_rank"] = round1(row["avg_rank"])
+    return compared + rest, {"method": "rank_average", "compared": count}
 
 
 def rising_products(category, related, limit=MAX_RISING_PRODUCTS):
@@ -266,13 +326,58 @@ def rising_products(category, related, limit=MAX_RISING_PRODUCTS):
     return rows[:limit]
 
 
-def parse_related(raw, limit=5):
+def parse_related(raw, limit=None):
+    """Google이 주는 연관 검색어 전부(인기·급상승 각 최대 25개)를 저장합니다. 거르기는 화면용 응답에서 합니다."""
     related = raw.get("related_queries") or {}
 
     def pick(rows):
-        return [{"query": row.get("query"), "value": row.get("value")} for row in (rows or [])[:limit] if row.get("query")]
+        return [{"query": row.get("query"), "value": row.get("value"), "extracted_value": row.get("extracted_value")}
+                for row in (rows or [])[:limit] if row.get("query")]
 
     return {"rising": pick(related.get("rising")), "top": pick(related.get("top"))}
+
+
+def parse_related_topics(raw):
+    topics = raw.get("related_topics") or {}
+
+    def pick(rows):
+        return [{"title": (row.get("topic") or {}).get("title"), "type": (row.get("topic") or {}).get("type"),
+                 "value": row.get("value"), "extracted_value": row.get("extracted_value")}
+                for row in rows or [] if (row.get("topic") or {}).get("title")]
+
+    return {"rising": pick(topics.get("rising")), "top": pick(topics.get("top"))}
+
+
+def food_related(category, related, labels=None):
+    """연관 검색어·관련 주제 중 식품만 남깁니다.
+
+    검색어는 상품 후보 제안 도구와 같은 제외 규칙(만드는 법·재료·위치·다른 의미·카테고리와 무관 등)을,
+    주제는 Google이 붙인 종류(FOOD_TOPIC_TYPES)를 씁니다.
+    """
+    from .candidate_service import exclusion_reason, plain
+
+    related = related or {}
+    labels = labels or {}
+    terms = category.get("representative_queries", [category["representative_query"]])
+    roots = [plain(term) for term in category.get("root_terms") or terms]
+
+    def queries(rows):
+        return [{"query": row["query"], "name": labels.get(row["query"]) or labels.get(f'"{row["query"]}"', row["query"]),
+                 "value": row.get("value"),
+                 "extracted_value": row.get("extracted_value")}
+                for row in rows or [] if row.get("query") and not exclusion_reason(row["query"], roots)]
+
+    def is_food(row):
+        kind = (row.get("type") or "").lower()
+        return any(word in kind for word in FOOD_TOPIC_TYPES)
+
+    return {
+        "query": related.get("query"),
+        "collected": bool(related) and not related.get("error"),
+        "top": queries(related.get("top")),
+        "rising": queries(related.get("rising")),
+        "topics": [row for row in (related.get("topics") or {}).get("top", []) if is_food(row)],
+    }
 
 
 def duration_bucket(seconds):
@@ -314,11 +419,15 @@ class TrendCollectionService:
         self.ad_collector_factory = ad_collector_factory
 
     def due_sections(self, country_code, now=None):
+        """권장 주기가 지난 영역. 설정의 paused_sections(일시 정지)는 뺍니다."""
         now = now or now_vn()
         stored = self.repository.get_latest(country_code) or {}
         sections = stored.get("sections", {})
+        paused = set((self.repository.get_keywords(country_code) or {}).get("paused_sections", []))
         due = []
         for name in SECTIONS:
+            if name in paused:
+                continue
             checked_at = sections.get(name, {}).get("checked_at")
             if not checked_at or now - datetime.fromisoformat(checked_at) >= REFRESH_INTERVALS[name]:
                 due.append(name)
@@ -344,13 +453,15 @@ class TrendCollectionService:
                 continue
             stored["sections"][name] = {"checked_at": now.isoformat(), **result}
             errors.pop(name, None)
-            report[name] = "완료"
+            partial = result.get("category_errors") if isinstance(result, dict) else None
+            report[name] = ("일부 실패 (" + "; ".join(f"{cid}: {message}, 이전 데이터 유지" for cid, message in partial.items()) + ")"
+                            if partial else "완료")
 
         self.repository.save_latest(country_code, stored)
         return report
 
-    def _timeseries(self, name, queries, date, now):
-        raw = self.collector.fetch("TIMESERIES", queries, date)
+    def _timeseries(self, name, queries, date, now, **extra):
+        raw = self.collector.fetch("TIMESERIES", queries, date, **extra)
         self.repository.save_raw(name, raw, now)
         return parse_timeseries(raw, queries)
 
@@ -373,25 +484,52 @@ class TrendCollectionService:
     def _collect_rankings(self, country_code, config, now):
         """후보가 5개를 넘으면 첫 후보를 기준 검색어로 넣어 나눠 요청한 뒤 같은 기준으로 환산합니다.
 
-        기준 검색어 데이터가 없으면 환산할 수 없으므로 영역 전체를 실패로 두고 이전 정상 데이터를 유지합니다.
+        카테고리 하나가 실패하면(기준 검색어 데이터 없음, 연관 검색어 결과 없음 등) 그 카테고리만 이전 정상 순위를
+        유지하고 오류를 기록합니다. 모든 카테고리가 실패하면 영역 전체를 실패로 둡니다.
+        ranking_source가 "related"인 카테고리는 설정 후보 대신 출발 검색어의 인기 연관 검색어 중 식품을
+        Google 인기값(최근 3개월, 1위 = 100) 순으로 씁니다. 주간 관심도는 받지 않으므로 증감률이 없습니다.
         """
-        by_category = {}
+        from .candidate_service import related_candidates  # candidate_service가 이 모듈을 import하므로 함수 안에서 불러옵니다
+
+        stored = (self.repository.get_latest(country_code) or {}).get("sections", {}).get("rankings", {})
+        previous, checked_at = stored.get("by_category", {}), stored.get("checked_at")
         period = trend_period(config, now)
+        by_category, failures, attempted = {}, {}, 0
         for category in config["categories"]:
-            queries = category["candidate_queries"][:MAX_RANK_CANDIDATES]
-            batches = anchor_batches(queries)
-            name = f"timeseries_rank_{category['id']}"
-            if len(batches) == 1:
-                dates, values = self._timeseries(name, queries, period, now)
-            else:
-                dates, values = anchor_scale([self._timeseries(f"{name}_{index + 1}", batch, period, now)
-                                              for index, batch in enumerate(batches)], queries[0])
-            items = [{"query": query, **trend_stats(dates, values.get(query, {}))} for query in queries]
-            by_category[category["id"]] = {
-                "source_url": trends_url(queries[:MAX_PER_REQUEST], period, config["geo"]),
-                "items": items,
-            }
-        return {"by_category": by_category}
+            if category.get("ranking_source") == "fruit_flavors":
+                continue  # 과일 맛 관심도(fruit_flavors 영역)로 순위를 대신하므로 따로 수집하지 않습니다
+            attempted += 1
+            try:
+                by_category[category["id"]] = self._collect_ranking(category, config, period, now, related_candidates)
+            except Exception as error:
+                failures[category["id"]] = str(error)
+                if category["id"] in previous:
+                    by_category[category["id"]] = {**previous[category["id"]], "kept_from": previous[category["id"]].get(
+                        "kept_from", checked_at), "error": str(error)}
+        if attempted and len(failures) == attempted:
+            raise RuntimeError("; ".join(f"{cid}: {message}" for cid, message in failures.items()))
+        return {"by_category": by_category, "category_errors": failures}
+
+    def _collect_ranking(self, category, config, period, now, related_candidates):
+        """카테고리 하나의 순위를 수집합니다. 실패하면 예외를 그대로 올립니다(_collect_rankings가 처리)."""
+        if category.get("ranking_source") == "related":
+            found = related_candidates(self.collector.fetch, category, config,
+                                       save=lambda name, raw: self.repository.save_raw(name, raw, now))
+            return {"metric": "related", "seed": found["seed"], "items": [{
+                **row, "recent_average": row["related_value"], "year_ago_average": None, "change_rate": None,
+                "short_change_rate": None, "is_new": False,
+                "data_status": "normal" if row["related_value"] is not None else "insufficient",
+            } for row in found["ranked"]]}
+        queries = category["candidate_queries"][:MAX_RANK_CANDIDATES]
+        batches = anchor_batches(queries)
+        name = f"timeseries_rank_{category['id']}"
+        if len(batches) == 1:
+            dates, values = self._timeseries(name, queries, period, now)
+        else:
+            dates, values = anchor_scale([self._timeseries(f"{name}_{index + 1}", batch, period, now)
+                                          for index, batch in enumerate(batches)], queries[0])
+        items = [{"query": query, **trend_stats(dates, values.get(query, {}))} for query in queries]
+        return {"source_url": trends_url(queries[:MAX_PER_REQUEST], period, config["geo"]), "items": items}
 
     def _collect_fruit_flavors(self, country_code, config, now):
         """과일이 5개를 넘으면 첫 과일을 기준 검색어로 넣어 나눠 요청한 뒤 같은 기준으로 환산합니다."""
@@ -414,10 +552,14 @@ class TrendCollectionService:
         span, themes, fruits = None, [], []
         for theme in config["seasonality_themes"]:
             query = theme["query"]
-            dates, values = self._timeseries(f"timeseries_season_{theme['id']}", [query], period, now)
+            # 주제마다 다른 나라에서 볼 수 있습니다(예: 한국인의 다낭 여행 관심 = geo KR, hl ko, tz -540).
+            locale = {key: theme[key] for key in ("geo", "hl", "tz") if key in theme}
+            dates, values = self._timeseries(f"timeseries_season_{theme['id']}", [query], period, now, **locale)
             months, status = monthly_seasonality(dates, values.get(query, {}))
             themes.append({"id": theme["id"], "query": query, "months": months, "data_status": status,
-                           "source_url": trends_url([query], period, geo)})
+                           "weekly": weekly_window(dates, values.get(query, {})) if status == "normal" else None,
+                           "geo": theme.get("geo", geo),
+                           "source_url": trends_url([query], period, theme.get("geo", geo))})
             if dates and span is None:
                 span = {"start": dates[0].isoformat(), "end": dates[-1].isoformat()}
         fruit_queries = [flavor["query"] for flavor in config["fruit_flavors"]]
@@ -431,7 +573,10 @@ class TrendCollectionService:
                 "fruit_source_url": trends_url(fruit_queries[:MAX_PER_REQUEST], period, geo)}
 
     def _collect_regions(self, country_code, config, now):
-        """카테고리마다 대표 검색어로 지역 관심도를 받아 평균합니다. 하나라도 실패하면 영역 전체를 실패로 둡니다."""
+        """카테고리마다 대표 검색어로 지역 관심도를 받습니다. 하나라도 실패하면 영역 전체를 실패로 둡니다.
+
+        종합 순위(카테고리 등수 평균)는 화면에 보낼 때 다시 계산합니다(_regions). 여기 items는 수집 시점 기록입니다.
+        """
         period = config["recent_period"]
         by_category = []
         for category in config["categories"]:
@@ -444,24 +589,38 @@ class TrendCollectionService:
                 "source_url": trends_url([query], period, config["geo"]),
                 "items": parse_regions(raw, config.get("region_labels", {})),
             })
-        return {"by_category": by_category, "items": combine_regions(by_category)}
+        items, meta = combine_regions(by_category)
+        return {"by_category": by_category, "items": items, "combine": meta}
 
     def _collect_related(self, country_code, config, now):
         """카테고리 하나가 실패해도 나머지는 저장합니다. 모두 실패하면 이전 정상 데이터를 유지합니다.
 
-        따옴표로 묶은 합산 검색어에는 Google이 연관 검색어를 주지 않으므로 묶음의 첫 검색어를 사용합니다.
+        합산 검색어에는 Google이 연관 검색어를 주지 않으므로 묶음의 검색어를 하나씩 씁니다.
+        첫 검색어에 결과가 없으면 다음 검색어로 다시 시도하고, 결과를 준 검색어로 관련 주제도 받습니다.
         """
         by_category, errors = {}, []
         for category in config["categories"]:
-            query = category.get("representative_queries", [category["representative_query"]])[0]
-            try:
-                raw = self.collector.fetch("RELATED_QUERIES", query, config["recent_period"])
-            except Exception as error:
-                errors.append(f"{category['id']}: {error}")
-                by_category[category["id"]] = {"query": query, "rising": [], "top": [], "error": str(error)}
+            terms = category.get("representative_queries", [category["representative_query"]])
+            raw, failures = None, []
+            for query in terms:
+                try:
+                    raw = self.collector.fetch("RELATED_QUERIES", query, config["recent_period"])
+                    break
+                except Exception as error:
+                    failures.append(f"{query}: {error}")
+            if raw is None:
+                errors.append(f"{category['id']}: {'; '.join(failures)}")
+                by_category[category["id"]] = {"query": terms[0], "rising": [], "top": [], "error": "; ".join(failures)}
                 continue
             self.repository.save_raw(f"related_{category['id']}", raw, now)
-            by_category[category["id"]] = {"query": query, **parse_related(raw)}
+            row = {"query": query, **parse_related(raw)}
+            try:
+                topics = self.collector.fetch("RELATED_TOPICS", query, config["recent_period"])
+                self.repository.save_raw(f"related_topics_{category['id']}", topics, now)
+                row["topics"] = parse_related_topics(topics)
+            except Exception as error:  # 주제가 없어도 연관 검색어는 저장합니다
+                row["topics_error"] = str(error)
+            by_category[category["id"]] = row
         if len(errors) == len(config["categories"]):
             raise RuntimeError("; ".join(errors))
         return {"by_category": by_category}
@@ -499,7 +658,7 @@ class TrendService:
         categories = self._categories(config, sections, labels)
         fruit_flavors = self._fruit_flavors(config, sections)
         seasonality = self._seasonality(config, sections)
-        regions = self._regions(sections, config.get("region_labels", {}))
+        regions, regions_meta = self._regions(sections, config.get("region_labels", {}))
         ads = self._ads(country_code)
 
         section_status = {}
@@ -514,7 +673,9 @@ class TrendService:
             section_status[name] = {"checked_at": checked_at, "status": status,
                                     "error": (stored.get("errors") or {}).get(name)}
 
-        search_status = [section_status[name]["status"] for name in SERPAPI_SECTIONS]
+        # 일시 정지한 영역은 오래돼도 "갱신 지연"으로 보지 않습니다
+        paused = set(config.get("paused_sections", []))
+        search_status = [section_status[name]["status"] for name in SERPAPI_SECTIONS if name not in paused]
         insufficient = any(
             item.get("data_status") == "insufficient"
             for item in [*categories, *fruit_flavors, *seasonality, *regions,
@@ -542,6 +703,7 @@ class TrendService:
             "fruit_anchor": sections.get("fruit_flavors", {}).get("anchor"),
             "seasonality": seasonality,
             "regions": regions,
+            "regions_meta": regions_meta,
             "regions_by_category": self._regions_by_category(sections, config.get("region_labels", {})),
             "ad_creative_trends": ads,
             "source": {"search": SOURCE_SEARCH, "ads": SOURCE_ADS},
@@ -569,6 +731,7 @@ class TrendService:
                 "is_new": row.get("is_new", False),
                 "data_status": row["data_status"],
                 "checked_at": rankings.get("checked_at"),
+                "rising_value": row.get("rising_value"),
             } for row in ranking_section.get("items", [])]
             status = item.get("data_status", "empty")
             if status == "normal" and (item.get("recent_average") or 0) < MIN_INTEREST:
@@ -586,10 +749,15 @@ class TrendService:
                 "series": item.get("series", []),
                 "checked_at": trend.get("checked_at"),
                 "source_url": trend.get("source_url"),
-                "ranking": rank_items(ranking),
+                # fruit_flavors 방식: 메뉴 검색이 적은 카테고리는 과일 맛 관심도 순위로 대신합니다
+                "ranking": (TrendService._fruit_flavors(config, sections)
+                            if category.get("ranking_source") == "fruit_flavors" else rank_items(ranking)),
                 "ranking_source_url": ranking_section.get("source_url"),
+                "ranking_metric": ("fruit_flavors" if category.get("ranking_source") == "fruit_flavors"
+                                   else ranking_section.get("metric", "interest")),
                 "related_queries": related.get(category["id"]),
                 "rising_products": rising_products(category, related.get(category["id"])),
+                "related_food": food_related(category, related.get(category["id"]), labels),
                 "related_checked_at": sections.get("related", {}).get("checked_at"),
             })
         return result
@@ -631,6 +799,7 @@ class TrendService:
                 continue
             tabs.append({"id": theme["id"], "label": theme["label"], "type": "query", "query": row["query"],
                          "months": row["months"], "peak_months": peak_months(row["months"]),
+                         "weekly": row.get("weekly"),
                          "data_status": row["data_status"], "source_url": row["source_url"], **meta})
 
         fruit_rows = {row["query"]: row for row in section.get("fruits", [])}
@@ -657,15 +826,21 @@ class TrendService:
 
     @staticmethod
     def _regions(sections, region_labels):
+        """지역 종합 순위와 계산 방식. 카테고리별 수집본이 있으면 카테고리 등수 평균으로 다시 계산합니다."""
         section = sections.get("regions", {})
+        by_category = section.get("by_category")
+        if by_category:
+            rows, meta = combine_regions(by_category)
+        else:  # 이전 형식(검색어 하나 기준) 수집본
+            rows, meta = section.get("items", []), {"method": "single"}
         return [{
             **row,
             "name": region_labels.get(row.get("geo")) or row.get("name"),
-            "combined": bool(section.get("by_category")),  # False면 이전 형식(검색어 하나 기준) 수집본
+            "combined": bool(by_category),
             "query": section.get("query"),
             "checked_at": section.get("checked_at"),
             "source_url": section.get("source_url"),
-        } for row in section.get("items", [])]
+        } for row in rows], meta
 
     @staticmethod
     def _regions_by_category(sections, region_labels):

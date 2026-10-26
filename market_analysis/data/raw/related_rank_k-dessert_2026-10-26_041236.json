@@ -1,0 +1,210 @@
+{
+  "search_metadata": {
+    "id": "6ade70c4ee072e7978f3db82",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/ak6oCImUW9rQhdjD_jyqQBOAeq56wd66DcBeApT1hIQ/6ade70c4ee072e7978f3db82.md",
+    "created_at": "2026-10-25 21:12:36 UTC",
+    "processed_at": "2026-10-25 21:12:36 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22bingsu%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/ak6oCImUW9rQhdjD_jyqQBOAeq56wd66DcBeApT1hIQ/6ade70c4ee072e7978f3db82.html",
+    "prettify_html_file": "https://serpapi.com/searches/ak6oCImUW9rQhdjD_jyqQBOAeq56wd66DcBeApT1hIQ/6ade70c4ee072e7978f3db82.prettify",
+    "total_time_taken": 2.69
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "bingsu",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "bunny bingsu",
+        "value": "Đột phá",
+        "extracted_value": 35600,
+        "link": "https://trends.google.com/trends/explore?q=bunny+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bunny+bingsu&tz=-420"
+      },
+      {
+        "query": "bingsu phổ quang",
+        "value": "+4.000%",
+        "extracted_value": 4000,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+ph%E1%BB%95+quang&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+ph%E1%BB%95+quang&tz=-420"
+      },
+      {
+        "query": "bingsu trần hưng đạo",
+        "value": "+2.650%",
+        "extracted_value": 2650,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+tr%E1%BA%A7n+h%C6%B0ng+%C4%91%E1%BA%A1o&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+tr%E1%BA%A7n+h%C6%B0ng+%C4%91%E1%BA%A1o&tz=-420"
+      },
+      {
+        "query": "bingsu near me",
+        "value": "+1.300%",
+        "extracted_value": 1300,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+near+me&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+near+me&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "bingsu near me",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+near+me&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+near+me&tz=-420"
+      },
+      {
+        "query": "mrp",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=mrp&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=mrp&tz=-420"
+      },
+      {
+        "query": "the bingsu",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=the+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=the+bingsu&tz=-420"
+      },
+      {
+        "query": "bingsu gần đây",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+g%E1%BA%A7n+%C4%91%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+g%E1%BA%A7n+%C4%91%C3%A2y&tz=-420"
+      },
+      {
+        "query": "kem bingsu",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=kem+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+bingsu&tz=-420"
+      },
+      {
+        "query": "mr bingsu",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=mr+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=mr+bingsu&tz=-420"
+      },
+      {
+        "query": "snow bingsu",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=snow+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=snow+bingsu&tz=-420"
+      },
+      {
+        "query": "boulevard",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=boulevard&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=boulevard&tz=-420"
+      },
+      {
+        "query": "bingsu là gì",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+l%C3%A0+g%C3%AC&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+l%C3%A0+g%C3%AC&tz=-420"
+      },
+      {
+        "query": "mrp bingsu & tea",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=mrp+bingsu+%26+tea&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=mrp+bingsu+%26+tea&tz=-420"
+      },
+      {
+        "query": "bingsu ngon",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+ngon&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+ngon&tz=-420"
+      },
+      {
+        "query": "bingsu đà nẵng",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+%C4%91%C3%A0+n%E1%BA%B5ng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+%C4%91%C3%A0+n%E1%BA%B5ng&tz=-420"
+      },
+      {
+        "query": "what is bingsu",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=what+is+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=what+is+bingsu&tz=-420"
+      },
+      {
+        "query": "bingsu quận 1",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+qu%E1%BA%ADn+1&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+qu%E1%BA%ADn+1&tz=-420"
+      },
+      {
+        "query": "bingsu hà nội",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+h%C3%A0+n%E1%BB%99i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+h%C3%A0+n%E1%BB%99i&tz=-420"
+      },
+      {
+        "query": "máy làm bingsu",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=m%C3%A1y+l%C3%A0m+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%C3%A1y+l%C3%A0m+bingsu&tz=-420"
+      },
+      {
+        "query": "sul bingsu",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=sul+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=sul+bingsu&tz=-420"
+      },
+      {
+        "query": "bingsu nguyễn trãi",
+        "value": "1",
+        "extracted_value": 1,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+nguy%E1%BB%85n+tr%C3%A3i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+nguy%E1%BB%85n+tr%C3%A3i&tz=-420"
+      },
+      {
+        "query": "bingsu nha trang",
+        "value": "1",
+        "extracted_value": 1,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+nha+trang&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+nha+trang&tz=-420"
+      },
+      {
+        "query": "bunny bingsu",
+        "value": "1",
+        "extracted_value": 1,
+        "link": "https://trends.google.com/trends/explore?q=bunny+bingsu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bunny+bingsu&tz=-420"
+      },
+      {
+        "query": "bingsu phổ quang",
+        "value": "<1",
+        "extracted_value": 0,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+ph%E1%BB%95+quang&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+ph%E1%BB%95+quang&tz=-420"
+      },
+      {
+        "query": "bingsu trần hưng đạo",
+        "value": "<1",
+        "extracted_value": 0,
+        "link": "https://trends.google.com/trends/explore?q=bingsu+tr%E1%BA%A7n+h%C6%B0ng+%C4%91%E1%BA%A1o&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=bingsu+tr%E1%BA%A7n+h%C6%B0ng+%C4%91%E1%BA%A1o&tz=-420"
+      }
+    ]
+  }
+}

@@ -48,10 +48,10 @@
       "registration_status": "on_hold",
       "start_date": null,
       "end_date": null,
-      "last_reviewed_at": "2026-10-23",
-      "finding": "이전 조사에서 확인한 공식 구체 일정은 2026년 행사에 관한 자료였음.",
-      "missing_evidence": "2027년 개최일을 확정할 공식 발표 미확보. 미개최나 발표 부재를 단정하지 않음.",
-      "next_check": "DIFF 주최 측·다낭시·시 관광정보 포털의 2027년 발표 확인",
+      "last_reviewed_at": "2026-10-25",
+      "finding": "2026-10-25 재조사에서도 2027년 개최 일정 발표를 찾지 못했다. 최근 회차 패턴은 2025년 05-31~07-12 개최, 2026년 6개 경연 밤에 개막 05-30이며, 관람석 가격은 2026년 3월에 공표되었다. 이 패턴은 통상 5월 말 개막 7월 중순 종료를 시사하나 2027년 공식 발표가 아니므로 날짜 근거로 쓰지 않는다.",
+      "missing_evidence": "2027년 개최 여부와 일정을 확정할 주최 측·다낭시 공식 발표를 확보하지 못했다. 과거 회차 패턴은 예측이며 미개최나 일정 변경 가능성을 배제하지 않는다.",
+      "next_check": "공식 발표는 통상 연초에 나오므로 2027년 1~3월에 다낭시 포털과 주최 측 공지를 확인한다. 관람석 가격 공표 시점(2026년은 3월)도 함께 본다. 발표가 없다는 검색 결과를 미개최 확정으로 해석하지 않는다.",
       "source_urls": [
         "https://danangfantasticity.com/en/tin-tuc/top-su-kien-va-le-hoi-noi-bat-nhat-tai-da-nang-tu-nay-den-dau-nam-2027"
       ]
@@ -70,15 +70,16 @@
       "date_precision": "unconfirmed",
       "original_period": null,
       "scope_note": "조사 범위를 다낭에서 베트남 전 지역으로 확대했다. candidate_id는 기존 기록과의 연결을 위해 유지한다. 2026-10-24 조사에서 전국 단위 제철이 성립하지 않음을 확인했으므로, 등록 시 산지·품종을 특정한 별도 후보로 나누는 것을 검토한다. 이전 조사의 동탑성 Cát Chu 관련 언급을 2027년 확정 정보로 승격하지 않는다.",
-      "last_reviewed_at": "2026-10-24",
-      "finding": "2026-10-24 재조사에서 산지별 수확 시기가 서로 달랐고 하나의 전국 제철로 정리되지 않았다. 직접 열어 확인한 자료는 두 건이다. ① 산업무역부 포털 기사(2021-07-14, Báo Công Thương, An Châu)는 2021년 손라성 니엔부의 수확이 7월 중 이어지며 예상 72,300톤 중 25,600톤이 소비되었다고 적었다. ② ACIAR·SCAP 보고서(2022-09, Đinh Hữu Hoàng 외)는 호찌민에서 Cát Hòa Lộc·Cát Chu·Keo, 하노이에서 Cát Chu·Nha Trang·Keo가 많이 유통되고 유통 단계 손실률이 13~19%라고 적었다. 검색 요약으로만 본 미확인 수치로는 손라 5~8월, 동탑성 8~12월(9월 정점), 동탑성 떤투언동 12~2월(유도 시 6월까지), 깜럼 호주망고 4월 초가 있었다. 원문을 열지 않았으므로 확정 정보로 쓰지 않는다. 차이의 주된 이유는 개화 유도로 출하기를 옮기는 rải vụ 정책으로 보이나 이 인과 자체도 1차 자료로 확인하지 않았다.",
-      "missing_evidence": "전국 단일 제철이 성립하지 않으므로 산지와 품종을 먼저 특정해야 한다. 직접 확인한 자료는 2021년과 2022년 것이어서 2027년 수확 시기의 근거가 되지 않는다. 같은 산지·품종의 월 단위 수확 시기를 독립 출처 2개에서 대조하지 못했다. 기존 기록의 2019년 동탑성 Cát Chu 4~5월 언급도 재검증하지 않았다.",
+      "last_reviewed_at": "2026-10-26",
+      "finding": "2026-10-24 재조사에서 산지별 수확 시기가 서로 달랐고 하나의 전국 제철로 정리되지 않았다. 직접 열어 확인한 자료는 두 건이다. ① 산업무역부 포털 기사(2021-07-14, Báo Công Thương, An Châu)는 2021년 손라성 니엔부의 수확이 7월 중 이어지며 예상 72,300톤 중 25,600톤이 소비되었다고 적었다. ② ACIAR·SCAP 보고서(2022-09, Đinh Hữu Hoàng 외)는 호찌민에서 Cát Hòa Lộc·Cát Chu·Keo, 하노이에서 Cát Chu·Nha Trang·Keo가 많이 유통되고 유통 단계 손실률이 13~19%라고 적었다. 검색 요약으로만 본 미확인 수치로는 손라 5~8월, 동탑성 8~12월(9월 정점), 동탑성 떤투언동 12~2월(유도 시 6월까지), 깜럼 호주망고 4월 초가 있었다. 원문을 열지 않았으므로 확정 정보로 쓰지 않는다. 차이의 주된 이유는 개화 유도로 출하기를 옮기는 rải vụ 정책으로 보이나 이 인과 자체도 1차 자료로 확인하지 않았다. 2026-10-26 3차 조사에서도 같은 결론이다. 정부·지자체 문서(동탑성 성인민위 계획, 까오란현 보고서, 농업부 결정 4085/QD-BNN-TT)는 면적·생산량·가공 목표만 담고 수확 시기를 적지 않는다. 공개 자료의 월 표기는 여행·상업 안내가 대부분이고 서로 어긋난다(남부 망고 3~4월설과 6~8월설). 한편 동탑성은 2026년 설 시장을 겨냥해 약 3,000ha에 개화를 유도해 36,000톤을 계획했다(SGGP 보도). 즉 출하기는 고정된 자연 절기가 아니라 해마다 조절되는 값이다.",
+      "missing_evidence": "전국 단일 제철이 성립하지 않고, 출하기를 인위적으로 옮기는 rải vụ 정책 때문에 해마다 달라진다. 달력에 매년 반복되는 시즌으로 등록할 근거가 없다. 등록하려면 특정 연도·산지·품종을 지정한 지자체 수확 전망 공문이 필요하며, 그런 문서는 수확기 직전에만 나온다.",
       "next_check": "① 대상 산지와 품종을 먼저 정한다(손라·동탑성·깜럼 등). ② 해당 성의 농업 부서나 국가농업지도센터의 최근 니엔부 자료에서 월 단위 수확 시기를 찾고 독립 출처와 대조한다. ③ 통상 수확철과 특정 연도 전망을 구분해 기록한다. ④ 원료 구매 가능 기간과 냉동 원료 공급 기간은 공개 자료로 확정하지 않고 OEM 공장·수매처에 직접 확인한다. ⑤ 월 단위로 확인되면 로더가 과일 시즌에 한해 month 정밀도를 허용하므로 달 경계 기간으로 등록할 수 있다.",
       "source_urls": [
         "https://moit.gov.vn/tin-tuc/thi-truong-trong-nuoc/mua-nong-san-o-son-la.html",
         "https://research.aciar.gov.au/vietnammangonet/wp-content/uploads/2022/09/Domestic-Markets-.pdf",
         "https://khuyennongvn.gov.vn/portals/0/tailieu/2019/11/hangweb/ruot_tap_chi_khuyen_nong_so_062019_gui_0110.pdf"
-      ]
+      ],
+      "decision_note": "2026-10-26 결정: 웹 조사로는 해결되지 않는 항목으로 분류한다. 더 조사하지 않는다. 원재료 수급 시기는 OEM 공장·현지 수입상에게 직접 확인할 사항이며, 확인되면 그 해의 특정 기간으로만 등록한다. 매년 반복되는 일정으로는 등록하지 않는다."
     },
     {
       "candidate_id": "vn_culture_day_2026",
@@ -211,6 +212,91 @@
         "independence_notes": "정부 전자신문과 정부사무처 공문은 모두 정부 1차 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Tiền Phong 소속 기자(Luân Dũng)가 작성한 보도로, 정부 포털 기사 재게시가 아니라 자체 지면 기사입니다. 다만 베트남 언론 일반과 같이 국가 계열 매체입니다.",
         "latest_notice_result": "2026-10-24 검색 결과 최신 공지는 내무부 공지 11483/TB-BNV(2026-10-09)이며 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
       }
+    },
+    {
+      "candidate_id": "vn_culture_week_2026",
+      "verification_status": "verified",
+      "registration_status": "pending_approval",
+      "event": {
+        "event_id": "vn_culture_week_2026",
+        "country": "VN",
+        "name": "베트남 전국 문화주간 · 대단결 축제",
+        "official_name": "Tuần Văn hóa - Đại đoàn kết toàn dân tộc năm 2026",
+        "type": "regional_event",
+        "year": 2026,
+        "start_date": "2026-11-18",
+        "end_date": "2026-11-24",
+        "date_precision": "day",
+        "original_period": "18/11/2026–24/11/2026, 연속 7일",
+        "region": "베트남 전국 · 다낭 포함",
+        "applies_to": "전국 단위 정부 지시에 따른 행사 주간. 휴무 기간이 아니며 마지막 날인 11월 24일 문화의 날만 유급휴일",
+        "description": "총리 지시로 대단결 축제일(11월 18일)부터 문화의 날(11월 24일)까지 전국에서 진행하는 행사 주간입니다. 기간 중 국기 게양, 문화시설 개방 시간 연장과 입장료 면제·감면, 읍·면·동별 문화산업 홍보 상품 마련이 지시되었습니다. 산업무역부에는 유통·판매 사업장의 판촉·할인 행사를 독려하도록 지시했으며 특히 11월 24일이 대상입니다. 개별 지역의 세부 행사 일정과 참여 조건은 별도로 확인해야 합니다.",
+        "schedule_nature": "총리 지시에 따른 전국 행사 주간",
+        "event_status": "scheduled",
+        "verification_status": "verified",
+        "registration_status": "pending_approval",
+        "verified_at": "2026-10-25",
+        "is_demo": false,
+        "sources": [
+          {
+            "publisher": "베트남 총리 · 정부 법령 포털",
+            "title": "Chỉ thị số 35/CT-TTg — Về việc tổ chức Ngày Văn hóa Việt Nam gắn với Ngày hội Đại đoàn kết toàn dân tộc năm 2026",
+            "url": "https://chinhphu.vn/?docid=219683&pageid=27160",
+            "published_at": "2026-09-30",
+            "role": "primary",
+            "supports": "문서 번호 35/CT-TTg, 공포일 2026-09-30, 서명자 Phạm Thị Thanh Trà, 제목의 행사 취지를 정부 법령 포털 문서 정보에서 확인. 첨부 서명본은 스캔 이미지여서 본문 조항은 이 페이지에서 확인하지 못함"
+          },
+          {
+            "publisher": "베트남 정부 전자신문",
+            "title": "Tổ chức treo cờ Tổ quốc trong suốt tuần văn hóa đại đoàn kết dân tộc từ 18-24/11/2026",
+            "url": "https://xaydungchinhsach.chinhphu.vn/to-chuc-treo-co-to-quoc-trong-suot-tuan-van-hoa-dai-doan-ket-dan-toc-tu-18-24-11-2026-119261013182705219.htm",
+            "published_at": "2026-10-13",
+            "role": "primary",
+            "supports": "정부사무처 Thông báo 524/TB-VPCP(2026-10-13) 기준 기간 2026-11-18~11-24, 국기 게양, 문화시설 개방·감면, 산업무역부의 11월 24일 판촉 독려를 확인. 지시 원문 인용이 아니라 후속 결론 보도임"
+          },
+          {
+            "publisher": "Thanh Niên · Thu Hằng",
+            "title": "Cả nước tổ chức tuần văn hóa đại đoàn kết từ 18 - 24.11",
+            "url": "https://thanhnien.vn/ca-nuoc-to-chuc-tuan-van-hoa-dai-doan-ket-tu-18-2411-18526093014252357.htm",
+            "published_at": "2026-09-30",
+            "role": "independent_corrob",
+            "supports": "별도 작성자의 보도에서 기간 11월 18일~24일과 문화의 날 연계, 지시 번호 35와 서명자를 대조 확인"
+          }
+        ],
+        "verification_notes": "정부 법령 포털에서 지시 번호·공포일·서명자·제목을 확인했습니다. 첨부된 서명 원본 PDF는 스캔 이미지여서 조문을 직접 추출하지 못했고, 기간과 세부 지시사항은 정부 전자신문의 후속 보도(Thông báo 524/TB-VPCP 기준)와 Thanh Niên 보도로 확인했습니다. 정부 법령 포털과 정부 전자신문은 독립 출처 2개로 세지 않았습니다. 다낭시가 별도로 발표한 것으로 보도된 11월 23~29일 문화주간과는 기간이 다르며, 둘의 관계는 확인하지 못해 등록 대상에서 제외했습니다. 판촉 독려는 정부의 지시사항이며 특정 사업자의 참여 자격이나 혜택을 보장하지 않습니다.",
+        "_작성_메모": "주연님 확인 전 초안입니다. review 체크값은 원문 확인 후 true로 바꿔야 stage 명령이 통과합니다."
+      },
+      "review": {
+        "reviewed_at": "2026-10-25",
+        "reviewed_by": "주연",
+        "originals_opened": true,
+        "dates_match": true,
+        "scope_match": true,
+        "independent_sources": true,
+        "latest_notice_checked": true,
+        "conflicts_resolved": true,
+        "comparison_notes": "정부 전자신문(2026-10-13)과 Thanh Niên(2026-09-30)이 기간 11월 18일~24일에서 일치합니다. 다낭시 발표로 보도된 11월 23~29일과는 다르며, 전국 주간과 지역 행사를 구분해 전국 주간만 등록 대상으로 삼았습니다.",
+        "independence_notes": "정부 법령 포털과 정부 전자신문은 모두 정부 자료이므로 독립 출처로 각각 세지 않았습니다. 독립 교차는 Thanh Niên 소속 기자(Thu Hằng)의 보도로, 정부 포털 기사 재게시가 아닙니다. 다만 베트남 언론 일반과 같이 국가 계열 매체입니다.",
+        "latest_notice_result": "2026-10-25 검색 기준 최신 관련 문서는 Thông báo 524/TB-VPCP(2026-10-13)이며 이후 변경·취소 공지는 검색 범위에서 발견하지 못했습니다. 이는 변경이 없다는 공식 확인이 아닙니다."
+      }
+    },
+    {
+      "candidate_id": "vn_spring_holidays_2027",
+      "name": "2027년 봄 공휴일 연휴 · 흥 왕 기일·통일절·노동절",
+      "type": "holiday",
+      "year": 2027,
+      "verification_status": "insufficient_evidence",
+      "registration_status": "on_hold",
+      "start_date": null,
+      "end_date": null,
+      "last_reviewed_at": "2026-10-25",
+      "finding": "2026-10-25 조사에서 2027년 흥 왕 기일·통일절(4월 30일)·노동절(5월 1일)의 휴무 방안 공지를 찾지 못했다. 정부사무처 공문 10065/VPCP-KGVX(2026-10-02)는 2026년 문화의 날과 2027년 설·국경일만 다루었고 봄 공휴일은 포함하지 않았다. 2026년의 경우 내무부가 공문 3383/BNV-CVL(2026-04-10)로 노동법 규정대로 쉬며 대체 근무일 교환은 하지 않는다고 밝혔다.",
+      "missing_evidence": "2027년 봄 공휴일의 연속 휴무 일수와 대체 근무일 교환 여부를 확인할 공지가 없다. 흥 왕 기일은 음력 3월 10일 기준이라 양력 날짜도 별도 확인이 필요하다. 2026년에 교환이 없었다는 사실이 2027년을 보장하지 않는다.",
+      "next_check": "내무부 공지와 정부사무처 공문을 확인한다. 2026년 전체 일정은 2025년 10월에, 봄 공휴일 세부 안내는 2026년 4월에 나왔으므로 두 시점을 모두 본다. 법정 공휴일 자체와 공공부문 연속 휴무 기간을 구분해 기록한다.",
+      "source_urls": [
+        "https://nhandan.vn/ocop/bo-noi-vu-khong-co-chu-truong-hoan-doi-ngay-nghi-dip-gio-to-hung-vuong-va-nghi-le-304-va-15-post952992.html",
+        "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/10065_vpcp-kgvx_02102026_1-signed.signed.pdf"
+      ]
     }
   ]
 }

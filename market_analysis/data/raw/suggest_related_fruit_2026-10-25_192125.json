@@ -1,0 +1,224 @@
+{
+  "search_metadata": {
+    "id": "6addf46ce99b2107ae18063d",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/jXSsBnts3qYsippso5L3AwLInDzcEE65mPBxTMqdMX0/6addf46ce99b2107ae18063d.md",
+    "created_at": "2026-10-25 12:22:04 UTC",
+    "processed_at": "2026-10-25 12:22:04 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22kem+d%E1%BB%ABa%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/jXSsBnts3qYsippso5L3AwLInDzcEE65mPBxTMqdMX0/6addf46ce99b2107ae18063d.html",
+    "prettify_html_file": "https://serpapi.com/searches/jXSsBnts3qYsippso5L3AwLInDzcEE65mPBxTMqdMX0/6addf46ce99b2107ae18063d.prettify",
+    "total_time_taken": 1.89
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "kem dừa",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "kem dừa côn đảo hà nội",
+        "value": "+350%",
+        "extracted_value": 350,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o+h%C3%A0+n%E1%BB%99i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o+h%C3%A0+n%E1%BB%99i&tz=-420"
+      },
+      {
+        "query": "kem merino",
+        "value": "+70%",
+        "extracted_value": 70,
+        "link": "https://trends.google.com/trends/explore?q=kem+merino&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+merino&tz=-420"
+      },
+      {
+        "query": "kem dừa vinamilk",
+        "value": "+50%",
+        "extracted_value": 50,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+vinamilk&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+vinamilk&tz=-420"
+      },
+      {
+        "query": "trà sữa kem dừa nướng",
+        "value": "+40%",
+        "extracted_value": 40,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A0+s%E1%BB%AFa+kem+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A0+s%E1%BB%AFa+kem+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "làm kem dừa",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+kem+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+kem+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem sữa dừa",
+        "value": "82",
+        "extracted_value": 82,
+        "link": "https://trends.google.com/trends/explore?q=kem+s%E1%BB%AFa+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+s%E1%BB%AFa+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem dừa",
+        "value": "67",
+        "extracted_value": 67,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem",
+        "value": "65",
+        "extracted_value": 65,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem&tz=-420"
+      },
+      {
+        "query": "kem bơ dừa",
+        "value": "30",
+        "extracted_value": 30,
+        "link": "https://trends.google.com/trends/explore?q=kem+b%C6%A1+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+b%C6%A1+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem dừa côn đảo",
+        "value": "29",
+        "extracted_value": 29,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o&tz=-420"
+      },
+      {
+        "query": "dầu dừa",
+        "value": "29",
+        "extracted_value": 29,
+        "link": "https://trends.google.com/trends/explore?q=d%E1%BA%A7u+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=d%E1%BA%A7u+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem dừa mã lai",
+        "value": "21",
+        "extracted_value": 21,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+m%C3%A3+lai&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+m%C3%A3+lai&tz=-420"
+      },
+      {
+        "query": "làm kem sữa dừa",
+        "value": "18",
+        "extracted_value": 18,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem trái dừa",
+        "value": "15",
+        "extracted_value": 15,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%C3%A1i+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%C3%A1i+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem merino",
+        "value": "13",
+        "extracted_value": 13,
+        "link": "https://trends.google.com/trends/explore?q=kem+merino&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+merino&tz=-420"
+      },
+      {
+        "query": "kem xôi dừa",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=kem+x%C3%B4i+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+x%C3%B4i+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem chuối dừa",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+chu%E1%BB%91i+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+chu%E1%BB%91i+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem sữa dừa",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+s%E1%BB%AFa+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem xôi",
+        "value": "11",
+        "extracted_value": 11,
+        "link": "https://trends.google.com/trends/explore?q=kem+x%C3%B4i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+x%C3%B4i&tz=-420"
+      },
+      {
+        "query": "kem trứng dừa nướng",
+        "value": "11",
+        "extracted_value": 11,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%E1%BB%A9ng+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%E1%BB%A9ng+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&tz=-420"
+      },
+      {
+        "query": "kem dừa vinamilk",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+vinamilk&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+vinamilk&tz=-420"
+      },
+      {
+        "query": "kem chuối nước cốt dừa",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=kem+chu%E1%BB%91i+n%C6%B0%E1%BB%9Bc+c%E1%BB%91t+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+chu%E1%BB%91i+n%C6%B0%E1%BB%9Bc+c%E1%BB%91t+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "cách làm kem bơ dừa",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+b%C6%A1+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+b%C6%A1+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "kem dừa bao nhiêu calo",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+bao+nhi%C3%AAu+calo&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+bao+nhi%C3%AAu+calo&tz=-420"
+      },
+      {
+        "query": "cách làm kem chuối cốt dừa",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+kem+chu%E1%BB%91i+c%E1%BB%91t+d%E1%BB%ABa&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+kem+chu%E1%BB%91i+c%E1%BB%91t+d%E1%BB%ABa&tz=-420"
+      },
+      {
+        "query": "trà sữa kem dừa nướng",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A0+s%E1%BB%AFa+kem+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A0+s%E1%BB%AFa+kem+d%E1%BB%ABa+n%C6%B0%E1%BB%9Bng&tz=-420"
+      },
+      {
+        "query": "bơ già dừa non",
+        "value": "7",
+        "extracted_value": 7,
+        "link": "https://trends.google.com/trends/explore?q=b%C6%A1+gi%C3%A0+d%E1%BB%ABa+non&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C6%A1+gi%C3%A0+d%E1%BB%ABa+non&tz=-420"
+      },
+      {
+        "query": "kem dừa côn đảo hà nội",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o+h%C3%A0+n%E1%BB%99i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%E1%BB%ABa+c%C3%B4n+%C4%91%E1%BA%A3o+h%C3%A0+n%E1%BB%99i&tz=-420"
+      }
+    ]
+  }
+}

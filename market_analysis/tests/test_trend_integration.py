@@ -35,7 +35,7 @@ class IntegrationTests(unittest.TestCase):
         d=r.get_json()
         self.assertEqual(len(d['categories']),4)
         self.assertEqual(len(d['fruit_flavors']),10)
-        self.assertEqual(len(d['seasonality']),4)
+        self.assertEqual(len(d['seasonality']),len(TrendRepository().get_keywords('VN')['seasonality_themes'])+1)  # 주제 탭 + 과일 탭
         self.assertTrue(d['regions'])
         self.assertNotIn('api_key',r.get_data(as_text=True).lower())
     def test_unsupported_country(self):

@@ -1,0 +1,92 @@
+{
+  "search_metadata": {
+    "id": "6ade5a9845a66a1c7e9ab33e",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/SJxcsznF51yaSlNxZ2pHe-jEgj1WL7A7inTr8dC1jvg/6ade5a9845a66a1c7e9ab33e.md",
+    "created_at": "2026-10-25 19:38:00 UTC",
+    "processed_at": "2026-10-25 19:38:00 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_TOPICS?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22bingsu%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/SJxcsznF51yaSlNxZ2pHe-jEgj1WL7A7inTr8dC1jvg/6ade5a9845a66a1c7e9ab33e.html",
+    "prettify_html_file": "https://serpapi.com/searches/SJxcsznF51yaSlNxZ2pHe-jEgj1WL7A7inTr8dC1jvg/6ade5a9845a66a1c7e9ab33e.prettify",
+    "total_time_taken": 5.39
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "bingsu",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_TOPICS"
+  },
+  "related_topics": {
+    "top": [
+      {
+        "topic": {
+          "value": "/m/06_jxl",
+          "title": "Bingsu",
+          "type": "Thức ăn"
+        },
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=/m/06_jxl&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F06_jxl&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11wc4z5mhq",
+          "title": "MrP Bingsu & Tea Phan Xích Long",
+          "type": "Quán cà phê ở Thành phố Hồ Chí Minh, Việt Nam"
+        },
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=/g/11wc4z5mhq&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11wc4z5mhq&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/024gjb",
+          "title": "Thực đơn",
+          "type": "Chủ đề"
+        },
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=/m/024gjb&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F024gjb&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11bwsp10mq",
+          "title": "Sul Bingsu (Kem Han Quoc)",
+          "type": "Cửa hàng kem ở Thành phố Hồ Chí Minh, Việt Nam"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/g/11bwsp10mq&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11bwsp10mq&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/11fy4sdn9g",
+          "title": "SNOW BINGS - Since 2015",
+          "type": "Cửa hàng kem ở Thành phố Hồ Chí Minh, Việt Nam"
+        },
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=/g/11fy4sdn9g&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11fy4sdn9g&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0cxn2",
+          "title": "Kem lạnh",
+          "type": "Thực phẩm"
+        },
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=/m/0cxn2&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0cxn2&tz=-420"
+      }
+    ]
+  }
+}

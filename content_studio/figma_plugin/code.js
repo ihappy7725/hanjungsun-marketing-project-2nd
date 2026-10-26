@@ -189,15 +189,28 @@ async function importDesign(data, images, missing) {
   if (data.design.demo) notes.push("DEMO · 예시 데이터입니다.");
   if (ctx.notices.size) notes.push(`글꼴 대체: ${[...ctx.notices].join(", ")}`);
   if (missing.length) notes.push(`사진 ${missing.length}개를 받지 못해 회색 칸으로 두었습니다.`);
-  return notes.join(" ");
+  return { message: notes.join(" "), link: frameLink(frames[0]) };
+}
+
+// 대시보드가 Figma 창을 바로 띄울 수 있게 첫 프레임 주소를 만듭니다.
+// figma.fileKey는 manifest의 enablePrivatePluginApi가 있어야 하고, 받지 못하면 null을 돌려줍니다.
+function frameLink(frame) {
+  let fileKey = null;
+  try {
+    fileKey = figma.fileKey;
+  } catch (error) {
+    // 이 플러그인에 허락되지 않은 기능: 링크 직접 넣기로 대신합니다.
+  }
+  if (!frame || !fileKey) return null;
+  return `https://www.figma.com/design/${fileKey}/?node-id=${frame.id.replace(":", "-")}`;
 }
 
 figma.ui.onmessage = async (message) => {
   if (message.type !== "import") return;
   try {
     const result = await importDesign(message.data, message.images || {}, message.missing || []);
-    figma.ui.postMessage({ type: "done", message: result });
-    figma.notify(result);
+    figma.ui.postMessage({ type: "done", message: result.message, link: result.link, chatId: message.data.id });
+    figma.notify(result.message);
   } catch (error) {
     figma.ui.postMessage({ type: "error", message: `가져오지 못했습니다: ${error.message}` });
   }

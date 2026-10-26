@@ -259,12 +259,12 @@ def youtube_channel(ref, recent=15):
     return result
 
 
-def youtube_search(query, max_results=15):
-    """베트남 지역 채널 검색 + 구독자 수. 약 101유닛 (검색이 100유닛)."""
+def youtube_search(query, max_results=15, region="VN", lang="vi"):
+    """채널 검색 + 구독자 수. 기본은 베트남 지역·베트남어 (한국인 대상은 region="KR", lang="ko"). 약 101유닛."""
     q = (query or "").strip()
     if not q:
         raise ApiError("검색어를 입력하세요. 예: review bánh Hàn Quốc")
-    data = _yt("search", {"part": "snippet", "type": "channel", "q": q, "regionCode": "VN", "relevanceLanguage": "vi",
+    data = _yt("search", {"part": "snippet", "type": "channel", "q": q, "regionCode": region or "VN", "relevanceLanguage": lang or "vi",
                           "maxResults": max(1, min(int(max_results), 25))}, f"search.list \"{q[:20]}\"")
     ids = [it["id"]["channelId"] for it in data.get("items") or [] if (it.get("id") or {}).get("channelId")]
     if not ids:
@@ -322,15 +322,15 @@ def youtube_popular_videos(region="VN", total=50):
     return items[:total]
 
 
-def youtube_search_channels(query, total=50):
-    """키워드로 베트남 지역 채널을 모음 (검색 1페이지=100유닛, 최대 50개). 구독자 수 포함."""
+def youtube_search_channels(query, total=50, region="VN", lang="vi"):
+    """키워드로 채널을 모음 (기본 베트남 지역·베트남어, 검색 1페이지=100유닛, 최대 50개). 구독자 수 포함."""
     q = (query or "").strip()
     if not q:
         raise ApiError("검색어를 입력하세요. 예: mukbang")
     total = max(1, min(int(total), 100))
     ids, token = [], None
     while len(ids) < total:
-        params = {"part": "snippet", "type": "channel", "q": q, "regionCode": "VN", "relevanceLanguage": "vi", "maxResults": 50}
+        params = {"part": "snippet", "type": "channel", "q": q, "regionCode": region or "VN", "relevanceLanguage": lang or "vi", "maxResults": 50}
         if token:
             params["pageToken"] = token
         data = _yt("search", params, f"search.list \"{q[:20]}\"")
