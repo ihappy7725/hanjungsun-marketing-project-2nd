@@ -222,8 +222,7 @@ function confirmDelete(item, preview) {
   no.type = "button";
   const buttons = el("div", "actions");
   buttons.append(yes, no);
-  ask.append(el("p", "studio-confirm-title", `「${item.title}」 작업을 삭제할까요?`),
-    el("p", "studio-hint", "모든 버전이 함께 지워지고 되돌릴 수 없어요. (크레딧 사용 기록은 남아요)"), buttons);
+  ask.append(el("p", "studio-confirm-title", `「${item.title}」 작업을 삭제할까요?`), buttons);
   const done = () => { ask.close(); ask.remove(); };  // 닫으면 바로 지움
   no.addEventListener("click", done);
   yes.addEventListener("click", async () => {
@@ -285,13 +284,10 @@ function openPreview(item) {
   const remove = el("button", "btn studio-preview-delete", "삭제");
   remove.type = "button";
   remove.addEventListener("click", () => confirmDelete(item, dialog));
-  // [수정하기]로 들어가야 할 수 있는 일(포스터·카드뉴스는 Figma 보내기 포함)을 버튼 바로 위에 알려 줍니다.
-  const guide = el("p", "studio-preview-guide", item.kind === "video"
-    ? "수정하기를 누르면 장면·프롬프트를 고치고 미리보기 이미지·영상을 만들 수 있어요."
-    : "수정하기를 누르면 편집 화면에서 시안 고치기 · AI 초안 · 문구 검수 · Figma로 보내기를 할 수 있어요.");
+  // 업무 화면이라 [수정하기] 설명 문구는 두지 않습니다(2026-10-27 유진 요청).
   dialog.append(remove, el("h2", "", item.title),
     el("p", "studio-hint", `${KIND_LABELS[item.kind]} · ${productNames(item.product_id)} · ${statusOf(item)} · ${shortDate(item.updated_at)}`),
-    body, guide, actions);
+    body, actions);
   dialog.addEventListener("close", () => dialog.remove());
   page.append(dialog);
   dialog.showModal();
