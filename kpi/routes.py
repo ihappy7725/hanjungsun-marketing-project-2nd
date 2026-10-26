@@ -42,13 +42,13 @@ DEMO_CHANNELS = [
      "conversions": 610, "landing_clicks": 7_900},
 ]
 
-# GA4 시연 값. kpi/data/ga4_demo.csv(GA4 공식 데모 계정 내보내기)가 있으면 세션·참여 세션은 그 파일 값을 씁니다.
+# GA4 시연 값. kpi/data/ga4_demo.json(GA4 공식 데모 계정 화면을 옮겨 적음)이 있으면 세션·참여·전환은 그 파일 값을 씁니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
 # 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
 DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
-GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
-# 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
+GA4_DEMO_JSON = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.json")
+# 팜플렛 QR 설문 주관식 한 줄 의견 (시연, 응답자 186명 · platform = 설문을 받은 창구)
 SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
 DEMO_CREATORS = [
@@ -60,178 +60,39 @@ DEMO_CREATORS = [
 ]
 
 SENTIMENTS = ("Positive", "Neutral", "Negative")
-# 한정선은 배송을 하지 않습니다. 포장·보냉(매장 구매 후 휴대) 반응만 다룹니다.
-KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "기타")
+# 한정선은 현지 배달·온라인 배송이 없습니다(매장 구매·예약 후 매장 픽업만). 포장·보냉(휴대) 반응만 다룹니다.
+# 1:1 문의 창구라 보관 방법·매장 위치·단체 주문 같은 문의가 많아 "문의/기타"로 묶습니다.
+KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "문의/기타")
+OTHER_TAG = "문의/기타"
 
-DEMO_REVIEWS = [
-    {"review_id": "demo_voc_01", "platform": "Shopee_VN",
-     "raw_text_vn": "Bánh mochi dâu rất tươi, vị ngọt vừa phải, cả nhà đều thích.",
-     "translated_kr": "딸기 찹쌀떡 처음 사 봤는데 딸기가 진짜 신선하더라고요! 단맛도 과하지 않아서 온 가족이 다 잘 먹었어요.",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_02", "platform": "Shopee_VN",
-     "raw_text_vn": "Trời nóng quá nên trên đường mua về nhà phần kem bên trong hơi bị chảy.",
-     "translated_kr": "날씨가 너무 더워서 그런지 사 들고 집에 오는 길에 안에 크림이 살짝 녹았더라고요..",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_03", "platform": "Instagram",
-     "raw_text_vn": "Hộp quà gói bằng vải bojagi nhìn sang trọng, rất hợp để biếu tặng.",
-     "translated_kr": "보자기로 싸 주신 선물 상자가 고급스러워 보여서 선물용으로 딱이에요!",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_04", "platform": "TikTok",
-     "raw_text_vn": "Giá hơi cao so với bánh mochi bình thường, nhưng chất lượng tốt.",
-     "translated_kr": "일반 찹쌀떡보다 가격이 좀 있는 편이긴 한데.. 먹어 보니 품질은 확실히 좋네요.",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_05", "platform": "Shopee_VN",
-     "raw_text_vn": "Vỏ bánh dẻo mềm, nhân xoài thơm, sẽ mua lại.",
-     "translated_kr": "떡이 쫀득하면서도 부드럽고 망고 소가 향긋해서 계속 생각나요. 재구매 의사 있습니다!",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_06", "platform": "Instagram",
-     "raw_text_vn": "Mua ở cửa hàng nhưng không có túi giữ lạnh, cầm về một tiếng là bánh bị mềm nhũn.",
-     "translated_kr": "매장에서 샀는데 보냉백이 없어서 한 시간쯤 들고 왔더니 떡이 완전 흐물흐물해졌어요ㅠ",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_07", "platform": "TikTok",
-     "raw_text_vn": "Mình mua làm quà Tết cho sếp, ai cũng khen đẹp.",
-     "translated_kr": "뗏(설) 선물로 상사분께 드리려고 샀는데 보는 사람마다 예쁘다고 칭찬하더라고요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_08", "platform": "Shopee_VN",
-     "raw_text_vn": "Vị sầu riêng hơi gắt, không hợp khẩu vị của mình.",
-     "translated_kr": "두리안 맛은 향이 생각보다 강하더라고요.. 제 입맛에는 좀 안 맞았어요.",
-     "sentiment": "Negative", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_09", "platform": "Instagram",
-     "raw_text_vn": "Bánh ăn được, không có gì đặc biệt lắm.",
-     "translated_kr": "무난하게 먹을 만했어요. 특별히 기억에 남는 맛은 아니었네요.",
-     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_10", "platform": "TikTok",
-     "raw_text_vn": "Mong có hộp nhỏ 4 cái để giá mềm hơn.",
-     "translated_kr": "4개짜리 작은 박스도 나오면 좋겠어요. 그러면 가격 부담이 좀 덜할 것 같아요.",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    # Zalo_OA: 제품 팜플렛 QR → 한정선 Zalo 공식 계정 1:1 문의 (한국 본사 카카오톡 채널 CS의 베트남 현지화)
-    {"review_id": "demo_voc_11", "platform": "Zalo_OA",
-     "raw_text_vn": "Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",
-     "translated_kr": "보냉 박스가 좋아서 다낭 집까지 들고 왔는데도 떡이 말랑말랑했어요!",
-     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_12", "platform": "Zalo_OA",
-     "raw_text_vn": "Cho mình hỏi bánh để tủ lạnh được mấy ngày?",
-     "translated_kr": "혹시 냉장고에 넣어 두면 며칠까지 괜찮을까요?",
-     "sentiment": "Neutral", "keyword_tag": "기타"},
-    {"review_id": "demo_voc_13", "platform": "Zalo_OA",
-     "raw_text_vn": "Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",
-     "translated_kr": "매장에서 받았을 때 상자 한쪽이 찌그러져 있었어요.. 포장 조금만 더 꼼꼼히 해 주시면 좋겠어요.",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    # Shopee 판매 페이지 리뷰
-    {"review_id": "demo_voc_14", "platform": "Shopee_VN",
-     "raw_text_vn": "Mua vị khoai môn, béo bùi mà không ngấy. Rất ngon!",
-     "translated_kr": "토란 맛 샀는데 고소하면서도 안 느끼해요. 진짜 맛있어요!",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_15", "platform": "Shopee_VN",
-     "raw_text_vn": "Hộp có đá khô, mang đi xa vẫn lạnh, bánh không bị chảy.",
-     "translated_kr": "드라이아이스를 넣어 주셔서 멀리 들고 가도 차갑고 하나도 안 녹았어요.",
-     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_16", "platform": "Shopee_VN",
-     "raw_text_vn": "Túi giữ lạnh hơi mỏng, trời 35 độ cầm 30 phút là bánh mềm.",
-     "translated_kr": "보냉백이 좀 얇아요. 35도 날씨에 30분 들고 다녔더니 떡이 물러졌어요ㅠ",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_17", "platform": "Shopee_VN",
-     "raw_text_vn": "Bánh ngon nhưng mua 6 cái hơn 300 nghìn thì hơi xót.",
-     "translated_kr": "맛은 있는데 6개에 30만 동 넘으니까 좀 아깝긴 하네요..",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_18", "platform": "Shopee_VN",
-     "raw_text_vn": "Vỏ mochi dẻo, nhân kem phô mai mặn ngọt rất cuốn.",
-     "translated_kr": "떡이 쫀득하고 크림치즈 소가 단짠이라 계속 들어가요!",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_19", "platform": "Shopee_VN",
-     "raw_text_vn": "Đặt làm quà sinh nhật cho mẹ, mẹ khen hộp đẹp và bánh ngon.",
-     "translated_kr": "엄마 생신 선물로 샀는데 상자도 예쁘고 맛있다고 좋아하셨어요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_20", "platform": "Shopee_VN",
-     "raw_text_vn": "Vị dâu lần này hơi chua, không ngọt như lần trước.",
-     "translated_kr": "이번 딸기 맛은 좀 시더라고요. 지난번만큼 달지 않았어요..",
-     "sentiment": "Negative", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_21", "platform": "Shopee_VN",
-     "raw_text_vn": "Hạn sử dụng ghi rõ, có hướng dẫn bảo quản bằng tiếng Việt, rất tiện.",
-     "translated_kr": "유통기한이 잘 적혀 있고 베트남어 보관 안내도 있어서 편했어요.",
-     "sentiment": "Positive", "keyword_tag": "기타"},
-    {"review_id": "demo_voc_22", "platform": "Shopee_VN",
-     "raw_text_vn": "Ăn ổn, nhưng mình thích bánh truyền thống của Việt Nam hơn.",
-     "translated_kr": "먹을 만은 한데 저는 베트남 전통 떡이 더 입에 맞네요.",
-     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_23", "platform": "Shopee_VN",
-     "raw_text_vn": "Mua combo 2 hộp được giảm giá, quá hời.",
-     "translated_kr": "두 박스 묶음으로 사니까 할인돼서 완전 이득이었어요.",
-     "sentiment": "Positive", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_24", "platform": "Shopee_VN",
-     "raw_text_vn": "Giá tăng so với tháng trước mà hộp lại ít bánh hơn.",
-     "translated_kr": "지난달보다 가격은 올랐는데 개수는 줄었어요..",
-     "sentiment": "Negative", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_25", "platform": "Shopee_VN",
-     "raw_text_vn": "Con mình 5 tuổi rất thích vị chuối, ngày nào cũng đòi.",
-     "translated_kr": "다섯 살 아이가 바나나 맛을 너무 좋아해서 매일 달라고 해요ㅋㅋ",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    # Instagram 게시물 댓글
-    {"review_id": "demo_voc_26", "platform": "Instagram",
-     "raw_text_vn": "Hộp quà màu pastel lên hình rất xinh, chụp story ai cũng hỏi mua ở đâu.",
-     "translated_kr": "파스텔 톤 선물 상자가 사진이 너무 예쁘게 나와서 스토리 올렸더니 다들 어디서 샀냐고 물어봐요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_27", "platform": "Instagram",
-     "raw_text_vn": "Lần đầu ăn mochi Hàn Quốc, nhân đậu đỏ không quá ngọt, rất thích.",
-     "translated_kr": "한국 찹쌀떡 처음 먹어 봤는데 팥소가 너무 달지 않아서 좋았어요.",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_28", "platform": "Instagram",
-     "raw_text_vn": "Hộp đẹp nhưng hơi to, mang theo không tiện lắm.",
-     "translated_kr": "상자는 예쁜데 좀 커서 들고 다니기엔 불편했어요.",
-     "sentiment": "Neutral", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_29", "platform": "Instagram",
-     "raw_text_vn": "Cửa hàng ở Quận 1 đông quá, xếp hàng gần 20 phút.",
-     "translated_kr": "1군 매장 사람이 너무 많아서 20분 가까이 줄 섰어요.",
-     "sentiment": "Negative", "keyword_tag": "기타"},
-    {"review_id": "demo_voc_30", "platform": "Instagram",
-     "raw_text_vn": "Bánh gói từng cái riêng, mang đi làm ăn rất tiện.",
-     "translated_kr": "하나씩 개별 포장이라 회사에 가져가서 먹기 편해요.",
-     "sentiment": "Positive", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_31", "platform": "Instagram",
-     "raw_text_vn": "Mua làm quà Trung thu thay bánh nướng, khách hàng rất thích.",
-     "translated_kr": "추석(쭝투) 선물로 월병 대신 드렸는데 거래처분들이 정말 좋아하셨어요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_32", "platform": "Instagram",
-     "raw_text_vn": "Bánh ngon, chỉ mong có thêm nhiều vị với giá mềm hơn.",
-     "translated_kr": "맛있어요. 다만 맛 종류가 더 많아지고 가격이 조금 내려가면 좋겠어요.",
-     "sentiment": "Neutral", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_33", "platform": "Instagram",
-     "raw_text_vn": "Nhân viên cửa hàng giới thiệu từng vị rất dễ thương.",
-     "translated_kr": "매장 직원분이 맛마다 하나하나 친절하게 설명해 주셔서 좋았어요.",
-     "sentiment": "Positive", "keyword_tag": "기타"},
-    # TikTok 영상 댓글
-    {"review_id": "demo_voc_34", "platform": "TikTok",
-     "raw_text_vn": "Xem review trên TikTok nên mua thử, ăn đúng là ngon thật.",
-     "translated_kr": "틱톡 리뷰 보고 사 봤는데 진짜 맛있네요.",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_35", "platform": "TikTok",
-     "raw_text_vn": "Mở hộp ra thấy bánh bị dính vào nhau, nhìn không đẹp.",
-     "translated_kr": "상자를 열어 보니 떡끼리 달라붙어 있어서 모양이 별로였어요.",
-     "sentiment": "Negative", "keyword_tag": "포장/보냉"},
-    {"review_id": "demo_voc_36", "platform": "TikTok",
-     "raw_text_vn": "Vị xoài siêu thơm, ăn lạnh như kem luôn.",
-     "translated_kr": "망고 맛 진짜 향긋하고 차갑게 먹으니까 아이스크림 같아요!",
-     "sentiment": "Positive", "keyword_tag": "당도/맛"},
-    {"review_id": "demo_voc_37", "platform": "TikTok",
-     "raw_text_vn": "Bánh để được mấy ngày vậy shop? Mình mua nhiều sợ ăn không kịp.",
-     "translated_kr": "며칠까지 보관할 수 있나요? 많이 샀는데 다 못 먹을까 봐 걱정이에요.",
-     "sentiment": "Neutral", "keyword_tag": "기타"},
-    {"review_id": "demo_voc_38", "platform": "TikTok",
-     "raw_text_vn": "Giá trên TikTok Shop với ở cửa hàng khác nhau, hơi khó hiểu.",
-     "translated_kr": "틱톡샵 가격이랑 매장 가격이 달라서 좀 헷갈려요.",
-     "sentiment": "Negative", "keyword_tag": "가격"},
-    {"review_id": "demo_voc_39", "platform": "TikTok",
-     "raw_text_vn": "Mua tặng bạn gái dịp 20/10, bạn ấy rất vui.",
-     "translated_kr": "10월 20일 여성의 날에 여자친구 선물로 줬는데 엄청 좋아했어요.",
-     "sentiment": "Positive", "keyword_tag": "선물용"},
-    {"review_id": "demo_voc_40", "platform": "TikTok",
-     "raw_text_vn": "Vị gốc ngon, còn vị sầu riêng thì tùy người.",
-     "translated_kr": "기본 맛은 맛있고 두리안 맛은 호불호가 있을 것 같아요.",
-     "sentiment": "Neutral", "keyword_tag": "당도/맛"},
-]
+# VOC 1:1 문의·후기 (시연). CS 창구는 제품 팜플렛 하단 QR 3개: Zalo OA · 카카오톡 채널 · WhatsApp
+# raw_text_vn은 고객이 쓴 원문이고 lang(vi/ko)으로 언어를 구분합니다. 파일이 없으면 빈 목록.
+REVIEWS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_reviews_demo.csv")
+REVIEW_CHANNELS = ("Zalo_OA", "KakaoTalk", "WhatsApp")
+
+
+def _read_demo_reviews(path=REVIEWS_CSV):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = [line for line in f if not line.startswith("#")]
+    return [{
+        "review_id": row["review_id"],
+        "platform": row["platform"],
+        "raw_text_vn": row["raw_text_vn"],
+        "translated_kr": row["translated_kr"],
+        "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
+        "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
+        "lang": row.get("lang") or "vi",
+        "source": "message",
+    } for row in csv.DictReader(lines)]
+
+
+DEMO_REVIEWS = _read_demo_reviews()
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
-DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_responses": 186}
+# follows: 팜플렛 QR로 채널을 추가한 수(Zalo OA 친구 추가 · WhatsApp 대화 시작 · 카카오톡 채널 추가). 베트남은 Zalo 이용자가 가장 많음
+DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "follows": {"Zalo_OA": 410, "WhatsApp": 150, "KakaoTalk": 90}, "survey_responses": 186}
 # 응답자 186명이 문항마다 1~5점 중 하나를 고른 인원 수(dist = [1점, 2점, 3점, 4점, 5점]).
 # 평균·긍정 비율은 이 분포에서 계산합니다(_survey_block).
 DEMO_SURVEY = [
@@ -536,92 +397,42 @@ def _simulator_influencer_list():
 
 
 # ---------------------------------------------------------------------------
-# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) CSV를 읽습니다.
-# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_csv만 GA4 Data API 호출로 바꿉니다.
+# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) 화면을 옮겨 적은 JSON을 읽습니다(데모 계정은 CSV 다운로드 불가).
+# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_json만 GA4 Data API 호출로 바꿉니다(같은 키 이름으로 돌려주면 됨).
 # (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 쇼피 이동은 '이탈 클릭' 이벤트)
 # ---------------------------------------------------------------------------
 
-GA4_COLUMNS = {
-    "sessions": ("세션수", "세션", "Sessions"),
-    "engaged_sessions": ("참여 세션수", "참여 세션", "Engaged sessions"),
-    "purchases": ("거래", "구매", "Transactions", "Purchases", "Ecommerce purchases"),
-}
-GA4_DATE_KEYS = {"start": ("시작 날짜", "Start date"), "end": ("종료 날짜", "End date")}
+GA4_CHANNEL_FIELDS = (
+    "sessions", "engaged_sessions", "avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd",
+)
 
 
-def _ga4_number(text):
-    text = (text or "").replace(",", "").replace("%", "").strip()
-    try:
-        return float(text)
-    except ValueError:
-        return None
-
-
-def _ga4_date(text):
-    text = (text or "").strip()
-    return f"{text[:4]}-{text[4:6]}-{text[6:8]}" if len(text) == 8 and text.isdigit() else text
-
-
-def _read_ga4_demo_csv(path=GA4_DEMO_CSV):
-    """GA4 보고서 '내보내기 → CSV' 파일을 읽어 합계를 돌려줍니다. 파일이 없으면 None, 형식 오류는 ValueError."""
+def _read_ga4_demo_json(path=GA4_DEMO_JSON):
+    """GA4 데모 JSON(totals · channels · top_events)을 읽습니다. 파일이 없으면 None, 형식 오류는 ValueError."""
     if not os.path.exists(path):
         return None
-    period = {}
-    table = []
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        for line in f:
-            stripped = line.strip()
-            if stripped.startswith("#"):
-                key, _, value = stripped.lstrip("#").partition(":")
-                for name, labels in GA4_DATE_KEYS.items():
-                    if key.strip() in labels:
-                        period[name] = _ga4_date(value)
-                continue
-            if not stripped:
-                if table:
-                    break  # 첫 번째 표만 읽습니다.
-                continue
-            table.append(line)
-    rows = list(csv.reader(table))
-    if len(rows) < 2:
-        raise ValueError("GA4_CSV_EMPTY")
-    header = [h.strip() for h in rows[0]]
-    index = {}
-    for field, labels in GA4_COLUMNS.items():
-        for i, h in enumerate(header):
-            if h in labels:
-                index[field] = i
-                break
-    if "sessions" not in index:
-        raise ValueError("GA4_CSV_NO_SESSIONS")
-
-    data_rows = [r for r in rows[1:] if r]
-    is_total = lambda r: any(t in r[0] for t in ("총계", "합계", "Total", "Grand total"))  # noqa: E731
-    total_rows = [r for r in data_rows if is_total(r)]
-    use_rows = total_rows[:1] or data_rows
-    totals = {}
-    for field, i in index.items():
-        values = [_ga4_number(r[i]) for r in use_rows if len(r) > i]
-        values = [v for v in values if v is not None]
-        totals[field] = round(sum(values)) if values else None
-
-    # 채널별 줄 (확대 화면의 채널별 참여율 표·차트용)
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    totals = data.get("totals") or {}
+    if not isinstance(totals.get("sessions"), (int, float)):
+        raise ValueError("GA4_JSON_NO_SESSIONS")
     channels = []
-    for r in data_rows:
-        if is_total(r) or len(r) <= index["sessions"]:
+    for c in data.get("channels") or []:
+        if not isinstance(c, dict) or not c.get("channel") or not isinstance(c.get("sessions"), (int, float)):
             continue
-        sessions = _ga4_number(r[index["sessions"]])
-        engaged = _ga4_number(r[index["engaged_sessions"]]) if "engaged_sessions" in index and len(r) > index["engaged_sessions"] else None
-        if sessions is None:
-            continue
-        channels.append({
-            "channel": r[0].strip(),
-            "sessions": round(sessions),
-            "engaged_sessions": round(engaged) if engaged is not None else None,
-            "engagement_rate_percent": _pct(engaged, sessions) if engaged is not None else None,
-        })
+        row = {"channel": str(c["channel"]), **{k: c.get(k) for k in GA4_CHANNEL_FIELDS}}
+        row["engagement_rate_percent"] = _pct(row["engaged_sessions"], row["sessions"]) if row["engaged_sessions"] is not None else None
+        channels.append(row)
     channels.sort(key=lambda c: c["sessions"], reverse=True)
-    return {"period": period, **totals, "channels": channels}
+    meta = data.get("meta") or {}
+    events = data.get("top_events") or {}
+    return {
+        "period": meta.get("period") or {},
+        **{k: totals.get(k) for k in ("sessions", *GA4_CHANNEL_FIELDS[1:], "event_count")},
+        "channels": channels,
+        "top_events": [e for e in events.get("rows") or [] if isinstance(e, dict) and e.get("event")],
+        "top_events_note": events.get("note") or "",
+    }
 
 
 def _build_ga4():
@@ -633,16 +444,16 @@ def _build_ga4():
         "source": "시연 값",
         "period": None,
         "scope": "가상 한정선 사이트",
-        "note": "kpi/data/ga4_demo.csv가 없어 시연 값을 씁니다.",
-        "purchase_rate_percent": None,
+        "note": "kpi/data/ga4_demo.json이 없어 시연 값을 씁니다.",
         "channels": [],
+        "top_events": [],
     }
     try:
-        demo = _read_ga4_demo_csv()
-    except (OSError, ValueError, csv.Error) as exc:
+        demo = _read_ga4_demo_json()
+    except (OSError, ValueError) as exc:
         code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
         demo = None
-        ga4["note"] = f"GA4 데모 CSV를 읽지 못해({code}) 시연 값을 씁니다."
+        ga4["note"] = f"GA4 데모 JSON을 읽지 못해({code}) 시연 값을 씁니다."
     if demo and demo.get("sessions"):
         ga4.update(
             sessions=demo["sessions"],
@@ -652,8 +463,11 @@ def _build_ga4():
             period=demo["period"] or None,
             scope="글로벌 데모 (한정선 데이터 아님)",
             note="GA4 데이터 형식 검증용 공개 데모 데이터입니다.",
-            purchase_rate_percent=_pct(demo["purchases"], demo["sessions"]) if demo.get("purchases") is not None else None,
             channels=demo.get("channels") or [],
+            top_events=demo.get("top_events") or [],
+            top_events_note=demo.get("top_events_note") or "",
+            # 전환 대체 지표(데모 매장 값): 주요 이벤트 · 세션 주요 이벤트 비율 · 평균 참여 시간 · 수익(USD)
+            **{k: demo.get(k) for k in ("avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd", "event_count")},
         )
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
@@ -778,7 +592,7 @@ def _voc_stats(reviews):
     for r in reviews:
         if r.get("sentiment") in sentiment_counts:
             sentiment_counts[r["sentiment"]] += 1
-        tag = r.get("keyword_tag") or "기타"
+        tag = r.get("keyword_tag") or OTHER_TAG
         keyword_counts[tag] = keyword_counts.get(tag, 0) + 1
     top_keywords = sorted(keyword_counts.items(), key=lambda kv: kv[1], reverse=True)[:5]
     return {
@@ -806,20 +620,10 @@ def _read_survey_comments(path=SURVEY_COMMENTS_CSV):
             "raw_text_vn": row["raw_text_vn"],
             "translated_kr": row["translated_kr"],
             "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
-            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else "기타",
+            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
+            "source": "survey",
         })
     return rows
-
-
-def _survey_voc(comments):
-    """설문 의견을 VOC 감성 도넛·키워드에 더할 수 있게 셉니다."""
-    sentiment_counts = {s: 0 for s in SENTIMENTS}
-    keyword_counts = {}
-    for c in comments:
-        if c["sentiment"] in sentiment_counts:
-            sentiment_counts[c["sentiment"]] += 1
-        keyword_counts[c["keyword_tag"]] = keyword_counts.get(c["keyword_tag"], 0) + 1
-    return {"respondents": len(comments), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
 
 
 def _survey_block(survey):
@@ -840,16 +644,21 @@ def _survey_block(survey):
     return {
         "items": items,
         "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
-        "voc": _survey_voc(_read_survey_comments()),  # VOC 감성 도넛·키워드에 더하는 설문 의견 집계
     }
 
 
 def _qr_block():
     q = DEMO_QR
+    follows = sum(q["follows"].values())
+    survey_by_channel = {}
+    for c in _read_survey_comments():
+        survey_by_channel[c["platform"]] = survey_by_channel.get(c["platform"], 0) + 1
     return {
         **q,
+        "follows_total": follows,
+        "survey_by_channel": survey_by_channel,
         "scan_rate_percent": _pct(q["qr_scans"], q["pamphlets"]),
-        "follow_rate_percent": _pct(q["zalo_follows"], q["qr_scans"]),
+        "follow_rate_percent": _pct(follows, q["qr_scans"]),
         "response_rate_percent": _pct(q["survey_responses"], q["qr_scans"]),
         "survey": _survey_block(DEMO_SURVEY),
     }
@@ -864,32 +673,44 @@ OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
 _voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
-아래 JSON 배열은 베트남어 고객 리뷰입니다. 각 리뷰를 한국어로 자연스럽게 번역하고,
-감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어로 짧게 요약하세요.
+고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
+한정선은 현지 배달 서비스와 온라인 배송 서비스가 모두 없습니다. 고객은 매장에서 사서 직접 들고 가거나, 예약한 뒤 매장에서 찾아갑니다.
+글을 배송·배달 상황으로 해석하지 말고, 번역·요약에 "배송", "배달", "~해서 왔다", "도착했다", "찌그러져 왔다" 같은 표현을 쓰지 마세요.
+아래 JSON의 messages는 1:1 문의·후기(대부분 베트남어, 일부 한국어)이고, survey는 설문 주관식 의견(한국어)입니다.
+messages의 각 글을 한국어로 자연스럽게 번역하고 감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤,
+창구별 요약을 한국어로 작성하세요. survey는 번역하지 말고 요약 근거로만 쓰세요.
+요약은 반드시 이번 입력의 글에서 실제로 많이 나온 내용만 근거로 하고, 이 지시문의 표현을 그대로 옮겨 쓰지 마세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
-- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
+- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 문의/기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉,
+  보관 방법·매장 정보·예약·응대 속도 같은 문의는 문의/기타)
 - review_id는 입력 값을 그대로 사용
 - translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
   (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
-- summary_kr는 짧은 평서문 2문장 이하. 첫 문장은 가장 많이 나온 긍정 요인, 둘째 문장은 가장 많이 나온 불만 요인
-  각 문장은 40자 이내, "~입니다/~습니다"로 끝내고 쉼표로 여러 내용을 잇지 말 것
-  수식어·추측·과장 없이 리뷰에 있는 내용만 근거로 작성 (예: "맛과 식감에 대한 만족이 가장 많습니다. 포장 상태와 가격에 대한 불만이 있습니다.")
+- channel_summaries는 Zalo_OA, KakaoTalk, WhatsApp 세 창구 각각 하나씩(그 창구의 messages + survey 근거)
+  summary: 그 창구에서 가장 많이 나온 의견을 한 문장(40자 이내, "~입니다/~습니다", 창구마다 다른 내용)
+  caution: 마케터가 유의해야 할 점 한 문장(40자 이내). 반복되는 불만·요청이나 응대 문제 중 가장 시급한 것
+  keep: 고객이 만족해 계속 유지할 점 1~2개를 짧은 명사구로
+  improve: 불만·요청이 많아 개선할 점 1~2개를 짧은 명사구로
+  근거가 없으면 빈 문자열·빈 배열, 원문에 없는 내용·수치는 만들지 말 것
 
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],
- "summary_kr": "..."}
+ "channel_summaries": [{"channel": "Zalo_OA", "summary": "...", "caution": "...", "keep": ["..."], "improve": ["..."]}]}
 
-리뷰:
+입력:
 """
 
 
-def _call_openai(reviews):
+def _call_openai(reviews, survey=()):
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
         return None, "OPENAI_API_KEY 환경변수가 없어 AI 분석을 실행하지 못했습니다."
     model = OPENAI_MODEL
-    source = [{"review_id": r["review_id"], "platform": r["platform"], "text": r["raw_text_vn"]} for r in reviews]
+    source = {
+        "messages": [{"review_id": r["review_id"], "channel": r["platform"], "text": r["raw_text_vn"]} for r in reviews],
+        "survey": [{"channel": c["platform"], "text_kr": c["translated_kr"]} for c in survey],
+    }
     body = {
         "model": model,
         "temperature": 0.2,
@@ -903,7 +724,7 @@ def _call_openai(reviews):
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:  # 문의 75건 번역 + 설문 186건 요약
             payload = json.loads(resp.read().decode("utf-8"))
         text = payload["choices"][0]["message"]["content"]
         parsed = json.loads(text)
@@ -921,7 +742,7 @@ def _call_openai(reviews):
         if not isinstance(item, dict) or item.get("review_id") not in known_ids:
             continue
         sentiment = item.get("sentiment") if item.get("sentiment") in SENTIMENTS else None
-        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else "기타"
+        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else OTHER_TAG
         analyzed.append({
             "review_id": item["review_id"],
             "translated_kr": str(item.get("translated_kr") or ""),
@@ -930,11 +751,18 @@ def _call_openai(reviews):
         })
     if not analyzed:
         return None, "OpenAI 응답에 분석 결과가 없습니다."
+    as_list = lambda v: [str(x) for x in v][:2] if isinstance(v, list) else []  # noqa: E731
+    channel_summaries = [
+        {"channel": c["channel"], "summary": str(c.get("summary") or ""), "caution": str(c.get("caution") or ""),
+         "keep": as_list(c.get("keep")), "improve": as_list(c.get("improve"))}
+        for c in parsed.get("channel_summaries") or []
+        if isinstance(c, dict) and c.get("channel") in REVIEW_CHANNELS
+    ]
     return {
         "model": model,
         "reviewed": False,  # AI 번역·분류는 사람이 검수하기 전 결과입니다.
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
-        "summary_kr": str(parsed.get("summary_kr") or ""),
+        "channel_summaries": channel_summaries,
         "reviews": analyzed,
         **_voc_stats(analyzed),
     }, None
@@ -978,19 +806,19 @@ def api_voc():
     return jsonify({
         "is_demo": True,
         "reviews": DEMO_REVIEWS,
+        "channels": list(REVIEW_CHANNELS),
         **_voc_stats(DEMO_REVIEWS),
-        # 설문 의견은 AI 정제 대상이 아니라 데이터의 한국어를 그대로 씁니다(리뷰 목록에 함께 표시).
+        # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
         "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
+        # 마지막 AI 분석 결과(서버 메모리 보관). AI 분석은 화면의 [AI로 분석]을 눌렀을 때만 실행합니다.
         "ai": _voc_ai_cache["result"],
-        # 키가 있으면 화면이 처음 열릴 때 AI 정제를 한 번 자동 실행합니다(결과는 서버 메모리에 보관).
-        "ai_available": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
     })
 
 
 @bp.post("/api/voc/analyze")
 def api_voc_analyze():
-    result, error = _call_openai(DEMO_REVIEWS)
+    result, error = _call_openai(DEMO_REVIEWS, _read_survey_comments())
     if error:
         return jsonify({"ok": False, "error": error}), 502
     _voc_ai_cache["result"] = result
