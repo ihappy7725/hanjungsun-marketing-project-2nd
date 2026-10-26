@@ -313,7 +313,7 @@ function imageDesign(kind, ratio, item) {
   };
 }
 
-// 광고 표현 검수 결과를 node에 그립니다. (편집기 [광고 표현 검수] · 시안 고르기 화면이 같이 씀)
+// 광고 표현 검수 결과를 node에 그립니다. (편집기 [광고 표현 검수])
 function fillReview(node, data) {
   const nodes = [el("h3", "", "광고 표현 검수")];
   const guide = data.guidelines || {};
@@ -363,19 +363,6 @@ function fillReview(node, data) {
   node.hidden = false;
 }
 
-// 유료 생성의 토큰 수 · 예상 비용($) 한 줄 (+ 작은 설명). 비용 정보가 없으면 숨깁니다.
-function fillUsage(node, data) {
-  const cost = data.cost;
-  if (!cost) { node.hidden = true; return; }
-  const count = (value) => Number(value || 0).toLocaleString("ko-KR");
-  const usd = cost.usd > 0 && cost.usd < 0.0001 ? "< $0.0001" : `$${Number(cost.usd || 0).toFixed(4)}`;
-  node.replaceChildren(
-    el("b", "", `이번 생성 ${count(cost.total_tokens)} 토큰 · 예상 비용 ${usd}`),
-    el("span", "", `${data.model} · 입력 ${count(cost.input_tokens)}${cost.cached_tokens ? ` (캐시 ${count(cost.cached_tokens)})` : ""} / 출력 ${count(cost.output_tokens)} 토큰`),
-    el("span", "", `OpenAI 공개 단가 기준 추정(${cost.price_checked} 확인). 실제 청구액은 OpenAI 사용 내역이 기준이에요.`));
-  node.hidden = false;
-}
-
 // ---------- 새로 만들기: 그림 시안 3개 고르기 (2026-10-26 유진 결정: 시안을 그림 모델로 통째로) ----------
 // sns.js(유진)가 포스터·카드뉴스 새로 만들기 [보내기]에서 부릅니다.
 //   ① 견적(유진 design-images/quote, 무료) → 크레딧 확인 팝업(영상 탭과 같은 dialog) [만들기] / [취소 → onBack]
@@ -396,13 +383,6 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
   const msg = el("p", "studio-hint");
   msg.setAttribute("role", "status");
   const cards = el("div", "studio-editor-candidates");
-  const usage = el("p", "studio-editor-usage");
-  usage.hidden = true;
-  const notice = el("p", "studio-editor-cost",
-    "그림 속 베트남어 글자는 AI가 틀리게 그릴 수 있어요. 확정 전에 그림 속 글자를 꼭 확인해 주세요. (아래 [넣은 문구 보기]가 원문이에요)");
-  notice.hidden = true;
-  const review = el("div", "studio-editor-review");
-  review.hidden = true;
   const actions = el("div", "studio-editor-actions");
   let quote = null;
   let proposals = [];  // [{name, concept_ko, style, style_label, pages: [{prompt_en, texts, job}]}]
@@ -410,28 +390,29 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
   let busy = false;
   let locked = false;  // 요청은 들어갔는데 결과를 못 받음 → 비용이 나갔을 수 있어 다시 만들지 못하게
   let sent = false;    // 그림 요청을 보냄 (프롬프트를 다시 쓰지 않음)
+  let pollError = false;  // 상태 확인 오류 글을 띄웠는지 (다음 확인이 되면 지움)
   const count = (value) => Number(value || 0).toLocaleString("ko-KR");
 
   const back = button("← 조건 바꾸기", goBack);
   back.hidden = !onBack;
   const confirm = button("이 시안으로 확정", confirmChoice, "btn dark");
-  const check = button("넣은 문구 광고 표현 검수", runReview);
   const retry = button("다시 시도", loadQuote);  // 견적·프롬프트·생성이 실패했을 때 (견적부터 다시)
-  const again = button("새로 다시 만들기", () => {
+  // [시안 다시 생성]: 지금 조건 그대로 크레딧 팝업 → 새로 3개 (그림이 다 끝난 뒤에만 보임)
+  const again = button("시안 다시 생성", () => {
     if (busy || locked) return;
     clearTimeout(timer);
     proposals = [];
     sent = false;
     selected = 0;
     cards.replaceChildren();
-    usage.hidden = notice.hidden = review.hidden = true;
+    updateActions();  // 이전 시안의 [확정]·[다시 생성] 버튼도 숨김
     loadQuote();
   });
-  confirm.hidden = check.hidden = again.hidden = retry.hidden = true;
-  actions.append(confirm, check, again, retry);
+  confirm.hidden = again.hidden = retry.hidden = true;
+  actions.append(confirm, again, retry);
   const head = el("div", "studio-editor-choices-head");
   head.append(back, el("h2", "", `${label} 시안 고르기`));
-  wrap.append(head, msg, cards, notice, review, usage, actions);
+  wrap.append(head, msg, cards, actions);
   root.replaceChildren(wrap);
   let timer = null;
 
@@ -449,7 +430,6 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     const asked = await creditDialog(wrap, quote, {
       title: `${label} 시안 만들기`, run: "만들기",
       detail: `${quote.model || "그림 모델"} · 시안 ${quote.proposals}개 × ${quote.pages}장 = ${quote.count}장 (장당 ${count(quote.unit)})`,
-      note: "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요.",
     });
     if (asked) return generate();
     if (onBack) return onBack();
@@ -472,7 +452,6 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     confirm.hidden = !sent;
     confirm.disabled = busy || !ready;
     confirm.title = ready ? "" : "이 시안의 그림이 다 그려지면 확정할 수 있어요";
-    check.hidden = !proposals.length;
     again.hidden = !sent || running;
     again.disabled = busy || locked;
     retry.disabled = busy;
@@ -482,7 +461,7 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
   async function loadQuote() {
     if (busy) return;
     retry.hidden = true;
-    msg.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    msg.textContent = "비용과 남은 크레딧을 확인하는 중…";
     try {
       quote = (await postJson(IMAGE_QUOTE_API, target)).quote;
       if (!wrap.isConnected) return;
@@ -501,17 +480,15 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     retry.hidden = true;
     let reask = false;  // 409(비용 바뀜·한도) → 새 견적으로 팝업을 다시
     try {
+      msg.textContent = "";  // 진행 안내 글은 두지 않습니다 (2026-10-27 유진 요청). 일부 실패는 카드의 "실패" 표시로.
       if (!proposals.length) {  // 견적이 바뀌어 다시 누를 때는 이미 쓴 프롬프트를 그대로 씁니다.
-        msg.textContent = `${label} 시안 3개의 그림 프롬프트를 쓰는 중… (OpenAI)`;
         const data = await postJson(ASSISTANT_API, {
           design: { kind, ratio, demo: true, pages: [{ elements: [] }] }, confirm_paid: true,
           options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages },
         });
         if (!wrap.isConnected) return;
         proposals = data.proposals.map((item) => ({ ...item, pages: item.pages.map((page) => ({ ...page, job: null })) }));
-        fillUsage(usage, data);
       }
-      msg.textContent = `그림을 요청하는 중… (Higgsfield ${count(quote.credits)}크레딧)`;
       const res = await fetch(IMAGE_API, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...target, prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)),
@@ -534,9 +511,7 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       if (data.submitted) locked = true;
       if (!data.ok && !data.submitted) throw new Error(data.error || "그림을 요청하지 못했어요.");
       sent = true;
-      notice.hidden = false;
-      msg.textContent = data.submitted ? data.error
-        : `그림을 그리는 중… 수십 초 걸려요. 다 된 시안부터 골라 확정할 수 있어요.${data.warning ? ` (${data.warning})` : ""}`;
+      msg.textContent = data.submitted ? data.error : "";  // 202: 다시 누르지 말라는 안내만 남깁니다.
       show();
       poll();
     } catch (error) {
@@ -563,33 +538,19 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
         const now = data.jobs?.[job.request_id];
         if (now) Object.assign(job, { status: now.status, url: now.url || null });
       }
+      if (pollError) msg.textContent = "";
+      pollError = false;
       show();
       updateActions();
     } catch (error) {
       msg.textContent = `${error.message} 잠시 뒤 다시 확인해요.`;
+      pollError = true;
     }
     if (wrap.isConnected) timer = setTimeout(poll, IMAGE_POLL_MS);
   }
 
-  function finish() {
-    const failed = proposals.reduce((sum, item) => sum + item.pages.filter((page) => !pageDone(page)).length, 0);
-    msg.textContent = failed
-      ? `그림을 다 받았어요. 그리지 못한 장이 ${failed}장 있어요. 다 그려진 시안을 골라 확정해 주세요.`
-      : "그림을 다 받았어요. 마음에 드는 시안을 골라 [이 시안으로 확정]을 눌러 주세요.";
+  function finish() {  // 다 받음: 안내 글 없이 버튼만 (일부 실패는 카드에 표시)
     updateActions();
-  }
-
-  // 넣은 문구(원문) 광고 표현 검수: 고른 시안 기준
-  async function runReview() {
-    const item = proposals[selected];
-    if (!item) return;
-    review.hidden = false;
-    review.replaceChildren(el("p", "", "검수하는 중…"));
-    try {
-      fillReview(review, await postJson(REVIEW_API, { design: imageDesign(kind, ratio, item) }));
-    } catch (error) {
-      review.replaceChildren(el("p", "is-error", error.message), button("닫기", () => { review.hidden = true; }));
-    }
   }
 
   // ④ 확정
@@ -988,7 +949,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     if (!chatId) { status.textContent = "작업을 저장한 뒤 비율을 바꿀 수 있어요."; return; }
     ratioBusy = true;
     updateBar();
-    status.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    status.textContent = "비용과 남은 크레딧을 확인하는 중…";
     try {
       let { quote } = await postJson(`${CHAT_API}/${chatId}/reratio/quote`, { ratio: value });
       for (;;) {
