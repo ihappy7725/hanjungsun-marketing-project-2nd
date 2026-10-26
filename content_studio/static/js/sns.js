@@ -1,50 +1,36 @@
-// 첫 화면·대화·이전 작업·되돌리기 [유진]
+// 메인·첫 화면(작업 목록·미리보기 팝업·추천)·대화·되돌리기 [유진]
 // type="module"로 불러오므로 전역 변수·함수가 생기지 않습니다.
 import { renderVideo } from "./sns_video.js";
 // 포스터·카드뉴스 편집기 [희주]. 묶어서 불러와, currentPage()가 아직 없어도 오류 없이 동작합니다.
 import * as editor from "./sns_editor.js";
 
 // ---------- 시연 데이터 (DEMO) ----------
-// 영상 탭 "내 영상"은 저장된 작업(/api/gallery)이 없을 때만 시연 카드를 보여줍니다.
-// 포스터·카드뉴스 내 작업은 저장된 작업의 실제 미리보기(희주 renderThumb)를 보여주고, 세 탭 추천은 아직 시연 데이터입니다.
-const DEMO_GALLERY = {
-  video: [
-    {
-      id: "v1", title: "한입 먹는 순간", updated: "10월 22일", ratio: "9:16", tone: "hero", duration: 5, status: "",
-      scenes: [{ time: "0-2s", ko: "찹쌀떡 클로즈업" }, { time: "2-4s", ko: "반으로 가르기" }, { time: "4-5s", ko: "로고" }],
-    },
-    {
-      id: "v2", title: "다낭 매장 분위기", updated: "10월 16일", ratio: "16:9", tone: "green", duration: 10, status: "",
-      scenes: [{ time: "0-3s", ko: "매장 외관" }, { time: "3-6s", ko: "진열대" }, { time: "6-10s", ko: "손님 미소" }],
-    },
-  ],
-};
-
-// concept: 추천 카드에 붙는 임시 컨셉 한 줄 (마케터 검토 전 문구)
+// 메인 탭 "지금 만들면 좋은 콘텐츠" 추천은 아직 시연 데이터입니다. 작업 목록은 저장된 작업(/api/gallery)만 보여 줍니다.
+// points: 추천 카드 개조식 2줄 [핵심 주제, 한정선 셀링포인트] (마케터 검토 전 문구)
+// 셀링포인트는 제품 사진·제품 설명에서 확인되는 것만 씁니다(단면 색, 보자기 포장, 4가지 맛).
 const DEMO_EVENTS = [
-  { name: "베트남 스승의 날", date: "2026-11-20", concept: "감사했던 분께 부드러운 정성을 전해 보세요" },
-  { name: "크리스마스", date: "2026-12-25", concept: "따뜻한 연말, 소중한 사람과 달콤함을 나눠 보세요" },
+  { name: "베트남 스승의 날", date: "2026-11-20", points: ["감사한 선생님께 전하는 정성", "보자기 포장 그대로 건네기 좋은 선물"] },
+  { name: "크리스마스", date: "2026-12-25", points: ["따뜻한 연말, 소중한 사람과 달콤한 시간", "4가지 맛을 함께 나눠 먹는 연말 디저트"] },
 ];
 // 대표 메뉴 홍보 카드: 실제 메뉴(products.py). 기념일이 없을 때도 늘 만들 수 있는 기본 콘텐츠입니다.
 const DEMO_STAPLE = {
-  product_id: "mango_yogurt", name: "망고 요거트 찹쌀떡", note: "대표 메뉴",
-  concept: "상큼한 망고와 부드러운 요거트가 어우러진 대표 메뉴를 소개해 보세요",
+  product_id: "mango_yogurt", name: "망고 요거트 찹쌀떡",
+  points: ["상큼한 망고 × 부드러운 요거트", "쫀득한 찹쌀떡 속 상큼한 과일 크림"],
 };
 const DEMO_NEW_MENU = {
-  product_id: "honey_red_dragonfruit", name: "꿀 레드용과 찹쌀떡", note: "신메뉴",
-  concept: "꿀을 머금은 레드용과의 새콤달콤한 첫맛을 보여 주세요",
+  product_id: "honey_red_dragonfruit", name: "꿀 레드용과 찹쌀떡",
+  points: ["꿀 머금은 레드용과의 새콤달콤한 첫맛", "선명한 자홍빛 과육이 보이는 단면"],
 };
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
 const WORK_KINDS = ["video", "poster", "cardnews"];  // 작업 화면이 연결된 탭
 const DESIGN_KINDS = ["poster", "cardnews"];          // 희주 편집기(sns_editor.js)로 그리는 탭
-const MAX_RECS = 6;
-const VIDEO_CARD_SCENES = 4;  // "내 영상" 카드에 보이는 장면 줄 수
-const VIDEO_RECS = 4;
+const RECS = 4;  // 메인 탭 추천 카드 수
 
 // ---------- 화면 요소 ----------
 const page = document.querySelector(".studio-page");
-const kind = KIND_LABELS[page?.dataset.tab] ? page.dataset.tab : "poster";
+// main: 메인 탭(추천 + 세 탭 작업 목록). 작업 화면은 포스터·카드뉴스·영상 탭에서만 엽니다.
+const kind = page?.dataset.tab === "main" ? "main" : KIND_LABELS[page?.dataset.tab] ? page.dataset.tab : "poster";
 const API = page?.dataset.api;
 const PRODUCTS = JSON.parse(page?.dataset.products || "[]");  // [{id, name_ko}] 포스터·카드뉴스 첫 화면 제품 고르기
 const $ = (role) => page.querySelector(`[data-role="${role}"]`);
@@ -54,15 +40,6 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
-}
-
-function thumb({ ratio, tone, title, sub }, badge) {
-  const box = el("div", `studio-thumb tone-${tone}`);
-  box.dataset.ratio = ratio;
-  if (badge) box.append(badge);
-  box.append(el("strong", "", title));
-  if (sub) box.append(el("small", "", sub));
-  return box;
 }
 
 function notify(message) {
@@ -93,191 +70,163 @@ async function api(path, options = {}) {
   return data;
 }
 
-// ---------- 첫 화면 · 내 작업 ----------
-function galleryCard(item) {
-  const card = el("button", "studio-card");
-  card.type = "button";
+// ---------- 첫 화면 · 작업 목록 ----------
+// 메인 탭은 세 탭 작업을 최신순으로 함께, 각 탭은 그 탭 작업만. 줄을 누르면 미리보기 팝업 → [수정하기]로 작업 화면.
+const JOB_STATUS = { completed: "완성", queued: "만드는 중", in_progress: "만드는 중", processing: "만드는 중",
+  failed: "실패", nsfw: "거절됨", canceled: "취소됨", cancelled: "취소됨" };
 
-  if (kind === "video") {
-    // 영상: 미리보기 높이는 모두 같고(sns.css .is-video) 가로만 비율대로. 장면은 4줄까지, 나머지는 "외 n컷".
-    card.classList.add("is-video");
-    const box = thumb(item, el("span", "badge", `${item.duration}초${item.status ? ` · ${item.status}` : ""}`));
-    const list = el("ul", "studio-scenes");
-    for (const scene of item.scenes.slice(0, VIDEO_CARD_SCENES)) {
-      const li = el("li");
-      li.append(el("b", "", scene.time), scene.ko);
-      list.append(li);
-    }
-    if (item.scenes.length > VIDEO_CARD_SCENES) list.append(el("li", "", `외 ${item.scenes.length - VIDEO_CARD_SCENES}컷`));
-    box.append(list);
-    card.append(box);
-  } else {
-    // 포스터·카드뉴스: 실제 디자인 1장 미리보기. 비율이 달라도 같은 크기 틀 안에 맞춰 카드 높이를 맞춥니다.
-    card.classList.add("is-design");
-    const box = el("div", "studio-preview");
-    if (item.pages > 1) box.append(el("span", "badge", `${item.pages}장`));
-    box.append(editor.renderThumb(item.design));
-    card.append(box);
-  }
+// "honey_red_dragonfruit,durian" → "꿀 레드용과·두리안" (4종 모두면 "전체 제품")
+function productNames(ids) {
+  const list = String(ids || "").split(",").filter(Boolean);
+  if (list.length && list.length === PRODUCTS.length) return "전체 제품";
+  const names = list.map((id) => PRODUCTS.find((item) => item.id === id)?.name_ko.replace(" 찹쌀떡", "")).filter(Boolean);
+  return names.join("·") || "—";
+}
 
-  const body = el("div", "studio-card-body");
-  const title = el("p", "studio-card-title", item.title);
+// 상태: 영상은 Higgsfield 작업 상태(없으면 초안), 카드뉴스는 장수, 포스터는 편집 중
+function statusOf(item) {
+  if (item.kind === "video") return JOB_STATUS[item.job_status] || "초안";
+  return item.kind === "cardnews" ? `${item.design?.pages?.length || 0}장` : "편집 중";
+}
+
+function workRow(item) {
+  const row = el("button", "studio-row");
+  row.type = "button";
+  const title = el("span", "studio-row-title", item.title);
   title.title = item.title;
-  body.append(title, el("p", "studio-card-meta", `${item.updated} · ${item.ratio}`));
-  card.append(body);
-
-  card.addEventListener("click", () => {
-    if (item.chatId) openChat(item.chatId);
-    else notify(`[새로 만들기]나 추천을 선택해 작업을 시작하세요.`);
-  });
-  return card;
-}
-
-function renderGallery(items) {
-  $("gallery").replaceChildren(...items.map(galleryCard));
-  $("gallery-count").textContent = items.length ? `${items.length}개` : "";
-  $("gallery-empty").hidden = items.length > 0;
-  $("gallery").hidden = items.length === 0;
-}
-
-async function loadDesignGallery() {
-  try {
-    const { items } = await api(`/gallery?kind=${kind}`);
-    renderGallery(items.filter((item) => item.design).map((item) => ({
-      chatId: item.id,
-      title: item.title,
-      updated: shortDate(item.updated_at),
-      ratio: item.design.ratio,
-      pages: item.design.pages.length,
-      design: item.design,
-    })));
-  } catch (error) {
-    renderGallery([]);
-    notify(`내 ${KIND_LABELS[kind]} 목록을 불러오지 못했습니다. (${error.message})`);
-  }
+  row.append(el("span", `studio-kind is-${item.kind}`, KIND_LABELS[item.kind]), title,
+    el("span", "", productNames(item.product_id)), el("span", "", statusOf(item)), el("span", "", shortDate(item.updated_at)));
+  row.addEventListener("click", () => openPreview(item));
+  return row;
 }
 
 async function loadGallery() {
-  if (DESIGN_KINDS.includes(kind)) return loadDesignGallery();
   try {
-    const { items } = await api(`/gallery?kind=${kind}`);
-    if (!items.length) return renderGallery(DEMO_GALLERY.video);
-    renderGallery(items.map((item) => ({
-      chatId: item.id,
-      title: item.title,
-      updated: shortDate(item.updated_at),
-      ratio: item.ratio,
-      duration: item.duration,
-      status: item.video_url ? "완성" : "",
-      tone: "hero",
-      scenes: item.scenes,
-    })));
+    const { items } = await api(kind === "main" ? "/gallery" : `/gallery?kind=${kind}`);
+    const head = el("div", "studio-row is-head");
+    head.append(...["종류", "제목", "제품", "상태", "수정일"].map((text) => el("span", "", text)));
+    $("gallery").replaceChildren(head, ...items.map(workRow));
+    $("gallery-count").textContent = items.length ? `${items.length}개` : "";
+    $("gallery-empty").hidden = items.length > 0;
+    $("gallery").hidden = items.length === 0;
   } catch (error) {
-    renderGallery(DEMO_GALLERY.video);
-    notify(`내 영상을 불러오지 못했습니다. (${error.message})`);
+    $("gallery").replaceChildren();
+    notify(`작업 목록을 불러오지 못했습니다. (${error.message})`);
   }
 }
 
-// ---------- 첫 화면 · 추천 ----------
-// 세 탭 모두 4장: 기념일·대표 메뉴·신메뉴 (영상 탭은 신메뉴 출시를 맨 앞에).
+// 미리보기 팝업: 포스터·카드뉴스는 모든 장(희주 renderThumb), 영상은 완성 영상(없으면 장면 구성) + [수정하기]
+function openPreview(item) {
+  const dialog = el("dialog", "studio-preview-dialog");
+  const body = el("div", "studio-preview-body");
+  if (item.kind === "video") {
+    if (item.video_url) {
+      const video = el("video", "studio-preview-video");
+      video.src = item.video_url;
+      video.controls = true;
+      video.playsInline = true;
+      body.append(video);
+    } else {
+      const list = el("ol", "studio-scenes");
+      for (const scene of item.scenes || []) {
+        const li = el("li");
+        li.append(el("b", "", scene.time), scene.ko);
+        list.append(li);
+      }
+      body.append(el("p", "studio-hint", "아직 만든 영상이 없어요 · 장면 구성"), list);
+    }
+  } else if (item.design) {
+    item.design.pages.forEach((_, index) => body.append(editor.renderThumb(item.design, index)));
+  }
+  const edit = el("button", "btn dark", "수정하기");
+  edit.type = "button";
+  edit.addEventListener("click", () => {
+    if (kind !== item.kind) {
+      location.href = `${location.pathname}?tab=${item.kind}&chat=${item.id}`;
+      return;
+    }
+    dialog.close();
+    openChat(item.id);
+  });
+  const close = el("button", "btn", "닫기");
+  close.type = "button";
+  close.addEventListener("click", () => dialog.close());
+  const actions = el("div", "actions");
+  actions.append(edit, close);
+  dialog.append(el("h2", "", item.title),
+    el("p", "studio-hint", `${KIND_LABELS[item.kind]} · ${productNames(item.product_id)} · ${statusOf(item)} · ${shortDate(item.updated_at)}`),
+    body, actions);
+  dialog.addEventListener("close", () => dialog.remove());
+  page.append(dialog);
+  dialog.showModal();
+}
+
+// ---------- 메인 탭 · 지금 만들면 좋은 콘텐츠 ----------
+// 신메뉴 출시 → 다가오는 기념일 → 대표 메뉴 순서로 4개. 종류는 카드의 [포스터] [카드뉴스] [영상] 버튼으로 고릅니다.
 function recommendations() {
-  const label = KIND_LABELS[kind];
-  const recs = [];
+  const recs = [{
+    type: "new",
+    mark: "NEW",
+    title: `${DEMO_NEW_MENU.name} 출시`,
+    product_id: DEMO_NEW_MENU.product_id,
+    points: DEMO_NEW_MENU.points,
+  }];
   for (const event of DEMO_EVENTS) {
     const days = daysUntil(event.date);
     if (days < 0) continue;
     recs.push({
       type: "dday",
       mark: days === 0 ? "D-DAY" : `D-${days}`,
-      title: `${event.name} ${label}`,
-      note: `${event.date.slice(5).replace("-", "/")} 기념일`,
-      concept: event.concept,
+      title: event.name,
+      date: event.date.slice(5).replace("-", "/"),
+      points: event.points,
       event: event.name,
     });
   }
-  const launch = {
-    type: "new",
-    mark: "NEW",
-    title: `${DEMO_NEW_MENU.name} 출시 ${label}`,
-    product_id: DEMO_NEW_MENU.product_id,
-    note: DEMO_NEW_MENU.note,
-    concept: DEMO_NEW_MENU.concept,
-  };
   recs.push({
     type: "season",  // 표시 색(초록)은 예전 제철 카드 스타일을 그대로 씁니다.
     mark: "대표",
-    title: `${DEMO_STAPLE.name} 대표 메뉴 ${label}`,  // 제품을 정해서 보내므로 누르면 묻지 않고 바로 초안
+    title: `${DEMO_STAPLE.name} 대표 메뉴`,  // 제품을 정해서 보내므로 누르면 묻지 않고 바로 초안
     product_id: DEMO_STAPLE.product_id,
-    note: DEMO_STAPLE.note,
-    concept: DEMO_STAPLE.concept,
+    points: DEMO_STAPLE.points,
   });
-  // 영상 탭: 신메뉴 출시 → 기념일 → 대표 메뉴 순서로 4개
-  if (kind === "video") return [launch, ...recs].slice(0, VIDEO_RECS);
-  recs.push(launch);
-  return recs.slice(0, MAX_RECS);
+  return recs.slice(0, RECS);
 }
 
-// 추천 카드: 왼쪽 큰 표시(D-26 · 대표 · NEW)로 이유를 먼저 보여주고, 오른쪽에 제목 · 날짜 · 한 줄 컨셉.
+// 추천 카드: 제목 [D-26 · 대표 · NEW] → 개조식 2줄(주제 · 셀링포인트) → 만들기 [포스터] [카드뉴스] [영상].
+// 버튼을 누르면 그 탭으로 옮겨 "제목 + 종류" 요청으로 바로 초안을 만듭니다(주소의 start, 시작할 때 한 번만).
 function recCard(rec) {
-  const card = el("button", `studio-rec is-${rec.type}`);
-  card.type = "button";
-  card.append(el("span", "studio-rec-mark", rec.mark));
-
-  const text = el("div", "studio-rec-text");
-  text.append(el("p", "studio-rec-title", rec.title), el("p", "studio-rec-note", rec.note));
-  if (rec.concept) text.append(el("p", "studio-rec-concept", rec.concept));
-  text.append(el("span", "studio-rec-go", "바로 만들기 →"));
-  card.append(text);
-
-  card.addEventListener("click", () => {
-    if (!WORK_KINDS.includes(kind)) return notify(`"${rec.title}" 요청으로 바로 만들기는 다음 단계에서 연결됩니다.`);
-    startNew();
-    send(rec.title, { event: rec.event, ...(rec.product_id && { product_ids: [rec.product_id] }) });
-  });
+  const card = el("div", `studio-rec is-${rec.type}`);
+  const title = el("p", "studio-rec-title", rec.title);
+  const mark = el("span", "studio-rec-mark", rec.mark);
+  if (rec.date) mark.title = `${rec.date} 기념일`;
+  title.append(mark);
+  const points = el("ul", "studio-rec-points");
+  points.append(...rec.points.map((point) => el("li", "", point)));
+  const kinds = el("div", "studio-rec-go");
+  kinds.append(el("span", "", "만들기"));
+  for (const target of ["poster", "cardnews", "video"]) {  // 탭 순서
+    const button = el("button", "btn", KIND_LABELS[target]);
+    button.type = "button";
+    button.title = `${rec.title} ${KIND_LABELS[target]} 만들기`;
+    button.addEventListener("click", () => {
+      const start = { text: `${rec.title} ${KIND_LABELS[target]}`, event: rec.event, product_id: rec.product_id };
+      location.href = `${location.pathname}?tab=${target}&start=${encodeURIComponent(JSON.stringify(start))}`;
+    });
+    kinds.append(button);
+  }
+  card.append(title, points, kinds);
   return card;
 }
 
-// ---------- 내 작업 넘겨 보기: 마우스 휠 · 끌기 ----------
-function enableRailScroll(rail) {
-  // 휠: 세로 휠을 가로로 바꿉니다. 목록 끝에 닿으면 원래대로 페이지가 위아래로 움직입니다.
-  rail.addEventListener("wheel", (event) => {
-    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;  // 터치패드 가로 밀기는 브라우저 기본 동작
-    const max = rail.scrollWidth - rail.clientWidth;
-    const atStart = rail.scrollLeft <= 0 && event.deltaY < 0;
-    const atEnd = rail.scrollLeft >= max - 1 && event.deltaY > 0;
-    if (max <= 0 || atStart || atEnd) return;
-    event.preventDefault();
-    rail.scrollLeft += event.deltaY;
-  }, { passive: false });
-
-  // 끌기: 5px 넘게 움직이면 끌기로 보고, 손을 뗀 직후의 카드 클릭은 무시합니다.
-  let drag = null;
-  let skipClick = false;
-  rail.addEventListener("pointerdown", (event) => {
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
-    drag = { x: event.clientX, left: rail.scrollLeft, moved: false };
-  });
-  window.addEventListener("pointermove", (event) => {
-    if (!drag) return;
-    const dx = event.clientX - drag.x;
-    if (!drag.moved && Math.abs(dx) < 5) return;
-    drag.moved = true;
-    rail.classList.add("is-dragging");
-    rail.scrollLeft = drag.left - dx;
-  });
-  window.addEventListener("pointerup", () => {
-    if (drag?.moved) {
-      skipClick = true;
-      setTimeout(() => { skipClick = false; });
-    }
-    rail.classList.remove("is-dragging");
-    drag = null;
-  });
-  rail.addEventListener("click", (event) => {
-    if (!skipClick) return;
-    event.stopPropagation();
-    event.preventDefault();
-  }, true);
+// 추천에서 넘어온 요청(주소 start). 틀린 값이면 null.
+function startRequest(params) {
+  try {
+    const start = JSON.parse(params.get("start") || "null");
+    return start && typeof start.text === "string" && start.text.trim() ? start : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------- 작업 화면 ----------
@@ -305,13 +254,14 @@ function setUrl(chatId) {
   url.searchParams.set("tab", kind);
   if (chatId) url.searchParams.set("chat", chatId);
   else url.searchParams.delete("chat");
+  url.searchParams.delete("start");  // 추천 요청은 한 번만 (새로고침해도 다시 만들지 않게)
   history.replaceState(null, "", url);
 }
 
 function showScreen(name) {
   $("home-screen").hidden = name !== "home";
   $("work-screen").hidden = name !== "work";
-  $("new").hidden = name !== "home";
+  $("new").hidden = name !== "home" || kind === "main";  // 메인 탭은 추천·탭 버튼으로 시작
 }
 
 function goHome() {
@@ -380,17 +330,16 @@ function renderWork() {
   }
   $("set-duration").closest("label").hidden = kind !== "video";
   $("set-sound").hidden = true;  // 소리는 버튼 대신 입력창에 "소리 켜줘"로 바꿉니다.
-  // 영상 탭은 [← 첫 화면]·[☰ 이전 작업] 버튼과 이전 작업 칸 없이 씁니다(첫 화면은 위쪽 [영상] 탭으로).
-  $("go-home").hidden = $("history-toggle").hidden = kind === "video";
-  if (kind === "video") {
-    $("history").hidden = true;
-    $("work-screen").classList.remove("has-history");
-  }
-  // 영상: 제목 가운데 → 제품·비율·길이(·되돌리기) 한 줄(is-video). 첫 생성 화면(is-start)은 그 아래 바로 입력창.
+  // 세 탭 모두 [← 첫 화면]·[☰ 이전 작업] 버튼과 이전 작업 칸 없이 씁니다(첫 화면은 위쪽 탭 버튼으로).
+  $("go-home").hidden = $("history-toggle").hidden = true;
+  $("history").hidden = true;
+  $("work-screen").classList.remove("has-history");
+  // 위쪽 가운데 정렬(is-centered): (영상 제목) → (제품)·비율·(길이)·되돌리기 한 줄. 영상 첫 생성 화면(is-start)은 그 아래 바로 입력창.
   // 되돌리기·다시하기는 초안 뒤에만.
-  $("work-screen").classList.toggle("is-video", kind === "video");
+  $("work-screen").classList.add("is-centered");
   $("work-screen").classList.toggle("is-start", kind === "video" && !doc);
-  $("undo").hidden = $("redo").hidden = kind === "video" && !doc;
+  // 묶음 칸째 숨겨야 빈 칸 간격 없이 가운데에 맞습니다(.actions는 display가 정해져 있어 style로).
+  $("undo").parentElement.style.display = doc ? "" : "none";
   // 제품 고르기: 영상만. 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
   const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
     : settings.product_ids;
@@ -732,14 +681,19 @@ function bindWork() {
 
 // ---------- 시작 ----------
 if (page) {
-  // 영상: 되돌리기·다시하기를 제품·비율·길이 줄 끝에 둡니다(제목 아래 가운데 한 줄).
-  if (kind === "video") page.querySelector(".studio-options").append($("undo").parentElement);
-  enableRailScroll($("gallery"));
-  $("recs").replaceChildren(...recommendations().map(recCard));
+  // 되돌리기·다시하기를 제품·비율·길이 줄 끝에 둡니다(가운데 한 줄).
+  page.querySelector(".studio-options").append($("undo").parentElement);
+  if (kind === "main") $("recs").replaceChildren(...recommendations().map(recCard));
+  $("new").hidden = kind === "main";
   $("new").addEventListener("click", startNew);
   bindWork();
 
-  const chatId = Number(new URL(location.href).searchParams.get("chat"));
+  const params = new URL(location.href).searchParams;
+  const chatId = Number(params.get("chat"));
+  const start = startRequest(params);
   if (chatId && WORK_KINDS.includes(kind)) openChat(chatId);
-  else loadGallery();
+  else if (start && WORK_KINDS.includes(kind)) {
+    startNew();
+    send(start.text, { event: start.event, ...(start.product_id && { product_ids: [start.product_id] }) });
+  } else loadGallery();
 }

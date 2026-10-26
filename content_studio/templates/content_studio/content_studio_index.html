@@ -1,6 +1,6 @@
 {% extends "platform_core/base.html" %}
-{# 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
-{% set tab_labels = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"} %}
+{# 메인 + 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
+{% set tab_labels = {"main": "작업", "poster": "포스터", "cardnews": "카드뉴스", "video": "영상"} %}
 
 {% block title %}콘텐츠 스튜디오{% endblock %}
 
@@ -16,11 +16,12 @@
       <h1>콘텐츠 스튜디오</h1>
     </div>
     <div class="actions">
-      <button type="button" class="btn dark" data-role="new">+ 새로 만들기</button>
+      <button type="button" class="btn dark" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
     </div>
   </header>
 
   <nav class="studio-tabs">
+    <a class="btn{% if tab == 'main' %} dark{% endif %}" href="{{ url_for('content_studio.index') }}">메인</a>
     <a class="btn{% if tab == 'poster' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='poster') }}">포스터</a>
     <a class="btn{% if tab == 'cardnews' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='cardnews') }}">카드뉴스</a>
     <a class="btn{% if tab == 'video' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='video') }}">영상</a>
@@ -28,19 +29,21 @@
 
   <p class="studio-notice" data-role="notice" role="status" hidden></p>
 
-  {# 첫 화면: 내 작업 가로 목록 + 추천 (README 2장). 카드는 sns.js가 그립니다. #}
+  {# 첫 화면 (README 2장): 메인은 추천 + 세 탭 작업 목록, 각 탭은 그 탭 작업 목록. 목록·추천·미리보기 팝업은 sns.js가 그립니다. #}
   <section class="studio-home" data-role="home-screen">
+    {% if tab == 'main' %}
     <div class="panelhead">
-      <h2>내 {{ tab_labels[tab] }} <span class="studio-count" data-role="gallery-count"></span></h2>
-    </div>
-    <div class="studio-rail" data-role="gallery"></div>
-    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. 아래 추천을 누르거나 [새로 만들기]로 시작하세요.</p>
-
-    <div class="panelhead studio-recs-head">
-      <h2>지금 만들면 좋은 {{ tab_labels[tab] }}</h2>
-      <span class="studio-hint">기념일 D-day · 제철 · 신메뉴 기준 <span class="demo">DEMO · 예시 데이터</span></span>
+      <h2>지금 만들면 좋은 콘텐츠</h2>
+      <span class="studio-hint">신메뉴 · 기념일 D-day · 대표 메뉴 기준 <span class="demo">DEMO · 예시 데이터</span></span>
     </div>
     <div class="studio-recs" data-role="recs"></div>
+    {% endif %}
+
+    <div class="panelhead{% if tab == 'main' %} studio-recs-head{% endif %}">
+      <h2>{% if tab == 'main' %}모든 작업{% else %}내 {{ tab_labels[tab] }}{% endif %} <span class="studio-count" data-role="gallery-count"></span></h2>
+    </div>
+    <div class="studio-list" data-role="gallery"></div>
+    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. {% if tab == 'main' %}위 추천을 누르거나 탭에서 [새로 만들기]로 시작하세요.{% else %}[새로 만들기]로 시작하세요.{% endif %}</p>
   </section>
 
   {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 + 아래 한 줄 입력 (README 1장 ③④) #}

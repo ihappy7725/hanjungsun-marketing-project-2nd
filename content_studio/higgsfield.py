@@ -85,8 +85,8 @@ def video_args(doc, start_image=None, photos=(), videos=(), end_image=None):
     if videos:
         clips = [part for path in videos for part in ("--video-references", path)]
         return args + ["--mode", "reference-to-video", "--aspect_ratio", doc["ratio"], *frames, *refs, *clips]
-    if start_image:
-        return args + ["--mode", "image-to-video", *frames, *refs]
+    if start_image:  # 비율을 꼭 보냅니다(안 보내면 Kling 기본값 16:9)
+        return args + ["--mode", "image-to-video", "--aspect_ratio", doc["ratio"], *frames, *refs]
     if photos:
         return args + ["--mode", "reference-to-video", "--aspect_ratio", doc["ratio"], *refs]
     return args + ["--mode", "text-to-video", "--aspect_ratio", doc["ratio"]]

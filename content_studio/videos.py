@@ -778,14 +778,16 @@ def _ko_line_to_en(line, phrases):
     return None if HANGUL.search(line) else line
 
 
-def korean_to_english(doc):
+def korean_to_english(doc, translate=None):
     """직접 고친 한국어(custom_ko) → (영어 프롬프트, 반영 못 한 한국어 줄들).
     자동 한국어와 줄마다 비교해, 같은 줄은 자동 영어 그대로 · 지운 줄은 영어도 지움 · 고친 줄은 아는 표현만 바꿉니다.
-    반영 못 한 고친 줄은 원래 영어를 남기고, 새로 쓴 줄은 영어에 넣지 않습니다."""
+    아는 표현만으로 못 바꾼 줄(새로 쓴 줄 포함)은 translate(한국어 줄들, 지금 영어 줄들) → 영어 줄들(AI 번역)로 한 번에 옮깁니다.
+    번역한 줄은 doc["ai_lines"]{한국어: 영어}에 남겨, 다시 저장할 때 같은 줄은 번역하지 않고 씁니다.
+    그래도 못 바꾼 고친 줄은 원래 영어를 남기고, 새로 쓴 줄은 영어에 넣지 않습니다."""
     ko_auto, en_auto = _prompt_lines(doc, 1), _prompt_lines(doc, 0)
     edited = [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()]
     phrases = _ko_phrases(doc)
-    out, untranslated = [], []
+    out, pending = [], []  # out: 영어 줄(글) 또는 [못 바꾼 한국어, 원래 영어 또는 None]
     for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ko_auto, edited, autojunk=False).get_opcodes():
         if tag == "equal":
             out += en_auto[i1:i2]
@@ -798,20 +800,45 @@ def korean_to_english(doc):
             if english:
                 out.append(english)
             else:
-                untranslated.append(news[k])
-                if k < len(olds):
-                    out.append(olds[k])
-    return "\n".join(out), untranslated
+                item = [news[k], olds[k] if k < len(olds) else None]
+                out.append(item)
+                pending.append(item)
+
+    # 전에 번역한 줄은 그대로 쓰고, 나머지만 AI로 번역합니다(줄 수가 맞고 한글이 없을 때만).
+    cache = {ko: en for ko, en in (doc.get("ai_lines") or {}).items()
+             if isinstance(ko, str) and isinstance(en, str) and en.strip() and not HANGUL.search(en)}
+    asked = list(dict.fromkeys(item[0] for item in pending if item[0] not in cache))
+    if asked and translate:
+        answers = translate(asked, en_auto)
+        if answers:
+            cache.update((ko, en) for ko, en in zip(asked, answers) if en)
+    lines, untranslated = [], []
+    for item in out:
+        if isinstance(item, str):
+            lines.append(item)
+        elif item[0] in cache:
+            lines.append(cache[item[0]])
+        else:
+            untranslated.append(item[0])
+            if item[1] is not None:
+                lines.append(item[1])
+    used = {item[0] for item in pending}
+    doc["ai_lines"] = {ko: en for ko, en in cache.items() if ko in used}
+    return "\n".join(lines), untranslated
 
 
-def refresh_prompts(doc):
-    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다. 직접 고친 한국어가 있으면 영어(custom)를 거기서 만듭니다."""
+def refresh_prompts(doc, translate=None):
+    """영어 프롬프트와 한국어 보기를 함께 다시 만듭니다. 직접 고친 한국어가 있으면 영어(custom)를 거기서 만듭니다.
+    translate: 아는 표현으로 못 바꾼 줄의 AI 번역 함수(korean_to_english 참고). 없으면 규칙만."""
     doc["untranslated"] = []
+    if not doc.get("custom_ko"):
+        doc.pop("ai_lines", None)
     if doc.get("custom_ko"):
         if [line.strip() for line in doc["custom_ko"].splitlines() if line.strip()] == _prompt_lines(doc, 1):
             doc["custom_ko"] = doc["custom"] = ""  # 자동과 같으면 직접 고친 것이 아닙니다.
+            doc.pop("ai_lines", None)
         else:
-            english, doc["untranslated"] = korean_to_english(doc)
+            english, doc["untranslated"] = korean_to_english(doc, translate)
             doc["custom"] = "" if english == "\n".join(_prompt_lines(doc, 0)) else english
     doc["prompt"] = build_prompt(doc)
     doc["prompt_ko"] = build_prompt_ko(doc)
@@ -1059,6 +1086,37 @@ def ai_messages(doc, text):
         {"role": "system", "content": instructions},
         {"role": "user", "content": f"지금 영상 문서:\n{json.dumps(current, ensure_ascii=False)}\n\n요청: {text}"},
     ]
+
+
+# [저장] 때 아는 표현으로 못 바꾼 한국어 줄의 번역 (routes_sns.py _ai_translate)
+TRANSLATE_INSTRUCTIONS = """한국 찹쌀떡 브랜드 '한정선'의 숏폼 광고 영상 프롬프트(영상 생성 AI Kling용)를 영어로 옮깁니다.
+받은 한국어 줄(lines)을 줄마다 영어 한 줄로 옮겨 {{"lines": ["...", ...]}} JSON으로만 답하세요.
+- 줄 수와 순서를 그대로 지키고, 줄을 합치거나 나누지 마세요.
+- 줄 맨 앞 머리는 영어 머리로 바꿉니다({labels}). "0-1s —" 같은 시간 표시는 그대로 둡니다.
+- 찹쌀떡은 chapssal-tteok(mochi라고 쓰지 않음), 한정선은 Hanjungsun.
+- english_prompt(같은 영상의 지금 영어 프롬프트)의 말투·용어에 맞춰 짧고 구체적인 영어로 쓰고, 한글은 남기지 마세요."""
+
+
+def translate_messages(lines, context):
+    """AI 번역 메시지. context: 지금 영어 프롬프트 줄들(머리 모양·용어 참고)."""
+    labels = ", ".join(f"{ko} → {en}" for ko, en in KO_LABELS)
+    return [
+        {"role": "system", "content": TRANSLATE_INSTRUCTIONS.format(labels=labels)},
+        {"role": "user", "content": json.dumps({"english_prompt": context, "lines": lines}, ensure_ascii=False)},
+    ]
+
+
+TRANSLATE_LIMIT = 800  # 번역한 줄 하나의 최대 글자 수 (컷 줄은 200자를 넘기 쉬움)
+
+
+def apply_translation(data, lines):
+    """AI 번역 결과 검사: 줄 수가 같을 때만 영어 줄 목록, 아니면 None.
+    줄마다 따로 검사해, 비었거나 너무 길거나 한글이 남은 줄만 None(그 줄은 "반영하지 못한 줄"로 남음)."""
+    got = data.get("lines") if isinstance(data, dict) else None
+    if not isinstance(got, list) or len(got) != len(lines):
+        return None
+    ok = lambda line: isinstance(line, str) and line.strip() and len(line) <= TRANSLATE_LIMIT and not HANGUL.search(line)
+    return [line.strip() if ok(line) else None for line in got]
 
 
 def _ai_text(value, english=False):

@@ -241,13 +241,13 @@ export function renderVideo(root, doc, options) {
   }
   for (const type of ["click", "keyup", "select"]) promptKo.addEventListener(type, highlight);
 
-  // 단어 규칙으로 영어에 못 바꾼 줄 (AI 연결 전). 그 줄의 영어는 바뀌지 않았습니다.
+  // 아는 표현으로도, AI 번역으로도(키 없음·한도·실패) 영어에 못 바꾼 줄. 그 줄의 영어는 바뀌지 않았습니다.
   const untranslated = el("div", "studio-video-untranslated");
   untranslated.hidden = !doc.untranslated?.length;
   if (doc.untranslated?.length) {
     const list = el("ul");
     list.append(...doc.untranslated.map((line) => el("li", "", line)));
-    untranslated.append(el("p", "", `영어에 반영하지 못한 줄 ${doc.untranslated.length}개 — 아직 아는 표현만 바꿀 수 있어요. 이 줄들의 영어는 그대로예요.`), list);
+    untranslated.append(el("p", "", `영어에 반영하지 못한 줄 ${doc.untranslated.length}개 — AI 번역을 쓰지 못해(키 없음·한도·실패) 아는 표현만 바꿨어요. 이 줄들의 영어는 그대로예요.`), list);
   }
 
   const save = el("button", "btn dark", "저장");
