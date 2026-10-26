@@ -490,9 +490,8 @@ export function renderVideo(root, doc, options) {
         genStatus.textContent = `${TARGET[target].label} 요청을 보내는 중…`;
         try {
           const data = await call("/generate", { method: "POST", body: { target, scene, credits: quote.credits } });
-          applyResult(data.design, `✓ ${fmt(data.spent)} 크레딧으로 ${TARGET[target].label} 요청을 보냈어요 · `
-            + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)} · 만드는 동안 상태를 확인합니다`
-            + (data.warning ? ` · ${data.warning}` : ""));
+          // 보낸 뒤 "✓ …" 안내 없이 바로 진행 상태를 보여 줍니다(2026-10-27 유진 요청). 일부만 보냈을 때의 경고만 남깁니다.
+          applyResult(data.design, data.warning || "");
           return;
         } catch (error) {
           // 비용이 바뀌었거나 한도를 넘으면 새 숫자로 다시 묻습니다.

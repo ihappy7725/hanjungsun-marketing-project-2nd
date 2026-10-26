@@ -375,6 +375,7 @@ const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending:
 const settings = { ratio: DESIGN_KINDS.includes(kind) ? "3:4" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
   user_refs: [], ref_video: null, style: "", pages: 5 };
 const USER_REFS_MAX = 4;
+const REF_SLOTS = 4;  // 첫 화면 레퍼런스 칸(2×2): 이미지·영상을 합친 개수
 
 // 영상 입력창 문구: 처음 만들 때와 초안 뒤
 const VIDEO_FIRST_PLACEHOLDER = [
@@ -430,7 +431,9 @@ function startNew() {
   Object.assign(settings, { title: "", user_refs: [], ref_video: null, style: "", pages: 5 });  // 제목·레퍼런스·스타일·장수는 작업마다 새로
   feedback("", "");
   renderWork();
-  $("chat-input").focus();
+  // 생성 화면에 집중: 탭 줄이 화면 맨 위에 오게 내려갑니다. 입력창 커서 때문에 더 내려가지 않게 preventScroll.
+  $("chat-input").focus({ preventScroll: true });
+  $("tabs").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function openChat(chatId) {
@@ -647,17 +650,12 @@ async function send(text, extra = {}) {
     work.pending = null;
     applyState(data.chat_id, data);
     loadHistory();
-    if (DESIGN_KINDS.includes(kind)) {
-      if (isNew && kind === "poster") feedback("ok", "✓ 포스터 초안을 만들었어요 — 가운데에서 글자를 끌어 옮기고 고칠 수 있어요");
-      else if (isNew) feedback("ok", `✓ 카드뉴스 ${data.design.pages.length}장 초안을 만들었어요 — 위 장 번호로 장을 옮기며 고칠 수 있어요`);
-      else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}`);
-      else feedback("warn", data.reply);
-      return;
-    }
-    const recheck = data.design.reviewed ? "" : " — 프롬프트 다시 검토 필요";
-    if (isNew) feedback("ok", `✓ ${data.design.scenes.length}컷 초안을 만들었어요 — 장면·자막·프롬프트를 검토해 주세요`);
-    else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}${recheck}`);
-    else feedback("warn", data.reply);
+    // 만들기·반영 성공은 화면에 바로 보이므로 "✓ …" 안내를 띄우지 않습니다(업무 화면이라 군더더기 없이, 2026-10-27 유진 요청).
+    // 알아듣지 못했을 때와, 영상이 바뀌어 프롬프트를 다시 검토해야 할 때만 알립니다.
+    if (isNew || data.changes.length) {
+      if (kind === "video" && !isNew && !data.design.reviewed) feedback("warn", "영상이 바뀌어 프롬프트를 다시 검토해 주세요.");
+      else feedback("", "");
+    } else feedback("warn", data.reply);
   } catch (error) {
     feedback("warn", `요청하지 못했습니다. (${error.message})`);
   } finally {
@@ -696,10 +694,12 @@ function currentRefs() {
 // 비율 사각형 오른쪽 레퍼런스 칸은 첫 생성 화면에서만. 영상 초안 뒤에는 ③ 영상 만들기의 레퍼런스 칸(sns_video.js)에서 넣고 뺍니다.
 // 포스터·카드뉴스는 이미지만(시안 그림의 분위기·구도·색 참고, renderChoices → design-images API).
 // 썸네일이 있으면 칸 안에 보이고, 안내 글은 칸 아래쪽으로 작게(is-filled, sns.css).
+// 칸은 2×2(REF_SLOTS)라, 영상 탭도 이미지·영상을 합쳐 4개까지(영상은 그중 1개). 하나라도 넣으면 좌측 상단부터 한 칸씩 채우고,
+// 다 차지 않았으면 다음 빈 칸에 "+"를 보여 줍니다(누르거나 끌어다 놓으면 추가).
 function renderRefs() {
   const show = !work.doc;
   const imagesOnly = DESIGN_KINDS.includes(kind);
-  $("ref-drop-note").textContent = imagesOnly ? `이미지 ${USER_REFS_MAX}장` : `이미지 ${USER_REFS_MAX}장 · 영상 1개`;
+  $("ref-drop-note").textContent = imagesOnly ? `이미지 ${REF_SLOTS}장` : `이미지·영상 합쳐 ${REF_SLOTS}개 (영상은 1개)`;
   $("ref-drop").setAttribute("aria-label", `레퍼런스 넣기 (${$("ref-drop-note").textContent})`);
   $("ref-file").accept = imagesOnly ? "image/jpeg,image/png,image/webp"
     : "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm";
@@ -728,6 +728,7 @@ function renderRefs() {
     clip.preload = "metadata";
     nodes.push(item(clip, "참고 영상", () => changeRefs({ ref_video: null })));
   }
+  if (nodes.length && nodes.length < REF_SLOTS) nodes.push(el("span", "studio-ref-slot", "+"));
   $("refs").replaceChildren(...nodes);
 }
 
@@ -745,12 +746,17 @@ async function addRef(file) {
   const isVideo = file.type.startsWith("video/");
   if (isVideo && DESIGN_KINDS.includes(kind)) return feedback("warn", `${KIND_LABELS[kind]} 레퍼런스는 이미지만 넣을 수 있어요.`);
   const refs = currentRefs();
+  // 첫 화면 칸은 이미지·영상을 합쳐 REF_SLOTS개. 영상은 1개라 새 영상은 있던 영상을 바꿉니다(그때는 개수가 늘지 않음).
+  const used = refs.user_refs.length + (refs.ref_video ? 1 : 0);
+  const full = !work.doc && (isVideo ? !refs.ref_video && used >= REF_SLOTS : used >= REF_SLOTS);
+  if (full) return feedback("warn", DESIGN_KINDS.includes(kind) ? `레퍼런스 이미지는 ${REF_SLOTS}장까지 넣을 수 있어요.`
+    : `레퍼런스는 이미지·영상을 합쳐 ${REF_SLOTS}개까지 넣을 수 있어요.`);
   if (!isVideo && refs.user_refs.length >= USER_REFS_MAX) return feedback("warn", `레퍼런스 이미지는 ${USER_REFS_MAX}장까지 올릴 수 있어요.`);
-  feedback("info", isVideo ? "참고 영상을 올리는 중…" : "레퍼런스 이미지를 올리는 중…");
+  // 올리기·넣기 성공은 칸의 썸네일로 보이므로 안내 줄을 띄우지 않습니다(업무 화면이라 군더더기 없이). 실패·개수 초과만 알립니다.
   try {
     const ref = await uploadRef(file);
     await changeRefs(isVideo ? { ref_video: ref } : { user_refs: [...refs.user_refs, ref] });
-    feedback("ok", isVideo ? "✓ 참고 영상을 넣었어요 (분위기·카메라 움직임 참고)" : "✓ 레퍼런스 이미지를 넣었어요 (분위기·구도·색감 참고)");
+    feedback("", "");
   } catch (error) {
     feedback("warn", `올리지 못했습니다. (${error.message})`);
   }
@@ -813,7 +819,7 @@ async function renameWork(title) {
     work.doc = data.design;
     renderWork();
     loadHistory();
-    feedback("ok", `✓ 제목을 "${data.chat.title}"(으)로 바꿨어요`);
+    feedback("", "");  // 바뀐 제목이 화면에 보이므로 안내 없음
   } catch (error) {
     feedback("warn", `제목을 바꾸지 못했습니다. (${error.message})`);
   }
