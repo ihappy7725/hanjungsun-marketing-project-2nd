@@ -60,6 +60,42 @@ let applyBackground = null;
 let bgBusy = false;    // 만드는 중 (한 번에 한 장)
 let bgLocked = false;  // 응답을 못 받음 → 비용이 나갔을 수 있어 이 화면에서는 다시 누를 수 없게 막습니다.
 
+// ---------- 그림 시안 비율 다시 그리기 (유진 reratio API, 2026-10-27) ----------
+// 그리는 동안 저장·되돌리기로 편집기가 다시 그려져도 이어서 확인하고, 끝나면 가장 최근 편집기(applyReratio)가 저장합니다.
+const CHAT_API = "/content_studio/api/chats";  // 유진 routes_sns.py: /<작업ID>/reratio/quote · /<작업ID>/reratio
+const IMAGE_RATIO_CHOICES = ["3:4", "4:3", "9:16", "16:9", "1:1"];  // 그림 시안 비율 버튼 (새로 만들기와 같음)
+let reratio = null;          // 그리는 중: { chatId, ratio, jobs: [{request_id, status, url} | {status: NOT_SENT}] (장 순서) }
+let reratioLocked = false;   // 요청은 들어갔는데 결과를 못 받음(202) → 이 화면에서는 다시 누를 수 없게
+let applyReratio = null;     // (job, done) — 가장 최근 편집기의 진행 표시·저장
+
+async function pollReratio() {
+  const job = reratio;
+  if (!job) return;
+  const waiting = job.jobs.filter((one) => one.request_id && one.status !== IMAGE_DONE && !IMAGE_FAILED.includes(one.status));
+  if (waiting.length) {
+    try {
+      const res = await fetch(`${IMAGE_STATUS_API}?ids=${waiting.map((one) => one.request_id).join(",")}`);
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (!data.ok) throw new Error(data.error || "상태를 확인하지 못했어요.");
+      for (const one of waiting) {
+        const now = data.jobs?.[one.request_id];
+        if (now) Object.assign(one, { status: now.status, url: now.url || null });
+      }
+      job.note = "";
+    } catch (error) {
+      job.note = `${error.message} 잠시 뒤 다시 확인해요.`;
+    }
+    const still = job.jobs.some((one) => one.request_id && one.status !== IMAGE_DONE && !IMAGE_FAILED.includes(one.status));
+    if (still) {
+      applyReratio?.(job, false);
+      setTimeout(pollReratio, IMAGE_POLL_MS);
+      return;
+    }
+  }
+  reratio = null;
+  applyReratio?.(job, true);
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -230,10 +266,43 @@ function imageCard(item, isSelected, onPick, ratio) {
   return card;
 }
 
+// 크레딧 확인 팝업 (sns_video.js confirmDialog와 같은 모양: base.css dialog). 실행 버튼이면 true, [취소]·Esc면 false.
+// 시안 만들기(renderChoices)와 비율 다시 그리기(renderDesign)가 같이 씁니다. q: 유진 견적 API의 quote.
+function creditDialog(parent, q, { title, run: runLabel = "만들기", detail = "", note = "" } = {}) {
+  const fmt = (value) => Number(value || 0).toLocaleString("ko-KR");
+  return new Promise((resolve) => {
+    const dialog = el("dialog");
+    const lines = el("ul");
+    lines.append(
+      el("li", "", `이번에 쓰일 크레딧: ${fmt(q.credits)}`),
+      el("li", "", `계정 남은 크레딧: ${fmt(q.balance)} → 실행 후 약 ${fmt(q.balance - q.credits)}`),
+      el("li", "", `오늘 대시보드 사용: ${fmt(q.today_used)} / ${fmt(q.daily_limit)}`),
+    );
+    if (note) lines.append(el("li", "", note));
+    const run = el("button", "btn dark", runLabel);
+    run.type = "button";
+    run.disabled = !q.allowed;
+    const cancel = el("button", "btn", "취소");
+    cancel.type = "button";
+    const row = el("div", "actions");
+    row.append(run, cancel);
+    dialog.append(el("h2", "", title), detail ? el("p", "studio-hint", detail) : "", lines);
+    if (!q.allowed) dialog.append(el("p", "badge dday", q.reason || "지금은 실행할 수 없어요."));
+    dialog.append(row);
+    const close = (answer) => { dialog.close(); dialog.remove(); resolve(answer); };
+    run.addEventListener("click", () => close(true));
+    cancel.addEventListener("click", () => close(false));
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
+    parent.append(dialog);
+    dialog.showModal();
+  });
+}
+
 // 확정한 그림 시안 → 문서 (designs.py IMAGE_MODE 설명과 같은 형식)
+// Higgsfield로 실제 생성한 그림이라 demo: false (DEMO 배지는 진짜 시연 데이터에만, 2026-10-27 유진 요청)
 function imageDesign(kind, ratio, item) {
   return {
-    kind, ratio, demo: true, mode: IMAGE_MODE, style: item.style,
+    kind, ratio, demo: false, mode: IMAGE_MODE, style: item.style,
     assistant: { name: item.name, prompt: item.concept_ko,
       notice: `AI 그림 시안 · ${item.style_label} · 그림 속 글자와 제품 정보는 꼭 확인해 주세요.` },
     pages: item.pages.map((page, index) => ({
@@ -374,42 +443,15 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     onBack();
   }
 
-  // 크레딧 확인 팝업 (sns_video.js confirmDialog와 같은 모양: base.css dialog). [만들기]면 true, [취소]·Esc면 false.
-  function creditDialog(q) {
-    return new Promise((resolve) => {
-      const dialog = el("dialog");
-      const lines = el("ul");
-      lines.append(
-        el("li", "", `이번에 쓰일 크레딧: ${count(q.credits)}`),
-        el("li", "", `계정 남은 크레딧: ${count(q.balance)} → 실행 후 약 ${count(q.balance - q.credits)}`),
-        el("li", "", `오늘 대시보드 사용: ${count(q.today_used)} / ${count(q.daily_limit)}`),
-        el("li", "", "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요."),
-      );
-      const run = el("button", "btn dark", "만들기");
-      run.type = "button";
-      run.disabled = !q.allowed;
-      const cancel = el("button", "btn", "취소");
-      cancel.type = "button";
-      const row = el("div", "actions");
-      row.append(run, cancel);
-      dialog.append(el("h2", "", `${label} 시안 만들기`),
-        el("p", "studio-hint", `${q.model || "그림 모델"} · 시안 ${q.proposals}개 × ${q.pages}장 = ${q.count}장 (장당 ${count(q.unit)})`),
-        lines);
-      if (!q.allowed) dialog.append(el("p", "badge dday", q.reason || "지금은 만들 수 없어요."));
-      dialog.append(row);
-      const close = (answer) => { dialog.close(); dialog.remove(); resolve(answer); };
-      run.addEventListener("click", () => close(true));
-      cancel.addEventListener("click", () => close(false));
-      dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
-      wrap.append(dialog);
-      dialog.showModal();
-    });
-  }
-
   // 팝업을 띄우고, [만들기]면 생성 · [취소]면 조건 바꾸기로 (onBack이 없으면 다시 시도 버튼만)
   async function ask() {
     if (!wrap.isConnected) return;
-    if (await creditDialog(quote)) return generate();
+    const asked = await creditDialog(wrap, quote, {
+      title: `${label} 시안 만들기`, run: "만들기",
+      detail: `${quote.model || "그림 모델"} · 시안 ${quote.proposals}개 × ${quote.pages}장 = ${quote.count}장 (장당 ${count(quote.unit)})`,
+      note: "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요.",
+    });
+    if (asked) return generate();
     if (onBack) return onBack();
     msg.textContent = "만들기를 취소했어요.";
     retry.hidden = false;
@@ -597,8 +639,10 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
   const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
-  const translations = el("details", "studio-editor-translations");
-  translations.open = false;  // 오른쪽 칸을 짧게: 눌러서 펼칩니다.
+  const imageDoc = draft.mode === IMAGE_MODE;  // 그림 시안: 그림 한 장으로 다룸 (비율은 다시 그리기, AI 배경 그림·꾸미기 없음)
+  // 문구 · 한국어 뜻: 그림 시안은 펼친 채 회색 글자로, 예전 틀 방식은 눌러서 펼치는 칸
+  const translations = el(imageDoc ? "section" : "details", "studio-editor-translations");
+  translations.open = false;
   review.hidden = true;
   stage.setAttribute("role", "group");
   stage.setAttribute("aria-label",
@@ -612,15 +656,16 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   center.append(view);
   wrap.append(center, side);
   root.replaceChildren(wrap);
-  let externalPanel = null;  // Figma 칸 (renderExternal)
-  renderExternal();
-  window.addEventListener("focus", syncFigma);
-  syncFigma();
+  let externalPanel = null;  // Figma 칸 (renderExternal). 그림 시안에는 두지 않습니다.
+  if (!imageDoc) {
+    renderExternal();
+    window.addEventListener("focus", syncFigma);
+    syncFigma();
+  }
 
   const find = (id) => page.elements.find((item) => item.id === id);
   const isBacking = (item) => item.role === BG_ROLE || item.role === ARTWORK_ROLE;  // 바탕처럼 두는 그림
   const pickable = (id) => { const item = id && find(id); return item && !isBacking(item) ? item : null; };
-  const imageDoc = draft.mode === IMAGE_MODE;  // 그림 시안: 그림 한 장으로 다룸 (비율 바꾸기·AI 배경 그림 없음)
   if (selectedId && !pickable(selectedId)) selectedId = null;
 
   async function save() {
@@ -730,14 +775,15 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   }
 
   function renderTranslations() {
-    translations.replaceChildren(el("summary", "", `${pageIndex + 1}장 문구 · 한국어 뜻`));
+    const heading = `${pageIndex + 1}장 문구 · 한국어 뜻`;
+    translations.replaceChildren(imageDoc ? el("h3", "", heading) : el("summary", "", heading));
     if (draft.assistant) translations.append(el("p", "studio-hint", draft.assistant.notice));
-    // 그림 시안: 그림 속에 넣은 문구 원문(page.texts). 그림 속 글자가 이 원문과 같은지 확인합니다.
+    // 그림 시안: 그림 속에 넣은 문구 원문(page.texts). 그림 속 글자가 이 원문과 같은지 확인합니다. (회색 글자)
     for (const text of page.texts || []) {
       const row = el("div", "studio-editor-translation");
-      const vi = el("p", "", text.vi);
+      const vi = el("p", "studio-hint", text.vi);
       vi.lang = "vi";
-      row.append(vi, el("p", "", text.ko));
+      row.append(vi, el("p", "studio-hint", text.ko));
       translations.append(row);
     }
     if (page.texts?.length) translations.append(el("p", "is-warn", "그림 속 글자가 위 원문과 같은지 꼭 확인해 주세요."));
@@ -931,6 +977,83 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     draft.pages.splice(pageIndex, 1);
     openPage(Math.min(pageIndex, draft.pages.length - 1));
     save();
+  }
+
+  // ---------- 그림 시안 비율 다시 그리기 (크레딧) ----------
+  // 견적(reratio/quote) → 크레딧 팝업 [다시 그리기] → reratio → design-images/status 확인(pollReratio)
+  // → 다 되면 ratio·장별 그림 주소를 바꾼 새 문서를 onSave로 저장 (새 버전이라 ↶로 원래 비율로 돌아감)
+  async function changeImageRatio(value) {
+    if (value === draft.ratio || ratioBusy || reratio || reratioLocked || !onSave) return;
+    const chatId = Number(new URL(location.href).searchParams.get("chat"));
+    if (!chatId) { status.textContent = "작업을 저장한 뒤 비율을 바꿀 수 있어요."; return; }
+    ratioBusy = true;
+    updateBar();
+    status.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    try {
+      let { quote } = await postJson(`${CHAT_API}/${chatId}/reratio/quote`, { ratio: value });
+      for (;;) {
+        if (!wrap.isConnected) return;
+        status.textContent = "";
+        const asked = await creditDialog(wrap, quote, {
+          title: `${value} 비율로 다시 그리기`, run: "다시 그리기",
+          detail: `${quote.model || "그림 모델"} · ${quote.pages}장 다시 그리기 (장당 ${quote.unit}) · 지금 그림과 장별 프롬프트를 참고해요`,
+        });
+        if (!asked) return;
+        status.textContent = `${value} 비율로 다시 그리기를 요청하는 중…`;
+        const res = await fetch(`${CHAT_API}/${chatId}/reratio`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ratio: value, credits: quote.credits }),
+        });
+        const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
+        if (res.status === 409 && data.quote) {  // 비용이 바뀌었거나 한도 초과 → 새 견적으로 팝업을 다시
+          quote = data.quote;
+          continue;
+        }
+        if (data.submitted) reratioLocked = true;
+        if (!data.ok && !data.submitted) throw new Error(data.error || "다시 그리기를 요청하지 못했어요.");
+        const jobs = (data.jobs || []).map((job) => (job ? { request_id: job.request_id, status: job.status, url: null }
+          : { status: NOT_SENT }));
+        if (!jobs.some((job) => job.request_id)) {  // 작업 ID를 하나도 못 받음 → 확인할 것이 없음
+          status.textContent = data.error || "다시 그리기 결과를 받지 못했어요. 다시 누르지 마세요.";
+          return;
+        }
+        reratio = { chatId, ratio: value, pages: draft.pages.length, jobs, warning: data.warning || data.error || "" };
+        pollReratio();
+        return;
+      }
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      ratioBusy = false;
+      if (wrap.isConnected) updateBar();
+    }
+  }
+
+  // 진행 표시 · 끝나면 저장. 일부 장을 못 그렸으면 저장하지 않고 알립니다.
+  function placeReratio(job, done) {
+    if (!wrap.isConnected || Number(new URL(location.href).searchParams.get("chat")) !== job.chatId) return;
+    const drawn = job.jobs.filter((one) => one.status === IMAGE_DONE && one.url).length;
+    const total = job.pages;
+    if (!done) {
+      status.textContent = `${job.ratio} 비율로 다시 그리는 중… ${drawn}/${total}장${job.note ? ` · ${job.note}` : ""}`;
+      updateBar();
+      return;
+    }
+    updateBar();
+    if (drawn < total || job.jobs.length !== draft.pages.length) {
+      status.textContent = `${total - drawn}장을 그리지 못해 저장하지 않았어요. (그린 장만큼 크레딧은 사용됐어요)`
+        + (job.warning ? ` ${job.warning}` : "");
+      return;
+    }
+    const next = structuredClone(draft);
+    next.ratio = job.ratio;
+    next.demo = false;  // 실제 생성한 그림
+    next.pages.forEach((one, index) => {
+      const art = one.elements.find((item) => item.role === ARTWORK_ROLE);
+      if (art) art.src = job.jobs[index].url;
+    });
+    status.textContent = `${job.ratio} 비율로 다시 그렸어요. 저장하는 중…`;
+    onSave(next).catch(() => { status.textContent = "다시 그린 그림을 저장하지 못했어요. 다시 시도해 주세요."; });
   }
 
   // ---------- 비율 바꾸기 (무료) ----------
@@ -1127,11 +1250,12 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
 
   // ---------- 오른쪽 고정 칸 ----------
   // 고르기·장 옮기기·저장 때마다 다시 채웁니다. 검수 결과·문구·Figma 칸은 같은 노드를 다시 붙여 펼친 상태를 유지합니다.
-  function section(title, nodes, className = "") {
+  function section(title, nodes, className = "") {  // title이 비면 제목 없이 버튼 줄만
     const box = el("section", `studio-editor-panel-section ${className}`.trim());
     const row = el("div", "studio-editor-panel-row");
     row.append(...nodes.filter(Boolean));
-    box.append(el("h3", "", title), row);
+    if (title) box.append(el("h3", "", title));
+    box.append(row);
     return box;
   }
 
@@ -1163,25 +1287,45 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     }
 
     const multi = draft.pages.length > 1;
+    const redrawing = imageDoc && Boolean(reratio);  // 비율 다시 그리는 중: 비율 버튼·내보내기 잠금
     const exports = [button(multi ? "이 장 PNG" : "PNG", () => download("png")),
       button(multi ? "이 장 JPG" : "JPG", () => download("jpg")), multi && button("모든 장 PNG", downloadAll)];
+    for (const node of exports) if (node) node.disabled = redrawing;
+
+    if (imageDoc) {  // 그림 시안: 비율(다시 그리기) · 장 · 되돌리기 · 내보내기 · 검수 · 문구 (2026-10-27 유진 요청으로 정리)
+      const choices = IMAGE_RATIO_CHOICES.includes(draft.ratio) ? IMAGE_RATIO_CHOICES : [draft.ratio, ...IMAGE_RATIO_CHOICES];
+      const ratioButtons = choices.map((value) => {
+        const current = value === draft.ratio;
+        const node = button(value, () => changeImageRatio(value), current ? "btn dark" : "btn");
+        node.setAttribute("aria-pressed", String(current));
+        node.disabled = !current && (ratioBusy || redrawing || reratioLocked);
+        node.title = current ? "지금 비율" : `${value}로 다시 그리기 (크레딧 사용)`;
+        return node;
+      });
+      const nodes = [head, section(`비율 · ${draft.ratio}`, ratioButtons)];
+      if (multi) {
+        renderPages();
+        nodes.push(section(`장 · ${pageIndex + 1}/${draft.pages.length}`, [pagesBar]));
+      }
+      if (history.length) nodes.push(section("", history));
+      nodes.push(section("내보내기", exports), section("", [button("광고 표현 검수", runReview)]), review);
+      if (item) nodes.push(section(`선택한 요소 · ${ROLE_NAMES[item.role] || TYPE_NAMES[item.type] || "요소"}`, itemTools(item), "is-selected"));
+      side.replaceChildren(...nodes, translations);
+      return;
+    }
 
     const make = button("🖼 AI 배경 그림 (유료)", makeBackground);
     make.disabled = bgBusy || bgLocked;
-    // 그림 시안은 장 전체가 그림이라 배경색·AI 배경 그림이 가려져 보이지 않습니다. (글·이모지 덧붙이기는 그대로)
-    const decorate = imageDoc ? [addSelect(), button("✂️ 배경 제거", openRemoveBg)]
-      : [addSelect(), field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })),
-        make, page.elements.some((one) => one.role === BG_ROLE) && button("배경 그림 빼기", () => {
-          page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
-          draw();
-          updateBar();
-          save();
-        }),
-        button("✂️ 배경 제거", openRemoveBg)];  // 기존 배경 제거 창(sns_image.js)을 엽니다.
+    const decorate = [addSelect(), field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })),
+      make, page.elements.some((one) => one.role === BG_ROLE) && button("배경 그림 빼기", () => {
+        page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
+        draw();
+        updateBar();
+        save();
+      }),
+      button("✂️ 배경 제거", openRemoveBg)];  // 기존 배경 제거 창(sns_image.js)을 엽니다.
 
-    const nodes = [head, imageDoc
-      ? section(`비율 · ${draft.ratio}`, [el("p", "studio-hint", "그림 시안은 비율을 바꾸려면 원하는 비율로 새로 만들어 주세요.")])
-      : section("비율", ratios)];
+    const nodes = [head, section("비율", ratios)];
     if (draft.kind === "cardnews" || multi) {
       renderPages();
       nodes.push(section(`장 · ${pageIndex + 1}/${draft.pages.length}`, [pagesBar]));
@@ -1192,7 +1336,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     nodes.push(item
       ? section(`선택한 요소 · ${ROLE_NAMES[item.role] || TYPE_NAMES[item.type] || "요소"}`, itemTools(item), "is-selected")
       : el("p", "studio-hint", "초안에서 요소를 누르면 여기서 글꼴·크기·색을 바꿀 수 있어요."));
-    side.replaceChildren(...nodes, translations, externalPanel);
+    side.replaceChildren(...nodes, translations, ...(externalPanel ? [externalPanel] : []));
   }
 
   // 선택한 요소 도구: 종류별 칸 + 순서 · 삭제
@@ -1317,6 +1461,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   applyBackground = placeBackground;
 
   async function download(type) {
+    if (imageDoc && reratio) return;  // 비율 다시 그리는 중에는 내보내기 잠금
     status.textContent = "이미지를 만드는 중…";
     try {
       await exportImage(draft, type, pageIndex);
@@ -1340,6 +1485,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
   async function downloadAll() {
+    if (imageDoc && reratio) return;
     try {
       for (let index = 0; index < draft.pages.length; index += 1) {
         status.textContent = `${index + 1}/${draft.pages.length}장 만드는 중…`;
@@ -1475,6 +1621,10 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
 
   draw();
   updateBar();  // 오른쪽 칸 (장 번호도 여기서 그림)
+  if (imageDoc) {
+    applyReratio = placeReratio;
+    if (reratio) placeReratio(reratio, false);  // 그리는 중에 다시 그려진 편집기도 진행 표시를 이어 받음
+  }
   fit();
   if (focusAfterRender) focusItem(selectedId);
   // 웹글꼴을 받은 뒤 글자 폭이 달라지므로 다시 그립니다.
