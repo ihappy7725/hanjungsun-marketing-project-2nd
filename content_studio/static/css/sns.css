@@ -5,6 +5,8 @@
 .studio-tabs a { padding: var(--space-5) var(--space-6); border-bottom: 2px solid transparent; color: var(--muted); text-decoration: none; white-space: nowrap; }
 .studio-tabs a:hover { color: var(--ink); }
 .studio-tabs a[aria-current="page"] { border-bottom-color: var(--gold); color: var(--ink); font-weight: 600; }
+/* 탭 줄 맨 오른쪽 [+ 새로 만들기] (세로 가운데, 줄 아래 선에 닿지 않게) */
+.studio-tabs .studio-tabs-new { flex: none; align-self: center; margin: 0 0 var(--space-2) auto; }
 .studio-page [hidden] { display: none !important; }  /* display: grid 등이 hidden 속성을 덮지 않게 */
 
 /* ---------- 안내 줄 ---------- */
@@ -134,6 +136,8 @@
 }
 .studio-page .studio-command-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); }
 .studio-page .studio-command-form textarea { display: block; width: 100%; resize: none; font: inherit; line-height: var(--line-height); }
+/* 세 탭 입력창: 커서가 들어가도 공용 :focus-visible 갈색 굵은 테두리(base.css)를 띄우지 않음 (2026-10-27 유진 요청) */
+.studio-page .studio-command-form textarea:focus, .studio-page .studio-command-form textarea:focus-visible { outline: none; }
 /* 영상 탭 입력창: 다른 입력칸과 같은 테두리·흰 배경, 글 길이에 맞춰 3~8줄(sns.js fitInput), 스크롤 막대·손잡이 없음.
    [보내기]는 입력창 안 우측 하단 */
 /* 입력창 → 아래 [보내기] 오른쪽 (레퍼런스는 위 비율 사각형 오른쪽 칸에서 넣음) */
@@ -189,7 +193,15 @@
 .studio-page .studio-ref-drop:hover, .studio-page .studio-ref-drop.is-dragover { border-color: var(--gold); background: var(--paper); }
 .studio-page .studio-ref-drop:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .studio-page .studio-ref-drop:not(.is-filled) .studio-refs { display: none; }
-.studio-page .studio-ref-drop.is-filled { justify-content: space-between; }
+/* 하나라도 넣으면 칸 전체를 2×2로 나눠 좌측 상단부터 한 칸씩 꽉 채움(잘라서 맞춤). 안내 글은 숨기고, 다음 빈 칸에 "+" (sns.js renderRefs)
+   — 영상 편집 화면 ③ 레퍼런스(sns_video.js)의 작은 썸네일은 그대로 두려고 이 칸 안에서만 */
+.studio-page .studio-ref-drop.is-filled { display: block; padding: var(--space-3); }
+.studio-page .studio-ref-drop.is-filled .studio-ref-drop-hint { display: none; }
+.studio-page .studio-ref-drop .studio-refs { display: grid; grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr)); gap: var(--space-3); width: 100%; height: 100%; }
+.studio-page .studio-ref-drop .studio-ref { min-width: 0; min-height: 0; }
+.studio-page .studio-ref-drop .studio-ref img, .studio-page .studio-ref-drop .studio-ref video { width: 100%; height: 100%; }
+.studio-page .studio-ref-drop .studio-ref-remove { top: var(--space-3); right: var(--space-3); }
+.studio-page .studio-ref-slot { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--muted); font-size: var(--fs-subheading); }
 .studio-page .studio-ref-drop-hint { margin: 0; font-size: var(--fs-body); }
 .studio-page .studio-ref-drop-hint small { display: block; margin-top: var(--space-2); color: var(--muted); font-size: var(--fs-min); }
 /* 초안 뒤 고정된 제목: 글자처럼 보이고, 누르면(읽기 전용 해제) 다시 입력칸 모양 */
@@ -388,8 +400,6 @@
   background: var(--white);
   box-shadow: var(--shadow);
 }
-/* 미리보기 팝업: [수정하기]로 할 수 있는 것 안내 */
-.studio-page .studio-preview-dialog .studio-preview-guide { margin: 0 0 var(--space-4); color: var(--ink); font-size: var(--fs-min); }
 /* 영상 편집 화면(초안 뒤, is-video-edit): 제목 왼쪽 · 비율·초·↶ ↷ 같은 줄 오른쪽 (제품 버튼은 숨김) */
 .studio-page .studio-work.is-video-edit .studio-settings { flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .studio-page .studio-work.is-video-edit .studio-title { flex: 1 1 240px; width: auto; min-width: 0; text-align: left; }

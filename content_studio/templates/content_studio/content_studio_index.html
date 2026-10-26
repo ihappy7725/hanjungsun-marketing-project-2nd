@@ -15,17 +15,16 @@
     <div>
       <h1>콘텐츠 스튜디오</h1>
     </div>
-    <div class="actions">
-      <button type="button" class="btn dark" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
-    </div>
   </header>
 
-  {# 탭 줄: 현지조사 탭(.ma-tabs)과 같은 모양 — 글자 탭 + 지금 탭 금색 밑줄 (sns.css .studio-tabs) #}
-  <nav class="studio-tabs" aria-label="콘텐츠 스튜디오 탭">
+  {# 탭 줄: 현지조사 탭(.ma-tabs)과 같은 모양 — 글자 탭 + 지금 탭 금색 밑줄 (sns.css .studio-tabs)
+     [+ 새로 만들기]는 탭 줄 맨 오른쪽(메인 탭은 숨김). 누르면 이 탭 줄까지 화면이 내려갑니다(sns.js startNew). #}
+  <nav class="studio-tabs" data-role="tabs" aria-label="콘텐츠 스튜디오 탭">
     <a href="{{ url_for('content_studio.index') }}"{% if tab == 'main' %} aria-current="page"{% endif %}>메인</a>
     <a href="{{ url_for('content_studio.index', tab='poster') }}"{% if tab == 'poster' %} aria-current="page"{% endif %}>포스터</a>
     <a href="{{ url_for('content_studio.index', tab='cardnews') }}"{% if tab == 'cardnews' %} aria-current="page"{% endif %}>카드뉴스</a>
     <a href="{{ url_for('content_studio.index', tab='video') }}"{% if tab == 'video' %} aria-current="page"{% endif %}>영상</a>
+    <button type="button" class="btn dark studio-tabs-new" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
   </nav>
 
   <p class="studio-notice" data-role="notice" role="status" hidden></p>
@@ -64,7 +63,7 @@
       </div>
     </div>
     <div class="studio-list" data-role="gallery"></div>
-    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. {% if tab == 'main' %}위 추천을 누르거나 탭에서 [새로 만들기]로 시작하세요.{% else %}[새로 만들기]로 시작하세요.{% endif %}</p>
+    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다.</p>
   </section>
 
   {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 + 아래 한 줄 입력 (README 1장 ③④) #}
