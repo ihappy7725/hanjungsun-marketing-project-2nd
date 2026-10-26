@@ -9,6 +9,8 @@
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
 .kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-navy: #3b5b8c; }
+/* 손익 판정 '이익' 글자: base.css 청록(--teal)은 작은 글씨에서 검정처럼 보여 선명한 초록을 KPI 안에서만 정의합니다. */
+.kpi-page { --kpi-green: #2e8b57; }
 /* VOC 색: 예산 트래킹과 같은 4색(녹색 · 분홍 · 밝은 남색 · 아이보리)만 씁니다.
    행동이 필요한 것일수록 진한 색: 불만 = 밝은 남색(가장 진함) · 만족 = 녹색 · 보통 = 아이보리. 키워드 1위 = 남색, 나머지 = 아이보리 */
 .kpi-page {
@@ -298,16 +300,19 @@
 .kpi-page .kpi-sim-form [hidden] { display: none; }
 .kpi-page .kpi-sim-help { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sim-help:empty { display: none; }
+/* 환율 참고 줄 · 예상 ROAS 기본값 근거는 한 단계 작게 */
+.kpi-page .kpi-sim-help[data-kpi="sim-rate-help"],
+.kpi-page .kpi-sim-help[data-kpi="sim-roas-help"] { font-size: calc(var(--fs-min) * .85); }
 .kpi-page .kpi-sim-row { display: flex; gap: var(--space-4); }
 .kpi-page .kpi-sim-row .field { flex: 1; min-width: 0; }
 .kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 110px; }
 .kpi-page .kpi-sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .kpi-page .kpi-sim-subtotal td { background: var(--paper); font-weight: 600; }
-/* 손익 판정: 이익 녹색 · 손해 벽돌빛(손익분기 미달과 같은 색) · 본전 회색 */
+/* 손익 판정: 이익 선명한 초록 · 손해 벽돌빛(손익분기 미달과 같은 색) · 본전 밝은 남색 */
 .kpi-page .kpi-verdict { font-weight: 700; }
-.kpi-page .kpi-verdict.is-gain { color: var(--teal); }
+.kpi-page .kpi-verdict.is-gain { color: var(--kpi-green); }
 .kpi-page .kpi-verdict.is-loss { color: var(--kpi-red); }
-.kpi-page .kpi-verdict.is-even { color: var(--muted); }
+.kpi-page .kpi-verdict.is-even { color: var(--kpi-navy); }
 .kpi-page td .kpi-verdict { margin-left: var(--space-2); font-size: 0.85em; }
 .kpi-page .kpi-sim-preview { margin: 0; padding: var(--space-3) var(--space-4); border-left: 2px solid var(--line-strong); background: var(--page-bg); font-size: var(--fs-table); }
 /* 예상 ROAS 드롭다운 · 직접 입력 칸: % 숫자만 들어가므로 좁게 */
