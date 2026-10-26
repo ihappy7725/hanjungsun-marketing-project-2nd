@@ -530,9 +530,9 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
         if (!wrap.isConnected) return;
         proposals = data.proposals.map((item) => ({ ...item, pages: item.pages.map((page) => ({ ...page, job: null })) }));
       }
-      // 포스터: 레이아웃·문구만 보내고 유진 템플릿이 조립 / 카드뉴스: 장별 프롬프트
+      // 포스터: 레이아웃·문구·스타일 버튼 값만 보내고 유진 템플릿이 조립 (style "" = AI 추천) / 카드뉴스: 장별 프롬프트
       const plan = kind === "poster"
-        ? { proposals: proposals.map((item) => ({ layout: item.layout, texts: item.texts })) }
+        ? { proposals: proposals.map((item) => ({ layout: item.layout, texts: item.texts })), style: style || "" }
         : { prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)) };
       const res = await fetch(IMAGE_API, {
         method: "POST", headers: { "Content-Type": "application/json" },
