@@ -98,31 +98,23 @@
 }
 .kpi-page .kpi-info:hover,
 .kpi-page .kpi-info:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; }
-.kpi-page .kpi-info::after {
-  content: attr(data-tip);
-  position: absolute;
-  top: calc(100% + 6px);
-  left: -8px;
-  z-index: 40;
+/* 설명창: JS가 화면 맨 위 층(fixed)에 하나만 띄웁니다. 블록 안에 그리면 뒤 내용에 가려 글씨가 겹쳐 보였습니다. */
+.kpi-page .kpi-tip {
+  position: fixed;
+  z-index: 70;  /* 확대 창(30)보다 위 */
   width: max-content;
-  max-width: 300px;
+  max-width: 320px;
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--line-strong);
-  background: var(--page-bg);  /* 블록 배경과 구분되는 흰 바탕: 뒤 글씨가 비쳐 겹쳐 보이지 않게 */
+  background: var(--page-bg);
+  box-shadow: var(--shadow);
   color: var(--ink);
   font: normal 400 var(--fs-min)/var(--line-height) var(--font-body);
-  letter-spacing: 0;
   text-align: left;
-  text-transform: none;
   white-space: pre-line;
-  opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition: opacity .15s;
 }
-.kpi-page .kpi-scorecards .kpi:last-child .kpi-info::after { left: auto; right: -8px; }
-.kpi-page .kpi-info:hover::after,
-.kpi-page .kpi-info:focus::after { opacity: 1; visibility: visible; z-index: 60; }
+.kpi-page .kpi-tip[hidden] { display: none; }
 /* 확대 화면에서는 ⓘ를 숨깁니다(상세 표와 겹치지 않게). */
 .kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
 
@@ -188,16 +180,19 @@
 /* ---------- 확대 상태 ---------- */
 .kpi-page .kpi-backdrop { position: fixed; inset: 0; z-index: 25; background: var(--backdrop); }
 .kpi-page .kpi-backdrop[hidden] { display: none; }
-/* 확대 창은 내용 높이에 맞춰 화면 가운데에 띄우고, 화면보다 길면 창 안에서 스크롤합니다(아래 빈 공간 없음). */
+/* 확대 창은 흰 바탕으로 내용 높이에 맞춰 화면 가운데에 띄우고, 화면보다 길면 창 안에서 스크롤합니다(아래 빈 공간 없음). */
 .kpi-page .kpi-panel.is-expanded {
   position: fixed;
   top: 50%;
-  right: max(32px, calc((100vw - 1180px) / 2));
+  /* 왼쪽 메뉴(--sidebar-width, 공통 레이아웃 값)를 뺀 본문 영역 가운데에 최대 1440px로 띄웁니다. */
+  --kpi-modal-gap: max(24px, calc((100vw - var(--sidebar-width, 0px) - 1440px) / 2));
+  right: var(--kpi-modal-gap);
   bottom: auto;
-  left: max(32px, calc((100vw - 1180px) / 2));
+  left: calc(var(--sidebar-width, 0px) + var(--kpi-modal-gap));
   z-index: 30;
   height: auto;
-  max-height: calc(100vh - 64px);
+  max-height: calc(100vh - 40px);
+  background: var(--page-bg);
   padding: var(--space-8) var(--space-8) var(--space-6);
   overflow-y: auto;
   transform: translateY(-50%);
@@ -205,8 +200,8 @@
 .kpi-page .kpi-panel.is-expanded .kpi-detail { display: block; }
 .kpi-page .kpi-panel.is-expanded .kpi-compact-only { display: none; }
 .kpi-page .kpi-panel.is-expanded .kpi-panel-body { flex: none; }
-.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 360px; }
-.kpi-page .kpi-panel.is-expanded .kpi-chart-wide { height: 320px; margin-bottom: var(--space-6); }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-bar { height: 420px; }
+.kpi-page .kpi-panel.is-expanded .kpi-chart-wide { height: 380px; margin-bottom: var(--space-6); }
 .kpi-page .kpi-panel.is-expanded .kpi-roas-totals { margin-bottom: var(--space-2); }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-donut { width: 190px; height: 190px; }
 .kpi-page .kpi-panel.is-expanded .kpi-chart-small,
@@ -481,6 +476,28 @@
 .kpi-page .kpi-roas-totals dd { margin: 0; font-family: var(--font-serif); font-weight: 700; }
 
 /* ---------- VOC 리뷰 보기 ---------- */
+/* 소통 창구 블록: 창구마다 건수 · 만족(녹)/보통(회)/불만(코랄) 비율 막대. 누르면 리뷰 목록을 그 창구로 거릅니다. */
+.kpi-page .kpi-voc-channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-5); }
+.kpi-page .kpi-voc-ch {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--page-bg);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.kpi-page .kpi-voc-ch:hover { border-color: var(--line-strong); }
+.kpi-page .kpi-voc-ch.is-on { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.kpi-page .kpi-voc-ch-name { color: var(--muted); font-size: var(--fs-table); font-weight: 600; }
+.kpi-page .kpi-voc-ch strong { font-size: var(--fs-subheading); line-height: 1.2; }
+.kpi-page .kpi-voc-ch small { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-voc-ch-bar { display: flex; height: 6px; overflow: hidden; background: var(--line); }
+.kpi-page .kpi-voc-ch-positive { background: var(--teal); }
+.kpi-page .kpi-voc-ch-neutral { background: var(--line-strong); }
+.kpi-page .kpi-voc-ch-negative { background: var(--kpi-coral); }
 .kpi-page .kpi-review-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
 .kpi-page .kpi-review-count { color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
 /* 언어 · 감성 드롭다운 (블록 머리 버튼과 같은 28px) */

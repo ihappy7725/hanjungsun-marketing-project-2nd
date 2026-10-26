@@ -163,7 +163,8 @@
                   </label>
                   <label class="field kpi-sim-unit">화폐
                     <select name="unit" data-kpi="sim-unit">
-                      <option value="KRW" selected>KRW(원)</option>
+                      <option value="USD" selected>USD(달러)</option>
+                      <option value="KRW">KRW(원)</option>
                       <option value="VND">VND</option>
                     </select>
                   </label>
@@ -234,7 +235,7 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC {{ info("만족도·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
+          <h2>VOC {{ info("만족도·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR) · 카카오톡 · WhatsApp") }}</h2>
         </div>
         <div class="kpi-tools">
 
@@ -274,11 +275,13 @@
 
           <!-- 리뷰 보기: 언어·만족도 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
           <p class="kpi-detail-title">리뷰</p>
+          <!-- 창구 블록: 누르면 아래 리뷰 목록이 그 창구만 보입니다(전체를 누르면 모두). -->
+          <div class="kpi-voc-channels" data-kpi="voc-channels" role="group" aria-label="소통 창구별 리뷰"></div>
           <div class="kpi-review-tools">
             <label class="kpi-select-label">언어
               <select class="kpi-select" data-kpi-action="review-lang" data-kpi="review-lang">
                 <option value="ko" selected>한국어</option>
-                <option value="vi">베트남어</option>
+                <option value="vi">원문</option>
                 <option value="both">둘 다</option>
               </select>
             </label>

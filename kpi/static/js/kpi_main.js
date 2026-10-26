@@ -15,8 +15,8 @@ const charts = {};
 // surveyComments: 설문 주관식 의견(응답자 1명당 1줄) — 리뷰 목록에 공개 리뷰 뒤로 이어 붙임
 const view = {
   currency: "KRW", summary: null,
-  reviewLang: "ko", reviewFilter: "all", reviewPage: 1, reviews: [],
-  surveyVoc: null, surveyComments: [],
+  reviewLang: "ko", reviewFilter: "all", reviewChannel: "all", reviewPage: 1, reviews: [],
+  surveyVoc: null, surveyComments: [], channels: [],
 };
 const REVIEW_PAGE_SIZE = 10;
 
@@ -39,7 +39,10 @@ const signedKrw = (n) => `${n >= 0 ? "+" : "−"}${num(Math.abs(n))}원`;
 
 // 화면에서는 '감성' 대신 '만족도'(만족 · 보통 · 불만)로 표시합니다. 데이터 값은 Positive/Neutral/Negative 그대로.
 const SENTIMENT_LABEL = { Positive: "만족", Neutral: "보통", Negative: "불만" };
-const PLATFORM_LABEL = { Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok", Zalo_OA: "Zalo QR", Zalo_Survey: "Zalo 설문" };
+const PLATFORM_LABEL = {
+  Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok",
+  Zalo_OA: "Zalo", KakaoTalk: "카카오톡", WhatsApp: "WhatsApp", Zalo_Survey: "Zalo 설문",
+};
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
 // ---------- 디자인 변수 ----------
@@ -47,7 +50,6 @@ const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "i
 const cssVar = (name) => getComputedStyle(root).getPropertyValue(name).trim();
 // 차트 색: 공통 톤(남색·청록·갈색·살구) 안에서 서로 잘 구분되는 진한 색을 씁니다. (base.css 변수 + KPI 전용 분홍)
 const palette = () => ({
-  ink: cssVar("--ink"),         // 예산: 플랫폼 광고비(검정)
   pink: cssVar("--kpi-pink"),   // 예산: 인플루언서 예상(분홍, kpi_main.css에서 정의)
   ivory: cssVar("--beige"),     // 예산: 잔여 가용 예산(아이보리)
   coral: cssVar("--kpi-coral"), // VOC: 불만(코랄, kpi_main.css에서 정의)
@@ -55,7 +57,7 @@ const palette = () => ({
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
-  strong: cssVar("--navy"),   // 가장 큰 몫(플랫폼 광고비)
+  strong: cssVar("--navy"),   // 예산: 인플루언서 예상(남색)
   good: cssVar("--teal"),     // 기준 이상 · 긍정 · 전환
   low: cssVar("--orange"),    // 기준 미달 · 부정 · 예상 지출
   mid: cssVar("--brown"),     // 보조 계열(인플루언서 집행 · 키워드 · 클릭)
@@ -193,11 +195,11 @@ function renderBudget(data) {
   const b = data.budget;
   const p = palette();
   const remaining = Math.max(b.remaining_krw, 0);
-  // 예산 색: 녹색 · 분홍 · 검정 · 아이보리 (검정은 가장 작은 몫인 인플루언서 예상에만 써서 눈에 덜 무겁게)
+  // 예산 색: 녹색 · 분홍 · 남색 · 아이보리 (남색은 가장 작은 몫인 인플루언서 예상에만 써서 눈에 덜 무겁게)
   const parts = [
     ["플랫폼 광고비", b.platform_krw, p.good],
     ["인플루언서 집행", b.influencer_paid_krw, p.pink],
-    ["인플루언서 예상", b.influencer_expected_krw, p.ink],
+    ["인플루언서 예상", b.influencer_expected_krw, p.strong],
     ["잔여 가용 예산", remaining, p.ivory],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
@@ -550,6 +552,7 @@ function renderVoc(stats, reviews, source) {
   });
 
   view.reviews = [...reviews, ...view.surveyComments];
+  renderVocChannels();
   renderReviewList();
 
   setStatus("voc-source", source.text, source.status, source.title || "");
@@ -557,13 +560,54 @@ function renderVoc(stats, reviews, source) {
   setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: ${sampleTitle}건 · 범위: 베트남`);
 }
 
-// 리뷰 목록(확대 화면): 언어(한국어 / 베트남어 / 둘 다) · 감성 드롭다운 · 10건씩 페이지 넘김
+// 창구 블록(확대 화면): 창구마다 건수 · 만족/보통/불만 비율 막대. 누르면 리뷰 목록을 그 창구로 거릅니다.
+function renderVocChannels() {
+  const order = [...view.channels, ...new Set(view.reviews.map((r) => r.platform))];
+  const keys = [...new Set(order)].filter((k) => view.reviews.some((r) => r.platform === k));
+  const block = (key, label, list) => {
+    const n = list.length;
+    const count = (s) => list.filter((r) => r.sentiment === s).length;
+    const bar = el("span", { className: "kpi-voc-ch-bar" }, ["Positive", "Neutral", "Negative"].map((s) => {
+      const seg = el("span", { className: `kpi-voc-ch-${s.toLowerCase()}` });
+      seg.style.width = `${n ? (count(s) / n) * 100 : 0}%`;
+      return seg;
+    }));
+    const btn = el("button", { className: `kpi-voc-ch${view.reviewChannel === key ? " is-on" : ""}` }, [
+      el("span", { className: "kpi-voc-ch-name", text: label }),
+      el("strong", { text: `${num(n)}건` }),
+      bar,
+      el("small", { text: n ? `만족 ${Math.round((count("Positive") / n) * 100)}% · 불만 ${Math.round((count("Negative") / n) * 100)}%` : "—" }),
+    ]);
+    btn.type = "button";
+    btn.dataset.kpiAction = "review-channel";
+    btn.dataset.channel = key;
+    btn.setAttribute("aria-pressed", String(view.reviewChannel === key));
+    return btn;
+  };
+  $("voc-channels").replaceChildren(
+    block("all", "전체", view.reviews),
+    ...keys.map((k) => block(k, PLATFORM_LABEL[k] || k, view.reviews.filter((r) => r.platform === k))),
+  );
+}
+
+function setReviewChannel(channel) {
+  view.reviewChannel = view.reviewChannel === channel ? "all" : channel;
+  view.reviewPage = 1;
+  renderVocChannels();
+  renderReviewList();
+}
+
+// 리뷰 목록(확대 화면): 창구 블록 · 언어(한국어 / 원문 / 둘 다) · 만족도 드롭다운 · 10건씩 페이지 넘김
 function renderReviewList() {
   // 만족도는 박스 없이 작은 글씨로: 만족 녹색 · 보통 회색 · 불만 붉은색
   const mood = (text, tone) => el("span", { text, className: `kpi-mood kpi-mood-${tone}` });
   const tone = { Positive: "good", Neutral: "mid", Negative: "bad" };
-  const list = view.reviewFilter === "all" ? view.reviews : view.reviews.filter((r) => r.sentiment === view.reviewFilter);
-  const label = view.reviewFilter === "all" ? "전체" : SENTIMENT_LABEL[view.reviewFilter];
+  const list = view.reviews.filter((r) => (view.reviewChannel === "all" || r.platform === view.reviewChannel)
+    && (view.reviewFilter === "all" || r.sentiment === view.reviewFilter));
+  const label = [
+    view.reviewChannel === "all" ? "" : PLATFORM_LABEL[view.reviewChannel] || view.reviewChannel,
+    view.reviewFilter === "all" ? "" : SENTIMENT_LABEL[view.reviewFilter],
+  ].filter(Boolean).join(" · ") || "전체";
   const pages = Math.max(Math.ceil(list.length / REVIEW_PAGE_SIZE), 1);
   view.reviewPage = Math.min(Math.max(view.reviewPage, 1), pages);
   $("review-count").textContent = `${label} ${num(list.length)}건 · ${view.reviewPage}/${pages}쪽`;
@@ -581,8 +625,9 @@ function renderReviewList() {
     ]);
     const ko = el("p", { className: "kpi-review-ko", text: r.translated_kr || r.raw_text_vn });
     const vi = el("p", { className: "kpi-review-vi", text: r.raw_text_vn });
-    vi.lang = "vi";
-    const body = view.reviewLang === "ko" ? [ko] : view.reviewLang === "vi" ? [vi] : [ko, vi];
+    vi.lang = r.lang || "vi";
+    // 한국어 원문(카카오톡 등)은 번역과 원문이 같으므로 '둘 다'에서도 한 번만 보여 줍니다.
+    const body = view.reviewLang === "vi" ? [vi] : view.reviewLang === "ko" || r.lang === "ko" ? [ko] : [ko, vi];
     return el("li", {}, [head, ...body]);
   }));
 }
@@ -736,8 +781,37 @@ function formatMoneyInput(input) {
 }
 
 const parseMoney = (value) => Number(String(value).replace(/\D/g, ""));
-const toKrw = (amount, unit) => (unit === "KRW" ? Math.round(amount) : Math.round((amount * sim.data.base_rate) / 100));
-const toVnd = (amount, unit) => (unit === "VND" ? Math.round(amount) : Math.round((amount * 100) / sim.data.base_rate));
+// 화폐 환산: VND ↔ 원은 편성 기준 환율, 달러 ↔ 원은 ROAS 블록과 같은 현재 원/달러 고시 환율(요약 API)
+const usdRate = () => (view.summary?.usd?.ok ? view.summary.usd.krw_per_usd : null);
+const toKrw = (amount, unit) => {
+  if (unit === "KRW") return Math.round(amount);
+  if (unit === "USD") return Math.round(amount * usdRate());
+  return Math.round((amount * sim.data.base_rate) / 100);
+};
+const fromKrw = (krw, unit) => {
+  if (unit === "KRW") return Math.round(krw);
+  if (unit === "USD") return Math.round(krw / usdRate());
+  return Math.round((krw * 100) / sim.data.base_rate);
+};
+const toVnd = (amount, unit) => (unit === "VND" ? Math.round(amount) : fromKrw(toKrw(amount, unit), "VND"));
+
+// 화폐 선택: 기본은 달러. 달러 환율을 못 받으면 달러를 끄고 원화로 돌아갑니다(요약 API를 받기 전에는 그대로 둠).
+function syncSimUnit(summaryFailed = false) {
+  const f = simForm().elements;
+  const usdOpt = [...f.unit.options].find((o) => o.value === "USD");
+  const known = Boolean(view.summary) || summaryFailed;
+  usdOpt.disabled = known && !usdRate();
+  if (usdOpt.disabled && f.unit.value === "USD") f.unit.value = "KRW";
+  if (!sim.data) return;
+  const usd = view.summary?.usd;
+  const vndNote = `1원 ≈ ${(100 / sim.data.base_rate).toFixed(1)} VND (편성 기준 환율 ${sim.data.base_rate.toFixed(2)}원/100 VND)`;
+  setText(
+    "sim-rate-help",
+    f.unit.value === "USD"
+      ? (usdRate() ? `1달러 = ${num(usd.krw_per_usd)}원 (${usd.source}${usd.as_of ? ` ${usd.as_of}` : ""}) · ${vndNote}` : "달러 환율을 불러오는 중입니다…")
+      : vndNote,
+  );
+}
 const estRevenue = (cost, roas) => (roas == null ? null : Math.round((cost * roas) / 100));
 
 function currentMedia() {
@@ -815,12 +889,14 @@ function renderSimOptions() {
     parts.push(quotes.length
       ? quotes.map((o) => `${o.platform} ${o.content_format} ${o.price_type_label} ${krwMan(toKrw(o.amount_vnd, "VND"))}`).join(" / ")
       : "단가 미등록");
+    // 시연 데이터(시연 후보 · 인플루언서 탭 시연 인물)는 보조 글씨 끝에 '시연'을 붙여 실제 데이터와 구분합니다.
+    if (entry?.is_demo || quotes.some((o) => o.is_demo)) parts.push("시연");
     const opt = el("option");
     opt.value = name;
     opt.label = parts.filter(Boolean).join(" · ");
     return opt;
   }));
-  setText("sim-rate-help", `1원 ≈ ${(100 / d.base_rate).toFixed(1)} VND (편성 기준 환율 ${d.base_rate.toFixed(2)}원/100 VND)`);
+  syncSimUnit();
   setText(
     "sim-source",
     `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}${inf.status === "demo" ? " · 시연" : ""}`,
@@ -869,7 +945,8 @@ function syncQuote() {
     if (!accountQuotes().length && accountListEntry()) return;  // 리스트만 있는 계정: applyQuote의 '단가 미등록' 안내 유지
     return setText("sim-quote-help", accountQuotes().length ? "이 매체·형식의 단가는 인플루언서 탭에 없습니다. 집행 예산을 직접 입력해 주세요." : "");
   }
-  f.amount.value = (f.unit.value === "KRW" ? toKrw(q.amount_vnd, "VND") : q.amount_vnd).toLocaleString("en-US");
+  if (f.unit.value === "USD" && !usdRate()) return;
+  f.amount.value = (f.unit.value === "VND" ? q.amount_vnd : fromKrw(toKrw(q.amount_vnd, "VND"), f.unit.value)).toLocaleString("en-US");
   setText("sim-quote-help", `인플루언서 탭 ${q.price_type_label} ${num(q.amount_vnd)} VND (약 ${krwMan(toKrw(q.amount_vnd, "VND"))}) 불러옴`);
 }
 
@@ -954,6 +1031,7 @@ function addSimItem(form) {
   if (sim.type === "kol" && !target) return showError("sim-error", "계정/인물명을 입력해 주세요.");
   const amount = parseMoney(f.amount.value);
   if (!amount) return showError("sim-error", "집행 예산을 0보다 큰 숫자로 입력해 주세요.");
+  if (f.unit.value === "USD" && !usdRate()) return showError("sim-error", "달러 환율을 아직 불러오지 못했습니다. 잠시 후 다시 누르거나 원화로 입력해 주세요.");
   const roasText = f.roas.value.trim();
   const roas = roasText === "" ? null : Number(roasText.replace(/[^\d.]/g, ""));
   if (roasText !== "" && !Number.isFinite(roas)) return showError("sim-error", "예상 ROAS는 숫자(%)로 입력해 주세요.");
@@ -990,6 +1068,40 @@ async function loadSimulator() {
     showError("sim-error", `시뮬레이션 데이터를 불러오지 못했습니다: ${err.message}`);
   }
 }
+
+// ---------- 계산식 설명(ⓘ) ----------
+// 설명창을 블록 안이 아니라 화면 맨 위 층에 하나만 띄웁니다. 블록 안 스크롤 영역·뒤 내용에 가려 글씨가 겹치지 않게.
+const tip = el("div", { className: "kpi-tip" });
+tip.setAttribute("role", "tooltip");
+tip.hidden = true;
+root.append(tip);
+
+function showTip(btn) {
+  tip.textContent = btn.dataset.tip;
+  tip.hidden = false;
+  const r = btn.getBoundingClientRect();
+  const left = Math.min(Math.max(8, r.left - 8), window.innerWidth - tip.offsetWidth - 8);
+  const below = r.bottom + 6;
+  const top = below + tip.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - tip.offsetHeight - 6) : below;
+  tip.style.left = `${left}px`;
+  tip.style.top = `${top}px`;
+}
+
+const hideTip = () => { tip.hidden = true; };
+root.addEventListener("mouseover", (event) => {
+  const btn = event.target.closest?.(".kpi-info");
+  if (btn) showTip(btn);
+});
+root.addEventListener("mouseout", (event) => {
+  if (event.target.closest?.(".kpi-info") && !event.relatedTarget?.closest?.(".kpi-info")) hideTip();
+});
+root.addEventListener("focusin", (event) => {
+  if (event.target.matches(".kpi-info")) showTip(event.target);
+});
+root.addEventListener("focusout", (event) => {
+  if (event.target.matches(".kpi-info")) hideTip();
+});
+window.addEventListener("scroll", hideTip, { capture: true, passive: true });
 
 // ---------- 블록 확대 ----------
 function resizeCharts() {
@@ -1050,8 +1162,10 @@ async function loadSummary() {
     renderBudget(data);
     renderRoas(data);
     renderGa4(data);
+    syncSimUnit();
     syncBlockHeight();
   } catch (err) {
+    syncSimUnit(true);
     root.querySelector(".kpi-legend-note").hidden = false;
     root.querySelector(".kpi-legend-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
   }
@@ -1061,6 +1175,7 @@ async function loadVoc() {
   try {
     const data = await getJson(API.voc);
     vocReviews = data.reviews;
+    view.channels = [...(data.channels || []), "Zalo_Survey"];
     view.surveyComments = data.survey_comments || [];
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
@@ -1181,6 +1296,8 @@ root.addEventListener("click", (event) => {
     analyzeVoc(target);
   } else if (action === "currency") {
     setCurrency(target.dataset.cur);
+  } else if (action === "review-channel") {
+    setReviewChannel(target.dataset.channel);
   } else if (action === "review-page") {
     setReviewPage(Number(target.dataset.page));
   } else if (action === "reset-order") {
@@ -1199,7 +1316,7 @@ root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi="sim-media"]')) onMediaChange();
   if (event.target.matches('[data-kpi="sim-format"]')) onFormatChange();
   // 화폐를 바꾸면 불러온 KOL 단가를 그 화폐로 다시 채웁니다(단가가 없는 항목의 금액은 그대로).
-  if (event.target.matches('[data-kpi="sim-unit"]')) syncQuote();
+  if (event.target.matches('[data-kpi="sim-unit"]')) { syncSimUnit(); syncQuote(); }
   if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
   if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);
 });

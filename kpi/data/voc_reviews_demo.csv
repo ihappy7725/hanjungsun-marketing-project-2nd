@@ -1,0 +1,94 @@
+# VOC 공개 리뷰·1:1 문의 (시연 데이터). 창구: Shopee_VN · Instagram · TikTok · Zalo_OA · KakaoTalk · WhatsApp
+# raw_text_vn = 고객이 쓴 원문(lang: vi 베트남어 / ko 한국어). 한정선은 배송을 하지 않으므로 배송 관련 내용 없음.
+review_id,platform,raw_text_vn,translated_kr,sentiment,keyword_tag,lang
+demo_voc_01,Shopee_VN,"Bánh mochi dâu rất tươi, vị ngọt vừa phải, cả nhà đều thích.",딸기 찹쌀떡 처음 사 봤는데 딸기가 진짜 신선하더라고요! 단맛도 과하지 않아서 온 가족이 다 잘 먹었어요.,Positive,당도/맛,vi
+demo_voc_02,Shopee_VN,Trời nóng quá nên trên đường mua về nhà phần kem bên trong hơi bị chảy.,날씨가 너무 더워서 그런지 사 들고 집에 오는 길에 안에 크림이 살짝 녹았더라고요..,Negative,포장/보냉,vi
+demo_voc_03,Instagram,"Hộp quà gói bằng vải bojagi nhìn sang trọng, rất hợp để biếu tặng.",보자기로 싸 주신 선물 상자가 고급스러워 보여서 선물용으로 딱이에요!,Positive,선물용,vi
+demo_voc_04,TikTok,"Giá hơi cao so với bánh mochi bình thường, nhưng chất lượng tốt.",일반 찹쌀떡보다 가격이 좀 있는 편이긴 한데.. 먹어 보니 품질은 확실히 좋네요.,Neutral,가격,vi
+demo_voc_05,Shopee_VN,"Vỏ bánh dẻo mềm, nhân xoài thơm, sẽ mua lại.",떡이 쫀득하면서도 부드럽고 망고 소가 향긋해서 계속 생각나요. 재구매 의사 있습니다!,Positive,당도/맛,vi
+demo_voc_06,Instagram,"Mua ở cửa hàng nhưng không có túi giữ lạnh, cầm về một tiếng là bánh bị mềm nhũn.",매장에서 샀는데 보냉백이 없어서 한 시간쯤 들고 왔더니 떡이 완전 흐물흐물해졌어요ㅠ,Negative,포장/보냉,vi
+demo_voc_07,TikTok,"Mình mua làm quà Tết cho sếp, ai cũng khen đẹp.",뗏(설) 선물로 상사분께 드리려고 샀는데 보는 사람마다 예쁘다고 칭찬하더라고요.,Positive,선물용,vi
+demo_voc_08,Shopee_VN,"Vị sầu riêng hơi gắt, không hợp khẩu vị của mình.",두리안 맛은 향이 생각보다 강하더라고요.. 제 입맛에는 좀 안 맞았어요.,Negative,당도/맛,vi
+demo_voc_09,Instagram,"Bánh ăn được, không có gì đặc biệt lắm.",무난하게 먹을 만했어요. 특별히 기억에 남는 맛은 아니었네요.,Neutral,당도/맛,vi
+demo_voc_10,TikTok,Mong có hộp nhỏ 4 cái để giá mềm hơn.,4개짜리 작은 박스도 나오면 좋겠어요. 그러면 가격 부담이 좀 덜할 것 같아요.,Neutral,가격,vi
+demo_voc_11,Zalo_OA,"Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",보냉 박스가 좋아서 다낭 집까지 들고 왔는데도 떡이 말랑말랑했어요!,Positive,포장/보냉,vi
+demo_voc_12,Zalo_OA,Cho mình hỏi bánh để tủ lạnh được mấy ngày?,혹시 냉장고에 넣어 두면 며칠까지 괜찮을까요?,Neutral,기타,vi
+demo_voc_13,Zalo_OA,"Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",매장에서 받았을 때 상자 한쪽이 찌그러져 있었어요.. 포장 조금만 더 꼼꼼히 해 주시면 좋겠어요.,Negative,포장/보냉,vi
+demo_voc_14,Shopee_VN,"Mua vị khoai môn, béo bùi mà không ngấy. Rất ngon!",토란 맛 샀는데 고소하면서도 안 느끼해요. 진짜 맛있어요!,Positive,당도/맛,vi
+demo_voc_15,Shopee_VN,"Hộp có đá khô, mang đi xa vẫn lạnh, bánh không bị chảy.",드라이아이스를 넣어 주셔서 멀리 들고 가도 차갑고 하나도 안 녹았어요.,Positive,포장/보냉,vi
+demo_voc_16,Shopee_VN,"Túi giữ lạnh hơi mỏng, trời 35 độ cầm 30 phút là bánh mềm.",보냉백이 좀 얇아요. 35도 날씨에 30분 들고 다녔더니 떡이 물러졌어요ㅠ,Negative,포장/보냉,vi
+demo_voc_17,Shopee_VN,Bánh ngon nhưng mua 6 cái hơn 300 nghìn thì hơi xót.,맛은 있는데 6개에 30만 동 넘으니까 좀 아깝긴 하네요..,Neutral,가격,vi
+demo_voc_18,Shopee_VN,"Vỏ mochi dẻo, nhân kem phô mai mặn ngọt rất cuốn.",떡이 쫀득하고 크림치즈 소가 단짠이라 계속 들어가요!,Positive,당도/맛,vi
+demo_voc_19,Shopee_VN,"Đặt làm quà sinh nhật cho mẹ, mẹ khen hộp đẹp và bánh ngon.",엄마 생신 선물로 샀는데 상자도 예쁘고 맛있다고 좋아하셨어요.,Positive,선물용,vi
+demo_voc_20,Shopee_VN,"Vị dâu lần này hơi chua, không ngọt như lần trước.",이번 딸기 맛은 좀 시더라고요. 지난번만큼 달지 않았어요..,Negative,당도/맛,vi
+demo_voc_21,Shopee_VN,"Hạn sử dụng ghi rõ, có hướng dẫn bảo quản bằng tiếng Việt, rất tiện.",유통기한이 잘 적혀 있고 베트남어 보관 안내도 있어서 편했어요.,Positive,기타,vi
+demo_voc_22,Shopee_VN,"Ăn ổn, nhưng mình thích bánh truyền thống của Việt Nam hơn.",먹을 만은 한데 저는 베트남 전통 떡이 더 입에 맞네요.,Neutral,당도/맛,vi
+demo_voc_23,Shopee_VN,"Mua combo 2 hộp được giảm giá, quá hời.",두 박스 묶음으로 사니까 할인돼서 완전 이득이었어요.,Positive,가격,vi
+demo_voc_24,Shopee_VN,Giá tăng so với tháng trước mà hộp lại ít bánh hơn.,지난달보다 가격은 올랐는데 개수는 줄었어요..,Negative,가격,vi
+demo_voc_25,Shopee_VN,"Con mình 5 tuổi rất thích vị chuối, ngày nào cũng đòi.",다섯 살 아이가 바나나 맛을 너무 좋아해서 매일 달라고 해요ㅋㅋ,Positive,당도/맛,vi
+demo_voc_26,Instagram,"Hộp quà màu pastel lên hình rất xinh, chụp story ai cũng hỏi mua ở đâu.",파스텔 톤 선물 상자가 사진이 너무 예쁘게 나와서 스토리 올렸더니 다들 어디서 샀냐고 물어봐요.,Positive,선물용,vi
+demo_voc_27,Instagram,"Lần đầu ăn mochi Hàn Quốc, nhân đậu đỏ không quá ngọt, rất thích.",한국 찹쌀떡 처음 먹어 봤는데 팥소가 너무 달지 않아서 좋았어요.,Positive,당도/맛,vi
+demo_voc_28,Instagram,"Hộp đẹp nhưng hơi to, mang theo không tiện lắm.",상자는 예쁜데 좀 커서 들고 다니기엔 불편했어요.,Neutral,포장/보냉,vi
+demo_voc_29,Instagram,"Cửa hàng ở Quận 1 đông quá, xếp hàng gần 20 phút.",1군 매장 사람이 너무 많아서 20분 가까이 줄 섰어요.,Negative,기타,vi
+demo_voc_30,Instagram,"Bánh gói từng cái riêng, mang đi làm ăn rất tiện.",하나씩 개별 포장이라 회사에 가져가서 먹기 편해요.,Positive,포장/보냉,vi
+demo_voc_31,Instagram,"Mua làm quà Trung thu thay bánh nướng, khách hàng rất thích.",추석(쭝투) 선물로 월병 대신 드렸는데 거래처분들이 정말 좋아하셨어요.,Positive,선물용,vi
+demo_voc_32,Instagram,"Bánh ngon, chỉ mong có thêm nhiều vị với giá mềm hơn.",맛있어요. 다만 맛 종류가 더 많아지고 가격이 조금 내려가면 좋겠어요.,Neutral,가격,vi
+demo_voc_33,Instagram,Nhân viên cửa hàng giới thiệu từng vị rất dễ thương.,매장 직원분이 맛마다 하나하나 친절하게 설명해 주셔서 좋았어요.,Positive,기타,vi
+demo_voc_34,TikTok,"Xem review trên TikTok nên mua thử, ăn đúng là ngon thật.",틱톡 리뷰 보고 사 봤는데 진짜 맛있네요.,Positive,당도/맛,vi
+demo_voc_35,TikTok,"Mở hộp ra thấy bánh bị dính vào nhau, nhìn không đẹp.",상자를 열어 보니 떡끼리 달라붙어 있어서 모양이 별로였어요.,Negative,포장/보냉,vi
+demo_voc_36,TikTok,"Vị xoài siêu thơm, ăn lạnh như kem luôn.",망고 맛 진짜 향긋하고 차갑게 먹으니까 아이스크림 같아요!,Positive,당도/맛,vi
+demo_voc_37,TikTok,Bánh để được mấy ngày vậy shop? Mình mua nhiều sợ ăn không kịp.,며칠까지 보관할 수 있나요? 많이 샀는데 다 못 먹을까 봐 걱정이에요.,Neutral,기타,vi
+demo_voc_38,TikTok,"Giá trên TikTok Shop với ở cửa hàng khác nhau, hơi khó hiểu.",틱톡샵 가격이랑 매장 가격이 달라서 좀 헷갈려요.,Negative,가격,vi
+demo_voc_39,TikTok,"Mua tặng bạn gái dịp 20/10, bạn ấy rất vui.",10월 20일 여성의 날에 여자친구 선물로 줬는데 엄청 좋아했어요.,Positive,선물용,vi
+demo_voc_40,TikTok,"Vị gốc ngon, còn vị sầu riêng thì tùy người.",기본 맛은 맛있고 두리안 맛은 호불호가 있을 것 같아요.,Neutral,당도/맛,vi
+demo_voc_41,Instagram,"Màu bánh đẹp, chụp hình sống ảo rất xinh. Vị trà xanh thơm nhẹ.",떡 색감이 예뻐서 사진이 진짜 잘 나와요. 녹차 맛도 은은하게 향긋해요.,Positive,당도/맛,vi
+demo_voc_42,Instagram,"Hộp quà sang trọng, tặng sếp dịp 20/11 ai cũng khen.",선물 박스가 고급스러워서 11/20 스승의 날에 선물했는데 다들 칭찬하더라고요!,Positive,선물용,vi
+demo_voc_43,Instagram,"Giá hơi cao so với size bánh, nhưng ăn thử thì cũng đáng.","크기에 비해 가격이 좀 있는 편인데, 먹어 보니 그럴 만하네요.",Neutral,가격,vi
+demo_voc_44,Instagram,"Bánh để ngoài trời nóng một lúc là bị mềm nhũn, chụp hình không kịp.",더운 데 잠깐 꺼내 뒀더니 떡이 흐물흐물해져서 사진 찍을 틈도 없었어요..,Negative,포장/보냉,vi
+demo_voc_45,TikTok,"Xem review trên TikTok rồi ra cửa hàng mua liền, vị xoài ngon đúng như clip.",틱톡 리뷰 보고 바로 매장 가서 샀어요. 망고 맛이 영상 그대로 맛있어요!,Positive,당도/맛,vi
+demo_voc_46,TikTok,"Nhân đậu đỏ không quá ngọt, người lớn tuổi trong nhà cũng ăn được.",팥소가 많이 달지 않아서 집에 계신 어르신들도 잘 드셨어요.,Positive,당도/맛,vi
+demo_voc_47,TikTok,"Clip quảng cáo nhìn to hơn ngoài đời, hơi hụt hẫng.",광고 영상에서는 더 커 보였는데 실물은 좀 작아서 아쉬웠어요.,Negative,기타,vi
+demo_voc_48,TikTok,"Mua combo 6 cái được tặng túi giữ lạnh, rất tiện mang đi chơi biển.",6개 세트 사니까 보냉백을 줘서 바다 놀러 갈 때 들고 가기 편했어요.,Positive,포장/보냉,vi
+demo_voc_49,TikTok,"Hương vị ổn, nhưng giá này thì mình chỉ mua dịp đặc biệt thôi.",맛은 괜찮은데 이 가격이면 특별한 날에만 살 것 같아요.,Neutral,가격,vi
+demo_voc_50,Zalo_OA,Shop ơi cửa hàng ở Đà Nẵng mở cửa đến mấy giờ ạ?,다낭 매장은 몇 시까지 문 여나요?,Neutral,기타,vi
+demo_voc_51,Zalo_OA,"Mình muốn đặt 50 hộp làm quà Tết cho công ty, có giá sỉ không ạ?",회사 설 선물로 50박스 맞추고 싶은데 단체 가격이 있을까요?,Neutral,선물용,vi
+demo_voc_52,Zalo_OA,"Nhân viên tư vấn qua Zalo nhiệt tình, trả lời nhanh.",Zalo로 문의했는데 직원분이 친절하고 답도 빨랐어요.,Positive,기타,vi
+demo_voc_53,Zalo_OA,Bánh có dùng chất bảo quản không ạ? Con mình bị dị ứng.,혹시 방부제가 들어가나요? 아이가 알레르기가 있어서요.,Neutral,기타,vi
+demo_voc_54,Zalo_OA,"Túi đá khô đi kèm giữ lạnh được khoảng 2 tiếng, vừa đủ về nhà.",같이 주는 드라이아이스가 2시간 정도 버텨서 집까지 딱 괜찮았어요.,Positive,포장/보냉,vi
+demo_voc_55,Zalo_OA,"Hộp 8 cái giá 320 nghìn hơi chát, mong có khuyến mãi.",8개 박스가 32만 동이라 좀 비싸요. 할인 행사가 있으면 좋겠어요.,Negative,가격,vi
+demo_voc_56,Zalo_OA,"Quét mã QR trên tờ rơi được giảm 10%, rất thích.",전단지 QR 찍으니까 10% 할인돼서 너무 좋았어요.,Positive,가격,vi
+demo_voc_57,Zalo_OA,"Vị sữa chua hơi chua so với mình, mong có vị ngọt hơn.","요거트 맛은 저한테는 좀 셔서, 더 달달한 맛도 나오면 좋겠어요.",Neutral,당도/맛,vi
+demo_voc_58,Zalo_OA,"Mình mua làm quà Trung thu, hộp đẹp nhưng nên có thiệp chúc.",추석 선물로 샀는데 박스는 예쁜데 메시지 카드도 있으면 좋겠어요.,Neutral,선물용,vi
+demo_voc_59,Zalo_OA,"Bánh để tủ lạnh qua đêm bị cứng, hướng dẫn bảo quản chưa rõ.",냉장고에 하룻밤 넣었더니 딱딱해졌어요. 보관 방법 안내가 잘 안 보여요.,Negative,포장/보냉,vi
+demo_voc_60,Zalo_OA,"Lần thứ ba mua rồi, vị dâu vẫn ngon nhất.",벌써 세 번째 구매인데 딸기 맛이 여전히 제일 맛있어요.,Positive,당도/맛,vi
+demo_voc_61,Zalo_OA,"Hỏi qua Zalo 2 ngày mới được trả lời, hơi chậm.",Zalo로 물어봤는데 이틀 만에 답이 와서 좀 느렸어요.,Negative,기타,vi
+demo_voc_62,KakaoTalk,다낭에서 한국 찹쌀떡 먹을 수 있어서 너무 반가워요. 맛도 한국이랑 똑같아요!,다낭에서 한국 찹쌀떡 먹을 수 있어서 너무 반가워요. 맛도 한국이랑 똑같아요!,Positive,당도/맛,ko
+demo_voc_63,KakaoTalk,회사 베트남 직원들 선물용으로 20박스 주문 가능한가요? 영수증 발행도 궁금합니다.,회사 베트남 직원들 선물용으로 20박스 주문 가능한가요? 영수증 발행도 궁금합니다.,Neutral,선물용,ko
+demo_voc_64,KakaoTalk,한국보다 가격이 꽤 비싸네요. 현지 사정은 이해하지만 조금 부담돼요.,한국보다 가격이 꽤 비싸네요. 현지 사정은 이해하지만 조금 부담돼요.,Negative,가격,ko
+demo_voc_65,KakaoTalk,보냉팩 넣어 주셔서 미케 해변 숙소까지 멀쩡하게 왔어요. 감사합니다.,보냉팩 넣어 주셔서 미케 해변 숙소까지 멀쩡하게 왔어요. 감사합니다.,Positive,포장/보냉,ko
+demo_voc_66,KakaoTalk,카톡으로 문의하니 한국어로 답해 주셔서 편했어요.,카톡으로 문의하니 한국어로 답해 주셔서 편했어요.,Positive,기타,ko
+demo_voc_67,KakaoTalk,쑥 맛이 한국 거보다 향이 약한 것 같아요. 그래도 먹을 만해요.,쑥 맛이 한국 거보다 향이 약한 것 같아요. 그래도 먹을 만해요.,Neutral,당도/맛,ko
+demo_voc_68,KakaoTalk,매장에서 산 상자가 습기 때문에 눅눅해졌어요. 포장재를 바꿔 주시면 좋겠어요.,매장에서 산 상자가 습기 때문에 눅눅해졌어요. 포장재를 바꿔 주시면 좋겠어요.,Negative,포장/보냉,ko
+demo_voc_69,KakaoTalk,"Chồng mình là người Hàn, ăn thử khen giống bánh ở quê.",남편이 한국 사람인데 먹어 보더니 고향에서 먹던 떡이랑 똑같대요!,Positive,당도/맛,vi
+demo_voc_70,KakaoTalk,"Mình học tiếng Hàn nên nhắn KakaoTalk hỏi, shop trả lời bằng tiếng Việt luôn, dễ hiểu.",한국어 공부 중이라 카카오톡으로 물어봤는데 베트남어로 답해 주셔서 이해하기 쉬웠어요.,Positive,기타,vi
+demo_voc_71,KakaoTalk,"Hộp quà có chữ Hàn rất đẹp, tặng bạn bè thích Kpop ai cũng mê.",선물 박스에 한글이 써 있어서 예뻐요. 케이팝 좋아하는 친구들한테 줬더니 다 좋아했어요.,Positive,선물용,vi
+demo_voc_72,KakaoTalk,"Giá bằng một bữa ăn trưa cho 2 cái bánh, hơi đắt.",떡 2개 값이 점심 한 끼 값이라 좀 비싸요.,Negative,가격,vi
+demo_voc_73,KakaoTalk,"Bánh mềm, nhưng nhân hơi ít so với vỏ.",떡은 말랑한데 피에 비해 소가 좀 적어요.,Neutral,당도/맛,vi
+demo_voc_74,KakaoTalk,Có bán ở sân bay Đà Nẵng không ạ? Mình muốn mua làm quà về Hà Nội.,다낭 공항에서도 파나요? 하노이 갈 때 선물로 사 가고 싶어서요.,Neutral,선물용,vi
+demo_voc_75,KakaoTalk,"Mua 2 lần đều thấy chất lượng ổn định, sẽ ủng hộ tiếp.",두 번 샀는데 두 번 다 품질이 똑같이 좋았어요. 계속 살게요.,Positive,당도/맛,vi
+demo_voc_76,KakaoTalk,"Đá khô trong túi tan nhanh, chưa về tới nhà đã hết lạnh.",봉투 안 드라이아이스가 빨리 녹아서 집에 오기도 전에 안 차가웠어요.,Negative,포장/보냉,vi
+demo_voc_77,WhatsApp,"Nhắn WhatsApp đặt giữ 10 hộp, ra lấy là có ngay, rất tiện.",왓츠앱으로 10박스 미리 맡겨 달라고 했는데 가자마자 바로 받았어요. 너무 편해요.,Positive,기타,vi
+demo_voc_78,WhatsApp,"Vị khoai lang tím ngọt dịu, ăn kèm trà rất hợp.",자색 고구마 맛이 은은하게 달아서 차랑 같이 먹기 딱 좋아요.,Positive,당도/맛,vi
+demo_voc_79,WhatsApp,"Hộp quà Tết có nhiều mẫu đẹp, mua cho cả họ hàng.",설 선물 박스 디자인이 다양하고 예뻐서 친척들 것까지 다 샀어요.,Positive,선물용,vi
+demo_voc_80,WhatsApp,Hỏi giá qua WhatsApp mà không thấy bảng giá rõ ràng.,왓츠앱으로 가격을 물어봤는데 가격표가 명확하지 않았어요.,Negative,가격,vi
+demo_voc_81,WhatsApp,"Bánh nhỏ xinh, nhưng 1 hộp 4 cái thì hơi ít cho gia đình.","떡이 작고 예쁜데, 4개 한 박스는 가족이 먹기엔 좀 적어요.",Neutral,가격,vi
+demo_voc_82,WhatsApp,"Túi giữ lạnh dày, mang lên Bà Nà Hills vẫn mát.",보냉백이 두꺼워서 바나힐까지 들고 가도 시원했어요.,Positive,포장/보냉,vi
+demo_voc_83,WhatsApp,"Mình hỏi có vị không đường cho người tiểu đường không, chưa thấy trả lời.",당뇨가 있는 분이 먹을 무설탕 맛이 있는지 물어봤는데 아직 답이 없어요.,Negative,기타,vi
+demo_voc_84,WhatsApp,"Vị phô mai lạ miệng, lần đầu ăn mochi kiểu này.",치즈 맛이 색달라요. 이런 찹쌀떡은 처음 먹어 봐요.,Positive,당도/맛,vi
+demo_voc_85,WhatsApp,"Nhân viên gửi ảnh từng vị qua WhatsApp để chọn, rất chu đáo.",직원분이 왓츠앱으로 맛별 사진을 보내 줘서 고르기 쉬웠어요. 세심하네요.,Positive,기타,vi
+demo_voc_86,WhatsApp,"Bánh ngon nhưng hộp nhựa bên trong hơi nhiều, không thân thiện môi trường.",맛있는데 안에 플라스틱 포장이 좀 많아요. 환경에 안 좋을 것 같아요.,Neutral,포장/보냉,vi
+demo_voc_87,WhatsApp,"Vỏ bánh hơi dày, ăn thấy ngán sau cái thứ hai.",떡 피가 좀 두꺼워서 두 개째부터는 물리더라고요.,Negative,당도/맛,vi
+demo_voc_88,WhatsApp,"Mua tặng khách hàng Hàn Quốc của công ty, họ rất bất ngờ.",회사 한국 거래처에 선물했더니 정말 놀라워하더라고요.,Positive,선물용,vi
+demo_voc_89,WhatsApp,Có giảm giá cho đơn trên 1 triệu không shop?,100만 동 이상 사면 할인되나요?,Neutral,가격,vi
+demo_voc_90,WhatsApp,"Mùa mưa ẩm, hộp giấy bị mềm khi cầm về.",우기라 습해서 들고 오는 동안 종이 상자가 눅눅해졌어요.,Negative,포장/보냉,vi
+demo_voc_91,WhatsApp,"Ăn lạnh ngon hơn hẳn, nên ghi rõ cách ăn trên hộp.",차갑게 먹으니까 훨씬 맛있어요. 먹는 방법을 상자에 적어 두면 좋겠어요.,Neutral,당도/맛,vi
