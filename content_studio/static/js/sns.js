@@ -175,7 +175,7 @@ function openPreview(item) {
   } else if (item.design) {
     item.design.pages.forEach((_, index) => body.append(editor.renderThumb(item.design, index)));
   }
-  const edit = el("button", "btn dark", "수정하기");
+  const edit = el("button", "btn dark", "수정하기 →");
   edit.type = "button";
   edit.addEventListener("click", () => {
     if (kind !== item.kind) {
@@ -190,9 +190,13 @@ function openPreview(item) {
   close.addEventListener("click", () => dialog.close());
   const actions = el("div", "actions");
   actions.append(edit, close);
+  // [수정하기]로 들어가야 할 수 있는 일(포스터·카드뉴스는 Figma 보내기 포함)을 버튼 바로 위에 알려 줍니다.
+  const guide = el("p", "studio-preview-guide", item.kind === "video"
+    ? "수정하기를 누르면 장면·프롬프트를 고치고 미리보기 이미지·영상을 만들 수 있어요."
+    : "수정하기를 누르면 편집 화면에서 시안 고치기 · AI 초안 · 문구 검수 · Figma로 보내기를 할 수 있어요.");
   dialog.append(el("h2", "", item.title),
     el("p", "studio-hint", `${KIND_LABELS[item.kind]} · ${productNames(item.product_id)} · ${statusOf(item)} · ${shortDate(item.updated_at)}`),
-    body, actions);
+    body, guide, actions);
   dialog.addEventListener("close", () => dialog.remove());
   page.append(dialog);
   dialog.showModal();
@@ -230,7 +234,7 @@ function recommendations() {
   return recs.slice(0, RECS);
 }
 
-// 추천 카드: 제목 [D-26 · 대표 · NEW] → 개조식 2줄(주제 · 셀링포인트) → 만들기 [포스터] [카드뉴스] [영상].
+// 추천 카드: 제목 [D-26 · 대표 · NEW] → 개조식 2줄(주제 · 셀링포인트) → [포스터] [카드뉴스] [영상].
 // 버튼을 누르면 그 탭으로 옮겨 "제목 + 종류" 요청으로 바로 초안을 만듭니다(주소의 start, 시작할 때 한 번만).
 function recCard(rec) {
   const card = el("div", `studio-rec is-${rec.type}`);
@@ -241,7 +245,6 @@ function recCard(rec) {
   const points = el("ul", "studio-rec-points");
   points.append(...rec.points.map((point) => el("li", "", point)));
   const kinds = el("div", "studio-rec-go");
-  kinds.append(el("span", "", "만들기"));
   for (const target of ["poster", "cardnews", "video"]) {  // 탭 순서
     const button = el("button", "btn", KIND_LABELS[target]);
     button.type = "button";
@@ -410,7 +413,12 @@ function renderWork() {
   $("redo").disabled = !work.canRedo || work.busy;
 
   // 포스터·카드뉴스는 초안이 생기기 전에는 아래 입력줄을 숨기고, 가운데 첫 화면에서 AI 초안을 만듭니다.
-  $("chat-form").closest(".studio-command").hidden = !doc && DESIGN_KINDS.includes(kind);
+  // 아래 수정 요청 입력창은 영상 탭에만. 포스터·카드뉴스는 가운데 편집기·오른쪽 프롬프트 칸으로 고치고,
+  // 결과 안내 줄(추천으로 만든 초안 안내 등)만 남깁니다(비어 있으면 줄도 숨김).
+  $("chat-form").hidden = DESIGN_KINDS.includes(kind);
+  // 영상 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
+  $("command-toggle").hidden = !doc || DESIGN_KINDS.includes(kind);
+  showCommand(Boolean(doc) && commandCollapsed && kind === "video");
   if (!doc && DESIGN_KINDS.includes(kind)) {
     editor.renderStart($("canvas"), {
       kind,
@@ -591,6 +599,26 @@ async function addRef(file) {
   }
 }
 
+// ---------- 아래 수정 요청 입력 영역 접기 ----------
+// 접은 상태는 이 브라우저에만 기억합니다(저장이 막힌 환경이면 기억만 안 함).
+const COMMAND_KEY = "content_studio.command_collapsed";
+let commandCollapsed = (() => {
+  try { return localStorage.getItem(COMMAND_KEY) === "1"; } catch { return false; }
+})();
+
+function showCommand(collapsed) {
+  $("chat-form").closest(".studio-command").classList.toggle("is-collapsed", collapsed);
+  $("command-toggle").textContent = collapsed ? "펼치기 ▴" : "접기 ▾";
+  $("command-toggle").setAttribute("aria-expanded", String(!collapsed));
+}
+
+function toggleCommand() {
+  commandCollapsed = !commandCollapsed;
+  try { localStorage.setItem(COMMAND_KEY, commandCollapsed ? "1" : ""); } catch { /* 기억만 안 함 */ }
+  showCommand(commandCollapsed);
+  if (!commandCollapsed) $("chat-input").focus();
+}
+
 // 레퍼런스 파일 올리기 → {file_id, url}. 이미지는 희주 업로드 API, 영상은 /api/ref-video
 async function uploadRef(file) {
   const isVideo = file.type.startsWith("video/");
@@ -698,6 +726,7 @@ function bindWork() {
   // 한글 입력 중(조합 중) Enter는 글자 확정만 하고 보내지 않습니다.
   $("chat-input").addEventListener("input", fitInput);
   $("ref-add").addEventListener("click", () => $("ref-file").click());
+  $("command-toggle").addEventListener("click", toggleCommand);
   $("ref-file").addEventListener("change", (event) => {
     const file = event.target.files[0];
     event.target.value = "";
