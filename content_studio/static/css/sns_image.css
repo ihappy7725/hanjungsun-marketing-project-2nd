@@ -708,6 +708,27 @@
   color: var(--badge-red-ink);
 }
 
+/* 포스터 시안 카드: 확정 문서와 같은 자리에 로고 (위치·크기는 JS가 % 로 넣음) */
+.studio-editor .studio-editor-image-frame img.studio-editor-image-logo {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 프롬프트 전문 (닫힌 채 시작) */
+.studio-editor .studio-editor-candidate-prompt pre {
+  margin: var(--space-3) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+  font-size: var(--fs-min);
+  line-height: var(--line-height);
+}
+
+.studio-editor .studio-editor-candidate-prompt[hidden] {
+  display: none;
+}
+
 .studio-editor .studio-editor-image-no {
   position: absolute;
   top: var(--space-2);

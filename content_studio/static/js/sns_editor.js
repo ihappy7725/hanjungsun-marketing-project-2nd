@@ -25,6 +25,13 @@ const IMAGE_DONE = "completed";  // higgsfield.py DONE, FAILED
 const IMAGE_FAILED = ["failed", "nsfw", "canceled", "cancelled"];
 const ARTWORK_ROLE = "artwork";  // designs.py ARTWORK_ROLE: 그림 시안 장 전체를 덮는 그림. 고르거나 옮기지 않습니다.
 const IMAGE_MODE = "image";      // designs.py IMAGE_MODE: 그림 시안 문서
+// 포스터 로고: 베이스 템플릿 그림은 아래 가운데(맨 아래 10%)를 비워 두고, 그 자리에 브랜드 로고를 얹습니다 (2026-10-27 유진 요청).
+// 그림 시안 포스터의 확정 문서·시안 카드 미리보기·PNG/JPG 내보내기에 들어가고, 편집기에서는 고르거나 옮기지 않습니다.
+const LOGO_ROLE = "logo";
+const LOGO_SRC = "/content_studio/static/images/sns/brand_logo.png";  // 투명 배경
+const LOGO_W = 13;            // 장 너비 대비 % (요청: 12~15%)
+const LOGO_ASPECT = 41 / 94;  // brand_logo.png 세로/가로. 그림은 contain이라 파일이 바뀌어도 찌그러지지 않습니다.
+const LOGO_BOTTOM = 3;        // 아래 여백 % (장 높이 대비)
 const FIGMA_API = "/content_studio/media/api/figma-preview";
 const FIGMA_DESIGN_API = "/content_studio/media/api/figma/designs";  // 플러그인 창구 (주소 확인에도 씀)
 const BG_QUOTE_API = "/content_studio/media/api/design-bg/quote";  // AI 배경 그림 견적 (무료)
@@ -222,7 +229,8 @@ const pageFailed = (page) => IMAGE_FAILED.includes(page.job?.status);
 
 // 그림 시안 카드: 이름 · 스타일 · 진행(완료 n/장수) · 장별 그림 칸 · 넣은 문구(베트남어·한국어 뜻).
 // 카드 아무 곳이나 누르면 onPick (문구 펼치기는 제외).
-function imageCard(item, isSelected, onPick, ratio) {
+// withLogo: 포스터(베이스 템플릿)는 확정 문서와 같은 자리에 로고를 얹어 미리 보여 줍니다.
+function imageCard(item, isSelected, onPick, ratio, withLogo = false) {
   const [W, H] = SIZES[ratio] || SIZES["4:5"];
   const card = el("section", `studio-editor-candidate${isSelected ? " is-selected" : ""}`);
   card.addEventListener("click", (event) => {
@@ -244,6 +252,14 @@ function imageCard(item, isSelected, onPick, ratio) {
       img.src = page.job.url;
       img.alt = `${item.name} ${total > 1 ? `${index + 1}장` : ""} 그림`;
       frame.append(img);
+      if (withLogo) {
+        const box = logoBox(ratio);
+        const logo = el("img", "studio-editor-image-logo");
+        logo.src = LOGO_SRC;
+        logo.alt = "";
+        Object.assign(logo.style, { left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%` });
+        frame.append(logo);
+      }
     } else {
       const unsent = page.job?.status === NOT_SENT;
       frame.classList.toggle("is-failed", pageFailed(page) || unsent);
@@ -262,7 +278,14 @@ function imageCard(item, isSelected, onPick, ratio) {
       words.append(vi, el("p", "studio-hint", text.ko));
     }
   });
-  card.append(choose, el("p", "studio-hint", `스타일 · ${item.style_label} · ${progress}`), strip, words);
+  // 프롬프트 전문 (생성 응답의 prompts, 닫힌 채 시작)
+  const prompts = item.pages.map((page) => page.prompt_en).filter(Boolean);
+  const full = el("details", "studio-editor-candidate-words studio-editor-candidate-prompt");
+  full.append(el("summary", "", "프롬프트 전문"),
+    ...prompts.map((text, index) => el("pre", "", `${prompts.length > 1 ? `${index + 1}장\n` : ""}${text}`)));
+  full.hidden = !prompts.length;
+  const label = item.layout ? item.style_label : `스타일 · ${item.style_label}`;
+  card.append(choose, el("p", "studio-hint", `${label} · ${progress}`), strip, words, full);
   return card;
 }
 
@@ -298,17 +321,32 @@ function creditDialog(parent, q, { title, run: runLabel = "만들기", detail = 
   });
 }
 
+// 로고 자리 (장 % 단위): 아래 가운데, 너비 LOGO_W%. 비율마다 높이(%)가 달라 비율 다시 그리기 뒤에도 다시 계산합니다.
+function logoBox(ratio) {
+  const [W, H] = SIZES[ratio] || SIZES["3:4"];
+  const h = round2(LOGO_W * LOGO_ASPECT * W / H);
+  return { x: round2((100 - LOGO_W) / 2), y: round2(100 - LOGO_BOTTOM - h), w: LOGO_W, h };
+}
+
+function logoElement(index, ratio) {
+  return { id: `p${index + 1}-${LOGO_ROLE}`, role: LOGO_ROLE, type: "image", ...logoBox(ratio), z: 1, src: LOGO_SRC,
+    radius: 0, fit: "contain" };
+}
+
 // 확정한 그림 시안 → 문서 (designs.py IMAGE_MODE 설명과 같은 형식)
 // Higgsfield로 실제 생성한 그림이라 demo: false (DEMO 배지는 진짜 시연 데이터에만, 2026-10-27 유진 요청)
+// 포스터(베이스 템플릿)는 레이아웃을 남기고 장마다 로고를 얹습니다. pages[].prompt는 비율 다시 그리기가 다시 씁니다.
 function imageDesign(kind, ratio, item) {
+  const poster = kind === "poster";
   return {
-    kind, ratio, demo: false, mode: IMAGE_MODE, style: item.style,
+    kind, ratio, demo: false, mode: IMAGE_MODE, style: item.style || null, ...(item.layout && { layout: item.layout }),
     assistant: { name: item.name, prompt: item.concept_ko,
       notice: `AI 그림 시안 · ${item.style_label} · 그림 속 글자와 제품 정보는 꼭 확인해 주세요.` },
     pages: item.pages.map((page, index) => ({
       layout: IMAGE_MODE, bg: "#ffffff", prompt: page.prompt_en, texts: page.texts,
       elements: [{ id: `p${index + 1}-${ARTWORK_ROLE}`, role: ARTWORK_ROLE, type: "image",
-        x: 0, y: 0, w: 100, h: 100, z: 0, src: page.job?.url || "", radius: 0 }],
+        x: 0, y: 0, w: 100, h: 100, z: 0, src: page.job?.url || "", radius: 0 },
+      ...(poster ? [logoElement(index, ratio)] : [])],
     })),
   };
 }
@@ -373,8 +411,10 @@ function fillReview(node, data) {
 // productIds: 여러 제품(라인업). 유진 API가 product_id 하나만 받는 동안 첫 제품을 product_id로도 보냅니다.
 // refs: 레퍼런스 이미지 [{file_id, url}] (없으면 []). 견적·생성 API에 ref_images로 그대로 넘깁니다.
 // onBack: 조건 바꾸기 화면으로 돌아가기 (팝업 [취소] · [← 조건 바꾸기]). 없으면 [← 조건 바꾸기]를 숨깁니다.
-export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", pages = 5,
-  request = "", refs = [], onCreate, onBack = null } = {}) {
+// layout (포스터): "" = A·B·C 하나씩 3안, "A"|"B"|"C" = 그 레이아웃으로 3안. 포스터는 도우미가 문구만 쓰고
+//   그림은 유진 베이스 템플릿이 조립합니다(생성 요청에 proposals [{layout, texts}], 응답 prompts를 pages[].prompt로).
+export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", layout = "",
+  pages = 5, request = "", refs = [], onCreate, onBack = null } = {}) {
   const ids = (Array.isArray(productIds) && productIds.length ? productIds : [productId]).filter(Boolean);
   const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages,
     ref_images: Array.isArray(refs) ? refs : [] };
@@ -442,7 +482,7 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       selected = index;
       show();
       updateActions();
-    }, ratio)));
+    }, ratio, kind === "poster")));
   }
 
   function updateActions() {
@@ -484,15 +524,19 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       if (!proposals.length) {  // 견적이 바뀌어 다시 누를 때는 이미 쓴 프롬프트를 그대로 씁니다.
         const data = await postJson(ASSISTANT_API, {
           design: { kind, ratio, demo: true, pages: [{ elements: [] }] }, confirm_paid: true,
-          options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages },
+          options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages,
+            ...(kind === "poster" && { layout: layout || "" }) },
         });
         if (!wrap.isConnected) return;
         proposals = data.proposals.map((item) => ({ ...item, pages: item.pages.map((page) => ({ ...page, job: null })) }));
       }
+      // 포스터: 레이아웃·문구만 보내고 유진 템플릿이 조립 / 카드뉴스: 장별 프롬프트
+      const plan = kind === "poster"
+        ? { proposals: proposals.map((item) => ({ layout: item.layout, texts: item.texts })) }
+        : { prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)) };
       const res = await fetch(IMAGE_API, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...target, prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)),
-          credits: quote.credits }),
+        body: JSON.stringify({ ...target, ...plan, credits: quote.credits }),
       });
       const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
       if (!wrap.isConnected) return;
@@ -506,6 +550,13 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
         data.jobs.forEach((jobs, p) => (jobs || []).forEach((job, i) => {
           const page = proposals[p]?.pages[i];
           if (page) page.job = job ? { request_id: job.request_id, status: job.status, url: null } : { status: NOT_SENT };
+        }));
+      }
+      // 실제로 보낸 프롬프트 전문 → 카드의 "프롬프트 전문"과 확정 문서의 pages[].prompt (비율 다시 그리기가 다시 씀)
+      if (Array.isArray(data.prompts)) {
+        data.prompts.forEach((list, p) => (list || []).forEach((text, i) => {
+          const page = proposals[p]?.pages[i];
+          if (page && typeof text === "string") page.prompt_en = text;
         }));
       }
       if (data.submitted) locked = true;
@@ -625,7 +676,8 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   }
 
   const find = (id) => page.elements.find((item) => item.id === id);
-  const isBacking = (item) => item.role === BG_ROLE || item.role === ARTWORK_ROLE;  // 바탕처럼 두는 그림
+  // 바탕처럼 두는 그림(고르거나 옮기지 않음): AI 배경 그림 · 그림 시안 그림 · 포스터 로고
+  const isBacking = (item) => item.role === BG_ROLE || item.role === ARTWORK_ROLE || item.role === LOGO_ROLE;
   const pickable = (id) => { const item = id && find(id); return item && !isBacking(item) ? item : null; };
   if (selectedId && !pickable(selectedId)) selectedId = null;
 
@@ -692,6 +744,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
         const img = el("img");
         img.src = item.src;
         img.alt = "";
+        if (item.fit === "contain") img.style.objectFit = "contain";  // 로고: 자르지 않고 칸 안에 맞춤
         node.append(img);
       } else {
         node.classList.add("is-empty");
@@ -1012,6 +1065,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     next.pages.forEach((one, index) => {
       const art = one.elements.find((item) => item.role === ARTWORK_ROLE);
       if (art) art.src = job.jobs[index].url;
+      for (const logo of one.elements.filter((item) => item.role === LOGO_ROLE)) Object.assign(logo, logoBox(job.ratio));
     });
     status.textContent = `${job.ratio} 비율로 다시 그렸어요. 저장하는 중…`;
     onSave(next).catch(() => { status.textContent = "다시 그린 그림을 저장하지 못했어요. 다시 시도해 주세요."; });
@@ -1661,6 +1715,13 @@ async function paintItem(ctx, item, x, y, w, h, W, H) {
   } else if (item.type === "image") {
     if (!item.src) return;  // 빈 사진 자리는 내보내지 않습니다.
     const img = await loadImage(item.src);
+    if (item.fit === "contain") {  // 로고: 화면의 object-fit: contain과 같게 자르지 않고 가운데에 맞춤
+      const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+      const dw = img.naturalWidth * scale;
+      const dh = img.naturalHeight * scale;
+      ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+      return;
+    }
     // 화면의 object-fit: cover와 같게 가운데를 잘라 채웁니다.
     const ratio = Math.max(w / img.naturalWidth, h / img.naturalHeight);
     const sw = w / ratio;
