@@ -616,8 +616,29 @@ def _prompt_lines(doc, lang):
     컷마다 구간 이름·카메라·움직임·효과음은 저장하지 않고, 분위기와 컷 자리(소개·디테일·클라이맥스·히어로)로 매번 만듭니다.
     영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·카메라·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다.
     여러 제품이면 제품 줄의 맛별 속 문장도 뺍니다. 한국어도 똑같이 줄입니다."""
-    compact = len("\n".join(_lines(doc, 0, False))) > PROMPT_LIMIT
+    compact = len(_with_breaks(_lines(doc, 0, False), 0)) > PROMPT_LIMIT
     return _lines(doc, lang, compact)
+
+
+# 읽기 쉽게 묶음 사이에 빈 줄: 제목 / 스타일·편집·제품·배경 / 컷 구성 / 카메라·조명·연속성·소리 / 금지.
+# 빈 줄은 줄 짝·저장·번역에서 무시합니다(줄 목록 _prompt_lines에는 넣지 않고 합칠 때만).
+GROUP_STARTS = (("Style:", "Shots:", "Camera:", "Avoid:"), ("스타일:", "컷 구성:", "카메라:", "금지:"))
+
+
+def _with_breaks(lines, lang):
+    out = []
+    for i, line in enumerate(lines):
+        if i and line.startswith(GROUP_STARTS[lang]):
+            out.append("")
+        out.append(line)
+    return "\n".join(out)
+
+
+def _auto_prompt(doc, lang):
+    """자동 프롬프트 글. 빈 줄 때문에 영어가 한도를 넘는 아주 긴 영상은 두 언어 모두 빈 줄 없이 합칩니다(줄 짝 유지)."""
+    lines = _prompt_lines(doc, lang)
+    breaks = len(_with_breaks(_prompt_lines(doc, 0), 0)) <= PROMPT_LIMIT
+    return _with_breaks(lines, lang) if breaks else "\n".join(lines)
 
 
 def _lines(doc, lang, compact):
@@ -714,7 +735,7 @@ def build_prompt(doc):
     """Higgsfield로 보낼 영어 프롬프트 (여러 줄). 사용자가 직접 고친 문장(custom)이 있으면 그대로 씁니다."""
     if doc.get("custom"):
         return doc["custom"]
-    return "\n".join(_prompt_lines(doc, 0))
+    return _auto_prompt(doc, 0)
 
 
 def build_prompt_ko(doc):
@@ -724,7 +745,7 @@ def build_prompt_ko(doc):
         return doc["custom_ko"]
     if doc.get("custom"):
         return None
-    return "\n".join(_prompt_lines(doc, 1))
+    return _auto_prompt(doc, 1)
 
 
 # ---------- 직접 고친 한국어 → 영어 (단어 규칙, AI 연결 전) ----------
@@ -850,7 +871,8 @@ def korean_to_english(doc, translate=None):
                 lines.append(item[1])
     used = {item[0] for item in pending}
     doc["ai_lines"] = {ko: en for ko, en in cache.items() if ko in used}
-    return "\n".join(lines), untranslated
+    english = _with_breaks(lines, 0)
+    return (english if len(english) <= PROMPT_LIMIT else "\n".join(lines)), untranslated
 
 
 def refresh_prompts(doc, translate=None):
@@ -865,7 +887,7 @@ def refresh_prompts(doc, translate=None):
             doc.pop("ai_lines", None)
         else:
             english, doc["untranslated"] = korean_to_english(doc, translate)
-            doc["custom"] = "" if english == "\n".join(_prompt_lines(doc, 0)) else english
+            doc["custom"] = "" if english == _auto_prompt(doc, 0) else english
     doc["prompt"] = build_prompt(doc)
     doc["prompt_ko"] = build_prompt_ko(doc)
     return doc
