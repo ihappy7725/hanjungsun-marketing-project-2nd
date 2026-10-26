@@ -406,8 +406,23 @@ async function initialize() {
       const starts = dated.map((t, i) => t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3)));
       const left = [addDays(dated[0].due_date, -3), ...starts].sort()[0], right = addDays(dated[dated.length - 1].due_date, 3), span = Math.max(1, dayDiff(right, left));
       const position = date => Math.max(0, Math.min(100, dayDiff(date, left) / span * 100));
+      const tickDays = span <= 14 ? 1 : span <= 84 ? 7 : span <= 168 ? 14 : span <= 336 ? 28 : Math.ceil(span / 12);
+      const ticks = [];
+      for (let offset = 0; offset < span; offset += tickDays) {
+        const date = addDays(left, offset), width = Math.min(tickDays, span - offset) / span * 100;
+        ticks.push(`<time datetime="${date}" title="${date}" style="width:${width}%">${tickDays === 1 ? Number(date.slice(8)) : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`}</time>`);
+      }
+      const bands = [];
+      // 날짜 축의 월 구간도 실제 일수에 비례합니다. 긴 계획은 연도 단위로 묶습니다.
+      for (let date = left; date < right;) {
+        const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7));
+        const boundary = span > 370 ? `${year + 1}-01-01` : month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const end = boundary < right ? boundary : right;
+        bands.push(`<span style="width:${dayDiff(end, date) / span * 100}%">${span > 370 ? `${year}년` : `${year}. ${String(month).padStart(2, '0')}`}</span>`);
+        date = end;
+      }
       const todayLine = today >= left && today <= right ? `<span class="home-gantt-today" style="left:${position(today)}%" title="업무 기준일 ${today}"></span>` : '';
-      $('#gantt').innerHTML = `<div class="home-gantt"><div class="home-gantt-row home-gantt-head"><span class="home-gantt-label">마케팅 업무</span><span class="home-gantt-label" title="시작일이 없으면 앞 업무 마감일을 기준으로 표시합니다.">시작 기준</span><span class="home-gantt-label">마감일</span><span class="home-gantt-label">상태</span><div class="home-gantt-axis">${[0, .25, .5, .75, 1].map(n => `<span>${shortDate(addDays(left, Math.round(span * n)))}</span>`).join('')}</div></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><time class="home-gantt-label" datetime="${esc(starts[i])}">${shortDate(starts[i])}</time><time class="home-gantt-label" datetime="${esc(t.due_date)}">${shortDate(t.due_date)}</time><span class="home-gantt-label">${TASK_STATES[t.status]}${unfinished(t) && t.due_date < today ? '<span class="home-gantt-overdue">기한 초과</span>' : ''}</span><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${ganttTone(t, starts[i], today)}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div></div>`).join('')}</div>`;
+      $('#gantt').innerHTML = `<div class="home-gantt" style="--home-gantt-step:${Math.min(100, tickDays / span * 100)}%"><div class="home-gantt-row home-gantt-head"><div class="home-gantt-task-head"><strong>준비 업무</strong><span>업무명 · 마감일 · 상태</span></div><div class="home-gantt-axis"><div class="home-gantt-months">${bands.join('')}</div><div class="home-gantt-dates">${ticks.join('')}</div></div></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open home-gantt-task" data-task="${esc(t.id)}" title="시작 기준 ${esc(starts[i])} · 마감 ${esc(t.due_date)}${t.start_date ? '' : ' · 시작일 미입력: 앞 업무 마감일 기준(첫 업무는 마감 3일 전)'}"><span class="home-gantt-task-title">${esc(t.title)}</span><span class="home-gantt-task-meta"><time datetime="${esc(t.due_date)}">${shortDate(t.due_date)} 마감</time><span>${TASK_STATES[t.status]}</span>${unfinished(t) && t.due_date < today ? '<span class="home-gantt-overdue">기한 초과</span>' : ''}</span></button><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${ganttTone(t, starts[i], today)}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div></div>`).join('')}</div>`;
     } else $('#gantt').innerHTML = empty('날짜가 있는 업무를 등록하면 일정이 표시됩니다.');
   }
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }

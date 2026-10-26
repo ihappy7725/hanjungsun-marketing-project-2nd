@@ -433,24 +433,32 @@
 .home-page #campaign-summary .home-campaign-detail { display: none; }
 .home-page #campaign-summary .home-dday { font-size: var(--fs-table); padding: var(--space-1) var(--space-3); background: transparent; border: 0; }
 .home-page #gantt { flex: 1 1 auto; min-height: 0; overflow: auto; }
-.home-page .home-gantt { min-width: 720px; }
-.home-page .home-gantt-row { grid-template-columns: minmax(170px, 1.5fr) 64px 64px 72px minmax(260px, 3fr); min-height: 46px; gap: 0; border: 0; background: var(--page-bg); }
-.home-page .home-gantt-row:nth-child(odd) { background: color-mix(in srgb, var(--paper) 35%, var(--page-bg)); }
-.home-page .home-gantt-row > .home-task-open { padding: var(--space-4) var(--space-5); background: color-mix(in srgb, var(--gold) 14%, var(--page-bg)); }
-.home-page .home-gantt-row > .home-gantt-label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-4) var(--space-2); font-variant-numeric: tabular-nums; }
-.home-page .home-gantt-head { position: sticky; top: 0; z-index: 4; background: var(--paper); }
-.home-page .home-gantt-head > .home-gantt-label { color: var(--ink); font-weight: var(--title-weight); }
-.home-page .home-gantt-head > .home-gantt-label:first-child { align-items: flex-start; padding-left: var(--space-5); }
-.home-page .home-gantt-row > button, .home-page .home-gantt-label, .home-page .home-gantt-axis { font-size: var(--fs-table); }
-.home-page .home-gantt-axis { align-items: center; padding-inline: var(--space-2); }
-.home-page .home-gantt-track { min-height: 46px; }
-.home-page .home-gantt-bar { top: 17px; height: 12px; border-radius: var(--radius); background: var(--celadon); }
+.home-page .home-gantt { --home-gantt-header: color-mix(in srgb, var(--teal) 75%, var(--navy)); min-width: 680px; }
+.home-page .home-gantt-row { grid-template-columns: minmax(210px, 30%) minmax(420px, 1fr); min-height: 50px; gap: 0; border: 0; background: color-mix(in srgb, var(--celadon) 14%, var(--page-bg)); }
+.home-page .home-gantt-row:nth-child(odd) { background: color-mix(in srgb, var(--celadon) 26%, var(--page-bg)); }
+.home-page .home-gantt-task { position: sticky; left: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); padding: var(--space-3) var(--space-5); background: color-mix(in srgb, var(--celadon) 22%, var(--page-bg)); box-shadow: inset -2px 0 var(--page-bg), inset 0 -1px var(--page-bg); }
+.home-page .home-gantt-row:nth-child(odd) > .home-gantt-task { background: color-mix(in srgb, var(--celadon) 36%, var(--page-bg)); }
+.home-page .home-gantt-task:hover { text-decoration: none; background: color-mix(in srgb, var(--celadon) 48%, var(--page-bg)); }
+.home-page .home-gantt-task-title { color: var(--ink); font-size: var(--fs-table); font-weight: 500; line-height: var(--line-height-heading); }
+.home-page .home-gantt-task-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); color: var(--muted); font-size: calc(var(--fs-table) * .85); line-height: var(--line-height-heading); font-variant-numeric: tabular-nums; }
+.home-page .home-gantt-row.home-gantt-head { position: sticky; top: 0; z-index: 4; min-height: 64px; background: var(--home-gantt-header); color: var(--on-dark); }
+.home-page .home-gantt-task-head { position: sticky; left: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); padding: var(--space-4) var(--space-5); background: var(--home-gantt-header); box-shadow: inset -2px 0 var(--page-bg); }
+.home-page .home-gantt-task-head strong { font-size: var(--fs-body); font-weight: var(--title-weight); }
+.home-page .home-gantt-task-head > span { font-size: calc(var(--fs-table) * .8); color: color-mix(in srgb, var(--on-dark) 80%, var(--celadon)); }
+.home-page .home-gantt-axis { display: flex; flex-direction: column; gap: 0; padding: 0; min-width: 0; color: var(--on-dark); font-size: calc(var(--fs-table) * .85); }
+.home-page .home-gantt-months, .home-page .home-gantt-dates { display: flex; flex: 1; min-width: 0; }
+.home-page .home-gantt-months > span, .home-page .home-gantt-dates > time { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; white-space: nowrap; box-shadow: inset 1px 0 color-mix(in srgb, var(--on-dark) 24%, transparent); }
+.home-page .home-gantt-months > span { padding-inline: var(--space-1); font-weight: var(--title-weight); }
+.home-page .home-gantt-dates { background: color-mix(in srgb, var(--teal) 82%, var(--navy)); box-shadow: inset 0 1px color-mix(in srgb, var(--on-dark) 24%, transparent); font-variant-numeric: tabular-nums; }
+.home-page .home-gantt-track { min-height: 50px; background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(var(--home-gantt-step) - 1px), var(--page-bg) calc(var(--home-gantt-step) - 1px), var(--page-bg) var(--home-gantt-step)), repeating-linear-gradient(to right, transparent 0, transparent var(--home-gantt-step), color-mix(in srgb, var(--celadon) 32%, transparent) var(--home-gantt-step), color-mix(in srgb, var(--celadon) 32%, transparent) calc(var(--home-gantt-step) * 2)); box-shadow: inset 0 -1px var(--page-bg); }
+.home-page .home-gantt-bar { top: 50%; transform: translateY(-50%); height: 8px; min-width: 4px; border-radius: var(--radius); background: var(--teal); }
 .home-page .home-gantt-bar.past { background: var(--muted); opacity: .25; }
-.home-page .home-gantt-bar.upcoming { background: color-mix(in srgb, var(--teal) 45%, var(--celadon)); }
+.home-page .home-gantt-bar.upcoming { background: var(--teal); }
 .home-page .home-gantt-bar.active, .home-page .home-gantt-bar.urgent, .home-page .home-gantt-bar.soon { background: var(--home-urgent); }
 .home-page .home-gantt-bar.soon { opacity: .72; }
 .home-page .home-gantt-bar.blocked { background: var(--home-urgent); opacity: .55; }
 .home-page .home-gantt-overdue { display: block; color: var(--home-urgent); font-weight: var(--title-weight); }
+.home-page .home-gantt-today { z-index: 1; border-left-color: var(--home-urgent); }
 .home-page .home-tomorrow { flex: 0 0 auto; max-height: 118px; overflow: auto; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line-soft); }
 .home-page .home-tomorrow-head { display: flex; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3); color: var(--muted); font-size: var(--fs-table); }
 .home-page .home-tomorrow > button { display: block; min-height: 24px; font-size: var(--fs-table); }
