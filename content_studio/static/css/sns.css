@@ -174,6 +174,8 @@
 /* 첫 생성 화면(영상 is-start, 포스터·카드뉴스 is-design-new): 줄 사이 12px → 18px, 버튼 영역과 입력창 사이 16px → 24px */
 .studio-page .studio-work:is(.is-start, .is-design-new) .studio-settings { row-gap: calc(1.5 * var(--space-5)); }
 .studio-page .studio-work:is(.is-start, .is-design-new) .studio-toolbar { margin-bottom: var(--space-8); }
+/* 포스터·카드뉴스 시안을 보는 동안(is-choosing): 위쪽 버튼 줄은 보이되 옅게, 누를 수 없게(sns.js가 inert도 겁니다) */
+.studio-page .studio-work.is-choosing .studio-settings { opacity: .45; pointer-events: none; }
 /* 묶음 이름 글자(제품·비율·장수·길이): 첫 생성 화면에서만 버튼 왼쪽에. 버튼이 숨으면 칸째 숨김 */
 .studio-page .studio-option { display: flex; align-items: center; gap: var(--space-5); }
 .studio-page .studio-option:has(> [hidden]) { display: none; }
