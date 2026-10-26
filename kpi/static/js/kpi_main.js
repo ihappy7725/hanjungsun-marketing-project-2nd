@@ -1615,19 +1615,33 @@ function animatePanel(panel) {
   panel.classList.add("is-animating");
   clearTimeout(animTimers.get(panel));
   animTimers.set(panel, setTimeout(() => panel.classList.remove("is-animating"), 1800));
+  // 처음에 숨겨진 상태로 만든 차트(GA4 채널 · 크리에이터 등)는 확대 순간 처음 그려지며 자체 애니메이션(막대가 한꺼번에)을
+  // 시작합니다. 움직이는 중인 막대에는 '하나씩' 지연이 적용되지 않으므로 ① 진행 중인 애니메이션을 멈추고 바닥 상태로 그려 둔 뒤
+  // ② 크기 조정이 끝나면(약 0.1초) 하나씩 올라오는 애니메이션을 새로 시작합니다. 모든 차트가 같은 타이밍으로 움직입니다.
+  const panelCharts = () => [...panel.querySelectorAll("canvas[data-kpi-chart]")]
+    .map((canvas) => (canvas.offsetParent ? charts[canvas.dataset.kpiChart] : null))
+    .filter(Boolean);
   requestAnimationFrame(() => {
-    panel.querySelectorAll("canvas[data-kpi-chart]").forEach((canvas) => {
-      const chart = charts[canvas.dataset.kpiChart];
-      if (!chart || !canvas.offsetParent) return;
+    panelCharts().forEach((chart) => {
+      chart.stop();
       chart.resize();
-      // 기준선(손익분기 · 전체 평균 같은 선)은 움직이지 않고 제자리에 두고, 막대만 차례로 올라오게
-      chart.data.datasets.forEach((ds) => { if ((ds.type || chart.config.type) === "line") ds.animation = false; });
-      chart.options.animation = chart.config.type === "doughnut"
-        ? { animateRotate: true, animateScale: false, duration: 800, easing: "easeOutCubic" }
-        : { duration: 650, easing: "easeOutCubic", delay: (ctx) => (ctx.type === "data" && ctx.mode === "default" ? ctx.dataIndex * 110 : 0) };
       chart.reset();
-      chart.update();
+      chart.draw();
     });
+    setTimeout(() => {
+      if (!panel.classList.contains("is-expanded")) return;
+      panelCharts().forEach((chart) => {
+        chart.resize();
+        // 기준선(손익분기 · 전체 평균 같은 선)은 제자리에 두고, 막대만 왼쪽부터 차례로(같은 항목의 막대 2개는 함께) 올라오게
+        chart.data.datasets.forEach((ds) => { if ((ds.type || chart.config.type) === "line") ds.animation = false; });
+        chart.options.animation = chart.config.type === "doughnut"
+          ? { animateRotate: true, animateScale: false, duration: 800, easing: "easeOutCubic" }
+          : { duration: 650, easing: "easeOutCubic", delay: (ctx) => (ctx.type === "data" && ctx.mode === "default" ? ctx.dataIndex * 110 : 0) };
+        chart.stop();
+        chart.reset();
+        chart.update();
+      });
+    }, 100);
   });
 }
 
