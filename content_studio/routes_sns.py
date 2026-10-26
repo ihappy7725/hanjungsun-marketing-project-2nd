@@ -1060,14 +1060,20 @@ def _design_prompts(value, pages):
 
 @bp.route("/api/design-images", methods=["POST"])
 def design_images():
-    """크레딧이 나갑니다. body: {kind, ratio, product_id, pages, prompts: [[장별]×3], credits(화면에서 확인한 비용),
-    ref_images(선택, 견적 때와 같은 목록)}
+    """크레딧이 나갑니다. body: {kind, ratio, product_id(s), pages, credits(화면에서 확인한 비용), ref_images(선택, 견적과 같게),
+    포스터: proposals: [{layout: "A"|"B"|"C", texts: {badge_vi, eyebrow_vi, headline_vi, sub_vi}} × 3] → 베이스 템플릿으로 조립
+    카드뉴스(와 예전 방식 포스터): prompts: [[장별] × 3]}
     견적과 같고 한도 안일 때만 장마다 1건씩 보냅니다. 중간에 실패하면 거기서 멈추고 이미 보낸 것만 기록합니다.
-    응답 jobs: [[{request_id, status} 또는 None(못 보냄)] × 3안]"""
+    응답 jobs: [[{request_id, status} 또는 None(못 보냄)] × 3안], prompts: [[장별 최종 프롬프트 전문] × 3안]"""
     body = request.get_json(silent=True) or {}
     try:
-        _, ratio, products, pages = _design_target(body)
-        prompts = _design_prompts(body.get("prompts"), pages)
+        kind, ratio, products, pages = _design_target(body)
+        exact = kind == "poster" and body.get("proposals") is not None
+        if exact:
+            prompts = [[higgsfield.design_poster_prompt(products, item["layout"], ratio, item["texts"])]
+                       for item in _poster_proposals(body.get("proposals"))]
+        else:
+            prompts = _design_prompts(body.get("prompts"), pages)
         refs = _design_refs(body.get("ref_images"))
         photos = _design_photos(products, refs)
         confirmed = body.get("credits")
@@ -1083,13 +1089,31 @@ def design_images():
 
     # 선물세트·포장 이야기가 있는 장만 선물세트 사진을 함께 보냅니다(참고 사진 수와 관계없이 장당 비용은 같음).
     args = [higgsfield.design_image_args(prompt, ratio,
-                                         _design_photos(products, refs, with_gift=bool(GIFT_WORDS.search(prompt))))
+                                         _design_photos(products, refs, with_gift=bool(GIFT_WORDS.search(prompt))),
+                                         exact_product=exact)
             for proposal in prompts for prompt in proposal]
     flat, response = _send_design_jobs(args, None, quote)
     if response is not None and not flat:
         return response
     jobs = [flat[p * pages:(p + 1) * pages] for p in range(len(prompts))]
-    return _design_jobs_reply(jobs, flat, response, quote)
+    # 결과 아래 "프롬프트 전문" 토글·문서 pages[].prompt 저장용. 참고 사진 문장은 보낼 때마다 붙이므로 빼고 돌려줍니다
+    # (비율 다시 그리기에서 두 번 붙지 않게).
+    return _design_jobs_reply(jobs, flat, response, quote, prompts=prompts)
+
+
+def _poster_proposals(value):
+    """포스터 시안 3안 [{layout, texts}]. 틀리면 ValueError."""
+    if not isinstance(value, list) or len(value) != DESIGN_PROPOSALS:
+        raise ValueError(f"시안 {DESIGN_PROPOSALS}개의 레이아웃·문구가 필요합니다.")
+    out = []
+    for item in value:
+        if not isinstance(item, dict) or item.get("layout") not in higgsfield.POSTER_LAYOUT_KEYS:
+            raise ValueError("레이아웃은 A · B · C 중 하나여야 합니다.")
+        texts = item.get("texts") or {}
+        if not isinstance(texts, dict) or not all(isinstance(texts.get(key, ""), str) for key in higgsfield.POSTER_TEXT_KEYS):
+            raise ValueError("문구(texts) 형식이 올바르지 않습니다.")
+        out.append({"layout": item["layout"], "texts": texts})
+    return out
 
 
 # Higgsfield 일시 오류(서버 5xx, 참고 사진 올리기 실패): 생성 전에 끊긴 것이라 크레딧이 나가지 않아 다시 보내도 됩니다.
@@ -1164,16 +1188,18 @@ def _send_design_jobs(arg_list, chat_id, quote):
     return results, ({"warning": f"{len(sent)}장만 요청했어요. 나머지는 보내지 못했어요. ({failure})"} if failure else None)
 
 
-def _design_jobs_reply(jobs, flat, problem, quote):
-    """보낸 결과를 화면에 돌려줄 응답으로. problem: _send_design_jobs의 두 번째 값(202 응답 또는 경고 dict 또는 None)."""
+def _design_jobs_reply(jobs, flat, problem, quote, prompts=None):
+    """보낸 결과를 화면에 돌려줄 응답으로. problem: _send_design_jobs의 두 번째 값(202 응답 또는 경고 dict 또는 None).
+    prompts: 실제로 보낸 프롬프트 전문(있으면 응답에 그대로)."""
     spent = round(quote["unit"] * sum(1 for job in flat if job), 2)
+    extra = {"prompts": prompts} if prompts is not None else {}
     if isinstance(problem, tuple):  # 요청은 들어갔지만 작업 ID를 못 받음(202)
         payload, status = problem
         data = payload.get_json()
-        data["jobs"] = jobs
+        data.update(jobs=jobs, **extra)
         return jsonify(data), status
     data = {"ok": True, "jobs": jobs, "spent": spent, "today_used": quote["today_used"] + spent,
-            "daily_limit": higgsfield.DAILY_LIMIT}
+            "daily_limit": higgsfield.DAILY_LIMIT, **extra}
     if problem:
         data.update(problem)
     return jsonify(data)
@@ -1224,9 +1250,18 @@ def _reratio_photos(prompt, path, products):
 
 
 def _reratio_args(ratio, pages, products):
-    """장마다 그림 요청 인자. 프롬프트 끝에 새 비율로 다시 배치하라는 문장을 붙입니다."""
-    return [higgsfield.design_image_args(f"{prompt.strip()} Re-compose this same design for a {ratio} frame, keeping the same text.",
-                                         ratio, _reratio_photos(prompt, path, products)) for prompt, path in pages]
+    """장마다 그림 요청 인자. 프롬프트 끝에 새 비율로 다시 배치하라는 문장을 붙입니다.
+    포스터 베이스 템플릿으로 만든 장(POSTER_BASE로 시작)은 만들 때처럼 "제품은 사진과 똑같이" 문장을 씁니다."""
+    head = higgsfield.POSTER_BASE.split("\n", 1)[0]
+    orientation, frame = higgsfield.poster_frame(ratio)
+
+    def retarget(prompt):  # 템플릿 [TYPE] 줄의 예전 비율을 새 비율로
+        return re.sub(r"^\w+ premium dessert advertising poster, \d+:\d+ [\w ]+?, high-end",
+                      f"{orientation} premium dessert advertising poster, {ratio} {frame}, high-end", prompt, flags=re.M)
+    return [higgsfield.design_image_args(
+        f"{(retarget(prompt) if prompt.startswith(head) else prompt).strip()} "
+        f"Re-compose this same design for a {ratio} frame, keeping the same text.",
+        ratio, _reratio_photos(prompt, path, products), exact_product=prompt.startswith(head)) for prompt, path in pages]
 
 
 def _reratio_quote(ratio, pages, products):

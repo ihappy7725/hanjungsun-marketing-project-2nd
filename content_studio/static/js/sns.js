@@ -369,7 +369,7 @@ const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending:
 // user_refs·ref_video: 처음 만들 때 올린 레퍼런스 이미지(최대 4장)·참고 영상(1개). 초안 뒤에는 작업 문서에 저장합니다.
 // style·pages: 포스터·카드뉴스 새로 만들기의 스타일(designs.py STYLE_HINTS key, ""은 AI 추천)·카드뉴스 장수
 const settings = { ratio: DESIGN_KINDS.includes(kind) ? "3:4" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
-  user_refs: [], ref_video: null, style: "", pages: 5 };
+  user_refs: [], ref_video: null, style: "", layout: "", pages: 5 };
 const USER_REFS_MAX = 4;
 const REF_SLOTS = 4;  // 첫 화면 레퍼런스 칸(2×2): 이미지·영상을 합친 개수
 
@@ -382,9 +382,10 @@ const VIDEO_FIRST_PLACEHOLDER = [
 ].join("\n");
 const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";
 // 포스터·카드뉴스 입력창 문구: 처음 만들 때
+// 사용자는 제품(버튼)과 컨셉만 쓰고, 그림 속 베트남어 문구는 희주 design-assistant가 만듭니다.
 const designFirstPlaceholder = (label) => [
-  `만들 ${label}의 목적·분위기·넣을 내용을 입력해 주세요.`,
-  "예) 꿀 레드용과 신메뉴 출시. 따뜻하고 고급스러운 분위기, 20~30대 다낭 디저트 손님 대상.",
+  `${label}의 컨셉을 입력해 주세요. 문구는 AI가 베트남어로 만들어요.`,
+  "예) 발렌타인데이 커플 선물. 따뜻하고 고급스러운 분위기, 20~30대 다낭 손님 대상.",
 ].join("\n");
 const DESIGN_REVISE_PLACEHOLDER = 'AI에게 고칠 점을 말해 주세요. 예: "제목 더 크게", "크리스마스 느낌으로 바꿔줘"';  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
@@ -424,7 +425,7 @@ function startNew() {
   // 새 작업이라 이전 작업 칸은 닫습니다(☰ 이전 작업으로 다시 열 수 있음). 첫 안내는 입력창 문구(VIDEO_FIRST_PLACEHOLDER)로 합니다.
   $("history").hidden = true;
   $("work-screen").classList.remove("has-history");
-  Object.assign(settings, { title: "", user_refs: [], ref_video: null, style: "", pages: 5 });  // 제목·레퍼런스·스타일·장수는 작업마다 새로
+  Object.assign(settings, { title: "", user_refs: [], ref_video: null, style: "", layout: "", pages: 5 });  // 제목·레퍼런스·스타일·레이아웃·장수는 작업마다 새로
   feedback("", "");
   renderWork();
   // 생성 화면에 집중: 탭 줄이 화면 맨 위에 오게 내려갑니다. 입력창 커서 때문에 더 내려가지 않게 preventScroll.
@@ -495,9 +496,13 @@ function renderWork() {
   const designStart = DESIGN_KINDS.includes(kind) && !doc;
   $("work-screen").classList.toggle("is-design-new", designStart);
   $("style-row").hidden = !designStart;
-  $("style-label").textContent = `${KIND_LABELS[kind]} 스타일`;
+  // 포스터는 스타일 대신 레이아웃(베이스 템플릿 A·B·C), 카드뉴스는 스타일 그대로
+  $("style-label").textContent = kind === "poster" ? "포스터 레이아웃" : `${KIND_LABELS[kind]} 스타일`;
+  $("set-style").hidden = kind === "poster";
+  $("set-layout").hidden = kind !== "poster";
   $("set-pages").hidden = !(designStart && kind === "cardnews");
-  for (const [role, value] of [["set-style", settings.style], ["set-pages", String(settings.pages)]]) {
+  for (const [role, value] of [["set-style", settings.style], ["set-layout", settings.layout],
+    ["set-pages", String(settings.pages)]]) {
     for (const button of $(role).children) {
       button.classList.toggle("dark", button.dataset.value === value);
       button.setAttribute("aria-pressed", String(button.dataset.value === value));
@@ -618,6 +623,7 @@ function startChoices(text) {
     productId,
     productIds,                  // 여러 제품(라인업) → design-images API의 product_ids
     style: settings.style || "",
+    layout: kind === "poster" ? settings.layout : undefined,  // 포스터: "" = A·B·C 하나씩, "A"|"B"|"C" = 그 레이아웃으로 3안
     pages: settings.pages || 5,  // 카드뉴스만 씀
     request: text.trim(),
     refs: settings.user_refs,    // 레퍼런스 이미지 [{file_id, url}] → design-images API의 ref_images
@@ -891,6 +897,9 @@ function bindWork() {
   // 포스터·카드뉴스 스타일(한 개)·카드뉴스 장수: 초안 전에만 보이고, 다음 [보내기]에 씁니다.
   for (const button of $("set-style").children) {
     button.addEventListener("click", () => { settings.style = button.dataset.value; renderWork(); });
+  }
+  for (const button of $("set-layout").children) {
+    button.addEventListener("click", () => { settings.layout = button.dataset.value; renderWork(); });
   }
   for (const button of $("set-pages").children) {
     button.addEventListener("click", () => { settings.pages = Number(button.dataset.value); renderWork(); });

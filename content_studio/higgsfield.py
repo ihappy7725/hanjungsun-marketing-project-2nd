@@ -144,13 +144,19 @@ def image_args(doc, photos=(), index=0):
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 
-def design_image_args(prompt, ratio, photos=()):
-    """포스터·카드뉴스 시안 한 장 그림 요청. prompt: 희주 design-assistant가 쓴 장 프롬프트(영어, 넣을 베트남어 문구 포함).
-    photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고, 사진은 생김새 참고일 뿐 새로 그리라는 문장을 끝에 붙입니다.
-    ("사진과 정확히 같게"라고 쓰면 사진을 그대로 오려 붙여서, 2026-10-27 시험 뒤 바꿈)"""
+def design_image_args(prompt, ratio, photos=(), exact_product=False):
+    """포스터·카드뉴스 시안 한 장 그림 요청. prompt: 장 프롬프트(영어, 넣을 베트남어 문구 포함).
+    photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고 역할과 쓰는 법을 프롬프트 끝에 붙입니다.
+    exact_product=False(카드뉴스·예전 방식): 사진은 생김새 참고일 뿐 새로 그리게("정확히 같게"라고 쓰면 오려 붙여서).
+    exact_product=True(포스터 베이스 템플릿): 제품은 사진과 똑같이, 사진의 배경·소품·글자만 가져오지 않게."""
     photos = list(photos)[:IMAGE_REFS]
     text = prompt.strip()
-    if photos:
+    if photos and exact_product:
+        text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
+                 + ". Reproduce the product itself exactly as in these photos (shape, size, surface and filling), "
+                   "but place it naturally in this poster's scene and lighting. Do not copy the photos' backgrounds, "
+                   "wrapping, tags, plates or props, and never draw any text, letters or labels seen in the photos.")
+    elif photos:
         text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
                  + ". Use the attached photos only to understand what the product looks like (round shape, soft white "
                    "rice-flour skin, filling color and texture). Do not paste, cut out or collage the photos: draw the "
@@ -161,6 +167,145 @@ def design_image_args(prompt, ratio, photos=()):
     args = [DESIGN_IMAGE_MODEL, "--prompt", text, "--aspect_ratio", IMAGE_RATIOS[ratio],
             "--resolution", DESIGN_IMAGE_RESOLUTION, "--quality", DESIGN_IMAGE_QUALITY]
     return args + [part for path, _ in photos for part in ("--image-references", path)]
+
+
+# ---------- 포스터 디자인 베이스 템플릿 (2026-10-27 유진 결정) ----------
+# 유진이 받은 지시서(프롬프트 빌더)를 우리 제품(products.py)·Higgsfield 흐름에 맞춘 것. 포스터만 쓰고 카드뉴스는 예전 방식.
+# 희주 design-assistant는 짧은 베트남어 문구만 만들고, 레이아웃·톤·규칙은 여기서 조립합니다.
+# 로고는 그림 모델이 그리지 않고 아래 가운데 자리만 비워 둡니다(희주 편집기가 brand_logo.png를 얹음).
+POSTER_BASE = """Use the provided reference photos as the exact product.
+Keep the product's shape, proportions, size, color, surface texture and filling
+exactly identical to the reference. Do not redesign, reshape or stylize the product.
+
+[PRODUCT]
+{product_line}
+
+[TYPE]
+{orientation} premium dessert advertising poster, {ratio} {frame}, high-end print quality.
+Luxury confectionery campaign aesthetic: minimal, refined, editorial.
+
+[BACKGROUND]
+Single-tone {bg_color} background with a subtle fine-grain paper texture.
+No gradients, no scenery, no table edges.
+
+[LAYOUT]
+{layout_block}
+
+[LIGHTING]
+Soft diffused studio light from the upper left, one gentle natural soft shadow
+under the product. Crisp product focus, fine detail on the mochi surface.
+Photorealistic commercial food photography shot with a real camera.
+
+[COLOR]
+Background stays muted. Accent colors come only from the props ({accent_color}).
+Natural, fresh, appetizing food colors. Maximum 3 colors in total plus dark brown text.
+
+{text_block}
+
+[BRAND LOGO AREA]
+Keep a clean empty area at the bottom center (the lowest tenth of the image) for a brand logo added later.
+Do not draw any logo, emblem, seal or brand name there or anywhere else.
+
+[MOOD]
+Quiet luxury, elegant and calm, like a premium department-store dessert boutique
+campaign. Generous negative space around every element.
+
+[STRICT RULES]
+- The product must look exactly like the reference photos: no warping, melting,
+  bending, stretching or distortion of its shape.
+- Rice cake texture must look soft, fresh and plump: never rubbery, stretched,
+  slimy, glossy-wet, melting, sagging, collapsed or dull-colored.
+- No artificial CGI look, no fake physics, no oversaturated plastic-like colors.
+- No people, no faces, no hands, no fingers.
+- No watermarks and no logos.
+- Clean composition, no clutter, no busy background."""
+
+POSTER_NO_TEXT = """[TEXT]
+No text, no letters, no captions, no logos, no watermarks anywhere in the image.
+Keep the top third as clean empty space for text added later."""
+
+POSTER_LAYOUTS = {
+    "A": {"label": "A 재료 프레이밍", "block": (
+        "One hero product placed in the exact center, slightly below the middle. "
+        "{Props} and delicate flower petals scattered around the outer edges of the "
+        "frame, forming a loose oval border that frames the product. "
+        "The area around the product stays clean and empty.")},
+    "B": {"label": "B 플로팅", "block": (
+        "Four to five pieces of the product floating diagonally from upper right to "
+        "lower left at different angles, one cut open to show the filling. "
+        "A few small pieces of {props} suspended around them, still and elegant. "
+        "Two pieces resting on the ground plane above the logo area. "
+        "The top area stays clear.")},
+    "C": {"label": "C 페이퍼컷 윈도우", "block": (
+        "Three pieces of the product arranged in a tight cluster in the center, one cut open to show the filling. "
+        "Around them, 3 teardrop-shaped cut-out windows in the paper background, "
+        "with real paper-cut depth and soft inner shadows. Inside each window, "
+        "a close-up photo of {props}. A few small paper confetti shapes in "
+        "{accent_color} tones scattered loosely from two corners.")},
+}
+POSTER_LAYOUT_KEYS = tuple(POSTER_LAYOUTS)
+
+# 제품별 톤 (products.py id). 제품을 고르면 자동으로 정해집니다. 여러 제품이면 "lineup".
+POSTER_TONES = {
+    "mango_yogurt": {"bg_color": "pale peach ivory", "accent_color": "warm mango orange and creamy white",
+                     "props": "fresh ripe mango slices and cubes with a small dollop of white yogurt"},
+    "honey_red_dragonfruit": {"bg_color": "warm cream ivory", "accent_color": "magenta and golden honey",
+                              "props": "fresh sliced red dragon fruit with vivid magenta flesh and tiny black seeds, "
+                                       "with a thin drizzle of golden honey"},
+    "mangosteen_yogurt": {"bg_color": "soft lavender ivory", "accent_color": "deep purple and white",
+                          "props": "fresh halved mangosteen showing pearly white segments"},
+    "durian": {"bg_color": "soft butter ivory", "accent_color": "creamy yellow and soft green",
+               "props": "fresh durian pods with creamy pale-yellow flesh"},
+    "lineup": {"bg_color": "warm cream ivory", "accent_color": "warm gold with soft fruit colors",
+               "props": "small fresh pieces of mango, red dragon fruit, mangosteen and durian"},
+}
+POSTER_TEXT_KEYS = ("badge_vi", "eyebrow_vi", "headline_vi", "sub_vi")
+POSTER_TEXT_MAX = 60  # 칸마다 글자 수 (그림 속 글자는 짧을수록 정확)
+
+
+def poster_frame(ratio):
+    w, h = (int(x) for x in ratio.split(":"))
+    if w == h:
+        return "Square", "square format"
+    return ("Vertical", "portrait") if h > w else ("Horizontal", "landscape")
+
+
+def _poster_text_block(texts, accent_color):
+    """문구 블록. 헤드라인이 없으면 None(글자 없는 포스터). 배지·윗줄·아랫줄은 있을 때만."""
+    texts = {key: " ".join(str((texts or {}).get(key) or "").split()).replace('"', "'")[:POSTER_TEXT_MAX]
+             for key in POSTER_TEXT_KEYS}
+    if not texts["headline_vi"]:
+        return None
+    lines = ["[TEXT ELEMENTS - render exactly as written, Vietnamese]"]
+    if texts["badge_vi"]:
+        lines.append(f'Small circular seal badge near a top corner, dark brown with ivory text: "{texts["badge_vi"]}"')
+    if texts["eyebrow_vi"]:
+        lines.append(f'Lower area, small widely letter-spaced uppercase sans-serif: "{texts["eyebrow_vi"]}"')
+    lines.append(f'Large high-contrast elegant serif headline with a soft {accent_color} gradient, '
+                 f'at most two lines: "{texts["headline_vi"]}"')
+    if texts["sub_vi"]:
+        lines.append(f'One short line in thin sans-serif just above the logo area: "{texts["sub_vi"]}"')
+    lines.append("No other text anywhere. Spell every word exactly, keep all Vietnamese diacritics.")
+    return "\n".join(lines)
+
+
+def design_poster_prompt(products, layout, ratio, texts=None):
+    """포스터 베이스 템플릿 조립. products: products.py 제품 목록(1개 이상), layout: "A"|"B"|"C",
+    ratio: IMAGE_RATIOS 키, texts: {badge_vi, eyebrow_vi, headline_vi, sub_vi} (headline이 없으면 글자 없는 포스터)."""
+    tone = POSTER_TONES["lineup" if len(products) > 1 else products[0]["id"]]
+    if len(products) > 1:
+        product_line = ("Hanjungsun chapssal-tteok in " + str(len(products)) + " flavors, one of each: "
+                        + "; ".join(PRODUCT_LOOK.get(item["name_ko"], (item["name_ko"],))[0] for item in products) + ".")
+    else:
+        look = PRODUCT_LOOK.get(products[0]["name_ko"], (products[0]["name_ko"],))[0]
+        product_line = f"Hanjungsun {PRODUCT_EN.get(products[0]['name_ko'], 'chapssal-tteok')}: {look}."
+    orientation, frame = poster_frame(ratio)
+    layout_block = POSTER_LAYOUTS[layout]["block"].format(props=tone["props"], Props=tone["props"][:1].upper() + tone["props"][1:],
+                                                         accent_color=tone["accent_color"])
+    text_block = _poster_text_block(texts, tone["accent_color"]) or POSTER_NO_TEXT
+    return POSTER_BASE.format(product_line=product_line, orientation=orientation, ratio=ratio, frame=frame,
+                              bg_color=tone["bg_color"], layout_block=layout_block,
+                              accent_color=tone["accent_color"], text_block=text_block)
 
 
 # ---------- 무료 확인 ----------
