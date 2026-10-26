@@ -19,6 +19,8 @@ from pathlib import Path
 
 from flask import url_for
 
+from .products import get_product
+
 SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080)}
 DEFAULT_RATIO = "4:5"
 BRAND = "HANJUNGSUN"
@@ -798,6 +800,17 @@ def build_cardnews_prompt(request, doc=None, language="vi"):
     return "\n".join(lines), bool(rules)
 
 
+def _option_product(options):
+    """첫 화면에서 고른 제품(options.product_id). 고르지 않았으면 None, 목록에 없는 id면 ValueError."""
+    product_id = options.get("product_id")
+    if product_id in (None, ""):
+        return None
+    product = get_product(product_id) if isinstance(product_id, str) else None
+    if not product:
+        raise ValueError("고른 제품을 찾을 수 없습니다.")
+    return product
+
+
 # 전문 AI도 기존 요소 문서와 저장·되돌리기 경로를 그대로 사용합니다.
 def build_design_brief(doc, options):
     kind = doc.get("kind")
@@ -814,6 +827,7 @@ def build_design_brief(doc, options):
         fields[key] = value.strip()
     if not fields["request"]:
         raise ValueError("제품과 원하는 내용을 입력해 주세요.")
+    product = _option_product(options)
     count = options.get("pages", DEFAULT_PAGES) if kind == "cardnews" else 1
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= MAX_PAGES:
         raise ValueError("장수가 올바르지 않습니다.")
@@ -822,6 +836,8 @@ def build_design_brief(doc, options):
     persona = (Path(__file__).parent / "prompts" / f"{kind}_base.md").read_text(encoding="utf-8")
     rules = _guideline_rules()
     brief = {**fields, "kind": kind, "ratio": doc["ratio"], "pages": count,
+             "product": product and {"id": product["id"], "name_ko": product["name_ko"],
+                                     "name_vi": product.get("name_vi", "")},
              "reference_texts": design_texts(doc), "local_guidelines": rules,
              "reference_is_demo": bool(doc.get("demo", True)),
              "reference_notice": "기존 초안은 참고용입니다. 시연 문구의 제품 정보·효능·가격을 사실 근거로 사용하지 마세요.",
@@ -865,22 +881,35 @@ def validate_proposals(value, schema):
 
 
 def proposal_design(source, proposal, options):
-    """AI는 문구·구성을 제안하고, 사진은 기존 원본을 유지합니다."""
-    photo = next((item.get("src") for page in source.get("pages", [])
-                  for item in page.get("elements", []) if item.get("type") == "image" and item.get("src")), None)
+    """AI는 문구·구성을 제안하고, 사진은 기존 원본을 유지합니다.
+
+    사진은 같은 번호의 장 사진을 그대로 쓰고, 사진이 없는 장·늘어난 장은 표지 사진을 씁니다.
+    기존 사진이 하나도 없으면(첫 화면) 고른 제품의 대표 사진을 씁니다.
+    포스터 배치·색은 기본 틀 그대로이고, AI의 스타일 설명은 참고 가이드로만 남깁니다.
+    """
+    product = _option_product(options) or {}
+    photos = [next((item.get("src") for item in page.get("elements", [])
+                    if item.get("type") == "image" and item.get("src")), None)
+              for page in source.get("pages", [])]
+    cover_photo = (photos[0] if photos else None) or next((src for src in photos if src), None) or _image_src(product)
+
+    def photo_of(index):
+        return (photos[index] if index < len(photos) else None) or cover_photo
+
     texts = proposal["pages"]
+    is_new = not source["pages"][0].get("bg")  # 첫 화면의 빈 초안은 색이 없어 제품 색 조합을 씁니다.
     if source["kind"] == "cardnews":
-        palette = _doc_palette(source)
+        palette = dict(PALETTES.get(product.get("color"), PALETTES["gold"])) if is_new else _doc_palette(source)
         contents = [{"title": item["title_vi"], "subtitle": item["body_vi"], "body": item["body_vi"],
                      "quote": item["body_vi"], "checks": item["body_vi"].split("\n"), "badge": BRAND,
-                     "photo": photo} for item in texts]
+                     "photo": photo_of(index)} for index, item in enumerate(texts)]
         doc = {"kind": "cardnews", "ratio": source["ratio"], "template": proposal["template"],
                "palette": palette, "pages": _build_pages(proposal["template"], source["ratio"], contents, palette)}
     else:
-        doc = make_poster("", ratio=source["ratio"])
+        doc = make_poster("", ratio=source["ratio"], product=product if is_new else None)
         for item in doc["pages"][0]["elements"]:
             if item["type"] == "image":
-                item["src"] = photo
+                item["src"] = photo_of(0)
             elif item.get("role") in ("title", "subtitle"):
                 item["text"] = texts[0]["title_vi" if item["role"] == "title" else "body_vi"]
         # 긴 베트남어가 사진이나 화면 밖으로 넘치지 않도록 제목 아래에 본문을 배치합니다.
@@ -899,8 +928,10 @@ def proposal_design(source, proposal, options):
                 item["text_ko"] = words["title_ko" if role == "title" else "body_ko"]
                 item["translation_source"] = item["text"]
     doc["demo"] = source.get("demo", True)
+    style = ("스타일 설명은 참고 가이드(배치·색은 기본 틀)" if doc["kind"] == "poster"
+             else "스타일 제안")
     doc["assistant"] = {"name": proposal["name"], "prompt": proposal["prompt"], "options": options,
-                        "notice": "AI 문구 초안 · 스타일 제안 · 제품 정보와 번역은 검토해 주세요."}
+                        "notice": f"AI 문구 초안 · {style} · 제품 정보와 번역은 검토해 주세요."}
     if source.get("external_figma"):
         doc["external_figma"] = copy.deepcopy(source["external_figma"])
     return doc

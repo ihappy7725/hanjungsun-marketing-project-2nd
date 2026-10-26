@@ -3,6 +3,7 @@
 API는 /content_studio/media/api/... 아래에 둡니다. 예: @bp.route("/media/api/remove-bg", methods=["POST"])
 업로드·결과 파일은 instance/uploads/content_studio/, instance/exports/content_studio/ 에 저장합니다.
 """
+import copy
 import os
 import re
 import uuid
@@ -327,8 +328,9 @@ def figma_preview():
         return _error("Figma 미리보기를 받지 못했습니다. 인증·파일 권한·사용 한도를 확인해 주세요.", 502)
 
 
-# ---------- Figma 플러그인 창구 (README 3-4, 읽기 전용) ----------
-# 플러그인 화면은 출처(origin)가 "null"로 와서, 이 창구 응답에만 허락 헤더를 붙입니다. 고치기·지우기는 없습니다.
+# ---------- Figma 플러그인 창구 (README 3-4) ----------
+# 플러그인 화면은 출처(origin)가 "null"로 와서, 이 창구 응답에만 허락 헤더를 붙입니다.
+# 쓰기는 가져온 Figma 주소(external_figma)를 남기는 /link 하나뿐이고, 지우기는 없습니다.
 FIGMA_KINDS = ("poster", "cardnews")
 STATIC_IMAGE_RE = re.compile(r"^/content_studio/static/images/sns/([A-Za-z0-9_.-]+\.(?:png|jpe?g|webp))$")
 UPLOAD_SRC_RE = re.compile(r"^/content_studio/media/uploads/([0-9a-f]{32}\.(?:jpg|png|webp))$")
@@ -371,6 +373,28 @@ def figma_design(chat_id):
     # x·y·w·h는 %이고 size는 원본 크기 기준 px이라, 플러그인은 width·height로 픽셀을 계산합니다.
     return _for_plugin(jsonify({"ok": True, "id": chat.id, "title": chat.title,
                                 "width": width, "height": height, "design": doc}))
+
+
+@bp.route("/media/api/figma/designs/<int:chat_id>/link", methods=["POST"])
+def figma_design_link(chat_id):
+    """플러그인이 가져온 Figma 프레임 주소를 디자인 문서의 external_figma에 새 버전으로 남깁니다.
+    미리 묻기(preflight)를 피하려고 플러그인은 text/plain으로 JSON을 보냅니다."""
+    chat = db.session.get(SnsChat, chat_id)
+    doc = chat.design.doc if chat and chat.kind in FIGMA_KINDS and chat.design else None
+    if not doc:
+        return _plugin_error("포스터·카드뉴스를 찾을 수 없습니다.", 404)
+    body = request.get_json(force=True, silent=True) if (request.content_length or 0) <= 4000 else None
+    url = body.get("url") if isinstance(body, dict) else None
+    try:
+        _figma_selection(url)
+    except ValueError as error:
+        return _plugin_error(str(error))
+    if (doc.get("external_figma") or {}).get("url") != url:
+        next_doc = copy.deepcopy(doc)
+        next_doc["external_figma"] = {"url": url}
+        chat.design.push(next_doc)
+        db.session.commit()
+    return _for_plugin(jsonify({"ok": True, "url": url}))
 
 
 @bp.route("/media/api/figma/image")
