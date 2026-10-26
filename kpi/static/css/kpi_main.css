@@ -358,11 +358,30 @@
 .kpi-page .kpi-t-survey th:nth-child(4) { width: 17%; }
 .kpi-page .kpi-t-survey th:nth-child(5) { width: 14%; }
 
-.kpi-page .kpi-t-ga4 th:nth-child(1) { width: 32%; }
-.kpi-page .kpi-t-ga4 th:nth-child(2) { width: 17%; }
-.kpi-page .kpi-t-ga4 th:nth-child(3) { width: 17%; }
-.kpi-page .kpi-t-ga4 th:nth-child(4) { width: 17%; }
-.kpi-page .kpi-t-ga4 th:nth-child(5) { width: 17%; }
+/* GA4 채널: 채널 | 세션 | 세션 비중 | 참여율 | 평균 참여 시간 | 주요 이벤트 | 주요 이벤트 비율 | 수익(USD) */
+.kpi-page .kpi-t-ga4 th:nth-child(1) { width: 18%; }
+.kpi-page .kpi-t-ga4 th:nth-child(2) { width: 10%; }
+.kpi-page .kpi-t-ga4 th:nth-child(3) { width: 10%; }
+.kpi-page .kpi-t-ga4 th:nth-child(4) { width: 10%; }
+.kpi-page .kpi-t-ga4 th:nth-child(5) { width: 12%; }
+.kpi-page .kpi-t-ga4 th:nth-child(6) { width: 11%; }
+.kpi-page .kpi-t-ga4 th:nth-child(7) { width: 13%; }
+.kpi-page .kpi-t-ga4 th:nth-child(8) { width: 16%; }
+.kpi-page .kpi-row-total td { background: var(--paper); font-weight: 600; }
+
+/* GA4 이벤트 Top 10: 이벤트 이름 | 이벤트 수 | 이벤트 비중 | 사용자 | 사용자당 */
+.kpi-page .kpi-t-ga4ev th:nth-child(1) { width: 32%; }
+.kpi-page .kpi-t-ga4ev th:nth-child(2) { width: 18%; }
+.kpi-page .kpi-t-ga4ev th:nth-child(3) { width: 16%; }
+.kpi-page .kpi-t-ga4ev th:nth-child(4) { width: 18%; }
+.kpi-page .kpi-t-ga4ev th:nth-child(5) { width: 16%; }
+
+/* GA4 전환 대체 지표 4칸 (확대 화면) */
+.kpi-page .kpi-ga4-conv { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin: 0 0 var(--space-6); }
+.kpi-page .kpi-ga4-conv[hidden] { display: none; }
+.kpi-page .kpi-ga4-conv div { padding: var(--space-4) var(--space-5); border: 1px solid var(--line); }
+.kpi-page .kpi-ga4-conv dt { color: var(--muted); font-size: var(--fs-table); }
+.kpi-page .kpi-ga4-conv dd { margin: var(--space-1) 0 0; font-family: var(--font-title); font-size: var(--fs-subheading); font-weight: 700; }
 
 /* 크리에이터 표는 기본 화면(블록 높이 고정)에서만 줄 간격을 촘촘하게 */
 .kpi-page .kpi-panel:not(.is-expanded) .kpi-t-creator th,

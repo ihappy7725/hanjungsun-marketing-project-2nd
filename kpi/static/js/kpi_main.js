@@ -36,6 +36,8 @@ const krwMan = (n) => `${num(Math.round(n / 10000))}만 원`;
 const vnd = (n) => `${num(n)} VND`;
 const pct = (n) => (n === null || n === undefined ? "—" : `${n.toFixed(1)}%`);
 const signedKrw = (n) => `${n >= 0 ? "+" : "−"}${num(Math.abs(n))}원`;
+const usd = (n) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const duration = (sec) => (sec >= 60 ? `${Math.floor(sec / 60)}분 ${String(Math.round(sec % 60)).padStart(2, "0")}초` : `${Math.round(sec)}초`);
 
 // 화면에서는 '감성' 대신 '만족도'(만족 · 보통 · 불만)로 표시합니다. 데이터 값은 Positive/Neutral/Negative 그대로.
 const SENTIMENT_LABEL = { Positive: "만족", Neutral: "보통", Negative: "불만" };
@@ -366,11 +368,17 @@ function renderGa4(data) {
   setText("ga4-ctr", pct(g.shopee_ctr_percent));
   setText("ga4-ctr-sub", `${num(g.shopee_clicks)}회 이동`);
   setText("ga4-pamphlet", num(g.pamphlet_sessions));
-  setText(
-    "ga4-proxy",
-    g.purchase_rate_percent != null ? `대체 지표(데모): 구매 전환율 ${pct(g.purchase_rate_percent)} — 데모 스토어 값, 쇼피 이동 클릭률을 대신 참고` : "",
-  );
   setText("ga4-note", g.note);
+  // 확대 시: 전환 대체 지표(주요 이벤트 · 비율 · 평균 참여 시간 · 수익) — 값이 없으면 칸을 숨깁니다.
+  const conv = [
+    ["세션 주요 이벤트 비율", g.session_key_event_rate_percent == null ? null : pct(g.session_key_event_rate_percent)],
+    ["주요 이벤트", g.key_events == null ? null : `${num(g.key_events)}건`],
+    ["평균 참여 시간", g.avg_engagement_sec == null ? null : duration(g.avg_engagement_sec)],
+    ["수익", g.revenue_usd == null ? null : usd(g.revenue_usd)],
+  ].filter(([, v]) => v != null);
+  $("ga4-conv").replaceChildren(...conv.map(([k, v]) => el("div", {}, [el("dt", { text: k }), el("dd", { text: v })])));
+  $("ga4-conv").hidden = !conv.length;
+  renderGa4Events(g);
   const period = g.period && (g.period.start || g.period.end) ? `${g.period.start || "?"} ~ ${g.period.end || "?"}` : "—";
   ga4View.status = g.status;
   ga4View.note = g.note;
@@ -438,12 +446,36 @@ function renderGa4Channels(g) {
       plugins: { legend: { position: "top", align: "end", labels: { boxWidth: 8 } } },
     },
   });
-  fillRows("ga4-channel-rows", g.channels.map((c) => [
-    c.channel,
-    num(c.sessions),
-    pct((c.sessions / g.sessions) * 100),
-    c.engaged_sessions == null ? "—" : num(c.engaged_sessions),
-    pct(c.engagement_rate_percent),
+  const dash = (v, f) => (v == null ? "—" : f(v));
+  fillRows("ga4-channel-rows", [
+    ...g.channels.map((c) => [
+      c.channel,
+      num(c.sessions),
+      pct((c.sessions / g.sessions) * 100),
+      pct(c.engagement_rate_percent),
+      dash(c.avg_engagement_sec, duration),
+      dash(c.key_events, num),
+      dash(c.session_key_event_rate_percent, pct),
+      dash(c.revenue_usd, usd),
+    ]),
+    ["합계", num(g.sessions), "100.0%", pct(g.engagement_rate_percent), dash(g.avg_engagement_sec, duration),
+      dash(g.key_events, num), dash(g.session_key_event_rate_percent, pct), dash(g.revenue_usd, usd)],
+  ]);
+  $("ga4-channel-rows").lastElementChild.classList.add("kpi-row-total");
+}
+
+// 확대 시: 이벤트 보고서 Top 10 (이벤트 수 · 전체 이벤트 대비 · 사용자 · 사용자당 횟수)
+function renderGa4Events(g) {
+  const rows = g.top_events || [];
+  $("ga4-events-section").hidden = !rows.length;
+  if (!rows.length) return;
+  setText("ga4-events-count", g.event_count ? `전체 이벤트 ${num(g.event_count)}건 중` : "");
+  fillRows("ga4-event-rows", rows.map((e) => [
+    e.event,
+    num(e.count),
+    g.event_count ? pct((e.count / g.event_count) * 100) : "—",
+    e.users == null ? "—" : num(e.users),
+    e.users ? (e.count / e.users).toFixed(2) : "—",
   ]));
 }
 

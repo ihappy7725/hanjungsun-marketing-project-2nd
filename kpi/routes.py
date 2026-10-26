@@ -42,12 +42,12 @@ DEMO_CHANNELS = [
      "conversions": 610, "landing_clicks": 7_900},
 ]
 
-# GA4 시연 값. kpi/data/ga4_demo.csv(GA4 공식 데모 계정 내보내기)가 있으면 세션·참여 세션은 그 파일 값을 씁니다.
+# GA4 시연 값. kpi/data/ga4_demo.json(GA4 공식 데모 계정 화면을 옮겨 적음)이 있으면 세션·참여·전환은 그 파일 값을 씁니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트에만 있는 값이라 데모 계정에 없어 항상 시연 값입니다.
 # 쇼피 이동 클릭·팜플렛 QR 유입은 한정선 사이트 전용 이벤트라 시연 '비율'로 두고,
 # 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
 DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
-GA4_DEMO_CSV = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.csv")
+GA4_DEMO_JSON = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.json")
 # 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
 SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
@@ -393,92 +393,42 @@ def _simulator_influencer_list():
 
 
 # ---------------------------------------------------------------------------
-# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) CSV를 읽습니다.
-# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_csv만 GA4 Data API 호출로 바꿉니다.
+# GA4 — 지금은 공식 데모 계정(Google Merchandise Store) 화면을 옮겨 적은 JSON을 읽습니다(데모 계정은 CSV 다운로드 불가).
+# 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_json만 GA4 Data API 호출로 바꿉니다(같은 키 이름으로 돌려주면 됨).
 # (실연동에 필요한 것: 한정선 GA4 속성 보기 권한 · 서비스 계정 · GA4 Data API · 쇼피 이동은 '이탈 클릭' 이벤트)
 # ---------------------------------------------------------------------------
 
-GA4_COLUMNS = {
-    "sessions": ("세션수", "세션", "Sessions"),
-    "engaged_sessions": ("참여 세션수", "참여 세션", "Engaged sessions"),
-    "purchases": ("거래", "구매", "Transactions", "Purchases", "Ecommerce purchases"),
-}
-GA4_DATE_KEYS = {"start": ("시작 날짜", "Start date"), "end": ("종료 날짜", "End date")}
+GA4_CHANNEL_FIELDS = (
+    "sessions", "engaged_sessions", "avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd",
+)
 
 
-def _ga4_number(text):
-    text = (text or "").replace(",", "").replace("%", "").strip()
-    try:
-        return float(text)
-    except ValueError:
-        return None
-
-
-def _ga4_date(text):
-    text = (text or "").strip()
-    return f"{text[:4]}-{text[4:6]}-{text[6:8]}" if len(text) == 8 and text.isdigit() else text
-
-
-def _read_ga4_demo_csv(path=GA4_DEMO_CSV):
-    """GA4 보고서 '내보내기 → CSV' 파일을 읽어 합계를 돌려줍니다. 파일이 없으면 None, 형식 오류는 ValueError."""
+def _read_ga4_demo_json(path=GA4_DEMO_JSON):
+    """GA4 데모 JSON(totals · channels · top_events)을 읽습니다. 파일이 없으면 None, 형식 오류는 ValueError."""
     if not os.path.exists(path):
         return None
-    period = {}
-    table = []
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        for line in f:
-            stripped = line.strip()
-            if stripped.startswith("#"):
-                key, _, value = stripped.lstrip("#").partition(":")
-                for name, labels in GA4_DATE_KEYS.items():
-                    if key.strip() in labels:
-                        period[name] = _ga4_date(value)
-                continue
-            if not stripped:
-                if table:
-                    break  # 첫 번째 표만 읽습니다.
-                continue
-            table.append(line)
-    rows = list(csv.reader(table))
-    if len(rows) < 2:
-        raise ValueError("GA4_CSV_EMPTY")
-    header = [h.strip() for h in rows[0]]
-    index = {}
-    for field, labels in GA4_COLUMNS.items():
-        for i, h in enumerate(header):
-            if h in labels:
-                index[field] = i
-                break
-    if "sessions" not in index:
-        raise ValueError("GA4_CSV_NO_SESSIONS")
-
-    data_rows = [r for r in rows[1:] if r]
-    is_total = lambda r: any(t in r[0] for t in ("총계", "합계", "Total", "Grand total"))  # noqa: E731
-    total_rows = [r for r in data_rows if is_total(r)]
-    use_rows = total_rows[:1] or data_rows
-    totals = {}
-    for field, i in index.items():
-        values = [_ga4_number(r[i]) for r in use_rows if len(r) > i]
-        values = [v for v in values if v is not None]
-        totals[field] = round(sum(values)) if values else None
-
-    # 채널별 줄 (확대 화면의 채널별 참여율 표·차트용)
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    totals = data.get("totals") or {}
+    if not isinstance(totals.get("sessions"), (int, float)):
+        raise ValueError("GA4_JSON_NO_SESSIONS")
     channels = []
-    for r in data_rows:
-        if is_total(r) or len(r) <= index["sessions"]:
+    for c in data.get("channels") or []:
+        if not isinstance(c, dict) or not c.get("channel") or not isinstance(c.get("sessions"), (int, float)):
             continue
-        sessions = _ga4_number(r[index["sessions"]])
-        engaged = _ga4_number(r[index["engaged_sessions"]]) if "engaged_sessions" in index and len(r) > index["engaged_sessions"] else None
-        if sessions is None:
-            continue
-        channels.append({
-            "channel": r[0].strip(),
-            "sessions": round(sessions),
-            "engaged_sessions": round(engaged) if engaged is not None else None,
-            "engagement_rate_percent": _pct(engaged, sessions) if engaged is not None else None,
-        })
+        row = {"channel": str(c["channel"]), **{k: c.get(k) for k in GA4_CHANNEL_FIELDS}}
+        row["engagement_rate_percent"] = _pct(row["engaged_sessions"], row["sessions"]) if row["engaged_sessions"] is not None else None
+        channels.append(row)
     channels.sort(key=lambda c: c["sessions"], reverse=True)
-    return {"period": period, **totals, "channels": channels}
+    meta = data.get("meta") or {}
+    events = data.get("top_events") or {}
+    return {
+        "period": meta.get("period") or {},
+        **{k: totals.get(k) for k in ("sessions", *GA4_CHANNEL_FIELDS[1:], "event_count")},
+        "channels": channels,
+        "top_events": [e for e in events.get("rows") or [] if isinstance(e, dict) and e.get("event")],
+        "top_events_note": events.get("note") or "",
+    }
 
 
 def _build_ga4():
@@ -490,16 +440,16 @@ def _build_ga4():
         "source": "시연 값",
         "period": None,
         "scope": "가상 한정선 사이트",
-        "note": "kpi/data/ga4_demo.csv가 없어 시연 값을 씁니다.",
-        "purchase_rate_percent": None,
+        "note": "kpi/data/ga4_demo.json이 없어 시연 값을 씁니다.",
         "channels": [],
+        "top_events": [],
     }
     try:
-        demo = _read_ga4_demo_csv()
-    except (OSError, ValueError, csv.Error) as exc:
+        demo = _read_ga4_demo_json()
+    except (OSError, ValueError) as exc:
         code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
         demo = None
-        ga4["note"] = f"GA4 데모 CSV를 읽지 못해({code}) 시연 값을 씁니다."
+        ga4["note"] = f"GA4 데모 JSON을 읽지 못해({code}) 시연 값을 씁니다."
     if demo and demo.get("sessions"):
         ga4.update(
             sessions=demo["sessions"],
@@ -509,8 +459,11 @@ def _build_ga4():
             period=demo["period"] or None,
             scope="글로벌 데모 (한정선 데이터 아님)",
             note="GA4 데이터 형식 검증용 공개 데모 데이터입니다.",
-            purchase_rate_percent=_pct(demo["purchases"], demo["sessions"]) if demo.get("purchases") is not None else None,
             channels=demo.get("channels") or [],
+            top_events=demo.get("top_events") or [],
+            top_events_note=demo.get("top_events_note") or "",
+            # 전환 대체 지표(데모 매장 값): 주요 이벤트 · 세션 주요 이벤트 비율 · 평균 참여 시간 · 수익(USD)
+            **{k: demo.get(k) for k in ("avg_engagement_sec", "key_events", "session_key_event_rate_percent", "revenue_usd", "event_count")},
         )
     ga4["engagement_rate_percent"] = (
         _pct(ga4["engaged_sessions"], ga4["sessions"]) if ga4["engaged_sessions"] is not None else None
