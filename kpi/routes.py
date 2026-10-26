@@ -48,7 +48,7 @@ DEMO_CHANNELS = [
 # 화면에 쓰는 세션 수(GA4 데모 CSV 또는 아래 시연 세션)에 곱해 건수를 냅니다 → 지표끼리 같은 세션 기준.
 DEMO_GA4 = {"sessions": 12_400, "engaged_sessions": 5_890, "shopee_click_rate": 0.124, "pamphlet_share": 0.0952}
 GA4_DEMO_JSON = os.path.join(os.path.dirname(__file__), "data", "ga4_demo.json")
-# 팜플렛 QR → Zalo 설문 주관식 한 줄 의견 (시연, 응답자 186명)
+# 팜플렛 QR 설문 주관식 한 줄 의견 (시연, 응답자 186명 · platform = 설문을 받은 창구)
 SURVEY_COMMENTS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_survey_comments.csv")
 
 DEMO_CREATORS = [
@@ -61,12 +61,14 @@ DEMO_CREATORS = [
 
 SENTIMENTS = ("Positive", "Neutral", "Negative")
 # 한정선은 배송을 하지 않습니다. 포장·보냉(매장 구매 후 휴대) 반응만 다룹니다.
-KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "기타")
+# 1:1 문의 창구라 보관 방법·매장 위치·단체 주문 같은 문의가 많아 "문의/기타"로 묶습니다.
+KEYWORD_TAGS = ("당도/맛", "포장/보냉", "가격", "선물용", "문의/기타")
+OTHER_TAG = "문의/기타"
 
-# VOC 공개 리뷰·1:1 문의 (시연). 창구: Shopee · Instagram · TikTok · Zalo OA · 카카오톡 · WhatsApp
+# VOC 1:1 문의·후기 (시연). CS 창구는 제품 팜플렛 하단 QR 3개: Zalo OA · 카카오톡 채널 · WhatsApp
 # raw_text_vn은 고객이 쓴 원문이고 lang(vi/ko)으로 언어를 구분합니다. 파일이 없으면 빈 목록.
 REVIEWS_CSV = os.path.join(os.path.dirname(__file__), "data", "voc_reviews_demo.csv")
-REVIEW_CHANNELS = ("Shopee_VN", "Instagram", "TikTok", "Zalo_OA", "KakaoTalk", "WhatsApp")
+REVIEW_CHANNELS = ("Zalo_OA", "KakaoTalk", "WhatsApp")
 
 
 def _read_demo_reviews(path=REVIEWS_CSV):
@@ -80,15 +82,17 @@ def _read_demo_reviews(path=REVIEWS_CSV):
         "raw_text_vn": row["raw_text_vn"],
         "translated_kr": row["translated_kr"],
         "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
-        "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else "기타",
+        "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
         "lang": row.get("lang") or "vi",
+        "source": "message",
     } for row in csv.DictReader(lines)]
 
 
 DEMO_REVIEWS = _read_demo_reviews()
 
 # 팜플렛 QR 흐름과 QR 설문 만족도 (5점 만점) — 시연 값
-DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "zalo_follows": 410, "survey_responses": 186}
+# follows: 팜플렛 QR로 채널을 추가한 수(Zalo OA 친구 추가 · WhatsApp 대화 시작 · 카카오톡 채널 추가). 베트남은 Zalo 이용자가 가장 많음
+DEMO_QR = {"pamphlets": 2_000, "qr_scans": 1_240, "follows": {"Zalo_OA": 410, "WhatsApp": 150, "KakaoTalk": 90}, "survey_responses": 186}
 # 응답자 186명이 문항마다 1~5점 중 하나를 고른 인원 수(dist = [1점, 2점, 3점, 4점, 5점]).
 # 평균·긍정 비율은 이 분포에서 계산합니다(_survey_block).
 DEMO_SURVEY = [
@@ -588,7 +592,7 @@ def _voc_stats(reviews):
     for r in reviews:
         if r.get("sentiment") in sentiment_counts:
             sentiment_counts[r["sentiment"]] += 1
-        tag = r.get("keyword_tag") or "기타"
+        tag = r.get("keyword_tag") or OTHER_TAG
         keyword_counts[tag] = keyword_counts.get(tag, 0) + 1
     top_keywords = sorted(keyword_counts.items(), key=lambda kv: kv[1], reverse=True)[:5]
     return {
@@ -616,20 +620,10 @@ def _read_survey_comments(path=SURVEY_COMMENTS_CSV):
             "raw_text_vn": row["raw_text_vn"],
             "translated_kr": row["translated_kr"],
             "sentiment": row["sentiment"] if row["sentiment"] in SENTIMENTS else None,
-            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else "기타",
+            "keyword_tag": row["keyword_tag"] if row["keyword_tag"] in KEYWORD_TAGS else OTHER_TAG,
+            "source": "survey",
         })
     return rows
-
-
-def _survey_voc(comments):
-    """설문 의견을 VOC 감성 도넛·키워드에 더할 수 있게 셉니다."""
-    sentiment_counts = {s: 0 for s in SENTIMENTS}
-    keyword_counts = {}
-    for c in comments:
-        if c["sentiment"] in sentiment_counts:
-            sentiment_counts[c["sentiment"]] += 1
-        keyword_counts[c["keyword_tag"]] = keyword_counts.get(c["keyword_tag"], 0) + 1
-    return {"respondents": len(comments), "sentiment_counts": sentiment_counts, "keyword_counts": keyword_counts}
 
 
 def _survey_block(survey):
@@ -650,16 +644,21 @@ def _survey_block(survey):
     return {
         "items": items,
         "overall_avg": round(sum(scored) / len(scored), 2) if scored else None,
-        "voc": _survey_voc(_read_survey_comments()),  # VOC 감성 도넛·키워드에 더하는 설문 의견 집계
     }
 
 
 def _qr_block():
     q = DEMO_QR
+    follows = sum(q["follows"].values())
+    survey_by_channel = {}
+    for c in _read_survey_comments():
+        survey_by_channel[c["platform"]] = survey_by_channel.get(c["platform"], 0) + 1
     return {
         **q,
+        "follows_total": follows,
+        "survey_by_channel": survey_by_channel,
         "scan_rate_percent": _pct(q["qr_scans"], q["pamphlets"]),
-        "follow_rate_percent": _pct(q["zalo_follows"], q["qr_scans"]),
+        "follow_rate_percent": _pct(follows, q["qr_scans"]),
         "response_rate_percent": _pct(q["survey_responses"], q["qr_scans"]),
         "survey": _survey_block(DEMO_SURVEY),
     }
@@ -674,11 +673,14 @@ OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
 _voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
-아래 JSON 배열은 고객 리뷰(대부분 베트남어, 일부 한국어)입니다. 각 리뷰를 한국어로 자연스럽게 번역하고,
-감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤, 전체를 한국어로 짧게 요약하세요.
+고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
+아래 JSON의 messages는 1:1 문의·후기(대부분 베트남어, 일부 한국어)이고, survey는 설문 주관식 의견(한국어)입니다.
+messages의 각 글을 한국어로 자연스럽게 번역하고 감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤,
+전체 요약과 창구별 요약을 한국어로 작성하세요. survey는 번역하지 말고 요약 근거로만 쓰세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
-- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉)
+- keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 문의/기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉,
+  보관 방법·매장 정보·예약·응대 속도 같은 문의는 문의/기타)
 - review_id는 입력 값을 그대로 사용
 - translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
   (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
@@ -686,20 +688,30 @@ VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜�
   각 문장은 40자 이내, "~입니다/~습니다"로 끝내고 쉼표로 여러 내용을 잇지 말 것
   수식어·추측·과장 없이 리뷰에 있는 내용만 근거로 작성 (예: "맛과 식감에 대한 만족이 가장 많습니다. 포장 상태와 가격에 대한 불만이 있습니다.")
 
+- channel_summaries는 Zalo_OA, KakaoTalk, WhatsApp 세 창구 각각 하나씩(그 창구의 messages + survey 근거)
+  summary: 그 창구 의견을 한 문장(40자 이내, "~입니다/~습니다")
+  keep: 고객이 만족해 계속 유지할 점 1~2개를 짧은 명사구로(예: "보냉 박스 동봉")
+  improve: 불만·요청이 많아 개선할 점 1~2개를 짧은 명사구로(예: "보관 방법 안내")
+  근거가 없으면 빈 배열, 원문에 없는 내용은 만들지 말 것
+
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],
- "summary_kr": "..."}
+ "summary_kr": "...",
+ "channel_summaries": [{"channel": "Zalo_OA", "summary": "...", "keep": ["..."], "improve": ["..."]}]}
 
-리뷰:
+입력:
 """
 
 
-def _call_openai(reviews):
+def _call_openai(reviews, survey=()):
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
         return None, "OPENAI_API_KEY 환경변수가 없어 AI 분석을 실행하지 못했습니다."
     model = OPENAI_MODEL
-    source = [{"review_id": r["review_id"], "platform": r["platform"], "text": r["raw_text_vn"]} for r in reviews]
+    source = {
+        "messages": [{"review_id": r["review_id"], "channel": r["platform"], "text": r["raw_text_vn"]} for r in reviews],
+        "survey": [{"channel": c["platform"], "text_kr": c["translated_kr"]} for c in survey],
+    }
     body = {
         "model": model,
         "temperature": 0.2,
@@ -713,7 +725,7 @@ def _call_openai(reviews):
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:  # 문의 75건 번역 + 설문 186건 요약
             payload = json.loads(resp.read().decode("utf-8"))
         text = payload["choices"][0]["message"]["content"]
         parsed = json.loads(text)
@@ -731,7 +743,7 @@ def _call_openai(reviews):
         if not isinstance(item, dict) or item.get("review_id") not in known_ids:
             continue
         sentiment = item.get("sentiment") if item.get("sentiment") in SENTIMENTS else None
-        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else "기타"
+        tag = item.get("keyword_tag") if item.get("keyword_tag") in KEYWORD_TAGS else OTHER_TAG
         analyzed.append({
             "review_id": item["review_id"],
             "translated_kr": str(item.get("translated_kr") or ""),
@@ -740,11 +752,18 @@ def _call_openai(reviews):
         })
     if not analyzed:
         return None, "OpenAI 응답에 분석 결과가 없습니다."
+    as_list = lambda v: [str(x) for x in v][:2] if isinstance(v, list) else []  # noqa: E731
+    channel_summaries = [
+        {"channel": c["channel"], "summary": str(c.get("summary") or ""), "keep": as_list(c.get("keep")), "improve": as_list(c.get("improve"))}
+        for c in parsed.get("channel_summaries") or []
+        if isinstance(c, dict) and c.get("channel") in REVIEW_CHANNELS
+    ]
     return {
         "model": model,
         "reviewed": False,  # AI 번역·분류는 사람이 검수하기 전 결과입니다.
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
         "summary_kr": str(parsed.get("summary_kr") or ""),
+        "channel_summaries": channel_summaries,
         "reviews": analyzed,
         **_voc_stats(analyzed),
     }, None
@@ -790,7 +809,7 @@ def api_voc():
         "reviews": DEMO_REVIEWS,
         "channels": list(REVIEW_CHANNELS),
         **_voc_stats(DEMO_REVIEWS),
-        # 설문 의견은 AI 정제 대상이 아니라 데이터의 한국어를 그대로 씁니다(리뷰 목록에 함께 표시).
+        # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
         "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
         "ai": _voc_ai_cache["result"],
@@ -801,7 +820,7 @@ def api_voc():
 
 @bp.post("/api/voc/analyze")
 def api_voc_analyze():
-    result, error = _call_openai(DEMO_REVIEWS)
+    result, error = _call_openai(DEMO_REVIEWS, _read_survey_comments())
     if error:
         return jsonify({"ok": False, "error": error}), 502
     _voc_ai_cache["result"] = result

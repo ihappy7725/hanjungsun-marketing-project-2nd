@@ -235,7 +235,7 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC {{ info("만족도·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR) · 카카오톡 · WhatsApp") }}</h2>
+          <h2>VOC {{ info("CS 창구: 제품 팜플렛 하단 QR 3개(Zalo OA · 카카오톡 채널 · WhatsApp)\n만족도·키워드 = 창구별 1:1 문의·후기 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\n채널 추가율 = 채널 추가 수 ÷ QR 스캔 수 × 100 · QR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100") }}</h2>
         </div>
         <div class="kpi-tools">
 
@@ -249,16 +249,24 @@
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">
           <div class="kpi-chart kpi-chart-small">
-            <canvas data-kpi-chart="sentiment" aria-label="리뷰 만족도 비율 도넛 차트" role="img"></canvas>
+            <canvas data-kpi-chart="sentiment" aria-label="전체 만족도 비율 도넛 차트" role="img"></canvas>
           </div>
-          <div class="kpi-chart kpi-chart-keywords">
-            <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
+          <!-- 창구별 만족도: 창구마다 건수와 만족·보통·불만 비율 막대 (누르면 확대 화면에서 그 창구를 봄) -->
+          <div class="kpi-voc-side">
+            <p class="kpi-voc-side-title">창구별 만족도</p>
+            <ol class="kpi-voc-chbars" data-kpi="voc-chbars"></ol>
           </div>
         </div>
         <div class="kpi-qr" data-kpi="qr-strip"></div>
 
-        <!-- 기본 화면은 QR 줄까지. 설문 결과와 리뷰 목록은 확대 화면에서 봅니다. -->
+        <!-- 기본 화면은 QR 줄까지. 창구별 요약·키워드·설문 결과·문의 목록은 확대 화면에서 봅니다. -->
         <div class="kpi-detail">
+          <p class="kpi-detail-title">창구별 요약 <span class="kpi-review-count" data-kpi="voc-summary-source"></span></p>
+          <div class="kpi-voc-summaries" data-kpi="voc-ch-summaries"></div>
+          <p class="kpi-detail-title">핵심 키워드 Top 5 <span class="kpi-review-count" data-kpi="voc-keyword-scope"></span></p>
+          <div class="kpi-chart kpi-chart-keywords">
+            <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
+          </div>
           <p class="kpi-detail-title">
             팜플렛 QR 설문 만족도 <span class="kpi-review-count" data-kpi="survey-count"></span>
           </p>
@@ -274,9 +282,9 @@
           <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 만족 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
 
           <!-- 리뷰 보기: 언어·만족도 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
-          <p class="kpi-detail-title">리뷰</p>
-          <!-- 창구 블록: 누르면 아래 리뷰 목록이 그 창구만 보입니다(전체를 누르면 모두). -->
-          <div class="kpi-voc-channels" data-kpi="voc-channels" role="group" aria-label="소통 창구별 리뷰"></div>
+          <p class="kpi-detail-title">창구별 문의·후기</p>
+          <!-- 창구 블록: 누르면 아래 목록·키워드가 그 창구만 보입니다(전체를 누르면 모두). -->
+          <div class="kpi-voc-channels" data-kpi="voc-channels" role="group" aria-label="소통 창구별 문의·후기"></div>
           <div class="kpi-review-tools">
             <label class="kpi-select-label">언어
               <select class="kpi-select" data-kpi-action="review-lang" data-kpi="review-lang">

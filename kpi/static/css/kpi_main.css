@@ -8,15 +8,23 @@
 .kpi-page { margin-top: 0; }
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
-.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-coral: #ee8b76; }
-/* 빨강(차분한 벽돌빛): 손익분기 미달·예산 초과 경고 / 코랄: VOC 불만(도넛 · 설문 1점 · 리뷰 글씨) */
+.kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-navy: #3b5b8c; }
+/* VOC 색: 청록(만족) · 머스터드(보통) · 코랄(불만) 3색 조합, 기존보다 채도를 살짝 올림. 키워드 막대는 청록 진하게/연하게 */
+.kpi-page {
+  --kpi-voc-good: #2e8b7a;
+  --kpi-voc-mid: #e2b95b;
+  --kpi-voc-bad: #e8705a;
+  --kpi-voc-bad-soft: #f3b2a5;
+  --kpi-voc-good-soft: #a8d5cc;
+}
+/* 빨강(차분한 벽돌빛): 손익분기 미달·예산 초과 경고 / 밝은 남색: 예산 인플루언서 예상 */
 /* 조치가 필요한 문구(⚠ 손익분기 미달 → 예산 조정 검토, 예산 초과) */
 .kpi-page .kpi-warn { color: var(--kpi-red); font-weight: 700; }
 /* 리뷰 만족도: 박스 없이 작은 글씨(만족 녹색 · 보통 회색 · 불만 붉은색) */
 .kpi-page .kpi-mood { font-size: var(--fs-table); font-weight: 600; }
-.kpi-page .kpi-mood-good { color: var(--teal); }
+.kpi-page .kpi-mood-good { color: var(--kpi-voc-good); }
 .kpi-page .kpi-mood-mid { color: var(--muted); }
-.kpi-page .kpi-mood-bad { color: var(--kpi-coral); }
+.kpi-page .kpi-mood-bad { color: var(--kpi-voc-bad); }
 .kpi-page .kpi-head { margin-bottom: var(--space-3); }
 .kpi-page .kpi-head h1 { margin: 0; font-size: var(--fs-display); line-height: var(--line-height-heading); font-weight: var(--title-weight); }
 .kpi-page .kpi-head p { margin: 0; }
@@ -419,6 +427,41 @@
 
 /* ---------- VOC ---------- */
 .kpi-page .kpi-voc { display: flex; align-items: center; gap: var(--space-6); }
+/* 기본 화면 오른쪽: 창구별 만족도 막대 3줄 (창구 · 건수 | 만족/보통/불만 막대 | 만족 %) */
+.kpi-page .kpi-voc-side { flex: 1; min-width: 0; }
+.kpi-page .kpi-voc-side-title { margin: 0 0 var(--space-3); font-size: var(--fs-min); font-weight: 600; }
+.kpi-page .kpi-voc-chbars { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.kpi-page .kpi-voc-chrow {
+  display: grid;
+  grid-template-columns: 7.5em 1fr 5.5em;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-min);
+  text-align: left;
+  cursor: pointer;
+}
+.kpi-page .kpi-voc-chrow:hover .kpi-voc-chname { text-decoration: underline; }
+.kpi-page .kpi-voc-chname small { margin-left: var(--space-2); color: var(--muted); }
+.kpi-page .kpi-voc-chbar { display: flex; height: 12px; overflow: hidden; background: var(--line); }
+.kpi-page .kpi-voc-chbar span + span { box-shadow: inset 1px 0 0 var(--page-bg); }
+.kpi-page .kpi-voc-chpct { font-weight: 700; text-align: right; }
+.kpi-page .kpi-qr-split { color: var(--muted); }
+/* 확대 화면: 창구별 요약 카드 (요약 · 유지 · 개선) */
+.kpi-page .kpi-voc-summaries { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+.kpi-page .kpi-voc-sum { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-4) var(--space-5); border: 1px solid var(--line); }
+.kpi-page .kpi-voc-sum.is-on { border-color: var(--kpi-voc-good); box-shadow: inset 0 0 0 1px var(--kpi-voc-good); }
+.kpi-page .kpi-voc-sum header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.kpi-page .kpi-voc-sum header small { color: var(--muted); font-size: var(--fs-min); }
+.kpi-page .kpi-voc-sum p { margin: 0; font-size: var(--fs-min); line-height: var(--line-height); }
+.kpi-page .kpi-voc-sum-line b { display: inline-block; min-width: 3em; font-weight: 700; }
+.kpi-page .kpi-voc-sum-line.is-keep b { color: var(--kpi-voc-good); }
+.kpi-page .kpi-voc-sum-line.is-improve b { color: var(--kpi-voc-bad); }
 .kpi-page .kpi-qr {
   display: flex;
   flex-wrap: wrap;
@@ -435,11 +478,12 @@
 .kpi-page .kpi-survey-bar { display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--progress-bg); }
 .kpi-page .kpi-survey-bar span { display: block; height: 100%; }
 .kpi-page .kpi-survey-bar span + span { box-shadow: inset 1px 0 0 var(--page-bg); }
-.kpi-page .kpi-s1 { background: var(--kpi-coral); }   /* 1점: 불만과 같은 코랄 */
-.kpi-page .kpi-s2 { background: var(--kpi-pink); }
-.kpi-page .kpi-s3 { background: var(--beige); }
-.kpi-page .kpi-s4 { background: var(--celadon); }
-.kpi-page .kpi-s5 { background: var(--teal); }
+/* 설문 1~5점: 코랄 → 연코랄 → 머스터드 → 연청록 → 청록 (VOC 만족도 색과 같은 계열) */
+.kpi-page .kpi-s1 { background: var(--kpi-voc-bad); }
+.kpi-page .kpi-s2 { background: var(--kpi-voc-bad-soft); }
+.kpi-page .kpi-s3 { background: var(--kpi-voc-mid); }
+.kpi-page .kpi-s4 { background: var(--kpi-voc-good-soft); }
+.kpi-page .kpi-s5 { background: var(--kpi-voc-good); }
 .kpi-page .kpi-survey-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-bottom: var(--space-3); color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-survey-legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .kpi-page .kpi-survey-legend i { width: 10px; height: 10px; border-radius: 2px; }
@@ -509,14 +553,14 @@
   cursor: pointer;
 }
 .kpi-page .kpi-voc-ch:hover { border-color: var(--line-strong); }
-.kpi-page .kpi-voc-ch.is-on { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.kpi-page .kpi-voc-ch.is-on { border-color: var(--kpi-voc-good); box-shadow: inset 0 0 0 1px var(--kpi-voc-good); }
 .kpi-page .kpi-voc-ch-name { color: var(--muted); font-size: var(--fs-table); font-weight: 600; }
 .kpi-page .kpi-voc-ch strong { font-size: var(--fs-subheading); line-height: 1.2; }
 .kpi-page .kpi-voc-ch small { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-voc-ch-bar { display: flex; height: 6px; overflow: hidden; background: var(--line); }
-.kpi-page .kpi-voc-ch-positive { background: var(--teal); }
-.kpi-page .kpi-voc-ch-neutral { background: var(--line-strong); }
-.kpi-page .kpi-voc-ch-negative { background: var(--kpi-coral); }
+.kpi-page .kpi-voc-ch-positive { background: var(--kpi-voc-good); }
+.kpi-page .kpi-voc-ch-neutral { background: var(--kpi-voc-mid); }
+.kpi-page .kpi-voc-ch-negative { background: var(--kpi-voc-bad); }
 .kpi-page .kpi-review-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
 .kpi-page .kpi-review-count { color: var(--muted); font-size: var(--fs-min); font-weight: 400; }
 /* 언어 · 감성 드롭다운 (블록 머리 버튼과 같은 28px) */

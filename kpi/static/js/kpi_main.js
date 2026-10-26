@@ -11,12 +11,12 @@ const API = {
 };
 const charts = {};
 // 화면 선택 상태: ROAS 통화(기본 원화), 리뷰 언어(기본 한국어), 감성 필터(기본 전체)
-// surveyVoc: QR 설문 의견 감성·키워드 집계(서버 계산) — VOC 도넛·키워드에 리뷰와 합산
-// surveyComments: 설문 주관식 의견(응답자 1명당 1줄) — 리뷰 목록에 공개 리뷰 뒤로 이어 붙임
+// surveyComments: 설문 주관식 의견(응답자 1명당 1줄, platform = 설문을 받은 창구) — 1:1 문의 뒤로 이어 붙여 함께 집계
+// channels: VOC 창구(팜플렛 QR 3개) · vocAiChannels: AI 창구별 요약(없으면 자동 집계)
 const view = {
   currency: "KRW", summary: null,
   reviewLang: "ko", reviewFilter: "all", reviewChannel: "all", reviewPage: 1, reviews: [],
-  surveyVoc: null, surveyComments: [], channels: [],
+  surveyComments: [], channels: [], vocAiChannels: [],
 };
 const REVIEW_PAGE_SIZE = 10;
 
@@ -41,10 +41,8 @@ const duration = (sec) => (sec >= 60 ? `${Math.floor(sec / 60)}분 ${String(Math
 
 // 화면에서는 '감성' 대신 '만족도'(만족 · 보통 · 불만)로 표시합니다. 데이터 값은 Positive/Neutral/Negative 그대로.
 const SENTIMENT_LABEL = { Positive: "만족", Neutral: "보통", Negative: "불만" };
-const PLATFORM_LABEL = {
-  Shopee_VN: "Shopee", Instagram: "Instagram", TikTok: "TikTok",
-  Zalo_OA: "Zalo", KakaoTalk: "카카오톡", WhatsApp: "WhatsApp", Zalo_Survey: "Zalo 설문",
-};
+// VOC 창구: 제품 팜플렛 하단 QR 3개
+const PLATFORM_LABEL = { Zalo_OA: "Zalo", KakaoTalk: "카카오톡", WhatsApp: "WhatsApp" };
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
 // ---------- 디자인 변수 ----------
@@ -54,12 +52,12 @@ const cssVar = (name) => getComputedStyle(root).getPropertyValue(name).trim();
 const palette = () => ({
   pink: cssVar("--kpi-pink"),   // 예산: 인플루언서 예상(분홍, kpi_main.css에서 정의)
   ivory: cssVar("--beige"),     // 예산: 잔여 가용 예산(아이보리)
-  coral: cssVar("--kpi-coral"), // VOC: 불만(코랄, kpi_main.css에서 정의)
   light: cssVar("--gold"),      // VOC: 2위 이하 키워드(연한 갈색)
   muted: cssVar("--muted"),
   line: cssVar("--line"),
   lineStrong: cssVar("--line-strong"),
-  strong: cssVar("--navy"),   // 예산: 인플루언서 예상(남색)
+  strong: cssVar("--navy"),   // 진한 남색(기준선 등)
+  navy: cssVar("--kpi-navy"), // 예산: 인플루언서 예상(밝은 남색, kpi_main.css에서 정의)
   good: cssVar("--teal"),     // 기준 이상 · 긍정 · 전환
   low: cssVar("--orange"),    // 기준 미달 · 부정 · 예상 지출
   mid: cssVar("--brown"),     // 보조 계열(인플루언서 집행 · 키워드 · 클릭)
@@ -197,11 +195,11 @@ function renderBudget(data) {
   const b = data.budget;
   const p = palette();
   const remaining = Math.max(b.remaining_krw, 0);
-  // 예산 색: 녹색 · 분홍 · 남색 · 아이보리 (남색은 가장 작은 몫인 인플루언서 예상에만 써서 눈에 덜 무겁게)
+  // 예산 색: 녹색 · 분홍 · 밝은 남색 · 아이보리 (남색은 가장 작은 몫인 인플루언서 예상에만 써서 눈에 덜 무겁게)
   const parts = [
     ["플랫폼 광고비", b.platform_krw, p.good],
     ["인플루언서 집행", b.influencer_paid_krw, p.pink],
-    ["인플루언서 예상", b.influencer_expected_krw, p.strong],
+    ["인플루언서 예상", b.influencer_expected_krw, p.navy],
     ["잔여 가용 예산", remaining, p.ivory],
   ];
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
@@ -532,21 +530,32 @@ function setGa4Visible(show) {
 }
 
 // ---------- VOC ----------
-function renderVoc(stats, reviews, source) {
-  const p = palette();
-  // 리뷰(글) 감성 + QR 설문 응답자 감성(평균 4점↑ 긍정 / 3점대 중립 / 3점↓ 부정)을 합산합니다.
-  const sv = view.surveyVoc;
-  const keys = ["Positive", "Neutral", "Negative"];
-  const counts = Object.fromEntries(keys.map((k) => [k, (stats.sentiment_counts[k] || 0) + (sv?.sentiment_counts[k] || 0)]));
-  const reviewTotal = stats.sample_size ?? reviews.length;
-  const sampleTitle = sv ? `리뷰 ${num(reviewTotal)} + 설문 ${num(sv.respondents)}` : `리뷰 ${num(reviewTotal)}`;
-  doughnut("sentiment", keys.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k])}`), keys.map((k) => counts[k]), [p.good, p.lineStrong, p.coral], { cutout: "58%", legend: true, title: sampleTitle });
+// CS 창구는 팜플렛 QR 3개(Zalo · 카카오톡 · WhatsApp). 1:1 문의·후기와 설문 의견을 모두 view.reviews에 모아
+// 도넛 · 창구별 막대 · 키워드 · 창구별 요약 · 목록을 같은 데이터로 계산합니다(AI 분류가 오면 그 결과로 다시 계산).
+const SENTIMENT_KEYS = ["Positive", "Neutral", "Negative"];
+const vocColors = () => [cssVar("--kpi-voc-good"), cssVar("--kpi-voc-mid"), cssVar("--kpi-voc-bad")];
+const countBy = (list, key) => list.reduce((acc, r) => ({ ...acc, [r[key]]: (acc[r[key]] || 0) + 1 }), {});
+const channelList = (channel) => (channel === "all" ? view.reviews : view.reviews.filter((r) => r.platform === channel));
+const positivePct = (list) => (list.length ? Math.round((list.filter((r) => r.sentiment === "Positive").length / list.length) * 100) : 0);
+
+function renderVoc(reviews, source) {
+  view.reviews = [...reviews, ...view.surveyComments];
+  const counts = countBy(view.reviews, "sentiment");
+  const surveys = view.surveyComments.length;
+  const sampleTitle = surveys ? `문의 ${num(reviews.length)} + 설문 ${num(surveys)}` : `문의 ${num(reviews.length)}`;
+  doughnut(
+    "sentiment",
+    SENTIMENT_KEYS.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k] || 0)}`),
+    SENTIMENT_KEYS.map((k) => counts[k] || 0),
+    vocColors(),
+    { cutout: "58%", legend: true, title: sampleTitle },
+  );
   if (charts.sentiment) {
-    // 도넛 조각을 누르면 그 감성 리뷰만 봅니다(같은 조각을 다시 누르면 전체).
-    // 리뷰 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
+    // 도넛 조각을 누르면 그 만족도 글만 봅니다(같은 조각을 다시 누르면 전체).
+    // 목록은 확대 화면에 있으므로, 기본 화면에서 누르면 블록을 확대한 뒤 거릅니다.
     charts.sentiment.options.onClick = (_e, els) => {
       if (!els.length) return;
-      const key = keys.at(els[0].index);
+      const key = SENTIMENT_KEYS.at(els[0].index);
       const panel = root.querySelector('[data-kpi-panel="voc"]');
       if (!panel.classList.contains("is-expanded")) {
         setExpanded(panel);
@@ -558,17 +567,53 @@ function renderVoc(stats, reviews, source) {
     charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
   }
 
-  // 키워드: 리뷰 토픽 언급 + 설문에서 2점 이하로 답한 문항 토픽(불만)
-  const keywordCounts = {};
-  stats.top_keywords.forEach((k) => { keywordCounts[k.keyword] = (keywordCounts[k.keyword] || 0) + k.count; });
-  Object.entries(sv?.keyword_counts || {}).forEach(([k, n]) => { keywordCounts[k] = (keywordCounts[k] || 0) + n; });
-  const topKeywords = Object.entries(keywordCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  renderVocChannelBars();
+  renderVocKeywords();
+  renderVocSummaries();
+  renderVocChannels();
+  renderReviewList();
+
+  setStatus("voc-source", source.text, source.status, source.title || "");
+  const platforms = view.channels.map((c) => PLATFORM_LABEL[c] || c).join("·");
+  setText("voc-meta", `출처: ${source.meta} · 창구: ${platforms} · 표본: ${sampleTitle}건 · 범위: 베트남`);
+}
+
+// 기본 화면 오른쪽: 창구별 만족도 막대(건수 · 만족/보통/불만 비율). 누르면 확대 화면에서 그 창구를 봅니다.
+function renderVocChannelBars() {
+  const colors = vocColors();
+  $("voc-chbars").replaceChildren(...view.channels.map((ch) => {
+    const list = channelList(ch);
+    const c = countBy(list, "sentiment");
+    const bar = el("span", { className: "kpi-voc-chbar" }, SENTIMENT_KEYS.map((k, i) => {
+      const seg = el("span");
+      seg.style.width = `${list.length ? ((c[k] || 0) / list.length) * 100 : 0}%`;
+      seg.style.background = colors[i];
+      seg.title = `${SENTIMENT_LABEL[k]} ${num(c[k] || 0)}건`;
+      return seg;
+    }));
+    const btn = el("button", { className: "kpi-voc-chrow" }, [
+      el("span", { className: "kpi-voc-chname" }, [document.createTextNode(PLATFORM_LABEL[ch] || ch), el("small", { text: `${num(list.length)}건` })]),
+      bar,
+      el("span", { className: "kpi-voc-chpct", text: list.length ? `만족 ${positivePct(list)}%` : "—" }),
+    ]);
+    btn.type = "button";
+    btn.dataset.kpiAction = "voc-channel-open";
+    btn.dataset.channel = ch;
+    return el("li", {}, [btn]);
+  }));
+}
+
+// 확대 화면: 핵심 키워드 Top 5 (창구 블록에서 고른 창구 기준, 1위만 진한 청록)
+function renderVocKeywords() {
+  const top = Object.entries(countBy(channelList(view.reviewChannel), "keyword_tag")).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const strong = cssVar("--kpi-voc-good");
+  const soft = cssVar("--kpi-voc-good-soft");
+  setText("voc-keyword-scope", view.reviewChannel === "all" ? "전체 창구" : PLATFORM_LABEL[view.reviewChannel] || view.reviewChannel);
   drawChart("keywords", {
     type: "bar",
     data: {
-      labels: topKeywords.map(([k]) => k),
-      // 1위 키워드만 진한 갈색, 나머지는 연한 색으로 눈에 띄는 순서를 만듭니다.
-      datasets: [{ label: "언급 수", data: topKeywords.map(([, n]) => n), backgroundColor: topKeywords.map((_, i) => (i === 0 ? p.mid : p.light)), maxBarThickness: 14 }],
+      labels: top.map(([k]) => k),
+      datasets: [{ label: "언급 수", data: top.map(([, n]) => n), backgroundColor: top.map((_, i) => (i === 0 ? strong : soft)), maxBarThickness: 16 }],
     },
     options: {
       indexAxis: "y",
@@ -576,26 +621,56 @@ function renderVoc(stats, reviews, source) {
       layout: { padding: { right: 36 } },  // 막대 끝 숫자 자리
       scales: {
         x: { display: false, beginAtZero: true },  // 눈금 대신 막대 끝에 숫자 표시
-        y: { grid: { display: false }, ticks: { autoSkip: false, color: p.muted } },  // 키워드 이름을 건너뛰지 않고 모두 표시
+        y: { grid: { display: false }, ticks: { autoSkip: false, color: palette().muted } },
       },
-      plugins: { legend: { display: false }, title: { display: true, text: "핵심 키워드 Top 5", align: "start", padding: { top: 0, bottom: 4 } } },
+      plugins: { legend: { display: false } },
     },
     plugins: [barValueLabels],
   });
+}
 
-  view.reviews = [...reviews, ...view.surveyComments];
-  renderVocChannels();
-  renderReviewList();
+// 확대 화면: 창구별 요약 카드(요약 · 유지할 점 · 개선할 점).
+// AI 결과(channel_summaries)가 있으면 그것을, 없으면 데이터로 자동 집계한 요약을 'AI 아님'으로 표시합니다.
+function autoChannelSummary(ch) {
+  const list = channelList(ch);
+  // 만족 글에서 많이 나온 주제 2개 = 유지, 불만 글(없으면 보통)에서 많이 나온 주제 2개 = 개선
+  const topTags = (sentiment) => Object.entries(countBy(list.filter((r) => r.sentiment === sentiment), "keyword_tag"))
+    .sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const keep = topTags("Positive");
+  const bad = topTags("Negative");
+  const improve = bad.length ? bad : topTags("Neutral");
+  const neg = list.length ? Math.round((list.filter((r) => r.sentiment === "Negative").length / list.length) * 100) : 0;
+  return {
+    channel: ch,
+    summary: !list.length ? "의견이 없습니다."
+      : bad.length ? `불만 ${neg}% · '${bad[0][0]}' 불만이 ${num(bad[0][1])}건으로 가장 많습니다.` : "불만 의견이 없습니다.",
+    keep: keep.map(([k, n]) => `${k} ${num(n)}건`),
+    improve: improve.map(([k, n]) => `${k} ${num(n)}건`),
+  };
+}
 
-  setStatus("voc-source", source.text, source.status, source.title || "");
-  const platforms = [...new Set(reviews.map((r) => PLATFORM_LABEL[r.platform] || r.platform))].join("·");
-  setText("voc-meta", `출처: ${source.meta} · 수집처: ${platforms} · 표본: ${sampleTitle}건 · 범위: 베트남`);
+function renderVocSummaries() {
+  const ai = view.vocAiChannels || [];
+  setText("voc-summary-source", ai.length ? "AI · 검수 전" : "자동 집계 (AI 아님)");
+  $("voc-ch-summaries").replaceChildren(...view.channels.map((ch) => {
+    const s = ai.find((x) => x.channel === ch) || autoChannelSummary(ch);
+    const list = channelList(ch);
+    const line = (label, items, tone) => el("p", { className: `kpi-voc-sum-line is-${tone}` }, [
+      el("b", { text: label }),
+      document.createTextNode(items.length ? items.join(" · ") : "—"),
+    ]);
+    return el("article", { className: `kpi-voc-sum${view.reviewChannel === ch ? " is-on" : ""}` }, [
+      el("header", {}, [el("strong", { text: PLATFORM_LABEL[ch] || ch }), el("small", { text: `${num(list.length)}건 · 만족 ${positivePct(list)}%` })]),
+      el("p", { className: "kpi-voc-sum-text", text: s.summary || "—" }),
+      line("유지", s.keep || [], "keep"),
+      line("개선", s.improve || [], "improve"),
+    ]);
+  }));
 }
 
 // 창구 블록(확대 화면): 창구마다 건수 · 만족/보통/불만 비율 막대. 누르면 리뷰 목록을 그 창구로 거릅니다.
 function renderVocChannels() {
-  const order = [...view.channels, ...new Set(view.reviews.map((r) => r.platform))];
-  const keys = [...new Set(order)].filter((k) => view.reviews.some((r) => r.platform === k));
+  const keys = view.channels;
   const block = (key, label, list) => {
     const n = list.length;
     const count = (s) => list.filter((r) => r.sentiment === s).length;
@@ -622,10 +697,12 @@ function renderVocChannels() {
   );
 }
 
-function setReviewChannel(channel) {
-  view.reviewChannel = view.reviewChannel === channel ? "all" : channel;
+function setReviewChannel(channel, { toggle = true } = {}) {
+  view.reviewChannel = toggle && view.reviewChannel === channel ? "all" : channel;
   view.reviewPage = 1;
   renderVocChannels();
+  renderVocKeywords();
+  renderVocSummaries();
   renderReviewList();
 }
 
@@ -651,7 +728,7 @@ function renderReviewList() {
   const start = (view.reviewPage - 1) * REVIEW_PAGE_SIZE;
   $("review-list").replaceChildren(...list.slice(start, start + REVIEW_PAGE_SIZE).map((r) => {
     const head = el("div", { className: "kpi-review-head" }, [
-      el("span", { text: PLATFORM_LABEL[r.platform] || r.platform }),
+      el("span", { text: `${PLATFORM_LABEL[r.platform] || r.platform}${r.source === "survey" ? " · 설문" : ""}` }),
       r.sentiment ? mood(SENTIMENT_LABEL[r.sentiment], tone[r.sentiment]) : mood("미분류", "mid"),
       el("span", { text: r.keyword_tag || "" }),
     ]);
@@ -726,14 +803,17 @@ function renderQr(qr) {
   strip.replaceChildren(
     step("팜플렛 QR 스캔", num(qr.qr_scans)),
     arrow(),
-    step("Zalo 친구 추가", num(qr.zalo_follows)),
+    step("채널 추가", num(qr.follows_total)),
+    el("span", { className: "kpi-qr-split", text: `(${Object.entries(qr.follows).sort((x, y) => y[1] - x[1]).map(([ch, n]) => `${PLATFORM_LABEL[ch] || ch} ${num(n)}`).join(" · ")})` }),
     arrow(),
     step("설문 응답", `${num(qr.survey_responses)} (${pct(qr.response_rate_percent)})`),
     ...(qr.survey.overall_avg != null ? [el("span", { text: "·", className: "kpi-arrow" }), step("만족도 평균", `${qr.survey.overall_avg.toFixed(1)} / 5`)] : []),
   );
-  strip.title = `배포 팜플렛 ${num(qr.pamphlets)}장 · 스캔율 ${pct(qr.scan_rate_percent)} · 친구 추가율 ${pct(qr.follow_rate_percent)}`;
-
-  view.surveyVoc = qr.survey.voc || null;
+  const bySurvey = qr.survey_by_channel || {};
+  strip.title = [
+    `배포 팜플렛 ${num(qr.pamphlets)}장 · 스캔율 ${pct(qr.scan_rate_percent)} · 채널 추가율 ${pct(qr.follow_rate_percent)}`,
+    ...Object.entries(qr.follows).sort((x, y) => y[1] - x[1]).map(([ch, n]) => `${PLATFORM_LABEL[ch] || ch}: 추가 ${num(n)} (${pct((n / qr.qr_scans) * 100)}) · 설문 응답 ${num(bySurvey[ch] || 0)}`),
+  ].join("\n");
 
   // 확대 화면: 문항별 1~5점 분포 막대 · 평균 · 긍정(4~5점) 비율 · 응답 수
   const items = qr.survey.items;
@@ -752,7 +832,8 @@ function renderQr(qr) {
 function showVocAi(demoReviews, ai) {
   const byId = Object.fromEntries(ai.reviews.map((r) => [r.review_id, r]));
   const merged = demoReviews.map((r) => ({ ...r, ...(byId[r.review_id] || { translated_kr: "", sentiment: null, keyword_tag: null }) }));
-  renderVoc({ ...ai, sample_size: merged.length }, merged, {
+  view.vocAiChannels = ai.channel_summaries || [];
+  renderVoc(merged, {
     text: "OpenAI 분석 · 검수 전",
     status: "live",
     title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
@@ -1207,11 +1288,11 @@ async function loadVoc() {
   try {
     const data = await getJson(API.voc);
     vocReviews = data.reviews;
-    view.channels = [...(data.channels || []), "Zalo_Survey"];
+    view.channels = data.channels || [];
     view.surveyComments = data.survey_comments || [];
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
-    else renderVoc(data, vocReviews, { text: "시연 분류", status: "demo", meta: "시연 리뷰·시연 분류" });
+    else renderVoc(vocReviews, { text: "시연 분류", status: "demo", meta: "시연 문의·시연 분류" });
     // 기본값: 베트남어 리뷰를 AI가 한국어로 다듬어 보여 줍니다. 키가 있으면 처음 한 번 자동 실행(서버가 결과 보관).
     if (!data.ai && data.ai_available && !vocAutoTried) {
       vocAutoTried = true;
@@ -1330,6 +1411,11 @@ root.addEventListener("click", (event) => {
     setCurrency(target.dataset.cur);
   } else if (action === "review-channel") {
     setReviewChannel(target.dataset.channel);
+  } else if (action === "voc-channel-open") {
+    // 기본 화면의 창구 막대: 블록을 확대하고 그 창구를 고릅니다.
+    const panel = target.closest(".kpi-panel");
+    if (!panel.classList.contains("is-expanded")) setExpanded(panel);
+    setReviewChannel(target.dataset.channel, { toggle: false });
   } else if (action === "review-page") {
     setReviewPage(Number(target.dataset.page));
   } else if (action === "reset-order") {
