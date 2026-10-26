@@ -382,7 +382,8 @@ const VIDEO_FIRST_PLACEHOLDER = [
   "스토리: 포장을 푸는 손 → 반으로 갈라 진한 두리안 크림 단면 공개 → 한입 베어 물고 만족스러운 표정 → 제품 히어로 컷.",
   "분위기: 고급스럽고 차분한 톤, 따뜻한 조명, 느린 카메라 움직임.",
 ].join("\n");
-const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
+const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";
+const DESIGN_REVISE_PLACEHOLDER = 'AI에게 고칠 점을 말해 주세요. 예: "제목 더 크게", "크리스마스 느낌으로 바꿔줘"';  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -510,12 +511,14 @@ function renderWork() {
   $("redo").disabled = !work.canRedo || work.busy;
 
   // 포스터·카드뉴스는 초안이 생기기 전에는 아래 입력줄을 숨기고, 가운데 첫 화면에서 AI 초안을 만듭니다.
-  // 아래 수정 요청 입력창은 영상 탭에만. 포스터·카드뉴스는 가운데 편집기·오른쪽 프롬프트 칸으로 고치고,
-  // 결과 안내 줄(추천으로 만든 초안 안내 등)만 남깁니다(비어 있으면 줄도 숨김).
-  $("chat-form").hidden = DESIGN_KINDS.includes(kind);
-  // 영상 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
-  $("command-toggle").hidden = !doc || DESIGN_KINDS.includes(kind);
-  showCommand(Boolean(doc) && commandCollapsed && kind === "video");
+  // 초안 뒤에는 영상처럼 아래 입력창으로 AI에게 말로 고칩니다(결과 안내 줄은 비어 있으면 숨김).
+  $("chat-form").hidden = DESIGN_KINDS.includes(kind) && !doc;
+  if (DESIGN_KINDS.includes(kind)) $("chat-input").placeholder = DESIGN_REVISE_PLACEHOLDER;
+  // 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
+  $("command-toggle").hidden = !doc;
+  showCommand(Boolean(doc) && commandCollapsed);
+  // 포스터·카드뉴스 초안 화면: 비율·↶ ↷는 희주 편집기 오른쪽 고정 칸으로 옮겨 가므로 위 툴바 줄을 통째로 숨깁니다.
+  page.querySelector(".studio-toolbar").hidden = DESIGN_KINDS.includes(kind) && Boolean(doc);
   if (!doc && DESIGN_KINDS.includes(kind)) {
     editor.renderStart($("canvas"), {
       kind,
@@ -541,7 +544,16 @@ function renderWork() {
   if (kind === "video") {
     renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text), onUploadRef: uploadRef });
   }
-  else editor.renderDesign($("canvas"), doc, { onSave: saveDesign });
+  else {
+    // 되돌리기·다시하기는 희주 편집기 오른쪽 칸에서 씁니다(값이 없으면 그 칸의 ↶ ↷는 숨김). 단축키는 아래 bindWork 그대로.
+    editor.renderDesign($("canvas"), doc, {
+      onSave: saveDesign,
+      onUndo: () => move("undo"),
+      onRedo: () => move("redo"),
+      canUndo: work.canUndo && !work.busy,
+      canRedo: work.canRedo && !work.busy,
+    });
+  }
 }
 
 async function saveDesign(doc) {
