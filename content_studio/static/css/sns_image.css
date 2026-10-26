@@ -3,7 +3,8 @@
 
 /* ---------- 포스터·카드뉴스 편집기 (sns_editor.js) [희주] ----------
    선택자는 .studio-editor 아래로 제한합니다. 포스터 안의 색은 문서 데이터라 JS가 넣습니다.
-   크기 값(px)은 원본 크기 기준이라 화면에서는 축소되어 보입니다. */
+   크기 값(px)은 원본 크기 기준이라 화면에서는 축소되어 보입니다.
+   TODO: 선택 표시 색(Highlight)은 base.css 변수 확인 후 바꿉니다. */
 .studio-editor {
   display: flex;
   flex-direction: column;
@@ -43,7 +44,7 @@
   top: 0;
   overflow: hidden;
   transform-origin: 0 0;
-  outline: 1px solid var(--line-strong);
+  outline: 2px solid currentColor;
   touch-action: none;
   user-select: none;
 }
@@ -90,13 +91,13 @@
 }
 
 .studio-editor .studio-editor-item.is-selected {
-  outline: 6px solid var(--teal);
+  outline: 6px solid Highlight;
   outline-offset: 4px;
 }
 
 /* 키보드(Tab)로 고른 요소: 마우스 선택과 구분되게 점선 */
 .studio-editor .studio-editor-item:focus-visible {
-  outline: 6px dashed var(--teal);
+  outline: 6px dashed Highlight;
   outline-offset: 4px;
 }
 
@@ -106,7 +107,7 @@
   bottom: -22px;
   width: 36px;
   height: 36px;
-  background: var(--teal);
+  background: Highlight;
   cursor: nwse-resize;
 }
 
@@ -362,7 +363,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  min-height: 520px;
+  min-height: 100%;
   padding: var(--space-8);
   background: var(--paper);
   border-radius: var(--radius);
@@ -440,9 +441,6 @@
 .studio-editor .studio-editor-brief .studio-editor-field.is-wide {
   grid-column: 1 / -1;
 }
-.studio-editor .studio-editor-brief > .is-wide {
-  grid-column: 1 / -1;
-}
 
 /* 입력 칸·선택 상자 모양 통일 */
 .studio-editor .studio-editor-brief input,
@@ -508,7 +506,7 @@
 .studio-editor .studio-editor-empty-frame {
   display: grid;
   place-items: center;
-  width: min(280px, 65%);
+  width: min(240px, 60%);
   margin-bottom: var(--space-5);
   border: 2px dashed var(--line-strong);
   border-radius: var(--radius);
@@ -569,136 +567,7 @@
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--line);
-}
-
-/* 공통 AI 패널을 쓸 때는 결과 화면의 너비를 편집기에 모두 줍니다. */
-.studio-editor.has-assistant.studio-editor-start,
-.studio-editor.has-assistant .studio-editor-body {
-  grid-template-columns: minmax(0, 1fr);
-}
-.studio-editor.has-assistant .studio-editor-body {
-  padding: var(--space-6);
-  background: var(--paper);
-  border: 1px solid var(--line);
-}
-.studio-page [data-role="design-assistant"] .studio-editor-prompt-panel {
-  padding: 0;
-  background: transparent;
-}
-.studio-editor .studio-editor-proposals {
-  display: grid;
-  gap: var(--space-5);
-}
-.studio-editor .studio-editor-proposals:not(:has(.studio-editor-candidate)) {
-  display: none;
-}
-.studio-editor .studio-editor-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-.studio-editor .studio-editor-examples > span {
-  flex-basis: 100%;
-}
-.studio-editor .studio-editor-examples .btn {
-  padding: var(--space-3) var(--space-4);
-  min-height: 36px;
-  font-size: var(--fs-min);
-  background: var(--paper);
-}
-.studio-editor .studio-editor-source {
-  display: grid;
-  gap: var(--space-4);
-}
-.studio-editor .studio-editor-source > p {
-  margin: 0;
-}
-.studio-editor .studio-editor-source-photo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-.studio-editor .studio-editor-source-photo > img {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-  border: 1px solid var(--line);
-  background: var(--control-bg);
-}
-.studio-editor .studio-editor-source-photo > [role="status"] {
-  flex-basis: 100%;
-}
-.studio-editor .studio-editor-options {
-  min-width: 0;
-  border-top: 1px solid var(--line);
-  padding-top: var(--space-5);
-}
-.studio-editor .studio-editor-options > summary,
-.studio-editor .studio-editor-translations > summary {
-  cursor: pointer;
-  color: var(--ink);
-  font-size: var(--fs-min);
-  font-weight: 600;
-}
-.studio-editor .studio-editor-option-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5);
-  margin-top: var(--space-5);
-}
-.studio-editor .studio-editor-prompt-details > :not(summary) {
-  margin-top: var(--space-5);
-}
-.studio-editor .studio-editor-prompt-details > .btn {
-  width: 100%;
-}
-.studio-editor .studio-editor-start-form .studio-editor-actions > .btn,
-.studio-editor .studio-editor-prompt-panel > .studio-editor-actions > .btn {
-  width: 100%;
-}
-.studio-editor .studio-editor-translations {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
-}
-.studio-editor .studio-editor-cost {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.studio-editor .studio-editor-candidate .studio-editor-thumb {
-  box-sizing: border-box;
-}
-.studio-editor .studio-editor-image-ai {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--line-strong);
-  background: var(--paper);
-}
-.studio-editor .studio-editor-image-ai p {
-  margin: 0;
-}
-.studio-editor .studio-editor-image-options > summary {
-  cursor: pointer;
-  color: var(--ink);
-  font-size: var(--fs-min);
-  font-weight: 600;
-}
-.studio-editor .studio-editor-image-options > :not(summary) {
-  margin-top: var(--space-4);
-}
-.studio-editor .studio-editor-image-options > .btn {
-  width: 100%;
-}
-.studio-page .studio-editor-image-confirm {
-  width: min(440px, 90vw);
-}
-.studio-page .studio-editor-image-confirm .studio-editor-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-4);
+  box-shadow: var(--shadow-overlay);
 }
 
 @media (max-width: 1100px) {

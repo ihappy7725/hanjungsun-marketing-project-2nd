@@ -1,8 +1,9 @@
 {% extends "platform_core/base.html" %}
-{# 포스터·카드뉴스·영상 공통 작업 공간 [유진] #}
+{# 메인 + 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
 {% set tab_labels = {"main": "작업", "poster": "포스터", "cardnews": "카드뉴스", "video": "영상"} %}
 
-{% block title %}콘텐츠 제작{% endblock %}
+{% block title %}콘텐츠 스튜디오{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('content_studio.static', filename='css/sns.css') }}">
 <link rel="stylesheet" href="{{ url_for('content_studio.static', filename='css/sns_image.css') }}">
@@ -10,133 +11,113 @@
 
 {% block content %}
 <div class="studio-page" data-tab="{{ tab }}" data-api="{{ url_for('content_studio.index') }}api" data-products='{{ products|tojson }}'>
-  <header class="pagehead studio-pagehead">
+  <header class="pagehead">
     <div>
-      <h1>콘텐츠 제작</h1>
+      <h1>콘텐츠 스튜디오</h1>
     </div>
-    <button type="button" class="btn dark" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
+    <div class="actions">
+      <button type="button" class="btn dark" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
+    </div>
   </header>
-  <nav class="studio-tabs" aria-label="콘텐츠 종류">
-    <a href="{{ url_for('content_studio.index') }}"{% if tab == 'main' %} aria-current="page"{% endif %}>내 작업</a>
+
+  {# 탭 줄: 현지조사 탭(.ma-tabs)과 같은 모양 — 글자 탭 + 지금 탭 금색 밑줄 (sns.css .studio-tabs) #}
+  <nav class="studio-tabs" aria-label="콘텐츠 스튜디오 탭">
+    <a href="{{ url_for('content_studio.index') }}"{% if tab == 'main' %} aria-current="page"{% endif %}>메인</a>
     <a href="{{ url_for('content_studio.index', tab='poster') }}"{% if tab == 'poster' %} aria-current="page"{% endif %}>포스터</a>
     <a href="{{ url_for('content_studio.index', tab='cardnews') }}"{% if tab == 'cardnews' %} aria-current="page"{% endif %}>카드뉴스</a>
     <a href="{{ url_for('content_studio.index', tab='video') }}"{% if tab == 'video' %} aria-current="page"{% endif %}>영상</a>
   </nav>
+
   <p class="studio-notice" data-role="notice" role="status" hidden></p>
 
+  {# 첫 화면 (README 2장): 메인은 추천 + 세 탭 작업 목록, 각 탭은 그 탭 작업 목록. 목록·추천·미리보기 팝업은 sns.js가 그립니다. #}
   <section class="studio-home" data-role="home-screen">
     {% if tab == 'main' %}
-      <div class="studio-create-cards">
-        {% for key in ("poster", "cardnews", "video") %}
-        <a class="studio-create-card is-{{ key }}" href="{{ url_for('content_studio.index', tab=key, new='1') }}">
-          <strong>{{ tab_labels[key] }}</strong>
-        </a>
-        {% endfor %}
-      </div>
+    <div class="panelhead">
+      <h2>지금 만들면 좋은 콘텐츠</h2>
+      <span class="demo">DEMO · 예시 데이터</span>
+    </div>
+    <div class="studio-recs" data-role="recs"></div>
     {% endif %}
-    <div class="panelhead studio-gallery-head">
-      <h2>{% if tab == 'main' %}최근 작업{% else %}내 {{ tab_labels[tab] }}{% endif %} <span class="studio-count" data-role="gallery-count"></span></h2>
+
+    <div class="panelhead{% if tab == 'main' %} studio-recs-head{% endif %}">
+      <h2>{% if tab == 'main' %}모든 작업{% else %}내 {{ tab_labels[tab] }}{% endif %} <span class="studio-count" data-role="gallery-count"></span></h2>
+      {# 목록 도구: (메인만) 종류 필터 · 정렬(수정일) · 제목 검색. 화면에서만 거릅니다(sns.js renderList). #}
       <div class="studio-list-tools">
         {% if tab == 'main' %}
-        <div class="studio-seg" data-role="list-kind" role="group" aria-label="작업 종류">
+        <div class="studio-seg" data-role="list-kind" role="group" aria-label="종류로 거르기">
           <button type="button" class="btn dark" data-value="" aria-pressed="true">전체</button>
           {% for key in ("poster", "cardnews", "video") %}<button type="button" class="btn" data-value="{{ key }}" aria-pressed="false">{{ tab_labels[key] }}</button>{% endfor %}
         </div>
         {% endif %}
         <button type="button" class="btn" data-role="list-sort" title="수정일 기준 정렬 바꾸기">최신순 ↓</button>
-        <input type="search" class="studio-list-search" data-role="list-search" placeholder="작업 제목 검색" aria-label="작업 제목 검색" autocomplete="off">
+        <input type="search" class="studio-list-search" data-role="list-search" placeholder="제목 검색" aria-label="제목으로 검색" autocomplete="off">
       </div>
     </div>
     <div class="studio-list" data-role="gallery"></div>
-    <p class="empty-note studio-empty-work" data-role="gallery-empty" hidden>아직 저장된 작업이 없어요.</p>
+    <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. {% if tab == 'main' %}위 추천을 누르거나 탭에서 [새로 만들기]로 시작하세요.{% else %}[새로 만들기]로 시작하세요.{% endif %}</p>
   </section>
 
-  <section class="studio-work" data-role="work-screen" hidden>
-    <div class="studio-work-head">
-      <button type="button" class="btn" data-role="go-home">← 내 작업</button>
-      <ol class="studio-steps" aria-label="제작 순서">
-        <li data-step="request" aria-current="step"><span>1</span> 내용 알려주기</li>
-        <li data-step="edit"><span>2</span> 확인하고 다듬기</li>
-        <li data-step="finish"><span>3</span> 만들고 내려받기</li>
-      </ol>
-      <button type="button" class="btn" data-role="history-toggle" aria-expanded="false">이전 작업</button>
-    </div>
-    <aside class="studio-history" data-role="history" hidden>
+  {# 작업 화면: 왼쪽 이전 작업 · 가운데 결과물 + 아래 한 줄 입력 (README 1장 ③④) #}
+  <section class="studio-work has-history" data-role="work-screen" hidden>
+    <aside class="studio-history" data-role="history">
       <div class="panelhead"><h2>이전 작업</h2></div>
       <ul class="studio-history-list" data-role="history-list"></ul>
     </aside>
-    <div class="studio-workspace">
-      <aside class="studio-assistant" aria-label="AI 제작 도우미">
-        <div class="studio-assistant-head">
-          <span class="studio-ai-mark" aria-hidden="true">✦</span>
-          <div><h2>AI 제작 도우미</h2><p data-role="assistant-hint">원하는 내용을 편하게 적어 주세요.</p></div>
+
+    <div class="studio-main">
+      <div class="studio-toolbar">
+        <div class="actions">
+          <button type="button" class="btn" data-role="go-home">← 첫 화면</button>
+          <button type="button" class="btn" data-role="history-toggle">☰ 이전 작업</button>
         </div>
-        <div data-role="design-assistant"></div>
-        <div class="studio-video-setup" data-role="video-setup"{% if tab != 'video' %} hidden{% endif %}>
-          <label class="studio-field">작업 이름 <span class="studio-optional">선택</span>
-            <input type="text" class="studio-title" data-role="set-title" maxlength="30" autocomplete="off" placeholder="예: 신메뉴 소개 영상">
+        <div class="studio-settings">
+          {# 영상 제목 (직접 입력, 30자). 비우면 "기념일 - 제품" 규칙 제목. 초안 뒤에는 바꾸면 이름 바꾸기. sns.js가 영상 탭에서만 보여 줍니다. #}
+          <input type="text" class="studio-title" data-role="set-title" maxlength="30" autocomplete="off"
+                 placeholder="영상 제목" aria-label="영상 제목">
+          {# 제품·비율·길이 한 줄 묶음. 영상 첫 생성 화면(is-start)에서는 제목 아래 가운데에 놓입니다(sns.css). #}
+          <div class="studio-options">
+          {# 영상 제품 고르기 (products.py): [전체] 또는 여러 개. 아무것도 안 고르면 입력 문장에서 찾습니다. sns.js가 영상 탭에서만 보여 줍니다. #}
+          <div class="studio-seg studio-product" data-role="set-product" role="group" aria-label="제품">
+            <button type="button" class="btn" data-value="all">전체</button>
+            {% for product in products %}<button type="button" class="btn" data-value="{{ product.id }}">{{ product.name_ko|replace(" 찹쌀떡", "") }}</button>{% endfor %}
+          </div>
+          <div class="studio-seg" data-role="set-ratio">
+            <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">4:5</button>
+            <button type="button" class="btn" data-value="9:16">9:16</button>
+            <button type="button" class="btn" data-value="16:9">16:9</button>
+            <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
+          </div>
+          <label class="studio-duration" title="영상 길이 5~30초">
+            <input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이(초, 5~30)">초
           </label>
-          <div class="studio-field" data-role="product-field">
-            <span>어떤 제품을 소개할까요?</span>
-            <div class="studio-seg studio-product" data-role="set-product" role="group" aria-label="소개할 제품, 여러 개 선택 가능">
-              <button type="button" class="btn" data-value="all" aria-pressed="false">전체</button>
-              {% for product in products %}<button type="button" class="btn" data-value="{{ product.id }}" aria-pressed="false">{{ product.name_ko|replace(" 찹쌀떡", "") }}</button>{% endfor %}
-            </div>
+          <button type="button" class="btn" data-role="set-sound">소리 끔</button>
           </div>
         </div>
-        <div class="studio-command" data-role="command-panel">
-          <button type="button" class="btn studio-command-toggle" data-role="command-toggle" aria-expanded="true" hidden>요청 입력 접기</button>
-          <form class="studio-command-form" data-role="chat-form">
-            <label for="studio-request" class="studio-request-label" data-role="request-label">어떤 영상을 만들까요?</label>
-            <textarea id="studio-request" data-role="chat-input" rows="5" maxlength="1500" autocomplete="off" placeholder="예: 망고 요거트 찹쌀떡을 소개하는 따뜻한 분위기의 영상"></textarea>
-            <div class="studio-example-list" data-role="examples" aria-label="요청 예시">
-              <span>이렇게 시작해 보세요</span>
-              <button type="button" data-example="제품의 단면이 잘 보이는 신메뉴 소개 영상을 만들어 줘">신메뉴 소개</button>
-              <button type="button" data-example="보자기 포장을 여는 장면으로 따뜻한 선물 영상을 만들어 줘">선물 추천</button>
-              <button type="button" data-example="찹쌀떡의 쫀득한 질감이 느껴지는 짧은 영상을 만들어 줘">제품 매력 보여주기</button>
-            </div>
-            <div class="studio-refs" data-role="refs" hidden></div>
-            <div class="studio-command-actions">
-              <button type="button" class="btn studio-ref-add" data-role="ref-add" hidden>+ 참고 사진·영상</button>
-              <input type="file" data-role="ref-file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden>
-              <button type="submit" class="btn dark" data-role="send">내용 정리하기 <span aria-hidden="true">↑</span></button>
-            </div>
-          </form>
-          <div class="studio-feedback" data-role="feedback" aria-live="polite">
-            <span data-role="feedback-text"></span><span class="studio-choices" data-role="chat-choices"></span>
-          </div>
+        <div class="actions">
+          <button type="button" class="btn" data-role="undo" title="되돌리기 (Ctrl+Z)" disabled>↶</button>
+          <button type="button" class="btn" data-role="redo" title="다시하기 (Ctrl+Shift+Z)" disabled>↷</button>
         </div>
-        <details class="studio-advanced" data-role="advanced-settings">
-          <summary>크기·길이 설정 <span data-role="settings-summary"></span></summary>
-          <div class="studio-settings">
-            <div class="studio-options">
-              <div class="studio-field"><span>어디에 사용할까요?</span>
-                <div class="studio-seg studio-ratios" data-role="set-ratio" role="group" aria-label="콘텐츠 크기">
-                  <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">피드 4:5</button>
-                  <button type="button" class="btn" data-value="9:16">스토리 9:16</button>
-                  <button type="button" class="btn" data-value="16:9">가로 16:9</button>
-                  <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">정사각형 1:1</button>
-                </div>
-              </div>
-              <label class="studio-duration studio-field">영상 길이
-                <span><input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이, 5~30초"> 초</span>
-              </label>
-              <button type="button" class="btn" data-role="set-sound" aria-pressed="false">소리 끔</button>
-            </div>
-          </div>
-        </details>
-        <p class="studio-assistant-note">AI 결과는 만들기 전에 확인해 주세요. 이미지·영상 생성 시 사용 크레딧을 안내해요.</p>
-      </aside>
-      <div class="studio-main">
-        <div class="studio-toolbar">
-          <div><span class="studio-eyebrow">작업 화면</span><strong data-role="canvas-title">{{ tab_labels[tab] }} 미리보기</strong></div>
-          <div class="actions">
-            <span class="studio-save-state" data-role="save-state" role="status">내용을 입력하면 시작돼요</span>
-            <button type="button" class="btn" data-role="undo" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
-            <button type="button" class="btn" data-role="redo" title="다시하기 (Ctrl+Shift+Z)" aria-label="다시하기" disabled>↷</button>
-          </div>
+      </div>
+      <div class="studio-canvas" data-role="canvas"></div>
+
+      <div class="studio-command">
+        {# 초안 뒤 입력 영역 접기·펼치기 (sns.js toggleCommand) — 입력 영역 오른쪽 위. 접으면 이 버튼과 결과 안내 줄만 남습니다. #}
+        <button type="button" class="btn studio-command-toggle" data-role="command-toggle" aria-expanded="true" hidden>접기 ▾</button>
+        <form class="studio-command-form" data-role="chat-form">
+          {# 영상 레퍼런스(분위기 참고 이미지 4장·영상 1개) 썸네일. sns.js가 영상 탭에서만 그립니다. #}
+          <div class="studio-refs" data-role="refs" hidden></div>
+          {# 여러 줄 입력칸: Enter 보내기, Shift+Enter 줄바꿈 (sns.js). 영상 탭은 흰색 3줄(sns.css) #}
+          <textarea data-role="chat-input" rows="1" autocomplete="off"
+                    placeholder="추가로 원하는 점을 편하게 적어 주세요"></textarea>
+          <button type="button" class="btn studio-ref-add" data-role="ref-add" hidden>+ 레퍼런스</button>
+          <input type="file" data-role="ref-file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden>
+          <button type="submit" class="btn dark">보내기</button>
+        </form>
+        <div class="studio-feedback" data-role="feedback" aria-live="polite">
+          <span data-role="feedback-text"></span>
+          <span class="studio-choices" data-role="chat-choices"></span>
         </div>
-        <div class="studio-canvas" data-role="canvas"></div>
       </div>
     </div>
   </section>
@@ -144,5 +125,9 @@
 {% endblock %}
 
 {% block scripts %}
+{# sns.js가 sns_video.js를 import합니다 (README 9장). #}
 <script type="module" src="{{ url_for('content_studio.static', filename='js/sns.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_editor.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_fonts.js') }}"></script>
+<script type="module" src="{{ url_for('content_studio.static', filename='js/sns_image.js') }}"></script>
 {% endblock %}

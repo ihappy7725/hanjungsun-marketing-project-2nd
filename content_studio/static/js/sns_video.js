@@ -32,7 +32,6 @@ function endOf(time) {
 // notice: ③ 아래에 보여 줄 안내(크레딧 사용·남은 크레딧). cut: 처음 고를 컷. 생성 결과로 다시 그릴 때 이어서 씁니다.
 export function renderVideo(root, doc, options) {
   const { onSave, onCommand, onUploadRef, notice, cut = 0 } = options;
-  const studioPage = root.closest(".studio-page");
   let selected = 0;
   // 컷마다 미리보기 이미지(서버가 장면 글로 맞춰 줌, 없으면 null)
   if (!doc.cuts) doc.cuts = doc.scenes.map(() => null);
@@ -251,10 +250,10 @@ export function renderVideo(root, doc, options) {
     untranslated.append(el("p", "", `영어에 반영하지 못한 줄 ${doc.untranslated.length}개 — AI 번역을 쓰지 못해(키 없음·한도·실패) 아는 표현만 바꿨어요. 이 줄들의 영어는 그대로예요.`), list);
   }
 
-  const save = el("button", "btn", "변경사항 저장");
+  const save = el("button", "btn dark", "저장");
   save.type = "button";
   save.disabled = true;
-  const reset = el("button", "btn", "AI가 정리한 내용으로 되돌리기");
+  const reset = el("button", "btn", "자동 프롬프트로");
   reset.type = "button";
   reset.hidden = !doc.custom && !doc.custom_ko;
   reset.addEventListener("click", () => { promptKo.value = ""; markDirty(); saveDoc(); });
@@ -267,20 +266,15 @@ export function renderVideo(root, doc, options) {
   makeImage.type = "button";
   const makeCut = el("button", "btn");
   makeCut.type = "button";
-  const generate = el("button", "btn dark", doc.job?.request_id ? "영상 다시 만들기" : "이 내용으로 영상 만들기");
+  const generate = el("button", "btn dark", doc.job?.request_id ? "영상 다시 만들기" : "이 프롬프트로 영상 만들기");
   generate.type = "button";
   const genStatus = el("p", "studio-hint");
-  genStatus.setAttribute("role", "status");
   const genButtons = [makeImage, makeCut, generate];
   makeImage.addEventListener("click", () => askGenerate("image"));
   makeCut.addEventListener("click", () => askGenerate("image", selected));
   generate.addEventListener("click", () => askGenerate("video"));
   // 만들 수 있는 때: 고친 내용이 저장됐고 제품 사진이 있을 때 (제품을 고르면 서버가 자동으로 넣음)
-  const generationReady = () => studioPage?.dataset.generationEnabled === "true"
-    && studioPage?.dataset.higgsfieldConnected === "true";
-  const RUNNING = ["queued", "in_progress", "processing", "pending", "waiting", "dna", "script", "visuals", "vision", "flow", "ip_detect"];
-  const canGenerate = () => generationReady() && save.disabled && Boolean(doc.image)
-    && ![doc.job, ...doc.cuts].some((job) => [...RUNNING, "unknown", "submitting"].includes(job?.status));
+  const canGenerate = () => save.disabled && Boolean(doc.image);
   let locked = false;  // 요청이 들어갔는지 모를 때 다시 누르지 못하게
   genButtons.forEach((button) => { button.disabled = !canGenerate(); });
 
@@ -300,7 +294,7 @@ export function renderVideo(root, doc, options) {
   refButton.type = "button";
   refButton.title = `이미지 ${REFS_MAX}장·영상 1개까지 (영상을 다시 올리면 바뀜)`;
   refButton.addEventListener("click", () => refInput.click());
-  const refApply = el("button", "btn dark", "참고 자료 적용");
+  const refApply = el("button", "btn dark", "프롬프트에 반영");
   refApply.type = "button";
   refApply.addEventListener("click", () => saveDoc());
   const refItem = (node, label, remove) => {
@@ -335,7 +329,7 @@ export function renderVideo(root, doc, options) {
     drawRefs();
     if (refsChanged()) {
       markDirty();
-      refNote.textContent = "[참고 자료 적용]을 누르면 다음 생성에 함께 사용해요.";
+      refNote.textContent = "[프롬프트에 반영]을 누르면 저장되고 프롬프트에 들어가요.";
     } else {
       refNote.textContent = "";
     }
@@ -375,16 +369,16 @@ export function renderVideo(root, doc, options) {
   });
 
   // 위: 미리보기 | ① 장면 구성   아래: ② 영어 프롬프트 | 한국어 번역   맨 아래: ③ 만들기
-  const scenesBlock = el("details", "studio-video-scenes-block studio-video-details");
+  const scenesBlock = el("div", "studio-video-scenes-block");
   scenesBlock.append(
-    el("summary", "", `장면 구성 · ${doc.scenes.length}개 장면`),
-    el("p", "studio-hint", "장면을 눌러 미리 보고, 시간과 자막을 고칠 수 있어요."),
+    status,
+    el("h3", "", "① 장면 구성"),
     sceneList,
     addScene,
   );
 
   // 영어·한국어 제목 줄은 같은 높이(sns.css .studio-video-prompt-head), 두 상자도 같은 높이입니다.
-  const englishTitle = el("h3", "", "AI에게 전달할 내용 (영어) ");
+  const englishTitle = el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용) ");
   englishTitle.append(el("span", "studio-hint", "읽기 전용"));
   const englishHead = el("div", "studio-video-prompt-head");
   englishHead.append(englishTitle, copy);
@@ -397,33 +391,22 @@ export function renderVideo(root, doc, options) {
     koreanHead,
     promptKo,
     untranslated,
-    actions(reset),
+    actions(save, reset),
   );
   const prompts = el("div", "studio-video-prompts");
   prompts.append(englishBlock, koreanBlock);
-  const promptDetails = el("details", "studio-video-details");
-  promptDetails.append(el("summary", "", "AI에게 보낼 내용 자세히 보기"),
-    el("p", "studio-hint", "기본 내용은 AI가 정리해요. 필요한 경우 한국어 내용을 직접 고친 뒤 저장하세요."), prompts);
 
   const generateBlock = el("div", "studio-video-generate");
   generateBlock.append(
-    el("h3", "", "내용이 마음에 드시나요?"),
-    el("p", "studio-hint", "먼저 장면 이미지를 확인하거나 바로 영상을 만들 수 있어요. 생성 전 비용을 알려드려요."),
-    actions(generate, save),
-    actions(makeImage, makeCut),
+    el("h3", "", "③ 영상 만들기"),
+    actions(makeImage, makeCut, generate),
     genStatus,
   );
-  if (doc.job?.video_url && /^(https:\/\/|\/content_studio\/media\/)/.test(doc.job.video_url)) {
-    const download = el("a", "btn", "완성 영상 받기");
-    download.href = doc.job.video_url;
-    download.download = "hanjungsun_video.mp4";
-    generateBlock.append(download);
-  }
 
   // ---------- ③ 만들기: 확인 창 · 요청 · 상태 확인 ----------
   const STATUS_LABELS = { queued: "대기 중", in_progress: "만드는 중", processing: "만드는 중", completed: "완료",
-    pending: "대기 중", waiting: "대기 중", submitting: "접수 확인 중", unknown: "접수 확인 필요",
     failed: "실패", nsfw: "거절됨(부적절 판정)", canceled: "취소됨", cancelled: "취소됨" };
+  const RUNNING = ["queued", "in_progress", "processing"];
   const TARGET = { image: { label: "미리보기 이미지" }, video: { label: "영상" } };
   const isRunning = { image: (d) => (d.cuts || []).some((c) => RUNNING.includes(c?.status)), video: (d) => RUNNING.includes(d.job?.status) };
   const chatId = new URL(location.href).searchParams.get("chat");
@@ -449,16 +432,11 @@ export function renderVideo(root, doc, options) {
     if (!made.length) return "";
     const done = made.filter((c) => c.status === "completed").length;
     const running = made.filter((c) => RUNNING.includes(c.status)).length;
-    const unknown = made.filter((c) => ["unknown", "submitting"].includes(c.status)).length;
-    const failed = made.length - done - running - unknown;
-    return `미리보기 이미지: 완료 ${done}/${d.cuts.length}${running ? ` · 만드는 중 ${running}` : ""}${unknown ? ` · 접수 확인 필요 ${unknown}` : ""}${failed ? ` · 실패 ${failed}` : ""}`;
+    const failed = made.length - done - running;
+    return `미리보기 이미지: 완료 ${done}/${d.cuts.length}${running ? ` · 만드는 중 ${running}` : ""}${failed ? ` · 실패 ${failed}` : ""}`;
   }
 
   function showStatus() {
-    if (!generationReady()) {
-      genStatus.textContent = studioPage?.dataset.generationReason || "생성 예산이 정해지면 이미지를 만들고 영상으로 완성할 수 있어요.";
-      return;
-    }
     const parts = [cutSummary(), doc.job?.status ? `영상: ${STATUS_LABELS[doc.job.status] || doc.job.status}` : ""].filter(Boolean);
     genStatus.textContent = parts.join(" · ") || (doc.image ? "" : "제품 사진을 먼저 올려 주세요.");
   }
@@ -504,7 +482,6 @@ export function renderVideo(root, doc, options) {
 
   // scene: 미리보기 이미지를 만들 컷(0부터). 없으면 모든 컷.
   async function askGenerate(target, scene = null) {
-    if (!canGenerate()) { showStatus(); return; }
     genButtons.forEach((button) => { button.disabled = true; });
     genStatus.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
     try {
@@ -512,7 +489,7 @@ export function renderVideo(root, doc, options) {
       while (await confirmDialog(target, quote)) {
         genStatus.textContent = `${TARGET[target].label} 요청을 보내는 중…`;
         try {
-          const data = await call("/generate", { method: "POST", body: { target, scene, credits: quote.credits, reviewed: true } });
+          const data = await call("/generate", { method: "POST", body: { target, scene, credits: quote.credits } });
           applyResult(data.design, `✓ ${fmt(data.spent)} 크레딧으로 ${TARGET[target].label} 요청을 보냈어요 · `
             + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)} · 만드는 동안 상태를 확인합니다`
             + (data.warning ? ` · ${data.warning}` : ""));
@@ -558,7 +535,7 @@ export function renderVideo(root, doc, options) {
   // 미리보기 이미지는 컷마다 끝나는 대로 보여 주고(바뀐 컷이 있을 때만 다시 그림), 모두 끝나면 남은 크레딧을 알려 줍니다.
   function poll() {
     const target = Object.keys(TARGET).find((name) => isRunning[name](doc));
-    if (!target || !chatId || studioPage?.dataset.higgsfieldConnected !== "true") return;
+    if (!target || !chatId) return;
     setTimeout(async () => {
       if (!wrap.isConnected) return;
       try {
@@ -572,9 +549,8 @@ export function renderVideo(root, doc, options) {
         const balance = data.balance === null ? "" : ` · 계정 남은 크레딧 ${fmt(data.balance)}`;
         const status = data.design.job?.status;
         const result = target === "image" ? cutSummary(data.design) : `${TARGET[target].label} ${STATUS_LABELS[status] || status}`;
-        applyResult(data.design, `${result}${balance} · 오늘 대시보드 사용 ${fmt(data.today_used)}크레딧`
-          + (data.daily_limit == null ? "" : ` / ${fmt(data.daily_limit)}`)
-          + (data.warning ? ` · ${data.warning}` : ""));
+        applyResult(data.design, `${result}${balance} · `
+          + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)}`);
       } catch (error) {
         genStatus.textContent = `상태를 확인하지 못했습니다. (${error.message}) 잠시 후 다시 확인합니다.`;
         poll();
@@ -661,20 +637,13 @@ export function renderVideo(root, doc, options) {
   }
 
   const top = el("div", "studio-video-top");
-  top.append(preview);
+  top.append(preview, scenesBlock);
   const wrap = el("div", "studio-video");
-  const refsBlock = el("details", "studio-video-refs studio-video-details");
-  refsBlock.append(el("summary", "", "참고할 사진·영상 추가 (선택)"), refBox);
-  wrap.append(status, top, generateBlock, scenesBlock, refsBlock, promptDetails);
+  // 위: 미리보기 | ① 장면 구성 → 레퍼런스(프롬프트에 반영) → ② 프롬프트 검토 → ③ 만들기
+  const refsBlock = el("div", "studio-video-refs");
+  refsBlock.append(el("h3", "", "레퍼런스 (선택)"), refBox);
+  wrap.append(top, refsBlock, prompts, generateBlock);
   root.replaceChildren(wrap);
-  root.videoConnectionListener?.abort();
-  const connectionListener = new AbortController();
-  root.videoConnectionListener = connectionListener;
-  studioPage?.addEventListener("studio:higgsfield-status", () => {
-    if (!wrap.isConnected) { connectionListener.abort(); return; }
-    genButtons.forEach((button) => { button.disabled = locked || !canGenerate(); });
-    showStatus();
-  }, { signal: connectionListener.signal });
   updateTimes();
   select(Math.min(cut, doc.scenes.length - 1), false);
   if (notice) genStatus.textContent = notice;

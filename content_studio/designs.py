@@ -13,8 +13,6 @@
 AI 연결 전에는 정해진 틀로 만들고 demo=True로 표시합니다.
 """
 import copy
-import hashlib
-import json
 import math
 import re
 from pathlib import Path
@@ -73,51 +71,6 @@ def _image_src(product):
         return url_for("content_studio.static", filename=f"images/sns/{name}")
     except RuntimeError:  # 요청 밖(시험 등)에서 부를 때
         return None
-
-
-def image_generation_brief(doc, index, product):
-    """글자는 편집 가능한 요소로 남기고 제품 연출 사진만 생성합니다."""
-    pages = doc.get("pages")
-    if (doc.get("kind") not in ("poster", "cardnews") or doc.get("ratio") not in SIZES or
-            not isinstance(pages, list) or not 1 <= len(pages) <= 6 or not 0 <= index < len(pages)):
-        raise ValueError("장과 규격을 확인해 주세요.")
-    page = pages[index]
-    if not isinstance(page, dict) or not isinstance(page.get("elements"), list):
-        raise ValueError("편집할 장의 내용이 올바르지 않습니다.")
-    assistant = doc.get("assistant") if isinstance(doc.get("assistant"), dict) else {}
-    options = assistant.get("options") if isinstance(assistant.get("options"), dict) else {}
-    wishes = [options.get(key, "") for key in ("request", "purpose", "mood")]
-    if any(not isinstance(value, str) or len(value) > 1500 for value in wishes):
-        raise ValueError("제작 설명을 줄여 주세요.")
-    context = [item.get("text", "") for item in page["elements"] if isinstance(item, dict) and item.get("type") == "text"]
-    prompt = "\n".join([
-        "Create a polished food product photograph for a Hanjungsun Korean rice-cake marketing design.",
-        "Preserve the product shape and filling shown in the supplied product reference photographs.",
-        "Generate only the product photograph and its setting, without lettering, logos, captions or invented claims.",
-        "Text is added as editable layers by our editor; do not draw text inside the photograph.",
-        f"Product: {product.get('name_ko', '')}. Design: {doc['kind']}, image {index + 1} of {len(pages)}.",
-        "Keep a consistent visual style across this series.",
-        "User direction: " + " / ".join(value for value in wishes if value),
-        "Layout context (not text to render; do not assume sample claims are facts): " + " / ".join(str(value)[:500] for value in context[:8]),
-    ])
-    return prompt
-
-
-def image_generation_fingerprint(doc, index):
-    content = {"ratio": doc.get("ratio"), "page": doc["pages"][index], "assistant": doc.get("assistant")}
-    return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-
-
-def apply_generated_image(doc, index, src):
-    """기존 문구·사진 위치·색·DEMO 표시는 보존합니다."""
-    result = copy.deepcopy(doc)
-    elements = result["pages"][index]["elements"]
-    photo = next((item for item in elements if isinstance(item, dict) and item.get("type") == "image"), None)
-    if photo is None:
-        photo = _box(f"generated-photo-{index}", "image", (15, 20, 70, 50), 2, radius=0)
-        elements.append(photo)
-    photo["src"], photo["source"] = src, "higgsfield"
-    return result
 
 
 def make_poster(text, ratio=DEFAULT_RATIO, product=None, event=None):

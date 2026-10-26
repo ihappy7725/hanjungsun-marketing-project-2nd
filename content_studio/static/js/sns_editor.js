@@ -38,8 +38,7 @@ const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(unde
 let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다. (모듈 안 변수)
 let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
 let focusAfterRender = false;  // 키보드로 고치다 저장하면, 다시 그린 뒤 선택한 요소로 초점을 돌려줍니다.
-let promptCache = null;  // 같은 작업의 입력·AI 제안은 저장 후에도 유지합니다.
-let imagePanelAbort = null;
+let promptCache = null;  // 오른쪽 프롬프트 칸. 저장 후 다시 그려도 같은 작업이면 입력·AI 제안을 유지합니다.
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -123,43 +122,6 @@ function imageSize(file) {
   });
 }
 
-// 시작 화면과 편집기에서 같은 사진 검사·업로드를 사용합니다.
-function pickPhoto(status) {
-  return new Promise((resolve) => {
-    const input = el("input");
-    input.type = "file";
-    input.accept = PHOTO_TYPES.join(",");
-    input.addEventListener("cancel", () => resolve(null));
-    input.addEventListener("change", async () => {
-      const file = input.files[0];
-      if (!file) return resolve(null);
-      if (!PHOTO_TYPES.includes(file.type)) {
-        status.textContent = "JPEG·PNG·WEBP 이미지만 올릴 수 있습니다.";
-        return resolve(null);
-      }
-      const size = await imageSize(file);
-      if (!size || size[0] > MAX_SIDE || size[1] > MAX_SIDE) {
-        status.textContent = size ? `가로·세로가 각각 ${MAX_SIDE}px 이하인 사진만 올릴 수 있습니다.` : "사진을 읽지 못했습니다. 다른 파일을 골라 주세요.";
-        return resolve(null);
-      }
-      status.textContent = "사진을 올리는 중…";
-      try {
-        const form = new FormData();
-        form.append("image", file);
-        const res = await fetch(UPLOAD_API, { method: "POST", body: form });
-        const data = await res.json().catch(() => ({ ok: false }));
-        if (!data.ok) throw new Error(data.error || "사진을 올리지 못했습니다.");
-        status.textContent = "";
-        resolve(data.url);
-      } catch (error) {
-        status.textContent = error.message;
-        resolve(null);
-      }
-    });
-    input.click();
-  });
-}
-
 function field(label, input) {
   const box = el("label", "studio-editor-field");
   box.append(el("span", "", label), input);
@@ -193,16 +155,12 @@ async function postJson(url, body) {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({ ok: false }));
-  if (!data.ok) {
-    const error = new Error(data.error || "서버에 연결하지 못했습니다.");
-    error.data = data;
-    throw error;
-  }
+  if (!data.ok) throw new Error(data.error || "서버에 연결하지 못했습니다.");
   return data;
 }
 
-// ---------- AI 요청 · 초안 (한 문장 요청 → 초안 3개 → 적용) ----------
-// 왼쪽 요청 패널과 첫 화면이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
+// ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
+// 편집기 오른쪽 칸(promptPanel)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
 // extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
 // empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
 // productId: 고른 제품 id를 돌려주는 함수(첫 화면). 요청에 함께 보내 서버가 제품 목록으로 확인합니다.
@@ -215,7 +173,9 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   wish.rows = 4;
   wish.maxLength = 1500;
   wish.value = previous.request || "";
-  wish.placeholder = "예: 망고 요거트 찹쌀떡을 소개하는 따뜻한 느낌의 홍보물을 만들어 줘";
+  wish.placeholder = productId
+    ? "확인된 제품 정보와 원하는 내용을 적어 주세요. 위에서 고른 제품은 자동으로 들어가요. 예: 신메뉴 소개"
+    : "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
   const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
   const audience = el("input");
   audience.value = previous.audience || "";
@@ -238,37 +198,19 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   let proposals = [], selected = 0;
   const settingsBox = el("fieldset", "studio-editor-brief");
   const wide = (node) => { node.classList.add("is-wide"); return node; };  // 두 칸을 다 쓰는 칸
-  settingsBox.append(el("legend", "", "어떤 콘텐츠를 만들까요?"));
+  settingsBox.append(el("legend", "", "제작 조건"));
   if (extra) settingsBox.append(wide(extra));
-  settingsBox.append(wide(field("원하는 내용을 편하게 적어 주세요", wish)));
-  const examples = el("div", "studio-editor-examples is-wide");
-  examples.append(el("span", "studio-hint", "이렇게 시작해 보세요"));
-  for (const [label, text] of [
-    ["제품 소개", "제품의 맛과 특징이 잘 보이는 깔끔한 홍보물을 만들어 줘"],
-    ["선물 추천", "소중한 사람에게 선물하고 싶은 따뜻하고 고급스러운 홍보물을 만들어 줘"],
-    ["사진 강조", "제품 사진을 크게 보여 주고 글은 짧고 눈에 띄게 만들어 줘"],
-  ]) examples.append(button(label, () => {
-    wish.value = text;
-    wish.dispatchEvent(new Event("input", { bubbles: true }));
-    wish.focus();
-  }));
-  settingsBox.append(examples);
-  const details = el("details", "studio-editor-options is-wide");
-  details.append(el("summary", "", "상세 설정"));
-  const fields = el("div", "studio-editor-option-fields");
-  fields.append(wide(field("누구에게 보여줄까요?", audience)), field("목적", purpose),
-    field("분위기", mood), field("글의 양", density));
-  if (doc.kind === "cardnews") fields.append(field("카드 수", pages));
-  details.append(fields);
-  settingsBox.append(details);
-  const syncEmpty = () => { if (empty) empty.hidden = proposals.length > 0; };
+  settingsBox.append(wide(field(productId ? "요청" : "제품·요청", wish)), wide(field("대상", audience)),
+    field("목적", purpose), field("분위기", mood), field("글의 양", density));
+  if (doc.kind === "cardnews") settingsBox.append(field("장수", pages));
+  const syncEmpty = () => { if (empty) empty.hidden = proposals.length > 0 || !result.hidden; };
   const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
     mood: mood.value, density: density.value, pages: doc.kind === "poster" ? 1 : Number(pages.value),
     custom_prompt: result.hidden ? "" : result.value, ...(productId && { product_id: productId() }) });
   const copy = button("복사", async () => {
     try {
       await navigator.clipboard.writeText(result.value);
-      msg.textContent = "제작 설명을 복사했습니다.";
+      msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
     } catch {
       result.select();
       msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
@@ -277,15 +219,10 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   copy.hidden = true;
   const apply = button("선택한 초안 적용", async () => {
     if (!proposals[selected] || !onApply) return;
-    if (result.value !== proposals[selected].prompt) { msg.textContent = "제작 설명을 바꿨어요. 새 초안을 만든 뒤 적용해 주세요."; return; }
+    if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
     apply.disabled = true;
     try {
       await onApply(proposals[selected].design);
-      proposals = [];
-      candidates.replaceChildren();
-      apply.hidden = true;
-      msg.textContent = "초안을 적용했어요. 오른쪽에서 글과 사진을 직접 다듬어 보세요.";
-      syncEmpty();
     } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
     finally { apply.disabled = false; }
   }, "btn dark");
@@ -335,10 +272,10 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
     result.value = "";
     result.hidden = copy.hidden = true;
     syncEmpty();
-    msg.textContent = "요청을 바꿨어요. 새 초안을 만들어 확인해 주세요.";
+    msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
   }
   settingsBox.addEventListener("input", invalidate);
-  const brief = button("제작 설명 준비하기 · 무료", async () => {
+  const brief = button("기본 프롬프트 보기 (무료)", async () => {
     brief.disabled = make.disabled = settingsBox.disabled = true;
     try {
       const data = await postJson(BRIEF_API, { design: doc, options: { ...options(), custom_prompt: "" } });
@@ -352,12 +289,11 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
     } catch (error) { msg.textContent = error.message; }
     finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
   });
-  const make = button("문구·구성 초안 3개 · 유료", async () => {
+  const make = button("AI 제안 3개 생성 (유료)", async () => {
     if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
-    if (extra?.dataset.uploading === "true") { msg.textContent = "사진 업로드가 끝나면 초안을 만들 수 있어요."; return; }
     make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
     candidates.inert = true;
-    msg.textContent = "요청에 맞는 초안 3개를 만들고 있어요. 잠시 기다려 주세요.";
+    msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
     try {
       const data = await postJson(ASSISTANT_API, { design: doc, options: options(), confirm_paid: true });
       if (!isActive()) return;
@@ -367,7 +303,7 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
       result.hidden = copy.hidden = apply.hidden = false;
       showCandidates();
       candidates.scrollIntoView({ block: "nearest" });
-      msg.textContent = `${data.rules_ready ? "현지 지침을 반영했어요." : "현지 검수 기준은 준비 중이에요."} 마음에 드는 초안을 골라 적용해 주세요.`;
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} 제안을 고르고 적용하세요.`;
       showUsage(data);
     } catch (error) { msg.textContent = error.message; }
     finally {
@@ -377,18 +313,17 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   }, "btn dark");
   const label = doc.kind === "poster" ? "포스터" : "카드뉴스";
   const actions = el("div", "studio-editor-actions");
-  actions.append(make);
+  actions.append(brief, make);
   const resultActions = el("div", "studio-editor-actions");
-  resultActions.append(apply);
-  const promptDetails = el("details", "studio-editor-options studio-editor-prompt-details");
-  promptDetails.append(el("summary", "", "AI에 전달할 제작 설명"),
-    el("p", "studio-hint", "내용을 확인하거나 직접 고칠 수 있어요."), brief, result, copy);
-  const intro = [el("h2", "", `${label} AI 도우미`),
-    el("p", "studio-hint", "만들고 싶은 내용을 알려 주세요. 서로 다른 초안 3개를 제안해 드려요.")];
-  const controls = [settingsBox, actions,
-    el("p", "studio-editor-cost", "초안 생성은 OpenAI 유료 기능입니다. 베트남어 문구와 한국어 뜻을 함께 만들어요."),
-    msg, usage, promptDetails];
-  const results = [candidates, resultActions];
+  resultActions.append(apply, copy);
+  const styleNote = doc.kind === "poster"
+    ? "제안 3개는 서로 다른 스타일(큰 글자·매거진·메뉴판·팝·미니멀)과 색 조합으로 나와요."
+    : "표지 → 소개·포인트 → 마지막 장(저장·팔로우) 흐름의 캐러셀로, 제안마다 스타일이 달라요.";
+  const intro = [el("h2", "", `${label} AI 초안`),
+    el("p", "studio-hint", `베트남어 문구와 한국어 뜻을 함께 만들어요. ${styleNote}`),
+    el("p", "studio-editor-cost", "유료 버튼은 누를 때마다 OpenAI 비용이 나가요 (시험 예산 약 $5, 자동 차단 없음). 사진 생성 비용은 없어요.")];
+  const controls = [settingsBox, actions, msg, usage];
+  const results = [candidates, resultActions, result];
   syncEmpty();
   return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus(), options };
 }
@@ -398,8 +333,7 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
 // 고른 초안은 onCreate(design, { product_id })로 새 작업에 저장합니다. (저장 실패 시 onCreate가 throw)
 // products: [{id, name_ko}] — 주면 제품 고르기 칸을 맨 앞에 넣습니다.
 // form·onFormChange: 입력 중인 조건을 sns.js가 들고 있다가, 규격을 바꿔 다시 그릴 때 form으로 돌려줍니다.
-export function renderStart(root, { kind, ratio, products = [], onCreate, form: saved = null, onFormChange, assistantRoot } = {}) {
-  imagePanelAbort?.abort();
+export function renderStart(root, { kind, ratio, products = [], onCreate, form: saved = null, onFormChange } = {}) {
   // 빈 초안: 색은 designs.py 기본 색 조합을 쓰도록 비워 둡니다.
   const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };
   const [W, H] = sizeOf(base);
@@ -412,66 +346,25 @@ export function renderStart(root, { kind, ratio, products = [], onCreate, form: 
   const empty = el("div", "studio-editor-empty");
   const frame = el("div", "studio-editor-empty-frame", ratio);
   frame.style.aspectRatio = `${W} / ${H}`;
-  empty.append(frame, el("h3", "", `${label}가 완성될 공간이에요`),
-    el("p", "studio-hint", "왼쪽에 원하는 내용을 적고 초안을 만들어 보세요."),
-    el("p", "studio-hint", "마음에 드는 초안을 고른 뒤 글과 사진을 직접 다듬을 수 있어요."));
+  empty.append(frame, el("p", "", `왼쪽 조건을 고르고 [AI 제안 3개 생성]을 누르면 여기에 ${label} 초안 3개가 나타나요.`),
+    el("p", "studio-hint", "마음에 드는 초안을 골라 적용하면 바로 편집 화면으로 넘어가요."));
 
   const savedProduct = products.some((item) => item.id === saved?.product_id) ? saved.product_id : products[0]?.id;
   const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), savedProduct, () => {}) : null;
-  let photoSrc = saved?.photo_src || "";
-  const photo = el("div", "studio-editor-source-photo");
-  const photoStatus = el("span", "studio-hint");
-  photoStatus.setAttribute("role", "status");
-  const preview = el("img");
-  preview.alt = "초안에 사용할 제품 사진";
-  const setPhoto = (src) => {
-    photoSrc = src;
-    base.pages[0].elements = src ? [{ type: "image", role: "photo", src }] : [];
-    preview.hidden = !src;
-    if (src) preview.src = src;
-    else preview.removeAttribute("src");
-  };
-  setPhoto(photoSrc);
-  const addPhoto = button("내 사진 올리기", async () => {
-    addPhoto.disabled = true;
-    source.dataset.uploading = "true";
-    const src = await pickPhoto(photoStatus);
-    addPhoto.disabled = false;
-    source.dataset.uploading = "false";
-    if (!src || !side.isConnected) return;
-    setPhoto(src);
-    photo.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  const removePhoto = button("사진 빼기", () => {
-    setPhoto("");
-    photo.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  photo.append(preview, addPhoto, removePhoto, photoStatus);
-  const source = el("div", "studio-editor-source");
-  if (product) source.append(field("어떤 제품인가요?", product));
-  source.append(photo, el("p", "studio-hint", "사진을 올리지 않으면 선택한 제품의 기본 사진을 사용해요."));
   const form = promptForm(base, {
     isActive: () => wrap.isConnected,
-    extra: source,
+    extra: product && field("제품", product),
     empty,
     productId: product && (() => product.value),
     initial: saved,
-    status: saved && saved.ratio !== ratio ? "크기를 바꿨어요. 입력한 요청은 그대로예요. 새 초안을 만들어 주세요." : "",
+    status: saved && saved.ratio !== ratio ? "규격을 바꿨어요. 입력한 조건은 그대로예요. 프롬프트 또는 AI 제안을 다시 만들어 주세요." : "",
     onApply: (design) => onCreate(design, { product_id: product ? product.value : null }),
   });
   // 조건을 고칠 때마다 sns.js에 알려, 규격을 바꿔 다시 그려도 입력이 남게 합니다.
-  if (onFormChange) side.addEventListener("input", () => onFormChange({ ...form.options(), ratio, photo_src: photoSrc }));
-  const syncPhoto = () => { removePhoto.hidden = !photoSrc; addPhoto.textContent = photoSrc ? "사진 바꾸기" : "내 사진 올리기"; };
-  photo.addEventListener("input", syncPhoto);
-  syncPhoto();
+  if (onFormChange) side.addEventListener("input", () => onFormChange({ ...form.options(), ratio }));
   side.append(...form.intro, ...form.controls);
   main.append(el("h3", "", "AI 초안 미리보기"), empty, ...form.results);
-  if (assistantRoot) {
-    assistantRoot.classList.add("studio-editor");
-    assistantRoot.replaceChildren(side);
-    wrap.classList.add("has-assistant");
-    wrap.append(main);
-  } else wrap.append(side, main);
+  wrap.append(side, main);
   root.replaceChildren(wrap);
 }
 
@@ -484,9 +377,7 @@ export function currentPage() {
 // root 안에 포스터·카드뉴스 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
 // 카드뉴스처럼 여러 장이면 포스터 왼쪽 장 번호 버튼으로 장을 옮깁니다.
 // 배치: 위쪽 도구 줄 · 왼쪽(장 번호 + 포스터) · 오른쪽(프롬프트 · 문구 · 검수 · Figma)
-export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } = {}) {
-  imagePanelAbort?.abort();
-  imagePanelAbort = new AbortController();
+export function renderDesign(root, doc, { onSave } = {}) {
   const draft = structuredClone(doc);
   if (pageIndex >= draft.pages.length) pageIndex = 0;
   let page = draft.pages[pageIndex];
@@ -502,7 +393,7 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
   const stage = el("div", "studio-editor-stage");
   const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
   const translations = el("details", "studio-editor-translations");
-  translations.open = false;
+  translations.open = true;
   review.hidden = true;
   stage.setAttribute("role", "group");
   stage.setAttribute("aria-label",
@@ -514,14 +405,9 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
   const side = el("aside", "studio-editor-side"); // 프롬프트 · 문구 · 검수 · Figma
   const body = el("div", "studio-editor-body");
   left.append(pagesBar, view);
-  side.append(promptPanel(), imagePanel(), translations, review);
-  if (assistantRoot) {
-    assistantRoot.classList.add("studio-editor");
-    assistantRoot.replaceChildren(side);
-    wrap.classList.add("has-assistant");
-    body.append(left);
-  } else body.append(left, side);
-  wrap.append(bar, promptCache.results, body);
+  side.append(promptPanel(), translations, review);
+  body.append(left, side);
+  wrap.append(bar, body);
   root.replaceChildren(wrap);
   let externalPanel = null;  // Figma 칸 (renderExternal)
   renderExternal();
@@ -810,6 +696,43 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
     return w * W / H;
   }
 
+  // 사진을 골라 서버에 올리고 주소를 돌려줍니다. 취소하거나 실패하면 null.
+  function pickPhoto() {
+    return new Promise((resolve) => {
+      const input = el("input");
+      input.type = "file";
+      input.accept = PHOTO_TYPES.join(",");
+      input.addEventListener("cancel", () => resolve(null));
+      input.addEventListener("change", async () => {
+        const file = input.files[0];
+        if (!file) return resolve(null);
+        if (!PHOTO_TYPES.includes(file.type)) {
+          status.textContent = "JPEG·PNG·WEBP 이미지만 올릴 수 있습니다.";
+          return resolve(null);
+        }
+        const size = await imageSize(file);
+        if (size && (size[0] > MAX_SIDE || size[1] > MAX_SIDE)) {
+          status.textContent = `가로·세로가 각각 ${MAX_SIDE}px 이하인 사진만 올릴 수 있습니다. (지금 ${size[0]}×${size[1]})`;
+          return resolve(null);
+        }
+        status.textContent = "사진을 올리는 중…";
+        try {
+          const form = new FormData();
+          form.append("image", file);
+          const res = await fetch(UPLOAD_API, { method: "POST", body: form });
+          const data = await res.json().catch(() => ({ ok: false }));
+          if (!data.ok) throw new Error(data.error || "사진을 올리지 못했습니다.");
+          status.textContent = "";
+          resolve(data.url);
+        } catch (error) {
+          status.textContent = error.message;
+          resolve(null);
+        }
+      });
+      input.click();
+    });
+  }
+
   async function addItem(value) {
     let item;
     if (value === "text") {
@@ -825,7 +748,7 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
     } else if (value.startsWith("emoji:")) {
       item = { type: "sticker", role: "sticker", emoji: value.slice("emoji:".length), ...centered(14, square(14)) };
     } else if (value === "photo") {
-      const src = await pickPhoto(status);
+      const src = await pickPhoto();
       if (!src) return;
       item = { type: "image", role: "photo", src, radius: 24, ...centered(50, square(50)) };
     } else {
@@ -937,7 +860,7 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
     const item = find(selectedId);
     const tools = [];
     if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
-    tools.push(addSelect(), button("배경 제거", openRemoveBg));  // 기존 배경 제거 창(sns_image.js)을 엽니다.
+    tools.push(addSelect(), button("✂️ 배경 제거", openRemoveBg));  // 기존 배경 제거 창(sns_image.js)을 엽니다.
 
     if (!item) {
       tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
@@ -978,7 +901,7 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
       })));
     } else if (item.type === "image") {
       tools.push(button("사진 바꾸기", async () => {
-        const src = await pickPhoto(status);
+        const src = await pickPhoto();
         if (!src) return;
         item.src = src;
         draw();
@@ -1099,84 +1022,8 @@ export function renderDesign(root, doc, { onSave, onGenerated, assistantRoot } =
       isActive: () => panel.isConnected,
       onApply: async (design) => { if (promptCache?.onSave) await promptCache.onSave(design); },
     });
-    panel.append(...form.intro, ...form.controls);
-    const results = el("section", "studio-editor-proposals");
-    results.append(...form.results);
-    promptCache = { key, panel, results, doc: formDoc, onSave };
-    return panel;
-  }
-
-  function imagePanel() {
-    const panel = el("section", "studio-editor-image-ai");
-    const app = root.closest(".studio-page");
-    const signal = imagePanelAbort.signal;
-    const chatId = Number(new URL(location.href).searchParams.get("chat"));
-    const endpoint = `/content_studio/api/chats/${chatId}/generate`;
-    const jobs = draft.generated_images || [];
-    const running = ["queued", "in_progress", "processing", "pending", "waiting"];
-    let pending = jobs.some((job) => [...running, "unknown", "submitting"].includes(job?.status));
-    const note = el("p", "studio-hint");
-    note.setAttribute("role", "status");
-    let enabled = false;
-    let busy = false;
-    const create = button("현재 장의 AI 사진 만들기", async () => {
-      if (!enabled || busy || pending) return;
-      if (!chatId) { note.textContent = "작업을 먼저 저장해 주세요."; return; }
-      busy = true;
-      create.disabled = true;
-      const index = pageIndex;
-      try {
-        note.textContent = "생성 비용을 확인하고 있어요.";
-        const { quote } = await postJson(`${endpoint}/quote`, { target: "image", page: index });
-        if (!panel.isConnected) return;
-        if (!quote.allowed) { note.textContent = quote.reason || "지금은 이미지를 만들 수 없습니다."; return; }
-        if (!Number.isFinite(quote.credits) || quote.credits < 0) throw new Error("생성 비용을 확인하지 못했습니다.");
-        const dialog = el("dialog", "studio-editor-image-confirm");
-        const actions = el("div", "studio-editor-actions");
-        dialog.append(el("h2", "", "AI 사진을 만들까요?"),
-          el("p", "", `${index + 1}장에 사용할 사진을 만듭니다. ${quote.credits}크레딧이 사용됩니다.`));
-        const approved = await new Promise((resolve) => {
-          actions.append(button("취소", () => dialog.close()), button("확인하고 만들기", () => dialog.close("generate"), "btn dark"));
-          dialog.append(actions);
-          dialog.addEventListener("close", () => { const accepted = dialog.returnValue === "generate"; dialog.remove(); resolve(accepted); }, { once: true });
-          app.append(dialog);
-          dialog.showModal();
-        });
-        if (!approved || !enabled || !panel.isConnected) { note.textContent = "생성 요청을 보내지 않았습니다."; return; }
-        note.textContent = "사진을 만들고 있어요. 완료될 때까지 기다려 주세요.";
-        const data = await postJson(endpoint, { target: "image", page: index, credits: quote.credits });
-        if (panel.isConnected && onGenerated) onGenerated(data);
-      } catch (error) {
-        pending = Boolean(error.data?.submitted);
-        note.textContent = error.message;
-        if (pending && error.data.design && panel.isConnected && onGenerated) onGenerated(error.data);
-      } finally { busy = false; create.disabled = !enabled || pending; }
-    }, "btn dark");
-    create.disabled = true;
-    const update = (state) => {
-      enabled = state.connected === true && state.generation_enabled === true;
-      create.disabled = !enabled || busy || pending;
-      if (!busy) note.textContent = pending ? "생성 요청을 확인하고 있어요. 중복 요청은 보내지 않습니다."
-        : state.reason || (enabled ? "생성 전에 사용할 크레딧을 확인할 수 있어요." : "연결 상태와 생성 예산을 확인해 주세요.");
-    };
-    update({ connected: app?.dataset.higgsfieldConnected === "true", generation_enabled: app?.dataset.generationEnabled === "true", reason: app?.dataset.generationReason });
-    app?.addEventListener("studio:higgsfield-status", (event) => update(event.detail), { signal });
-    if (chatId && jobs.some((job) => running.includes(job?.status) && job?.request_id)) {
-      const timer = setTimeout(async () => {
-        if (!panel.isConnected) return;
-        try {
-          const response = await fetch(`${endpoint}/status?target=image`, { signal });
-          const data = await response.json();
-          if (!data.ok) throw new Error(data.error || "진행 상태를 확인하지 못했습니다.");
-          if (panel.isConnected && onGenerated) onGenerated(data);
-        } catch (error) { if (error.name !== "AbortError") note.textContent = `${error.message} 작업을 다시 열면 상태를 확인할 수 있어요.`; }
-      }, 5000);
-      signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
-    }
-    const options = el("details", "studio-editor-image-options");
-    options.append(el("summary", "", "AI 사진 만들기 · Higgsfield"),
-      el("p", "studio-hint", "사진을 새로 만들고 글과 배치는 그대로 유지해요."), create);
-    panel.append(options, note);
+    panel.append(...form.nodes);
+    promptCache = { key, panel, doc: formDoc, onSave };
     return panel;
   }
 

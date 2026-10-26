@@ -4,9 +4,28 @@ import { renderVideo } from "./sns_video.js";
 // 포스터·카드뉴스 편집기 [희주]. 묶어서 불러와, currentPage()가 아직 없어도 오류 없이 동작합니다.
 import * as editor from "./sns_editor.js";
 
+// ---------- 시연 데이터 (DEMO) ----------
+// 메인 탭 "지금 만들면 좋은 콘텐츠" 추천은 아직 시연 데이터입니다. 작업 목록은 저장된 작업(/api/gallery)만 보여 줍니다.
+// points: 추천 카드 개조식 2줄 [핵심 주제, 한정선 셀링포인트] (마케터 검토 전 문구)
+// 셀링포인트는 제품 사진·제품 설명에서 확인되는 것만 씁니다(단면 색, 보자기 포장, 4가지 맛).
+const DEMO_EVENTS = [
+  { name: "베트남 스승의 날", date: "2026-11-20", points: ["감사한 선생님께 전하는 정성", "보자기 포장 그대로 건네기 좋은 선물"] },
+  { name: "크리스마스", date: "2026-12-25", points: ["따뜻한 연말, 소중한 사람과 달콤한 시간", "4가지 맛을 함께 나눠 먹는 연말 디저트"] },
+];
+// 대표 메뉴 홍보 카드: 실제 메뉴(products.py). 기념일이 없을 때도 늘 만들 수 있는 기본 콘텐츠입니다.
+const DEMO_STAPLE = {
+  product_id: "mango_yogurt", name: "망고 요거트 찹쌀떡",
+  points: ["상큼한 망고 × 부드러운 요거트", "쫀득한 찹쌀떡 속 상큼한 과일 크림"],
+};
+const DEMO_NEW_MENU = {
+  product_id: "honey_red_dragonfruit", name: "꿀 레드용과 찹쌀떡",
+  points: ["꿀 머금은 레드용과의 새콤달콤한 첫맛", "선명한 자홍빛 과육이 보이는 단면"],
+};
+
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
 const WORK_KINDS = ["video", "poster", "cardnews"];  // 작업 화면이 연결된 탭
 const DESIGN_KINDS = ["poster", "cardnews"];          // 희주 편집기(sns_editor.js)로 그리는 탭
+const RECS = 4;  // 메인 탭 추천 카드 수
 
 // ---------- 화면 요소 ----------
 const page = document.querySelector(".studio-page");
@@ -29,6 +48,13 @@ function notify(message) {
   notice.hidden = !message;
 }
 
+function daysUntil(dateText) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(`${dateText}T00:00:00`) - today) / 86400000);
+}
+
+// 수정일: 2026/10/26
 function shortDate(iso) {
   const date = new Date(iso);
   const two = (n) => String(n).padStart(2, "0");
@@ -44,74 +70,6 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({ ok: false, error: "서버 응답을 읽지 못했습니다." }));
   if (!data.ok) throw new Error(data.error || "요청에 실패했습니다.");
   return data;
-}
-
-// 기존 인증은 조용히 재사용합니다. 유료 기능을 쓸 수 있고 인증이 없을 때만 안내합니다.
-let connectionRequest;
-let loginPromptShown = false;
-async function loadConnection() {
-  if (connectionRequest) return connectionRequest;
-  connectionRequest = refreshConnection();
-  try { return await connectionRequest; }
-  finally { connectionRequest = null; }
-}
-
-async function refreshConnection() {
-  try {
-    const data = await api("/higgsfield/status");
-    page.dataset.generationEnabled = String(Boolean(data.generation_enabled));
-    page.dataset.generationReason = data.reason || "생성 예산이 아직 확정되지 않았어요.";
-    page.dataset.higgsfieldConnected = String(Boolean(data.connected));
-    page.dispatchEvent(new CustomEvent("studio:higgsfield-status", { detail: data }));
-    return data;
-  } catch (error) {
-    page.dataset.generationEnabled = "false";
-    page.dataset.generationReason = "연결 상태를 확인하지 못했어요.";
-    page.dataset.higgsfieldConnected = "false";
-    page.dispatchEvent(new CustomEvent("studio:higgsfield-status", { detail: {
-      connected: false, generation_enabled: false, reason: page.dataset.generationReason,
-    } }));
-    return null;
-  }
-}
-
-async function ensureConnection() {
-  const data = await loadConnection();
-  if (!data?.generation_enabled || !data.login_required || loginPromptShown || $("work-screen").hidden) return;
-  loginPromptShown = true;
-  const dialog = el("dialog", "studio-login-dialog");
-  const title = el("h2", "", "Higgsfield 로그인이 필요해요");
-  title.id = "studio-login-title";
-  dialog.setAttribute("aria-labelledby", title.id);
-  const note = el("p", "studio-hint", "처음 한 번 로그인하면 기존 구독으로 제작할 수 있어요.");
-  note.setAttribute("role", "status");
-  const login = el("button", "btn dark", "로그인");
-  const later = el("button", "btn", "편집 먼저 하기");
-  login.type = later.type = "button";
-  later.addEventListener("click", () => dialog.close());
-  login.addEventListener("click", async () => {
-    login.disabled = true;
-    note.textContent = "로그인 화면을 여는 중…";
-    try {
-      // 다른 창에서 이미 인증했다면 로그인 화면을 다시 열지 않습니다.
-      if ((await loadConnection())?.connected) { dialog.close(); return; }
-      const data = await api("/higgsfield/connect", { method: "POST", body: {} });
-      const destination = new URL(data.authorization_url);
-      if (destination.origin !== "https://clerk.higgsfield.ai" || destination.pathname !== "/oauth/authorize") {
-        throw new Error("로그인 주소를 확인하지 못했습니다.");
-      }
-      location.assign(destination.href);
-    } catch (error) {
-      note.textContent = error.message;
-      login.disabled = false;
-    }
-  });
-  const actions = el("div", "actions");
-  actions.append(later, login);
-  dialog.append(title, note, actions);
-  dialog.addEventListener("close", () => { dialog.remove(); loginPromptShown = false; }, { once: true });
-  page.append(dialog);
-  dialog.showModal();
 }
 
 // ---------- 첫 화면 · 작업 목록 ----------
@@ -246,6 +204,64 @@ function openPreview(item) {
   dialog.showModal();
 }
 
+// ---------- 메인 탭 · 지금 만들면 좋은 콘텐츠 ----------
+// 신메뉴 출시 → 다가오는 기념일 → 대표 메뉴 순서로 4개. 종류는 카드의 [포스터] [카드뉴스] [영상] 버튼으로 고릅니다.
+function recommendations() {
+  const recs = [{
+    type: "new",
+    mark: "NEW",
+    title: `${DEMO_NEW_MENU.name} 출시`,
+    product_id: DEMO_NEW_MENU.product_id,
+    points: DEMO_NEW_MENU.points,
+  }];
+  for (const event of DEMO_EVENTS) {
+    const days = daysUntil(event.date);
+    if (days < 0) continue;
+    recs.push({
+      type: "dday",
+      mark: days === 0 ? "D-DAY" : `D-${days}`,
+      title: event.name,
+      date: event.date.slice(5).replace("-", "/"),
+      points: event.points,
+      event: event.name,
+    });
+  }
+  recs.push({
+    type: "season",  // 표시 색(초록)은 예전 제철 카드 스타일을 그대로 씁니다.
+    mark: "대표",
+    title: `${DEMO_STAPLE.name} 대표 메뉴`,  // 제품을 정해서 보내므로 누르면 묻지 않고 바로 초안
+    product_id: DEMO_STAPLE.product_id,
+    points: DEMO_STAPLE.points,
+  });
+  return recs.slice(0, RECS);
+}
+
+// 추천 카드: 제목 [D-26 · 대표 · NEW] → 개조식 2줄(주제 · 셀링포인트) → [포스터] [카드뉴스] [영상].
+// 버튼을 누르면 그 탭으로 옮겨 "제목 + 종류" 요청으로 바로 초안을 만듭니다(주소의 start, 시작할 때 한 번만).
+function recCard(rec) {
+  const card = el("div", `studio-rec is-${rec.type}`);
+  const title = el("p", "studio-rec-title", rec.title);
+  const mark = el("span", "studio-rec-mark", rec.mark);
+  if (rec.date) mark.title = `${rec.date} 기념일`;
+  title.append(mark);
+  const points = el("ul", "studio-rec-points");
+  points.append(...rec.points.map((point) => el("li", "", point)));
+  const kinds = el("div", "studio-rec-go");
+  for (const target of ["poster", "cardnews", "video"]) {  // 탭 순서
+    const button = el("button", "btn", KIND_LABELS[target]);
+    button.type = "button";
+    button.title = `${rec.title} ${KIND_LABELS[target]} 만들기`;
+    button.addEventListener("click", () => {
+      const start = { text: `${rec.title} ${KIND_LABELS[target]}`, event: rec.event, product_id: rec.product_id };
+      location.href = `${location.pathname}?tab=${target}&start=${encodeURIComponent(JSON.stringify(start))}`;
+    });
+    kinds.append(button);
+  }
+  card.append(title, points, kinds);
+  return card;
+}
+
+// 추천에서 넘어온 요청(주소 start). 틀린 값이면 null.
 function startRequest(params) {
   try {
     const start = JSON.parse(params.get("start") || "null");
@@ -267,9 +283,13 @@ const USER_REFS_MAX = 4;
 let startForm = null;
 
 // 영상 입력창 문구: 처음 만들 때와 초안 뒤
-const VIDEO_FIRST_PLACEHOLDER = "예: 망고 요거트 찹쌀떡의 단면을 보여주는 따뜻한 분위기의 영상을 만들어 줘.";
-const REVISE_PLACEHOLDER = "예: 제품을 더 가까이 보여 줘. 마지막 장면은 선물 포장으로 바꿔 줘.";
-const RATIO_LABELS = { "4:5": "피드 4:5", "9:16": "스토리 9:16", "16:9": "가로 16:9", "1:1": "정사각형 1:1" };
+const VIDEO_FIRST_PLACEHOLDER = [
+  "생성할 영상의 컨셉·스토리·분위기를 입력해 주세요.",
+  "예) 신메뉴 두리안 찹쌀떡 출시 기념 영상.",
+  "스토리: 포장을 푸는 손 → 반으로 갈라 진한 두리안 크림 단면 공개 → 한입 베어 물고 만족스러운 표정 → 제품 히어로 컷.",
+  "분위기: 고급스럽고 차분한 톤, 따뜻한 조명, 느린 카메라 움직임.",
+].join("\n");
+const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
   const url = new URL(location.href);
@@ -277,20 +297,16 @@ function setUrl(chatId) {
   if (chatId) url.searchParams.set("chat", chatId);
   else url.searchParams.delete("chat");
   url.searchParams.delete("start");  // 추천 요청은 한 번만 (새로고침해도 다시 만들지 않게)
-  url.searchParams.delete("new");
   history.replaceState(null, "", url);
 }
 
 function showScreen(name) {
   $("home-screen").hidden = name !== "home";
   $("work-screen").hidden = name !== "work";
-  $("new").hidden = kind === "main";
-  page.classList.toggle("is-working", name === "work");
-  if (name === "work") ensureConnection();
+  $("new").hidden = name !== "home" || kind === "main";  // 메인 탭은 추천·탭 버튼으로 시작
 }
 
 function goHome() {
-  if (work.busy) return;
   showScreen("home");
   setUrl(null);
   notify("");
@@ -303,27 +319,22 @@ function resetWork() {
 }
 
 function startNew() {
-  if (work.busy) return;
   if (!WORK_KINDS.includes(kind)) return notify(`새 ${KIND_LABELS[kind]} 작업 화면은 다음 단계에서 연결됩니다.`);
   resetWork();
   showScreen("work");
   setUrl(null);
   notify("");
-  // 새 작업은 요청부터 시작하며 이전 작업 목록은 접습니다.
+  // 새 작업이라 이전 작업 칸은 닫습니다(☰ 이전 작업으로 다시 열 수 있음). 첫 안내는 입력창 문구(VIDEO_FIRST_PLACEHOLDER)로 합니다.
   $("history").hidden = true;
-  $("history-toggle").setAttribute("aria-expanded", "false");
   $("work-screen").classList.remove("has-history");
   Object.assign(settings, { title: "", user_refs: [], ref_video: null });  // 제목·레퍼런스는 작업마다 새로
-  startForm = null;
-  $("chat-input").value = "";
-  $("advanced-settings").open = false;
+    startForm = null;
   feedback("", "");
   renderWork();
   if (kind === "video") $("chat-input").focus();
 }
 
 async function openChat(chatId) {
-  if (work.busy) return;
   try {
     const data = await api(`/chats/${chatId}`);
     if (data.chat.kind !== kind) return notify("다른 탭의 작업입니다.");
@@ -333,8 +344,8 @@ async function openChat(chatId) {
     applyState(chatId, data);
     loadHistory();
   } catch (error) {
-    goHome();
     notify(`작업을 열지 못했습니다. (${error.message})`);
+    goHome();
   }
 }
 
@@ -358,31 +369,28 @@ function renderWork() {
     button.hidden = !(button.dataset.kinds || "video poster").split(" ").includes(kind) || (ratioLocked && !isCurrent);
     button.classList.toggle("dark", isCurrent && !ratioLocked);
     button.classList.toggle("is-fixed", ratioLocked && isCurrent);
-    button.textContent = RATIO_LABELS[button.dataset.value];
-    button.setAttribute("aria-pressed", String(isCurrent));
+    button.textContent = ratioLocked && isCurrent ? `비율 ${button.dataset.value}` : button.dataset.value;
     button.disabled = ratioLocked;
     button.title = ratioLocked ? "비율은 새로 만들 때 정해요" : "";
   }
   $("set-duration").closest("label").hidden = kind !== "video";
-  $("set-sound").hidden = kind !== "video";
-  $("work-screen").classList.toggle("is-start", !doc);
-  $("video-setup").hidden = kind !== "video";
-  $("design-assistant").hidden = !DESIGN_KINDS.includes(kind);
-  $("assistant-hint").textContent = doc ? "원하는 부분을 고치며 완성해 보세요." : "제품과 원하는 내용만 알려 주세요.";
-  $("settings-summary").textContent = `${current.ratio}${kind === "video" ? ` · ${current.duration}초` : ""}`;
-  $("canvas-title").textContent = `${KIND_LABELS[kind]} ${doc ? "다듬기" : "미리보기"}`;
-  $("save-state").textContent = work.busy ? "내용을 반영하는 중…" : doc ? "작업 저장됨" : "내용을 입력하면 시작돼요";
-  for (const step of page.querySelectorAll("[data-step]")) {
-    const active = step.dataset.step === (doc ? "edit" : "request");
-    if (active) step.setAttribute("aria-current", "step");
-    else step.removeAttribute("aria-current");
-    step.classList.toggle("is-done", Boolean(doc) && step.dataset.step === "request");
-  }
+  $("set-sound").hidden = true;  // 소리는 버튼 대신 입력창에 "소리 켜줘"로 바꿉니다.
+  // 세 탭 모두 [← 첫 화면]·[☰ 이전 작업] 버튼과 이전 작업 칸 없이 씁니다(첫 화면은 위쪽 탭 버튼으로).
+  $("go-home").hidden = $("history-toggle").hidden = true;
+  $("history").hidden = true;
+  $("work-screen").classList.remove("has-history");
+  // 위쪽 가운데 정렬(is-centered): (영상 제목) → (제품)·비율·(길이)·되돌리기 한 줄. 영상 첫 생성 화면(is-start)은 그 아래 바로 입력창.
+  // 되돌리기·다시하기는 초안 뒤에만.
+  $("work-screen").classList.add("is-centered");
+  $("work-screen").classList.toggle("is-start", kind === "video" && !doc);
+  // 묶음 칸째 숨겨야 빈 칸 간격 없이 가운데에 맞습니다(.actions는 display가 정해져 있어 style로).
+  $("undo").parentElement.style.display = doc ? "" : "none";
   // 제품 고르기: 영상만. 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
   const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
     : settings.product_ids;
-  // 영상 초안 뒤 제품은 고정하고 작업 이름은 왼쪽에서 고칩니다.
-  $("product-field").hidden = kind !== "video" || Boolean(doc);
+  // 영상 초안 뒤에는 제품을 바꿀 수 없어 버튼을 숨기고, 제목 왼쪽 · 비율·초·↶ ↷ 오른쪽 한 줄로(is-video-edit, sns.css)
+  $("set-product").hidden = kind !== "video" || Boolean(doc);
+  $("work-screen").classList.toggle("is-video-edit", kind === "video" && Boolean(doc));
   // 영상 제목: 초안 전에는 입력값, 초안 뒤에는 그 작업 제목으로 고정해 보여 주고, 누르면 고칠 수 있습니다(이름 바꾸기).
   const title = $("set-title");
   title.hidden = kind !== "video";
@@ -405,18 +413,13 @@ function renderWork() {
   $("set-duration").value = current.duration;
   $("set-sound").textContent = current.sound ? "소리 켬" : "소리 끔";
   $("set-sound").classList.toggle("dark", current.sound);
-  $("set-sound").setAttribute("aria-pressed", String(Boolean(current.sound)));
   $("undo").disabled = !work.canUndo || work.busy;
   $("redo").disabled = !work.canRedo || work.busy;
-  $("send").disabled = work.busy;
-  $("send").textContent = work.busy ? "정리하는 중…" : doc ? "수정 요청하기 ↑" : "내용 정리하기 ↑";
-  $("new").disabled = $("go-home").disabled = work.busy;
-  $("request-label").textContent = doc ? "어떤 부분을 바꿀까요?" : "어떤 영상을 만들까요?";
-  $("examples").hidden = Boolean(doc);
 
-  // 이미지는 편집기가 왼쪽 요청 패널을 관리합니다. 공통 대화 입력은 영상에 씁니다.
+  // 포스터·카드뉴스는 초안이 생기기 전에는 아래 입력줄을 숨기고, 가운데 첫 화면에서 AI 초안을 만듭니다.
+  // 아래 수정 요청 입력창은 영상 탭에만. 포스터·카드뉴스는 가운데 편집기·오른쪽 프롬프트 칸으로 고치고,
+  // 결과 안내 줄(추천으로 만든 초안 안내 등)만 남깁니다(비어 있으면 줄도 숨김).
   $("chat-form").hidden = DESIGN_KINDS.includes(kind);
-  $("command-panel").hidden = DESIGN_KINDS.includes(kind) && !$("feedback-text").textContent;
   // 영상 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
   $("command-toggle").hidden = !doc || DESIGN_KINDS.includes(kind);
   showCommand(Boolean(doc) && commandCollapsed && kind === "video");
@@ -425,8 +428,7 @@ function renderWork() {
       kind,
       ratio: settings.ratio,
       products: PRODUCTS,
-      assistantRoot: $("design-assistant"),
-      form: startForm,
+            form: startForm,
       onFormChange: (value) => { startForm = value; },
 
       onCreate: async (design, { product_id }) => {
@@ -440,24 +442,13 @@ function renderWork() {
     return;
   }
   if (!doc) {
-    const empty = el("div", "studio-video-empty");
-    const frame = el("div", "studio-video-empty-frame");
-    frame.style.aspectRatio = current.ratio.replace(":", " / ");
-    frame.append(el("span", "studio-video-empty-play", "▷"), el("span", "", `${current.duration}초 · ${current.ratio}`));
-    empty.append(frame, el("h3", "", "이곳에서 영상이 완성돼요"),
-      el("p", "", "왼쪽에 원하는 내용을 적으면 먼저 장면 구성을 보여 드려요."),
-      el("p", "studio-hint", "내용을 확인한 뒤 이미지를 만들거나 영상 생성을 시작할 수 있어요."));
-    $("canvas").replaceChildren(empty);
+    $("canvas").replaceChildren();
     return;
   }
   if (kind === "video") {
     renderVideo($("canvas"), doc, { onSave: saveDesign, onCommand: (text) => send(text), onUploadRef: uploadRef });
   }
-  else editor.renderDesign($("canvas"), doc, {
-    onSave: saveDesign,
-    assistantRoot: $("design-assistant"),
-    onGenerated: (data) => { applyState(work.chatId, data); notify(data.warning || data.error || ""); loadHistory(); },
-  });
+  else editor.renderDesign($("canvas"), doc, { onSave: saveDesign });
 }
 
 async function saveDesign(doc) {
@@ -477,7 +468,6 @@ function feedback(type, text) {
   $("feedback").className = `studio-feedback${type ? ` is-${type}` : ""}`;
   $("feedback-text").textContent = text;
   $("chat-choices").replaceChildren();
-  $("command-panel").hidden = DESIGN_KINDS.includes(kind) && !text;
 }
 
 // 제품을 되물으면 답의 "(망고 요거트 찹쌀떡 / …)" 목록으로 고르기 버튼을 만듭니다.
@@ -495,8 +485,6 @@ async function send(text, extra = {}) {
   text = text.trim();
   if (!text || work.busy) return;
   work.busy = true;
-  $("send").disabled = $("new").disabled = $("go-home").disabled = true;
-  $("send").textContent = "정리하는 중…";
   const isNew = !work.chatId;
   feedback("info", "반영하는 중…");
   const body = { text, kind, chat_id: work.chatId, ...settings, ...extra };
@@ -520,8 +508,8 @@ async function send(text, extra = {}) {
       else feedback("warn", data.reply);
       return;
     }
-    const recheck = data.design.reviewed ? "" : " — 바뀐 내용을 확인해 주세요";
-    if (isNew) feedback("ok", `✓ ${data.design.scenes.length}개 장면을 준비했어요. 오른쪽에서 확인하고 영상을 만들어 보세요.`);
+    const recheck = data.design.reviewed ? "" : " — 프롬프트 다시 검토 필요";
+    if (isNew) feedback("ok", `✓ ${data.design.scenes.length}컷 초안을 만들었어요 — 장면·자막·프롬프트를 검토해 주세요`);
     else if (data.changes.length) feedback("ok", `✓ 반영: ${data.changes.join(" · ")}${recheck}`);
     else feedback("warn", data.reply);
   } catch (error) {
@@ -534,7 +522,6 @@ async function send(text, extra = {}) {
 
 // 규격 버튼: 초안 전에는 첫 규격을 고르고, 초안 뒤에는 같은 말을 대화로 보냅니다.
 function changeSetting(key, value, phrase) {
-  if (work.busy) return;
   if (!work.doc) {
     settings[key] = value;
     return renderWork();
@@ -625,7 +612,7 @@ let commandCollapsed = (() => {
 
 function showCommand(collapsed) {
   $("chat-form").closest(".studio-command").classList.toggle("is-collapsed", collapsed);
-  $("command-toggle").textContent = collapsed ? "수정 요청 펼치기 ▾" : "수정 요청 접기 ▴";
+  $("command-toggle").textContent = collapsed ? "펼치기 ▴" : "접기 ▾";
   $("command-toggle").setAttribute("aria-expanded", String(!collapsed));
 }
 
@@ -689,13 +676,10 @@ async function loadHistory() {
 }
 
 function bindWork() {
-  page.addEventListener("toggle", (event) => {
-    if (event.target.matches(".studio-editor-image-options[open]")) ensureConnection();
-  }, true);
   $("go-home").addEventListener("click", goHome);
   $("history-toggle").addEventListener("click", () => {
     $("history").hidden = !$("history").hidden;
-    $("history-toggle").setAttribute("aria-expanded", String(!$("history").hidden));
+    $("work-screen").classList.toggle("has-history", !$("history").hidden);
     loadHistory();
   });
   $("undo").addEventListener("click", () => move("undo"));
@@ -719,7 +703,6 @@ function bindWork() {
   // [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다.
   for (const button of $("set-product").children) {
     button.addEventListener("click", () => {
-      if (work.busy) return;
       const ids = PRODUCTS.map((item) => item.id), value = button.dataset.value;
       if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
       else if (settings.product_ids.includes(value)) settings.product_ids = settings.product_ids.filter((id) => id !== value);
@@ -740,20 +723,12 @@ function bindWork() {
   $("chat-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const input = $("chat-input");
-    if (work.busy || !input.value.trim()) return;
     send(input.value);
     input.value = "";
     fitInput();
   });
   // 한글 입력 중(조합 중) Enter는 글자 확정만 하고 보내지 않습니다.
   $("chat-input").addEventListener("input", fitInput);
-  for (const button of page.querySelectorAll("[data-example]")) {
-    button.addEventListener("click", () => {
-      $("chat-input").value = button.dataset.example;
-      fitInput();
-      $("chat-input").focus();
-    });
-  }
   $("ref-add").addEventListener("click", () => $("ref-file").click());
   $("command-toggle").addEventListener("click", toggleCommand);
   $("ref-file").addEventListener("change", (event) => {
@@ -763,15 +738,15 @@ function bindWork() {
   });
   // Enter = 보내기, Shift+Enter = 줄바꿈. 한글 입력 중(조합 중) Enter는 글자 확정만 합니다.
   $("chat-input").addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    if (event.key !== "Enter" || event.shiftKey) return;
     event.preventDefault();
-    $("chat-form").requestSubmit();
+    if (!event.isComposing) $("chat-form").requestSubmit();
   });
 
   // Ctrl+Z / Ctrl+Shift+Z: 입력칸에 쓰는 중에는 글자 되돌리기로 둡니다.
   document.addEventListener("keydown", (event) => {
     if ($("work-screen").hidden || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") return;
-    if (event.target.closest("input, textarea, [contenteditable='true']")) return;
+    if (event.target.closest("input, textarea")) return;
     event.preventDefault();
     move(event.shiftKey ? "redo" : "undo");
   });
@@ -779,10 +754,9 @@ function bindWork() {
 
 // ---------- 시작 ----------
 if (page) {
-  page.dataset.generationEnabled = "false";
-  page.dataset.generationReason = "생성 예산이 아직 확정되지 않았어요.";
-  page.dataset.higgsfieldConnected = "false";
-  loadConnection();
+  // 되돌리기·다시하기를 제품·비율·길이 줄 끝에 둡니다(가운데 한 줄).
+  page.querySelector(".studio-options").append($("undo").parentElement);
+  if (kind === "main") $("recs").replaceChildren(...recommendations().map(recCard));
   bindListTools();
   $("new").hidden = kind === "main";
   $("new").addEventListener("click", startNew);
@@ -794,14 +768,6 @@ if (page) {
   if (chatId && WORK_KINDS.includes(kind)) openChat(chatId);
   else if (start && WORK_KINDS.includes(kind)) {
     startNew();
-    if (DESIGN_KINDS.includes(kind)) {
-      startForm = { request: start.text, product_id: start.product_id, ratio: settings.ratio };
-      renderWork();
-    } else {
-      settings.product_ids = start.product_id ? [start.product_id] : [];
-      $("chat-input").value = start.text;
-      renderWork();
-    }
-  } else if (params.get("new") === "1" && WORK_KINDS.includes(kind)) startNew();
-  else loadGallery();
+    send(start.text, { event: start.event, ...(start.product_id && { product_ids: [start.product_id] }) });
+  } else loadGallery();
 }
