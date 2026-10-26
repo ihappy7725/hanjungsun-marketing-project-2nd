@@ -385,6 +385,29 @@
   line-height: var(--line-height);
 }
 
+/* 유료 생성 후 토큰 수 · 예상 비용($): 굵은 한 줄 + 작은 설명 줄 */
+.studio-editor .studio-editor-usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--brown);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  line-height: var(--line-height);
+}
+
+.studio-editor .studio-editor-usage[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-usage b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 /* 제작 조건: 두 칸 격자, 넓은 칸(is-wide)은 한 줄 전체 */
 .studio-editor .studio-editor-brief {
   display: grid;
