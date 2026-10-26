@@ -24,7 +24,7 @@ from .products import COMMON_IMAGES, get_product
 
 SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080),
          "3:4": (1080, 1440), "4:3": (1440, 1080)}  # 3:4·4:3은 Higgsfield 그림 시안 비율 (2026-10-26 유진 요청)
-DEFAULT_RATIO = "4:5"
+DEFAULT_RATIO = "3:4"  # 2026-10-27 유진 요청: 새로 만들기 기본 3:4 (4:5는 기존 작업용으로 SIZES에 남김)
 BRAND = "HANJUNGSUN"
 
 # 제품 color(products.py)별 포스터 색. 빨강·금색 권장, 흰색·검정 위주는 주의 (README 6.3)
@@ -144,7 +144,8 @@ def make_poster(text, ratio=DEFAULT_RATIO, product=None, event=None):
 
 
 # ---------- 카드뉴스 (README 4장) ----------
-CARDNEWS_RATIOS = ("4:5", "1:1", "3:4")
+# 새로 만들기는 3:4 · 4:3 · 9:16 · 16:9 · 1:1 (포스터와 같음). 4:5는 이미 만든 작업이 열리고 고쳐지게 남깁니다.
+CARDNEWS_RATIOS = ("3:4", "4:3", "9:16", "16:9", "1:1", "4:5")
 # 임시 템플릿 4종. 마케터가 실제 템플릿을 주면 바꿉니다. (README 4-2)
 TEMPLATES = {"clean": "깔끔 정보형", "photo": "사진 강조형", "checklist": "체크리스트형", "quote": "감성 문구형"}
 DEFAULT_TEMPLATE = "clean"
