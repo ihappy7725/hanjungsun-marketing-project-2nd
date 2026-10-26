@@ -10,6 +10,15 @@
 <button type="button" class="kpi-info" aria-label="계산식 보기" data-tip="{{ tip }}">i</button>
 {%- endmacro %}
 
+{# 블록 순서 바꾸기: 손잡이를 끌어서 옮깁니다. 순서는 각자 브라우저에만 저장됩니다([기본 순서로]로 되돌림). #}
+{% macro move_tools() -%}
+<span class="kpi-move-tools">
+  <span class="kpi-icon-btn kpi-drag" draggable="true" role="button" tabindex="-1" aria-label="끌어서 순서 바꾸기" title="끌어서 순서 바꾸기">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg>
+  </span>
+</span>
+{%- endmacro %}
+
 {% macro expand_button() -%}
 <button type="button" class="kpi-expand" data-kpi-action="expand" aria-label="블록 확대" title="확대">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
@@ -24,6 +33,7 @@
     </div>
     <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
+      <button type="button" class="btn" data-kpi-action="reset-order" title="블록 순서를 처음 배치로 되돌립니다">기본 순서로</button>
       <button type="button" class="btn" data-kpi-action="refresh">새로고침</button>
     </div>
   </header>
@@ -64,7 +74,7 @@
   </section>
 
   <!-- 2×2: 예산 · ROAS · VOC · GA4 -->
-  <div class="kpi-board">
+  <div class="kpi-board" data-kpi="board">
     <section class="panel kpi-panel" data-kpi-panel="budget">
       <div class="panelhead">
         <div>
@@ -72,6 +82,7 @@
         </div>
         <div class="kpi-tools">
           <button type="button" class="btn kpi-btn-small kpi-compact-only" data-kpi-action="simulate">집행 시뮬레이션</button>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -88,16 +99,16 @@
         </div>
         <div class="kpi-burn">
           <div class="kpi-burn-label"><span>예산 소진율</span><b data-kpi="burn-pct">—</b></div>
-          <div class="progress"><span data-kpi="burn-bar" style="width:0"></span></div>
+          <div class="kpi-burn-bar" data-kpi="burn-segments" role="img" aria-label="예산 구성 막대"></div>
+          <p class="kpi-burn-legend" data-kpi="burn-legend"></p>
         </div>
         <div class="kpi-detail">
           <p class="kpi-note" data-kpi="influencer-link">인플루언서 단가 연동 확인 중…</p>
-          <p class="kpi-note">원화 예산과 비교하려고 VND 지출을 편성 시점 기준 환율로 환산합니다(확정 전 안).</p>
 
-          <p class="kpi-detail-title">채널별 집행액 · 예산 대비 비중</p>
+          <p class="kpi-detail-title">채널별 광고비 지출 · 예산 대비 비중</p>
           <div class="table-wrap">
-            <table class="kpi-table">
-              <thead><tr><th class="is-text">채널</th><th>집행액(VND)</th><th>집행액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
+            <table class="kpi-table kpi-t-spend">
+              <thead><tr><th class="is-text">채널</th><th>지출액(VND)</th><th>지출액(원)</th><th>총 예산 대비</th><th>ROAS</th></tr></thead>
               <tbody data-kpi="spend-rows"></tbody>
             </table>
           </div>
@@ -105,52 +116,80 @@
           <section class="kpi-sim" data-kpi="sim" aria-label="예산 집행 시뮬레이션">
             <p class="kpi-detail-title">
               집행 시뮬레이션 <span class="kpi-status is-fallback">추정</span>
-              {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 예정 비용 × 해당 채널의 현재 ROAS ÷ 100\n(현재 ROAS가 유지된다고 가정한 추정이며 저장되지 않습니다)") }}
+              {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 집행 비용 × 예상 ROAS ÷ 100\n예상 ROAS 기본값: KOL 협찬은 인플루언서 채널 실적, 공식 매체는 매체별 실적(직접 수정 가능)\n(저장되지 않는 추정입니다)") }}
             </p>
-            <form class="kpi-sim-form" data-kpi="sim-form">
-              <div class="kpi-sim-kind" role="radiogroup" aria-label="집행 유형">
-                <label><input type="radio" name="kind" value="influencer" checked> 인플루언서</label>
-                <label><input type="radio" name="kind" value="ad"> 배너·플랫폼 광고</label>
+            <!-- 단일 입력 폼: 집행 유형(KOL 협찬 / 공식 매체 광고)에 따라 아래 칸이 바뀝니다. -->
+            <form class="kpi-sim-form" data-kpi="sim-form" aria-label="집행 예정 추가">
+              <div class="kpi-seg kpi-sim-type" role="group" aria-label="집행 유형">
+                <button type="button" class="is-on" data-kpi-action="sim-type" data-type="kol" aria-pressed="true">KOL / 인플루언서 협찬</button>
+                <button type="button" data-kpi-action="sim-type" data-type="paid" aria-pressed="false">공식 매체 광고 (Paid)</button>
               </div>
-              <div class="kpi-sim-fields" data-kpi="sim-influencer-fields">
-                <label class="field kpi-sim-wide">인플루언서 · 단가
-                  <select name="influencer" data-kpi="sim-influencer"></select>
+              <div class="kpi-sim-fields">
+                <label class="field">집행 매체
+                  <select name="media" data-kpi="sim-media"></select>
+                  <small class="kpi-sim-help" data-kpi="sim-media-help"></small>
                 </label>
-              </div>
-              <div class="kpi-sim-fields" data-kpi="sim-ad-fields" hidden>
-                <label class="field">채널
-                  <select name="channel" data-kpi="sim-channel"></select>
+                <label class="field" data-kpi="sim-media-name" hidden>매체 이름
+                  <input type="text" name="mediaName" maxlength="40" placeholder="예: Google Ads">
                 </label>
-                <label class="field">예정 광고비
-                  <input type="number" name="amount" min="0" step="1" inputmode="numeric" placeholder="예: 20000000">
+                <!-- KOL 협찬: 계정명은 입력 + 자동완성(인플루언서 탭 단가 목록). 고르면 매체·콘텐츠·예산을 채웁니다. -->
+                <label class="field kpi-sim-kol">계정/인물명
+                  <input type="text" name="account" list="kpi-sim-accounts" maxlength="40" autocomplete="off" placeholder="예: @hanoi.eats" data-kpi="sim-account">
+                  <datalist id="kpi-sim-accounts" data-kpi="sim-accounts"></datalist>
+                  <small class="kpi-sim-help" data-kpi="sim-quote-help"></small>
                 </label>
-                <label class="field">단위
-                  <select name="unit">
-                    <option value="VND">VND</option>
-                    <option value="KRW">원</option>
+                <!-- 콘텐츠 형태: 집행 매체에 맞는 형식만 표시. 계정·매체·형식이 인플루언서 탭 단가와 맞으면 집행 예산 자동 채움 -->
+                <label class="field kpi-sim-kol">콘텐츠 형태
+                  <select name="format" data-kpi="sim-format"></select>
+                </label>
+                <label class="field" data-kpi="sim-format-name" hidden>콘텐츠 형태 직접 입력
+                  <input type="text" name="formatName" maxlength="40" placeholder="예: 라이브 2회">
+                </label>
+                <!-- 공식 매체 광고 -->
+                <label class="field kpi-sim-paid" hidden>캠페인 목적
+                  <select name="objective">
+                    <option value="전환/매출 증대">전환/매출 증대</option>
+                    <option value="트래픽">트래픽</option>
+                    <option value="도달">도달</option>
                   </select>
                 </label>
+                <label class="field">예상 ROAS(%)
+                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 300" data-kpi="sim-roas">
+                  <small class="kpi-sim-help" data-kpi="sim-roas-help"></small>
+                </label>
+                <div class="kpi-sim-row">
+                  <label class="field">집행 예산
+                    <input type="text" name="amount" inputmode="numeric" autocomplete="off" placeholder="예: 1,000,000" data-kpi-money>
+                  </label>
+                  <label class="field kpi-sim-unit">화폐
+                    <select name="unit" data-kpi="sim-unit">
+                      <option value="KRW" selected>KRW(원)</option>
+                      <option value="VND">VND</option>
+                    </select>
+                  </label>
+                </div>
               </div>
-              <button type="submit" class="btn dark">목록에 추가</button>
+              <div class="kpi-sim-foot">
+                <small class="kpi-sim-help" data-kpi="sim-rate-help"></small>
+                <button type="submit" class="btn dark">목록에 추가</button>
+              </div>
             </form>
             <p class="kpi-note" data-kpi="sim-source"></p>
             <p class="kpi-error" data-kpi="sim-error" hidden></p>
 
             <div class="table-wrap">
-              <table class="kpi-table">
-                <thead><tr><th class="is-text">집행 예정 항목</th><th class="is-text">유형</th><th>비용(원)</th><th>예상 매출(원, 참고)</th><th></th></tr></thead>
+              <table class="kpi-table kpi-t-sim">
+                <thead><tr><th class="is-text">구분</th><th class="is-text">매체 및 대상</th><th class="is-text">세부 내용</th><th>집행 비용</th><th>예상 ROAS</th><th>예상 매출</th><th>관리</th></tr></thead>
                 <tbody data-kpi="sim-rows"></tbody>
               </table>
             </div>
 
             <div class="kpi-sim-result">
-              <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong></div>
-              <div><span>집행 예정 합계</span><strong data-kpi="sim-planned">—</strong></div>
-              <div><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong></div>
-            </div>
-            <div class="kpi-sim-bar" aria-hidden="true">
-              <span class="kpi-sim-bar-used" data-kpi="sim-bar-used"></span>
-              <span class="kpi-sim-bar-planned" data-kpi="sim-bar-planned"></span>
+              <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong><small data-kpi="sim-now-sub"></small></div>
+              <div><span>KOL 협찬 예정</span><strong data-kpi="sim-planned-kol">—</strong><small data-kpi="sim-planned-kol-sub"></small></div>
+              <div><span>공식 매체 예정</span><strong data-kpi="sim-planned-paid">—</strong><small data-kpi="sim-planned-paid-sub"></small></div>
+              <!-- 결과 카드: 가장 중요한 '집행 후 남는 예산'을 강조 -->
+              <div class="kpi-sim-key" data-kpi="sim-after-card"><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong><small data-kpi="sim-after-sub"></small></div>
             </div>
             <p class="kpi-note" data-kpi="sim-summary">항목을 추가하면 집행 후 남는 예산을 바로 계산합니다.</p>
           </section>
@@ -162,21 +201,28 @@
     <section class="panel kpi-panel" data-kpi-panel="roas">
       <div class="panelhead">
         <div>
-          <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%") }}</h2>
+          <h2>채널별 ROAS {{ info("ROAS(%) = 해당 채널 광고로 발생한 매출액 ÷ 투입 광고비 × 100\nCPA(전환당 비용) = 투입 광고비 ÷ 구매 전환 건수\n점선: 손익분기 300%\n통화: 원화 = VND × 편성 기준 환율 ÷ 100, 달러 = 원화 ÷ 현재 원/달러 고시 환율") }}</h2>
         </div>
         <div class="kpi-tools">
+          <div class="kpi-seg" role="group" aria-label="통화 단위">
+            <button type="button" class="is-on" data-kpi-action="currency" data-cur="KRW" aria-pressed="true">원</button>
+            <button type="button" data-kpi-action="currency" data-cur="USD" aria-pressed="false">달러</button>
+            <button type="button" data-kpi-action="currency" data-cur="VND" aria-pressed="false">동</button>
+          </div>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
       <div class="kpi-panel-body">
-        <div class="kpi-chart kpi-chart-bar">
+        <div class="kpi-chart kpi-chart-bar kpi-chart-fill">
           <canvas data-kpi-chart="roas" aria-label="채널별 ROAS 막대 차트" role="img"></canvas>
         </div>
         <p class="kpi-note kpi-one-line" data-kpi="roas-advice"></p>
+        <dl class="kpi-roas-totals" data-kpi="roas-totals"></dl>
         <div class="kpi-detail table-wrap">
-          <table class="kpi-table">
+          <table class="kpi-table kpi-t-roas">
             <thead>
-              <tr><th class="is-text">채널</th><th>광고비(VND)</th><th>매출(VND)</th><th>ROAS</th><th>CPA(VND)</th><th>상태</th></tr>
+              <tr><th class="is-text">채널</th><th data-kpi="th-spend">광고비(원)</th><th data-kpi="th-revenue">매출(원)</th><th>ROAS</th><th data-kpi="th-cpa">CPA(원)</th><th>상태</th></tr>
             </thead>
             <tbody data-kpi="channel-rows"></tbody>
           </table>
@@ -188,11 +234,12 @@
     <section class="panel kpi-panel" data-kpi-panel="voc">
       <div class="panelhead">
         <div>
-          <h2>VOC 감성 · 이슈 키워드 {{ info("감성 비율 = 감성별 리뷰 수 ÷ 전체 리뷰 수\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
+          <h2>VOC {{ info("만족도·키워드 = 공개 리뷰 + QR 설문 주관식 의견(응답자 1명당 1줄)\n설문 의견 만족도: 응답자 6문항 평균 4점 이상 만족 · 3점대 보통 · 3점 미만 불만\nQR 응답률 = 설문 응답 수 ÷ QR 스캔 수 × 100\n수집처: Shopee · Instagram · TikTok · Zalo OA(팜플렛 QR)") }}</h2>
         </div>
         <div class="kpi-tools">
 
           <button type="button" class="btn dark kpi-btn-small" data-kpi-action="voc-analyze">AI로 분석</button>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -201,22 +248,52 @@
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">
           <div class="kpi-chart kpi-chart-small">
-            <canvas data-kpi-chart="sentiment" aria-label="리뷰 감성 비율 도넛 차트" role="img"></canvas>
+            <canvas data-kpi-chart="sentiment" aria-label="리뷰 만족도 비율 도넛 차트" role="img"></canvas>
           </div>
           <div class="kpi-chart kpi-chart-keywords">
             <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
           </div>
         </div>
         <div class="kpi-qr" data-kpi="qr-strip"></div>
+
+        <!-- 기본 화면은 QR 줄까지. 설문 결과와 리뷰 목록은 확대 화면에서 봅니다. -->
         <div class="kpi-detail">
-          <p class="kpi-detail-title">팜플렛 QR 설문 만족도</p>
-          <dl class="kpi-survey" data-kpi="survey-list"></dl>
-          <div class="table-wrap kpi-review-wrap">
-            <table class="kpi-table">
-              <thead><tr><th>수집처</th><th>한국어 번역 / 베트남어 원문</th><th>감성</th><th>토픽</th></tr></thead>
-              <tbody data-kpi="review-rows"></tbody>
+          <p class="kpi-detail-title">
+            팜플렛 QR 설문 만족도 <span class="kpi-review-count" data-kpi="survey-count"></span>
+          </p>
+          <div class="kpi-survey-legend" aria-hidden="true">
+            <span><i class="kpi-s1"></i>1점</span><span><i class="kpi-s2"></i>2점</span><span><i class="kpi-s3"></i>3점</span><span><i class="kpi-s4"></i>4점</span><span><i class="kpi-s5"></i>5점</span>
+          </div>
+          <div class="table-wrap">
+            <table class="kpi-table kpi-t-survey">
+              <thead><tr><th class="is-text">문항</th><th class="is-text">점수 분포</th><th>평균</th><th>만족(4~5점)</th><th>응답</th></tr></thead>
+              <tbody data-kpi="survey-rows"></tbody>
             </table>
           </div>
+          <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 만족 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
+
+          <!-- 리뷰 보기: 언어·만족도 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
+          <p class="kpi-detail-title">리뷰</p>
+          <div class="kpi-review-tools">
+            <label class="kpi-select-label">언어
+              <select class="kpi-select" data-kpi-action="review-lang" data-kpi="review-lang">
+                <option value="ko" selected>한국어</option>
+                <option value="vi">베트남어</option>
+                <option value="both">둘 다</option>
+              </select>
+            </label>
+            <label class="kpi-select-label">만족도
+              <select class="kpi-select" data-kpi-action="review-filter" data-kpi="review-filter">
+                <option value="all" selected>전체</option>
+                <option value="Positive">만족</option>
+                <option value="Neutral">보통</option>
+                <option value="Negative">불만</option>
+              </select>
+            </label>
+            <span class="kpi-review-count" data-kpi="review-count"></span>
+          </div>
+          <ul class="kpi-review-list" data-kpi="review-list"></ul>
+          <nav class="kpi-pager" data-kpi="review-pager" aria-label="리뷰 페이지"></nav>
         </div>
       </div>
       <p class="kpi-meta" data-kpi="voc-meta"></p>
@@ -233,6 +310,7 @@
             <input type="checkbox" data-kpi-action="ga4-toggle" checked>
             <span>GA4</span>
           </label>
+          {{ move_tools() }}
           {{ expand_button() }}
         </div>
       </div>
@@ -256,6 +334,14 @@
             </div>
           </div>
           <p class="kpi-note" data-kpi="ga4-proxy"></p>
+          <!-- 기본 화면: 유입 채널 Top 5 참여율 (전체 채널은 확대 화면) -->
+          <div class="kpi-ga4-top kpi-compact-only" data-kpi="ga4-top-section">
+            <p class="kpi-detail-title">
+              유입 채널 Top 5 · 참여율
+              {{ info("세션 수가 많은 순서로 5개 채널\n막대 길이: 채널 참여율(참여 세션 ÷ 세션)\n세로선: 전체 참여율") }}
+            </p>
+            <ol class="kpi-ga4-bars" data-kpi="ga4-top"></ol>
+          </div>
           <div class="kpi-detail">
             <p class="kpi-note" data-kpi="ga4-note"></p>
             <div data-kpi="ga4-channel-section">
@@ -267,7 +353,7 @@
                 <canvas data-kpi-chart="ga4-channels" aria-label="유입 채널별 참여율 막대 차트" role="img"></canvas>
               </div>
               <div class="table-wrap">
-                <table class="kpi-table">
+                <table class="kpi-table kpi-t-ga4">
                   <thead><tr><th class="is-text">채널</th><th>세션</th><th>세션 비중</th><th>참여 세션</th><th>참여율</th></tr></thead>
                   <tbody data-kpi="ga4-channel-rows"></tbody>
                 </table>
@@ -284,7 +370,7 @@
             </div>
           </div>
           <div class="table-wrap">
-            <table class="kpi-table">
+            <table class="kpi-table kpi-t-creator">
               <thead><tr><th class="is-text">#</th><th class="is-text">크리에이터</th><th class="is-text">플랫폼</th><th>링크 클릭</th><th>전환</th><th>전환율</th></tr></thead>
               <tbody data-kpi="creator-rows"></tbody>
               <tfoot><tr data-kpi="creator-total"></tr></tfoot>
