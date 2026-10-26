@@ -10,7 +10,7 @@ import re
 import shutil
 import subprocess
 
-from .videos import COMMON_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot
+from .videos import COMMON_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot, scene_kind
 
 # 결정 사항 (README 10장, 2026-10-24 유진)
 VIDEO_MODEL = "kling4_0"            # Kling 4.0
@@ -85,15 +85,16 @@ def video_args(doc, start_image=None, photos=(), videos=(), end_image=None):
     if videos:
         clips = [part for path in videos for part in ("--video-references", path)]
         return args + ["--mode", "reference-to-video", "--aspect_ratio", doc["ratio"], *frames, *refs, *clips]
-    if start_image:
-        return args + ["--mode", "image-to-video", *frames, *refs]
+    if start_image:  # 비율을 꼭 보냅니다(안 보내면 Kling 기본값 16:9)
+        return args + ["--mode", "image-to-video", "--aspect_ratio", doc["ratio"], *frames, *refs]
     if photos:
         return args + ["--mode", "reference-to-video", "--aspect_ratio", doc["ratio"], *refs]
     return args + ["--mode", "text-to-video", "--aspect_ratio", doc["ratio"]]
 
 
-def image_prompt(doc, photo=False, index=0):
+def image_prompt(doc, roles=(), index=0):
     """미리보기 이미지(컷 하나의 그림) 프롬프트: 그 컷 장면·카메라·움직임 + 제품 고정 문장 + 분위기·조명.
+    roles: 첨부 사진마다 무엇인지(영어, 순서대로). 사진마다 역할을 적어 겉모습 컷에 단면이 나오지 않게 합니다.
     컷마다 따로 만들어도 한 영상처럼 보이게 같은 배경·조명을 지키라고 적습니다. 글자는 넣지 않습니다."""
     style = STYLES.get(doc.get("style")) or STYLES["premium"]
     look = PRODUCT_LOOK.get(doc.get("product"), (None,))[0]
@@ -114,8 +115,12 @@ def image_prompt(doc, photo=False, index=0):
         f"Photorealistic still frame, {place} of a {style['genre'][0]}: {scene}.",
         f"Camera: {_shot(style, index, count)[0]}; {_action(style, index, count)[0]}." if count else "",
         f"The product: {look}." if look else "",
-        ("The product must look exactly like the attached product photo." if len(names) == 1
-         else "Each flavor must look exactly like its attached product photo.") if photo else "",
+        ("Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, role in enumerate(roles))
+         + ". The product must match the photos that fit this shot exactly; reference images guide only mood, "
+           "composition and color.") if roles else "",
+        # 속 컷: 단면만 덩그러니 나오지 않게 동그란 찹쌀떡을 가르는 순간으로
+        ("The rice cake starts as the round white one in the outside photo and is caught at the moment it is split "
+         "open, revealing the filling from the cross-section photo.") if scene_kind(scene) == "inside" else "",
         f"Style: {style['keywords'][0]}.",
         f"Setting: {doc.get('background', '')}, {doc.get('mood', '')} mood, {doc.get('lighting', '')}.",
         "Keep the same setting, lighting and product look as the other shots of this video." if count > 1 else "",
@@ -125,10 +130,11 @@ def image_prompt(doc, photo=False, index=0):
 
 
 def image_args(doc, photos=(), index=0):
-    """컷 하나의 미리보기 이미지 요청. photos(제품 사진·레퍼런스 경로들)가 있으면 참고 사진으로 보냅니다."""
-    args = [IMAGE_MODEL, "--prompt", image_prompt(doc, bool(photos), index),
+    """컷 하나의 미리보기 이미지 요청. photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고 역할은 프롬프트에 적습니다."""
+    photos = list(photos)[:IMAGE_REFS]
+    args = [IMAGE_MODEL, "--prompt", image_prompt(doc, [role for _, role in photos], index),
             "--aspect_ratio", IMAGE_RATIOS.get(doc["ratio"], "9:16")]
-    return args + [part for path in list(photos)[:IMAGE_REFS] for part in ("--image-references", path)]
+    return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 
 # ---------- 무료 확인 ----------

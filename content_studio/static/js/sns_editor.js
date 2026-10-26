@@ -4,6 +4,7 @@
 import {
   FONT_GROUPS, LOCAL_PREFIX, fontFamily, getLocalFonts, loadFont, loadFontsFor, loadLocalFonts, localFontsSupported,
 } from "./sns_fonts.js";
+import { openRemoveBg } from "./sns_image.js";
 
 export const SIZES = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080] };
 const LOCAL_ACTION = "__local__";  // 글꼴 목록의 "내 PC 글꼴 불러오기…"
@@ -34,6 +35,7 @@ const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(unde
 let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다. (모듈 안 변수)
 let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
 let focusAfterRender = false;  // 키보드로 고치다 저장하면, 다시 그린 뒤 선택한 요소로 초점을 돌려줍니다.
+let promptCache = null;  // 오른쪽 프롬프트 칸. 저장 후 다시 그려도 같은 작업이면 입력·AI 제안을 유지합니다.
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -154,7 +156,7 @@ async function postJson(url, body) {
 }
 
 // ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
-// 편집기 안 창(openPrompt)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
+// 편집기 오른쪽 칸(promptPanel)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
 // extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
 // empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
 // productId: 고른 제품 id를 돌려주는 함수(첫 화면). 요청에 함께 보내 서버가 제품 목록으로 확인합니다.
@@ -354,7 +356,8 @@ export function currentPage() {
 
 // ---------- 편집기 ----------
 // root 안에 포스터·카드뉴스 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
-// 카드뉴스처럼 여러 장이면 위쪽 장 번호 버튼으로 장을 옮깁니다.
+// 카드뉴스처럼 여러 장이면 포스터 왼쪽 장 번호 버튼으로 장을 옮깁니다.
+// 배치: 위쪽 도구 줄 · 왼쪽(장 번호 + 포스터) · 오른쪽(프롬프트 · 문구 · 검수 · Figma)
 export function renderDesign(root, doc, { onSave } = {}) {
   const draft = structuredClone(doc);
   if (pageIndex >= draft.pages.length) pageIndex = 0;
@@ -379,7 +382,13 @@ export function renderDesign(root, doc, { onSave } = {}) {
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  wrap.append(pagesBar, bar, view, translations, review);
+  const left = el("div", "studio-editor-left");   // 장 번호(세로) + 포스터
+  const side = el("aside", "studio-editor-side"); // 프롬프트 · 문구 · 검수 · Figma
+  const body = el("div", "studio-editor-body");
+  left.append(pagesBar, view);
+  side.append(promptPanel(), translations, review);
+  body.append(left, side);
+  wrap.append(bar, body);
   root.replaceChildren(wrap);
   let externalPanel = null;  // Figma 칸 (renderExternal)
   renderExternal();
@@ -599,7 +608,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
         el("p", "studio-hint", "위 편집기와 다운로드는 대시보드 원본입니다. 외부 수정 결과가 원본 요소에 자동 반영되지는 않습니다."));
     }
     if (externalPanel) externalPanel.replaceWith(panel);
-    else wrap.append(panel);
+    else side.append(panel);
     externalPanel = panel;
   }
 
@@ -828,7 +837,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
     const item = find(selectedId);
     const tools = [];
     if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
-    tools.push(addSelect());
+    tools.push(addSelect(), button("✂️ 배경 제거", openRemoveBg));  // 기존 배경 제거 창(sns_image.js)을 엽니다.
 
     if (!item) {
       tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
@@ -891,7 +900,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
     const multi = draft.pages.length > 1;
     tools.push(el("span", "studio-editor-spacer"), status, button("검수", runReview));
-    tools.push(button("프롬프트 · AI 초안", openPrompt));
     tools.push(
       button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
       button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
@@ -970,23 +978,24 @@ export function renderDesign(root, doc, { onSave } = {}) {
   }
 
   // 기존 작업 안에서 AI 제안을 적용하므로 유진 담당 생성·저장 경로는 바꾸지 않습니다.
-  function openPrompt() {
-    const dialog = el("dialog", "studio-editor-prompt");
-    const close = button("×", () => dialog.close(), "close");
-    close.setAttribute("aria-label", "닫기");
-    const form = promptForm(draft, {
-      isActive: () => wrap.isConnected,
-      onApply: async (design) => {
-        if (!onSave) return;
-        await onSave(design);
-        dialog.close();
-      },
+  // 같은 작업(chat · 종류)이면 만들어 둔 칸을 다시 붙이고, 칸이 쓰는 문서와 저장 함수만 최신으로 바꿉니다.
+  function promptPanel() {
+    const key = `${new URL(location.href).searchParams.get("chat")}:${draft.kind}`;
+    if (promptCache?.key === key) {
+      for (const name of Object.keys(promptCache.doc)) delete promptCache.doc[name];
+      Object.assign(promptCache.doc, structuredClone(draft));
+      promptCache.onSave = onSave;
+      return promptCache.panel;
+    }
+    const formDoc = structuredClone(draft);
+    const panel = el("section", "studio-editor-prompt studio-editor-prompt-panel");
+    const form = promptForm(formDoc, {
+      isActive: () => panel.isConnected,
+      onApply: async (design) => { if (promptCache?.onSave) await promptCache.onSave(design); },
     });
-    dialog.append(close, ...form.nodes);
-    dialog.addEventListener("close", () => dialog.remove());
-    wrap.append(dialog);
-    dialog.showModal();
-    form.focus();
+    panel.append(...form.nodes);
+    promptCache = { key, panel, doc: formDoc, onSave };
+    return panel;
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.

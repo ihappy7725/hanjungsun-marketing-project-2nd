@@ -1,0 +1,1562 @@
+{
+  ".claude/hooks/guard_ownership.py": {
+    "mtime": 1792741331.580666,
+    "seen": 1792986268.4679432,
+    "ast_hash": "497e56e6c69154b8db3acce096aa5329",
+    "semantic_hash": ""
+  },
+  ".claude/ownership.json": {
+    "mtime": 1792929159.000338,
+    "seen": 1792986268.4679525,
+    "ast_hash": "6b4b0211cf625a0d5fe1e282e885bc66",
+    "semantic_hash": ""
+  },
+  ".claude/settings.json": {
+    "mtime": 1792741331.581666,
+    "seen": 1792986268.4679563,
+    "ast_hash": "439e57b6e439a03b58cee51927ee2594",
+    "semantic_hash": ""
+  },
+  "app.py": {
+    "mtime": 1792741331.5839765,
+    "seen": 1792986268.4679585,
+    "ast_hash": "ca3c3bc09e5f2fccfe67201e3cfe0556",
+    "semantic_hash": ""
+  },
+  "content_studio/__init__.py": {
+    "mtime": 1792741331.5852244,
+    "seen": 1792986268.467961,
+    "ast_hash": "e88a34406f9fea62bfc90b47dd951d91",
+    "semantic_hash": ""
+  },
+  "content_studio/designs.py": {
+    "mtime": 1792977463.5272436,
+    "seen": 1792986268.467963,
+    "ast_hash": "a61d85b4efe11c103bf063e3a6d6a956",
+    "semantic_hash": ""
+  },
+  "content_studio/figma_plugin/code.js": {
+    "mtime": 1792977463.5272436,
+    "seen": 1792986268.4679654,
+    "ast_hash": "77a1b7fae33fdca6bda8f8c39b79050b",
+    "semantic_hash": ""
+  },
+  "content_studio/figma_plugin/manifest.json": {
+    "mtime": 1792977463.5272436,
+    "seen": 1792986268.4679673,
+    "ast_hash": "4186cd72fb43be94e94687f9ab2cb3be",
+    "semantic_hash": ""
+  },
+  "content_studio/higgsfield.py": {
+    "mtime": 1792985906.9040446,
+    "seen": 1792986268.467969,
+    "ast_hash": "59070d82b2c7ded6f40f465b211f4bcf",
+    "semantic_hash": ""
+  },
+  "content_studio/models_sns.py": {
+    "mtime": 1792838061.809065,
+    "seen": 1792986268.4679708,
+    "ast_hash": "72cb81b35fda12f53d891e6af5de7d2b",
+    "semantic_hash": ""
+  },
+  "content_studio/products.py": {
+    "mtime": 1792946325.391745,
+    "seen": 1792986268.4679723,
+    "ast_hash": "a16c5d42ddb6ef75b32e3fa45253ba02",
+    "semantic_hash": ""
+  },
+  "content_studio/routes_media.py": {
+    "mtime": 1792977463.5272436,
+    "seen": 1792986268.4679747,
+    "ast_hash": "d160abcdc795e9b9e83c270e4e7d6b43",
+    "semantic_hash": ""
+  },
+  "content_studio/routes_sns.py": {
+    "mtime": 1792985906.9040446,
+    "seen": 1792986268.467976,
+    "ast_hash": "068734e4d0ba061dea8edc7b43558dd8",
+    "semantic_hash": ""
+  },
+  "content_studio/static/js/sns.js": {
+    "mtime": 1792985906.920612,
+    "seen": 1792986268.4679778,
+    "ast_hash": "55734a5227c7e5bc2558a002985e7a12",
+    "semantic_hash": ""
+  },
+  "content_studio/static/js/sns_editor.js": {
+    "mtime": 1792986240.452313,
+    "seen": 1792986268.4679794,
+    "ast_hash": "4a8b9f6c36eb06b11b5494460dd55781",
+    "semantic_hash": ""
+  },
+  "content_studio/static/js/sns_fonts.js": {
+    "mtime": 1792828289.145976,
+    "seen": 1792986268.4679813,
+    "ast_hash": "ac79bc9a0085230c3b279f98d283211b",
+    "semantic_hash": ""
+  },
+  "content_studio/static/js/sns_image.js": {
+    "mtime": 1792985892.488146,
+    "seen": 1792986268.4679832,
+    "ast_hash": "d1606f6518e43d39d7ac296e18f8a1d1",
+    "semantic_hash": ""
+  },
+  "content_studio/static/js/sns_video.js": {
+    "mtime": 1792985906.920612,
+    "seen": 1792986268.4679852,
+    "ast_hash": "1ce7cbd6829b3ac81a1efff718112271",
+    "semantic_hash": ""
+  },
+  "content_studio/videos.py": {
+    "mtime": 1792985906.920612,
+    "seen": 1792986268.4679873,
+    "ast_hash": "228a82dce49812ff09d188626e55c6cf",
+    "semantic_hash": ""
+  },
+  "home/__init__.py": {
+    "mtime": 1792977463.5407794,
+    "seen": 1792986268.4679887,
+    "ast_hash": "93e18cbd01f068e1bc19aae06ed378c4",
+    "semantic_hash": ""
+  },
+  "home/cli.py": {
+    "mtime": 1792977463.541781,
+    "seen": 1792986268.4679906,
+    "ast_hash": "8a148d6a4f35c9d6e471ccbbf2d0a57b",
+    "semantic_hash": ""
+  },
+  "home/data/event_candidates.json": {
+    "mtime": 1792977463.5437784,
+    "seen": 1792986268.467992,
+    "ast_hash": "07f50836f1d2f9a0c986482eaecd2684",
+    "semantic_hash": ""
+  },
+  "home/data/events.json": {
+    "mtime": 1792977463.5447795,
+    "seen": 1792986268.4679947,
+    "ast_hash": "ea1e3083a2621471481d489df28b3a2f",
+    "semantic_hash": ""
+  },
+  "home/data/holiday_cache.json": {
+    "mtime": 1792977463.5447795,
+    "seen": 1792986268.4679961,
+    "ast_hash": "623c036a55f1cf7de48f623e0b43fd89",
+    "semantic_hash": ""
+  },
+  "home/data/news.json": {
+    "mtime": 1792977463.5457797,
+    "seen": 1792986268.4679978,
+    "ast_hash": "f56553c3ef346a2e7cce5167019cb87d",
+    "semantic_hash": ""
+  },
+  "home/event_import.py": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.4679992,
+    "ast_hash": "7a04ab7fceaeaa5af2c0b10783b24f46",
+    "semantic_hash": ""
+  },
+  "home/holiday_feed.py": {
+    "mtime": 1792977463.54678,
+    "seen": 1792986268.4680014,
+    "ast_hash": "409873a674e4ba90bce0a4db671ce29c",
+    "semantic_hash": ""
+  },
+  "home/models.py": {
+    "mtime": 1792977463.54678,
+    "seen": 1792986268.4680028,
+    "ast_hash": "c4e580672cdd272f3373837100116eac",
+    "semantic_hash": ""
+  },
+  "home/news_import.py": {
+    "mtime": 1792977463.54678,
+    "seen": 1792986268.468004,
+    "ast_hash": "9e172971e29c4eebd550ea1412fd8274",
+    "semantic_hash": ""
+  },
+  "home/news_search.py": {
+    "mtime": 1792977463.54678,
+    "seen": 1792986268.4680054,
+    "ast_hash": "7b0efaddbb7977a8856067d1b5d2a974",
+    "semantic_hash": ""
+  },
+  "home/routes.py": {
+    "mtime": 1792977463.54678,
+    "seen": 1792986268.468007,
+    "ast_hash": "d3b4321038469e393b7ef80d423f3713",
+    "semantic_hash": ""
+  },
+  "home/static/js/home_main.js": {
+    "mtime": 1792977463.5517797,
+    "seen": 1792986268.468009,
+    "ast_hash": "6a45efe8cdfb468a140d2f0cc27c59fd",
+    "semantic_hash": ""
+  },
+  "home/translate.py": {
+    "mtime": 1792977463.5537782,
+    "seen": 1792986268.4680107,
+    "ast_hash": "04b7ee839124f16fa054a6c280ac1699",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/__init__.py": {
+    "mtime": 1792817177.5341694,
+    "seen": 1792986268.4680123,
+    "ast_hash": "03496db090200add52aa76ebb12b431e",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/discovery.py": {
+    "mtime": 1792977463.5548038,
+    "seen": 1792986268.468014,
+    "ast_hash": "4cfa2b82196285388517d93fbcad120e",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/external_api.py": {
+    "mtime": 1792977463.5557773,
+    "seen": 1792986268.4680157,
+    "ast_hash": "1a93245329ec0f75618d0feb45d550f6",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/models.py": {
+    "mtime": 1792977463.5567775,
+    "seen": 1792986268.468017,
+    "ast_hash": "a395f6cbc929fc715f7c8e70858cf5b8",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/public.py": {
+    "mtime": 1792817177.5341694,
+    "seen": 1792986268.4680185,
+    "ast_hash": "3ddefa70baa94eb035c58d4919b63bad",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/routes.py": {
+    "mtime": 1792977463.5577774,
+    "seen": 1792986268.4680202,
+    "ast_hash": "1f7ace57e1229c09511472dc9799f16f",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/static/js/influencer_main.js": {
+    "mtime": 1792977463.5587783,
+    "seen": 1792986268.4680219,
+    "ast_hash": "26876418c0bbb13073cf428ed921b4cd",
+    "semantic_hash": ""
+  },
+  "kpi/__init__.py": {
+    "mtime": 1792741331.597753,
+    "seen": 1792986268.4680233,
+    "ast_hash": "ee7d50f19d52e13f73a84dd614e0c7a3",
+    "semantic_hash": ""
+  },
+  "kpi/models.py": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.468025,
+    "ast_hash": "0ca1941a0634e5143fc6ab07b824178e",
+    "semantic_hash": ""
+  },
+  "kpi/routes.py": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.468027,
+    "ast_hash": "9c7fa85811d3d7aae649d1ffc8f88583",
+    "semantic_hash": ""
+  },
+  "kpi/static/js/kpi_main.js": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.4680302,
+    "ast_hash": "fc52c919dce35442ef36b0e56a55c71e",
+    "semantic_hash": ""
+  },
+  "market_analysis/__init__.py": {
+    "mtime": 1792741331.6004915,
+    "seen": 1792986268.4680316,
+    "ast_hash": "4b8366cb0a9c1973f6b1641b8f4a5724",
+    "semantic_hash": ""
+  },
+  "market_analysis/build_competitors.py": {
+    "mtime": 1792977463.5587783,
+    "seen": 1792986268.4680333,
+    "ast_hash": "7a31b99235f1bc5ecb9d99e82a83996d",
+    "semantic_hash": ""
+  },
+  "market_analysis/collect_trends.py": {
+    "mtime": 1792977463.5597777,
+    "seen": 1792986268.4680347,
+    "ast_hash": "8827939ee6a8d984b7998f04ccd09dbb",
+    "semantic_hash": ""
+  },
+  "market_analysis/collectors/__init__.py": {
+    "mtime": 1792929159.0052402,
+    "seen": 1792986268.4680364,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "market_analysis/collectors/ad_trend_collector.py": {
+    "mtime": 1792929159.0052402,
+    "seen": 1792986268.4680378,
+    "ast_hash": "5172606eb4e25ec9a051516a5d4abc60",
+    "semantic_hash": ""
+  },
+  "market_analysis/collectors/serpapi_trends_collector.py": {
+    "mtime": 1792929159.016511,
+    "seen": 1792986268.4680395,
+    "ast_hash": "329f43aabc898be13421cfad23aa719a",
+    "semantic_hash": ""
+  },
+  "market_analysis/config/trend_keywords_vn.json": {
+    "mtime": 1792977463.5597777,
+    "seen": 1792986268.468041,
+    "ast_hash": "6e1778a135926432570f3760ab08a7d8",
+    "semantic_hash": ""
+  },
+  "market_analysis/countries.py": {
+    "mtime": 1792756231.1496785,
+    "seen": 1792986268.4680426,
+    "ast_hash": "2a6e135f0627dc7ea73a355e0e31c8fc",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/ad_research_vn.json": {
+    "mtime": 1792929159.0195901,
+    "seen": 1792986268.4680443,
+    "ast_hash": "ec29995397309c6d5c84ffc51f4cc83c",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/ad_trends_vn.json": {
+    "mtime": 1792929159.0205994,
+    "seen": 1792986268.4680457,
+    "ast_hash": "5edf3c7b9c46fe343683b670b37ab524",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/candidate_suggestions_vn.json": {
+    "mtime": 1792977463.5607777,
+    "seen": 1792986268.4680471,
+    "ast_hash": "4918bd3410e2510e74b1f2dec3ba82fb",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/content_guidelines_vn.json": {
+    "mtime": 1792977463.5637772,
+    "seen": 1792986268.4680488,
+    "ast_hash": "22b7af4130bfd875dfbf05ebdecbeb24",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/country_vn.json": {
+    "mtime": 1792756231.1496785,
+    "seen": 1792986268.4680505,
+    "ast_hash": "5e48cea27fa98ed1ba0cd885775a0fdd",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_fruit_2026-10-25_222713.json": {
+    "mtime": 1792977463.5637772,
+    "seen": 1792986268.4680521,
+    "ast_hash": "2b36e5b7bd2614187a693307ae1f95d0",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_fruit_2026-10-26_043858.json": {
+    "mtime": 1792977463.5647774,
+    "seen": 1792986268.468054,
+    "ast_hash": "8631fe8197b89035fce7a492ef80b663",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_fruit_2026-10-26_043949.json": {
+    "mtime": 1792977463.573837,
+    "seen": 1792986268.4680557,
+    "ast_hash": "5bf53da5b11785a3e23022d1fd84ffd1",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_k-dessert_2026-10-25_222713.json": {
+    "mtime": 1792977463.5743468,
+    "seen": 1792986268.4680576,
+    "ast_hash": "a66ebf2d3f5c4b0cc0f5c42e983d4341",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_k-dessert_2026-10-26_043858.json": {
+    "mtime": 1792977463.5743468,
+    "seen": 1792986268.4680588,
+    "ast_hash": "ac406c8d37526cbbc2d5cc68d9234840",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_k-dessert_2026-10-26_043949.json": {
+    "mtime": 1792977463.5753517,
+    "seen": 1792986268.4680607,
+    "ast_hash": "85e6fd81c781694b94071ced943daf02",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_mochi_2026-10-25_222713.json": {
+    "mtime": 1792977463.5753517,
+    "seen": 1792986268.4680622,
+    "ast_hash": "39dd9d6745d9012b20ef55e8a35fd313",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_mochi_2026-10-26_043858.json": {
+    "mtime": 1792977463.5763526,
+    "seen": 1792986268.4680643,
+    "ast_hash": "dda25d91fa2989e0a17f1b2adc1b3348",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_mochi_2026-10-26_043949.json": {
+    "mtime": 1792977463.5763526,
+    "seen": 1792986268.4680655,
+    "ast_hash": "ed5bb8adec7eeab9d2fa361c39d32a60",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_sticky-rice_2026-10-25_222713.json": {
+    "mtime": 1792977463.5763526,
+    "seen": 1792986268.4680674,
+    "ast_hash": "5f5a8cad46ad300a1a91238b14de5bae",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_sticky-rice_2026-10-26_043858.json": {
+    "mtime": 1792977463.5773523,
+    "seen": 1792986268.468069,
+    "ast_hash": "b8f703c269cc4af7090aa85fb57bd3ee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/geo_map_sticky-rice_2026-10-26_043949.json": {
+    "mtime": 1792977463.5773523,
+    "seen": 1792986268.468071,
+    "ast_hash": "1bfd1b29258fe1235353c50e6cbbdfa9",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_fruit_2026-10-26_023745.json": {
+    "mtime": 1792977463.5773523,
+    "seen": 1792986268.4680724,
+    "ast_hash": "2bc36b10ad1ad77450424731cf437a7b",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_k-dessert_2026-10-26_023745.json": {
+    "mtime": 1792977463.578357,
+    "seen": 1792986268.4680746,
+    "ast_hash": "cce3796c38dbb5c55b1162cbe51108f7",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_mochi_2026-10-26_023745.json": {
+    "mtime": 1792977463.578357,
+    "seen": 1792986268.468076,
+    "ast_hash": "d516a3dac4087ef598f0ce8cc4a052a2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_fruit_2026-10-26_041236.json": {
+    "mtime": 1792977463.579358,
+    "seen": 1792986268.468078,
+    "ast_hash": "8436463847ce77e078751d1748748076",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_k-dessert_2026-10-26_041236.json": {
+    "mtime": 1792977463.579358,
+    "seen": 1792986268.4680793,
+    "ast_hash": "914cafc0f6de1b6e0c562df9219c2084",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_031424.json": {
+    "mtime": 1792977463.579358,
+    "seen": 1792986268.4680812,
+    "ast_hash": "d516a3dac4087ef598f0ce8cc4a052a2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_031829.json": {
+    "mtime": 1792977463.5803576,
+    "seen": 1792986268.4680827,
+    "ast_hash": "d516a3dac4087ef598f0ce8cc4a052a2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_032000.json": {
+    "mtime": 1792977463.5803576,
+    "seen": 1792986268.4680843,
+    "ast_hash": "d516a3dac4087ef598f0ce8cc4a052a2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_032039.json": {
+    "mtime": 1792977463.5803576,
+    "seen": 1792986268.468086,
+    "ast_hash": "d516a3dac4087ef598f0ce8cc4a052a2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_034437.json": {
+    "mtime": 1792977463.5813591,
+    "seen": 1792986268.4680882,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_034654.json": {
+    "mtime": 1792977463.5813591,
+    "seen": 1792986268.4680898,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_035306.json": {
+    "mtime": 1792977463.5813591,
+    "seen": 1792986268.4680915,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_040417.json": {
+    "mtime": 1792977463.5823574,
+    "seen": 1792986268.468093,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_040711.json": {
+    "mtime": 1792977463.5823574,
+    "seen": 1792986268.4680943,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_040800.json": {
+    "mtime": 1792977463.5823574,
+    "seen": 1792986268.468096,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_040901.json": {
+    "mtime": 1792977463.5833578,
+    "seen": 1792986268.4680977,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_mochi_2026-10-26_041236.json": {
+    "mtime": 1792977463.5833578,
+    "seen": 1792986268.4680994,
+    "ast_hash": "1cf066533bda6a53a670e70857845876",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_sticky-rice_2026-10-26_031424.json": {
+    "mtime": 1792977463.5833578,
+    "seen": 1792986268.4681025,
+    "ast_hash": "c99b8f17668c423dee0dd075a109faa4",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_sticky-rice_2026-10-26_031829.json": {
+    "mtime": 1792977463.5843577,
+    "seen": 1792986268.4681041,
+    "ast_hash": "c99b8f17668c423dee0dd075a109faa4",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_sticky-rice_2026-10-26_032000.json": {
+    "mtime": 1792977463.5843577,
+    "seen": 1792986268.4681058,
+    "ast_hash": "c99b8f17668c423dee0dd075a109faa4",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_sticky-rice_2026-10-26_032039.json": {
+    "mtime": 1792977463.5843577,
+    "seen": 1792986268.468107,
+    "ast_hash": "c99b8f17668c423dee0dd075a109faa4",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_rank_sticky-rice_2_2_2026-10-26_031424.json": {
+    "mtime": 1792977463.5843577,
+    "seen": 1792986268.468109,
+    "ast_hash": "389457f201fe14ba1f845348c0e41842",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_sticky-rice_2026-10-26_023745.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681106,
+    "ast_hash": "c99b8f17668c423dee0dd075a109faa4",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_topics_fruit_2026-10-26_023745.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681118,
+    "ast_hash": "027985cf98179cac23cfd37dfa62ebfa",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_topics_k-dessert_2026-10-26_023745.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681134,
+    "ast_hash": "7616fe420be6895308772fa8ba366f56",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_topics_mochi_2026-10-26_023745.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681149,
+    "ast_hash": "a446cd9afba53d684b3e475131c436e7",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/related_topics_sticky-rice_2026-10-26_023745.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681165,
+    "ast_hash": "432ab1331e24aa0c9a8127344d63afce",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_fruit_1_2026-10-25_192125.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.468118,
+    "ast_hash": "3fbf87a44e1f85f1e4f224ceca9b7d2f",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_fruit_1_2026-10-25_221700.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681196,
+    "ast_hash": "3bba2edc6d9e261dd4e980076e1f21ee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_fruit_2_2026-10-25_192125.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681213,
+    "ast_hash": "5e211f906fc0f7ddd5cd1152e93dd13f",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_fruit_2_2026-10-25_221700.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.468123,
+    "ast_hash": "eed2e535db8aba2dfec7496c0ab38a47",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_1_2026-10-25_192125.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681246,
+    "ast_hash": "91c8d432a262e575545abf037139a857",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_1_2026-10-25_221700.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681263,
+    "ast_hash": "484ba3657a3f8680c731b21b8411e555",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_1_2026-10-25_224629.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.468128,
+    "ast_hash": "0c041b0002fccba260e5da3403633565",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_2_2026-10-25_192125.json": {
+    "mtime": 1792977463.585358,
+    "seen": 1792986268.4681296,
+    "ast_hash": "bcf47239f49885c7f371b47586acf822",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_2_2026-10-25_221700.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681308,
+    "ast_hash": "88c88f2e1b0a9193c9e3220fbe9d42ed",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_k-dessert_2_2026-10-25_224629.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681323,
+    "ast_hash": "92fae58d548b88cb8b7a6c9445dbeaee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_1_2026-10-25_190410.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.468134,
+    "ast_hash": "87fc2b0e573279651d59deccb6fedffc",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_1_2026-10-25_192125.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681354,
+    "ast_hash": "510b45181e5e31699ae38f7631306891",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_1_2026-10-25_221700.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.468137,
+    "ast_hash": "3a2f62bbadf3163ca2f784f13ea5355e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_2_2026-10-25_190410.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681385,
+    "ast_hash": "b1557e96573852f065b4fb050506f143",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_2_2026-10-25_192125.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681401,
+    "ast_hash": "960086f1a7efcf79266293b9baf59a70",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_mochi_2_2026-10-25_221700.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.4681416,
+    "ast_hash": "0ee770c90f950b990b80bae7e4ca6fdc",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_sticky-rice_1_2026-10-25_192125.json": {
+    "mtime": 1792977463.5928261,
+    "seen": 1792986268.468143,
+    "ast_hash": "8a999716aa6cebb227fa4a94295f3080",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_sticky-rice_1_2026-10-25_221700.json": {
+    "mtime": 1792977463.5979943,
+    "seen": 1792986268.4681447,
+    "ast_hash": "70ba1891fcdb3133b0b25835a70a1cd0",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_sticky-rice_2_2026-10-25_192125.json": {
+    "mtime": 1792977463.5979943,
+    "seen": 1792986268.468146,
+    "ast_hash": "5ee5849a7bdd94a687044f95a1754a51",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_check_sticky-rice_2_2026-10-25_221700.json": {
+    "mtime": 1792977463.5979943,
+    "seen": 1792986268.4681478,
+    "ast_hash": "8152abdb5b9f47af438b55bb56cee556",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_fruit_2026-10-25_192125.json": {
+    "mtime": 1792977463.5995622,
+    "seen": 1792986268.468149,
+    "ast_hash": "2fa8b7967ffdbece37b4246843b2c505",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_fruit_2026-10-25_221700.json": {
+    "mtime": 1792977463.5995622,
+    "seen": 1792986268.4681506,
+    "ast_hash": "f02c44f379937476b5e0a00c956e2325",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_k-dessert_2026-10-25_192125.json": {
+    "mtime": 1792977463.5995622,
+    "seen": 1792986268.468152,
+    "ast_hash": "0e1e65ba859393cc4da1c5637a0a94c1",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_k-dessert_2026-10-25_221700.json": {
+    "mtime": 1792977463.5995622,
+    "seen": 1792986268.4681532,
+    "ast_hash": "6a87a87d118cf22464108f4add73c933",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_k-dessert_2026-10-25_224629.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.468155,
+    "ast_hash": "4b8ed2999fb6caede1bce19182dede9a",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_mochi_2026-10-25_190410.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681563,
+    "ast_hash": "27ee826b21f3b2c0c2ed0cae8528fd29",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_mochi_2026-10-25_192125.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681582,
+    "ast_hash": "2e7c875d19f1bd1fb733c36013010fec",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_mochi_2026-10-25_221700.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681597,
+    "ast_hash": "7b0392f0a75e8759b6d63c84a18fa158",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_sticky-rice_2026-10-25_190410.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681613,
+    "ast_hash": "f612b6e8451ce29e7c6d70b9b9ee0621",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_sticky-rice_2026-10-25_192125.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681625,
+    "ast_hash": "9faed2cb73a029bede254ae39aedec41",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/suggest_related_sticky-rice_2026-10-25_221700.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681642,
+    "ast_hash": "40f64f17c13efd8f94cf0c6d5a8ffa0e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_categories_2026-10-26_043858.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681656,
+    "ast_hash": "7e6bf286ab6ca0f3c11fc66158997b38",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_categories_2026-10-26_043949.json": {
+    "mtime": 1792977463.6013093,
+    "seen": 1792986268.4681673,
+    "ast_hash": "b1b0f5bc0130c59a627689f7c0a235a5",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-25_222536.json": {
+    "mtime": 1792977463.605803,
+    "seen": 1792986268.4681695,
+    "ast_hash": "22404a52c3a2999f5b067b872e8a8594",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-25_223440.json": {
+    "mtime": 1792977463.605803,
+    "seen": 1792986268.4681711,
+    "ast_hash": "e09b327c0136207ec39522b6ac9fdae6",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-25_225134.json": {
+    "mtime": 1792977463.605803,
+    "seen": 1792986268.4681728,
+    "ast_hash": "e09b327c0136207ec39522b6ac9fdae6",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-25_232307.json": {
+    "mtime": 1792977463.605803,
+    "seen": 1792986268.4681742,
+    "ast_hash": "e09b327c0136207ec39522b6ac9fdae6",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-25_234541.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681756,
+    "ast_hash": "ac19f2b8512d2c30a3fb87a660ae984b",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-26_031424.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681773,
+    "ast_hash": "7f82bc7da2041e821cb9f35e01ab6a5e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-26_031829.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681787,
+    "ast_hash": "7f82bc7da2041e821cb9f35e01ab6a5e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-26_032000.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681802,
+    "ast_hash": "7f82bc7da2041e821cb9f35e01ab6a5e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_fruit_2026-10-26_032039.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681818,
+    "ast_hash": "7f82bc7da2041e821cb9f35e01ab6a5e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-25_222536.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681833,
+    "ast_hash": "b57eab85db99f39b68f26f0663d49a0f",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-25_223440.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681845,
+    "ast_hash": "0517db80f49c976116b848425454470e",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-25_225134.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681861,
+    "ast_hash": "2eca43c320e1dfdbd3e8524ff5b7f2ee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-25_232307.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681873,
+    "ast_hash": "2eca43c320e1dfdbd3e8524ff5b7f2ee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-25_234541.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681892,
+    "ast_hash": "2eca43c320e1dfdbd3e8524ff5b7f2ee",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-26_031424.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681907,
+    "ast_hash": "73566a7d61cdaf63310655063b33f847",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-26_031829.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681923,
+    "ast_hash": "73566a7d61cdaf63310655063b33f847",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-26_032000.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681935,
+    "ast_hash": "73566a7d61cdaf63310655063b33f847",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_k-dessert_2026-10-26_032039.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681954,
+    "ast_hash": "73566a7d61cdaf63310655063b33f847",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_1_2026-10-25_222536.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681966,
+    "ast_hash": "3903b50a2e634ba689be21ecb3209e01",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_1_2026-10-26_031424.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4681983,
+    "ast_hash": "320c3db22c4f020554481af80f0292e7",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2026-10-25_223440.json": {
+    "mtime": 1792977463.6076057,
+    "seen": 1792986268.4682002,
+    "ast_hash": "80d417b95af02cef1dc6377fc320fffb",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2026-10-25_225134.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682014,
+    "ast_hash": "80d417b95af02cef1dc6377fc320fffb",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2026-10-25_232307.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.468203,
+    "ast_hash": "80d417b95af02cef1dc6377fc320fffb",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2026-10-25_234541.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682045,
+    "ast_hash": "73169d110560fef17e81fdf61710fc9a",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2_2026-10-25_222536.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682062,
+    "ast_hash": "af120a9843076857e85661ffacd6b021",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_mochi_2_2026-10-26_031424.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682078,
+    "ast_hash": "e001f597775212a4cfa30578f44ed13b",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_1_2026-10-26_031424.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682093,
+    "ast_hash": "aafca1ab70194beb454ddd4fd1972783",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_2026-10-25_222536.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682107,
+    "ast_hash": "d86265df19fc1a156c5f7045b8054796",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_2026-10-25_223440.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682124,
+    "ast_hash": "d86265df19fc1a156c5f7045b8054796",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_2026-10-25_225134.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.468214,
+    "ast_hash": "d86265df19fc1a156c5f7045b8054796",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_2026-10-25_232307.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682152,
+    "ast_hash": "477849b0b5f9920b1f02a84d174b22df",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_rank_sticky-rice_2026-10-25_234541.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.468217,
+    "ast_hash": "477849b0b5f9920b1f02a84d174b22df",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_danang-travel-kr_2026-10-25_235858.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.468218,
+    "ast_hash": "b7c95c7084fb583f3c2b3941d31330c8",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_danang-travel_2026-10-25_235420.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682202,
+    "ast_hash": "04192e94443a659d073ae978ebadda20",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_danang-travel_2026-10-25_235858.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.4682214,
+    "ast_hash": "04192e94443a659d073ae978ebadda20",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_fruit_1_2026-10-25_235420.json": {
+    "mtime": 1792977463.6171489,
+    "seen": 1792986268.468223,
+    "ast_hash": "9cd191c959984a7376b9ba529c863f75",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_fruit_1_2026-10-25_235858.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682245,
+    "ast_hash": "9cd191c959984a7376b9ba529c863f75",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_fruit_2_2026-10-25_235420.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682257,
+    "ast_hash": "862e690e11ca0b9ce077a6bae74d5661",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_fruit_2_2026-10-25_235858.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682276,
+    "ast_hash": "862e690e11ca0b9ce077a6bae74d5661",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_gift-season_2026-10-25_235420.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.468229,
+    "ast_hash": "34f49331afc7e0485d4bda14f45cc68b",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_gift-season_2026-10-25_235858.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682307,
+    "ast_hash": "34f49331afc7e0485d4bda14f45cc68b",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_mochi-demand_2026-10-25_235420.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682322,
+    "ast_hash": "2efe48d9197e250305f9198fbdf53da2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/raw/timeseries_season_mochi-demand_2026-10-25_235858.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682374,
+    "ast_hash": "2efe48d9197e250305f9198fbdf53da2",
+    "semantic_hash": ""
+  },
+  "market_analysis/data/trends_vn.json": {
+    "mtime": 1792977463.627213,
+    "seen": 1792986268.4682388,
+    "ast_hash": "e3b2f92d875c0051aae86f0ff1e52b65",
+    "semantic_hash": ""
+  },
+  "market_analysis/models.py": {
+    "mtime": 1792741331.60191,
+    "seen": 1792986268.4682407,
+    "ast_hash": "1661336e1c051bae0bb6e7439c395e92",
+    "semantic_hash": ""
+  },
+  "market_analysis/public.py": {
+    "mtime": 1792741331.60191,
+    "seen": 1792986268.4682422,
+    "ast_hash": "0329a2fbb67237adcd5739d0b6f7f8d0",
+    "semantic_hash": ""
+  },
+  "market_analysis/repositories/__init__.py": {
+    "mtime": 1792929159.0205994,
+    "seen": 1792986268.4682436,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "market_analysis/repositories/trend_repository.py": {
+    "mtime": 1792929159.0205994,
+    "seen": 1792986268.468245,
+    "ast_hash": "711cc668b82bd9ab4fe94e1037363a97",
+    "semantic_hash": ""
+  },
+  "market_analysis/routes.py": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4682465,
+    "ast_hash": "d73101ab59e2035845b6e73f50497809",
+    "semantic_hash": ""
+  },
+  "market_analysis/services/__init__.py": {
+    "mtime": 1792929159.0205994,
+    "seen": 1792986268.4682484,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "market_analysis/services/candidate_service.py": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4682498,
+    "ast_hash": "86bf50303604e0f3072a74da1e8af393",
+    "semantic_hash": ""
+  },
+  "market_analysis/services/decision_cards.py": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4682515,
+    "ast_hash": "593e57b26d8b9b7d891811e490309904",
+    "semantic_hash": ""
+  },
+  "market_analysis/services/insight_service.py": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4682531,
+    "ast_hash": "30377ee0c090f01554bbbca36d24f515",
+    "semantic_hash": ""
+  },
+  "market_analysis/services/trend_service.py": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4682548,
+    "ast_hash": "0c08222a899b31ef62cda5415d7b44ae",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/js/market_analysis_main.js": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4682562,
+    "ast_hash": "59a7796452d93b202a63e9b6e89d6579",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/js/trends.js": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4682574,
+    "ast_hash": "c24c86f1fc2610f6c6824eb14376a3ce",
+    "semantic_hash": ""
+  },
+  "market_analysis/suggest_candidates.py": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.468259,
+    "ast_hash": "1d47c30d1b8480a17b73e38ca2b241ab",
+    "semantic_hash": ""
+  },
+  "market_analysis/tests/test_competitor_analysis.py": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.4682608,
+    "ast_hash": "1c65226eb02732131440e6b16f806209",
+    "semantic_hash": ""
+  },
+  "market_analysis/tests/test_decision_cards.py": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.4682624,
+    "ast_hash": "afceeed8cda29dfaa5905e9556337e7b",
+    "semantic_hash": ""
+  },
+  "market_analysis/tests/test_insight.py": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.4682636,
+    "ast_hash": "7c234d6bcb52260b122a40b6358c01f9",
+    "semantic_hash": ""
+  },
+  "market_analysis/tests/test_trend_calculations.py": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.4682655,
+    "ast_hash": "b448dda068bd15b269ce5d342d505b41",
+    "semantic_hash": ""
+  },
+  "market_analysis/tests/test_trend_integration.py": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.468267,
+    "ast_hash": "7a7ceefade54de7184ab14e20d9cf2f4",
+    "semantic_hash": ""
+  },
+  "platform_core/__init__.py": {
+    "mtime": 1792741331.6040754,
+    "seen": 1792986268.4682686,
+    "ast_hash": "def1bba53cbd05dd9f194a1e6595e0e0",
+    "semantic_hash": ""
+  },
+  "platform_core/extensions.py": {
+    "mtime": 1792741331.6040754,
+    "seen": 1792986268.46827,
+    "ast_hash": "abeb484a908c4eb9fa26f1e9950fb211",
+    "semantic_hash": ""
+  },
+  "platform_core/static/js/base.js": {
+    "mtime": 1792913134.5242157,
+    "seen": 1792986268.4682717,
+    "ast_hash": "4a32105fc0db171525e5b0682894b5bb",
+    "semantic_hash": ""
+  },
+  "platform_core/static/locales/en.json": {
+    "mtime": 1792913134.5242157,
+    "seen": 1792986268.4682734,
+    "ast_hash": "8e4a1a8b9db0e90b8cab54b146c6a1d3",
+    "semantic_hash": ""
+  },
+  "platform_core/static/locales/ko.json": {
+    "mtime": 1792913134.5242157,
+    "seen": 1792986268.4682748,
+    "ast_hash": "d11c6f3432ee960dec63e16ac630caa2",
+    "semantic_hash": ""
+  },
+  "platform_core/static/locales/vi.json": {
+    "mtime": 1792913134.525211,
+    "seen": 1792986268.4682765,
+    "ast_hash": "804a61045a5f89fe9f568f7ede752549",
+    "semantic_hash": ""
+  },
+  ".github/pull_request_template.md": {
+    "mtime": 1792741331.5826826,
+    "seen": 1792986268.468278,
+    "ast_hash": "1e17ea9c89048feb0db486ffcf770188",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1792745863.5306363,
+    "seen": 1792986268.4682796,
+    "ast_hash": "79cd56a6318e0105bea2abfe5ffac293",
+    "semantic_hash": ""
+  },
+  "AI_RULES.md": {
+    "mtime": 1792745863.5306363,
+    "seen": 1792986268.4682808,
+    "ast_hash": "e8da0db0759bc04703c95242eff73468",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1792745863.5306363,
+    "seen": 1792986268.4682825,
+    "ast_hash": "a00801faaeef30ca069e88e785950092",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1792838061.809065,
+    "seen": 1792986268.468284,
+    "ast_hash": "b59d550936eba5dd78641378dc17b55b",
+    "semantic_hash": ""
+  },
+  "content_studio/README.md": {
+    "mtime": 1792985906.9040446,
+    "seen": 1792986268.4682853,
+    "ast_hash": "50f9fe5a4c2a86e6678070943e060c22",
+    "semantic_hash": ""
+  },
+  "content_studio/figma_plugin/ui.html": {
+    "mtime": 1792977463.5272436,
+    "seen": 1792986268.468287,
+    "ast_hash": "91d076848f3f1660b7706cdf368b59b8",
+    "semantic_hash": ""
+  },
+  "content_studio/prompts/cardnews_base.md": {
+    "mtime": 1792929107.8087132,
+    "seen": 1792986268.4682884,
+    "ast_hash": "9b72292dd3cc6df552adc6e0f8fc7ee4",
+    "semantic_hash": ""
+  },
+  "content_studio/prompts/poster_base.md": {
+    "mtime": 1792929107.8087132,
+    "seen": 1792986268.46829,
+    "ast_hash": "519afb6004d7dade5c5ea8024f21a2c4",
+    "semantic_hash": ""
+  },
+  "content_studio/templates/content_studio/content_studio_index.html": {
+    "mtime": 1792985906.920612,
+    "seen": 1792986268.4682915,
+    "ast_hash": "77f83e7b6b1e4359f7e06e6df79c9d98",
+    "semantic_hash": ""
+  },
+  "home/README.md": {
+    "mtime": 1792977463.539779,
+    "seen": 1792986268.468293,
+    "ast_hash": "bf449fc02725b8951081d54ed31a14b6",
+    "semantic_hash": ""
+  },
+  "home/USAGE.md": {
+    "mtime": 1792977463.5407794,
+    "seen": 1792986268.4682944,
+    "ast_hash": "d989cd8e66354283999dca01f3bb5c56",
+    "semantic_hash": ""
+  },
+  "home/templates/home/home_index.html": {
+    "mtime": 1792977463.552778,
+    "seen": 1792986268.468296,
+    "ast_hash": "050118ccaa876562e049b1f7dca95182",
+    "semantic_hash": ""
+  },
+  "home/templates/home/home_report.html": {
+    "mtime": 1792977463.552778,
+    "seen": 1792986268.4682975,
+    "ast_hash": "c1048ba3e4f74b1ad1e869f52a162395",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/README-INFLUENCER.md": {
+    "mtime": 1792977463.5548038,
+    "seen": 1792986268.468299,
+    "ast_hash": "c75134ae0212bb75ceebdccd53892303",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/README.md": {
+    "mtime": 1792741331.5947537,
+    "seen": 1792986268.4683003,
+    "ast_hash": "9900ee78e0a2291d18e0fcc2838bd717",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/templates/influencer_marketing/influencer_index.html": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.4683018,
+    "ast_hash": "b1e0aeea9d704d7ba49fac364f641ab2",
+    "semantic_hash": ""
+  },
+  "influencer_marketing/templates/influencer_marketing/influencer_report.html": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.4683037,
+    "ast_hash": "7a43aabcf4d82153a88a99f5a126d7dd",
+    "semantic_hash": ""
+  },
+  "kpi/README.md": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.468305,
+    "ast_hash": "c552229149da03ec8345cd7e505fb4d5",
+    "semantic_hash": ""
+  },
+  "kpi/templates/kpi/kpi_index.html": {
+    "mtime": 1792913134.4653547,
+    "seen": 1792986268.4683068,
+    "ast_hash": "6b0e964f58d12cbe3c17808210b4f141",
+    "semantic_hash": ""
+  },
+  "market_analysis/README.md": {
+    "mtime": 1792756231.1496785,
+    "seen": 1792986268.4683082,
+    "ast_hash": "14d8ecf9cdd1099e5bdd77c1a68d6d84",
+    "semantic_hash": ""
+  },
+  "market_analysis/country_culture.md": {
+    "mtime": 1792977463.5607777,
+    "seen": 1792986268.4683096,
+    "ast_hash": "80ca47d8de5cc545d6d87fc867470002",
+    "semantic_hash": ""
+  },
+  "market_analysis/templates/market_analysis/market_analysis_index.html": {
+    "mtime": 1792929159.0205994,
+    "seen": 1792986268.4683113,
+    "ast_hash": "8dde4cfd62b511db83be71bdb4493b9c",
+    "semantic_hash": ""
+  },
+  "market_analysis/templates/market_analysis/trends_panel.html": {
+    "mtime": 1792977463.6598296,
+    "seen": 1792986268.4683125,
+    "ast_hash": "bf8ec891040dfe787f0af1b9934f00db",
+    "semantic_hash": ""
+  },
+  "platform_core/templates/platform_core/base.html": {
+    "mtime": 1792913134.525211,
+    "seen": 1792986268.4683144,
+    "ast_hash": "9d2ea3e8367ddd1000adafeb485539c7",
+    "semantic_hash": ""
+  },
+  "requirements.txt": {
+    "mtime": 1792838061.8190043,
+    "seen": 1792986268.4683156,
+    "ast_hash": "51431ed24bf0973cb1bb57e444f2b815",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_durian_cut.jpg": {
+    "mtime": 1792946325.391745,
+    "seen": 1792986268.4683173,
+    "ast_hash": "3a27893dd7fd02c4411f15bcec73dee5",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_durian_pack.jpg": {
+    "mtime": 1792946325.391745,
+    "seen": 1792986268.4683187,
+    "ast_hash": "60d7bd16d1bdc0c7d51619230d2228f1",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_honey_dragonfruit_cut.jpg": {
+    "mtime": 1792946325.391745,
+    "seen": 1792986268.46832,
+    "ast_hash": "9416a6b18ecaf710d9c1b2f3191fcb9c",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_honey_dragonfruit_pack.jpg": {
+    "mtime": 1792946325.391745,
+    "seen": 1792986268.4683218,
+    "ast_hash": "2bf4cb049b24281eb2fbee2f6db75a12",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_mango_yogurt_cut.jpg": {
+    "mtime": 1792946325.4088283,
+    "seen": 1792986268.4683232,
+    "ast_hash": "b12f68acdab00c94006e0246ea9d159a",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_mango_yogurt_pack.jpg": {
+    "mtime": 1792946325.4088283,
+    "seen": 1792986268.468325,
+    "ast_hash": "137d15c852f8ee4af9c1a9915c80e7e0",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_mangosteen_yogurt_cut.jpg": {
+    "mtime": 1792946325.4088283,
+    "seen": 1792986268.4683263,
+    "ast_hash": "fc6dfd2a977270d1233133334e3860be",
+    "semantic_hash": ""
+  },
+  "content_studio/static/images/sns/product_mangosteen_yogurt_pack.jpg": {
+    "mtime": 1792946325.4163337,
+    "seen": 1792986268.4683278,
+    "ast_hash": "79c49dd1efee5233fd71203651a6f559",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p001.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683292,
+    "ast_hash": "e7047a4d29956065c1a4946d86452c2c",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p004.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683309,
+    "ast_hash": "c77c8a5700df10eb2bd7640e6690035c",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p008.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.468332,
+    "ast_hash": "956c514d93697ca79c38cb630b14e8ab",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p009.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683335,
+    "ast_hash": "7f4a0bd2ae62dc4ed4df7f8701966354",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p060.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683352,
+    "ast_hash": "02f6a71084e1654107d45cee60aaae15",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p063.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683363,
+    "ast_hash": "67a7a00b7f0accdd04505f931d18709a",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p064.webp": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.468338,
+    "ast_hash": "3efc11fecdcfed10f422dbc4dde914a0",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p066.jpg": {
+    "mtime": 1792977463.6331704,
+    "seen": 1792986268.4683394,
+    "ast_hash": "ef1b287a061e237a8e85bf94a56762e2",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p068.png": {
+    "mtime": 1792977463.6422732,
+    "seen": 1792986268.4683409,
+    "ast_hash": "073f7bdab1a16253f54e42f1b4f7e98f",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p069.png": {
+    "mtime": 1792977463.6422732,
+    "seen": 1792986268.4683423,
+    "ast_hash": "45c24ad90fa9274a231f02f46e01ac79",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p070.jpg": {
+    "mtime": 1792977463.6450024,
+    "seen": 1792986268.4683437,
+    "ast_hash": "784e27682832018ba2b773f429b4ee26",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p071.png": {
+    "mtime": 1792977463.6450024,
+    "seen": 1792986268.4683456,
+    "ast_hash": "afc918d3df67c335347888e7b0e48acc",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p072.jpg": {
+    "mtime": 1792977463.6470084,
+    "seen": 1792986268.4683468,
+    "ast_hash": "7c9c129620bfa3911679a56c93458109",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p073.jpg": {
+    "mtime": 1792977463.6470084,
+    "seen": 1792986268.4683487,
+    "ast_hash": "c977f500e075f381495568885be5104b",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p076.png": {
+    "mtime": 1792977463.6490142,
+    "seen": 1792986268.4683504,
+    "ast_hash": "1c4ba302288fe8911891fc90241f0818",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/competitors/vn-p077.png": {
+    "mtime": 1792977463.6490142,
+    "seen": 1792986268.4683518,
+    "ast_hash": "1afe777bb41732cb811425d00fcdc050",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/kumquat.jpg": {
+    "mtime": 1792977463.6512334,
+    "seen": 1792986268.4683535,
+    "ast_hash": "abee8d32b1e1babcaa17dc7a5a8e5bb4",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/ochna.jpg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4683552,
+    "ast_hash": "91217a46fd502707fc5fd2120134a4b4",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/peach.jpg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4683566,
+    "ast_hash": "383cf518067104b5430f91a4150c32c3",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/sns/facebook.svg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4683578,
+    "ast_hash": "e4e9a2173656a39df687e7c0dd6335db",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/sns/shopee.svg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4683595,
+    "ast_hash": "62d46d63d98f0bbecdb9fdd7a845021a",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/sns/tiktok.svg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.468361,
+    "ast_hash": "068c4facb7efd7696d001f47ace6aae5",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/sns/youtube.svg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.4683626,
+    "ast_hash": "fbae9fa0bf72b79e967ca4537eaf6795",
+    "semantic_hash": ""
+  },
+  "market_analysis/static/images/culture/sns/zalo.svg": {
+    "mtime": 1792977463.6532402,
+    "seen": 1792986268.468364,
+    "ast_hash": "285a5ae0c31eba72954b410af7d8db74",
+    "semantic_hash": ""
+  },
+  "platform_core/static/images/hanjungsun_logo_stack.png": {
+    "mtime": 1792913134.4819965,
+    "seen": 1792986268.468366,
+    "ast_hash": "36671dbab935225147d38b70099a6997",
+    "semantic_hash": ""
+  },
+  "platform_core/static/images/hanjungsun_logo_wide.png": {
+    "mtime": 1792913134.4819965,
+    "seen": 1792986268.4683676,
+    "ast_hash": "2b63d606dc4f8e89fbc7e18533270c09",
+    "semantic_hash": ""
+  },
+  "platform_core/static/images/inkwash_moon.png": {
+    "mtime": 1792913134.5023496,
+    "seen": 1792986268.4683692,
+    "ast_hash": "c483885966f27f2f02c162f865ba422c",
+    "semantic_hash": ""
+  },
+  "platform_core/static/images/inkwash_tteok.png": {
+    "mtime": 1792913134.5023496,
+    "seen": 1792986268.4683707,
+    "ast_hash": "5ff9b98e8fc07a2d4a6db69b7315e078",
+    "semantic_hash": ""
+  },
+  "platform_core/static/images/inkwash_vietnam.png": {
+    "mtime": 1792913134.523214,
+    "seen": 1792986268.468372,
+    "ast_hash": "1bde8d67b0a093c73633c1c13070567d",
+    "semantic_hash": ""
+  }
+}
