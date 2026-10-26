@@ -20,11 +20,12 @@
     </div>
   </header>
 
-  <nav class="studio-tabs">
-    <a class="btn{% if tab == 'main' %} dark{% endif %}" href="{{ url_for('content_studio.index') }}">메인</a>
-    <a class="btn{% if tab == 'poster' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='poster') }}">포스터</a>
-    <a class="btn{% if tab == 'cardnews' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='cardnews') }}">카드뉴스</a>
-    <a class="btn{% if tab == 'video' %} dark{% endif %}" href="{{ url_for('content_studio.index', tab='video') }}">영상</a>
+  {# 탭 줄: 현지조사 탭(.ma-tabs)과 같은 모양 — 글자 탭 + 지금 탭 금색 밑줄 (sns.css .studio-tabs) #}
+  <nav class="studio-tabs" aria-label="콘텐츠 스튜디오 탭">
+    <a href="{{ url_for('content_studio.index') }}"{% if tab == 'main' %} aria-current="page"{% endif %}>메인</a>
+    <a href="{{ url_for('content_studio.index', tab='poster') }}"{% if tab == 'poster' %} aria-current="page"{% endif %}>포스터</a>
+    <a href="{{ url_for('content_studio.index', tab='cardnews') }}"{% if tab == 'cardnews' %} aria-current="page"{% endif %}>카드뉴스</a>
+    <a href="{{ url_for('content_studio.index', tab='video') }}"{% if tab == 'video' %} aria-current="page"{% endif %}>영상</a>
   </nav>
 
   <p class="studio-notice" data-role="notice" role="status" hidden></p>
@@ -41,6 +42,17 @@
 
     <div class="panelhead{% if tab == 'main' %} studio-recs-head{% endif %}">
       <h2>{% if tab == 'main' %}모든 작업{% else %}내 {{ tab_labels[tab] }}{% endif %} <span class="studio-count" data-role="gallery-count"></span></h2>
+      {# 목록 도구: (메인만) 종류 필터 · 정렬(수정일) · 제목 검색. 화면에서만 거릅니다(sns.js renderList). #}
+      <div class="studio-list-tools">
+        {% if tab == 'main' %}
+        <div class="studio-seg" data-role="list-kind" role="group" aria-label="종류로 거르기">
+          <button type="button" class="btn dark" data-value="" aria-pressed="true">전체</button>
+          {% for key in ("poster", "cardnews", "video") %}<button type="button" class="btn" data-value="{{ key }}" aria-pressed="false">{{ tab_labels[key] }}</button>{% endfor %}
+        </div>
+        {% endif %}
+        <button type="button" class="btn" data-role="list-sort" title="수정일 기준 정렬 바꾸기">최신순 ↓</button>
+        <input type="search" class="studio-list-search" data-role="list-search" placeholder="제목 검색" aria-label="제목으로 검색" autocomplete="off">
+      </div>
     </div>
     <div class="studio-list" data-role="gallery"></div>
     <p class="empty-note" data-role="gallery-empty" hidden>아직 만든 작업이 없습니다. {% if tab == 'main' %}위 추천을 누르거나 탭에서 [새로 만들기]로 시작하세요.{% else %}[새로 만들기]로 시작하세요.{% endif %}</p>

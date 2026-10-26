@@ -5,8 +5,16 @@
 - color: 콘텐츠 색 이름 (sns.css의 tone-* 와 같은 이름)
 - image: static/images/sns/ 안의 대표 사진 파일 이름 (단면 사진, 없으면 None)
 - images: 같은 폴더의 사진들 {cut: 단면, pack: 포장}. 영상 제품 사진 칸의 기본값은 cut입니다.
+- COMMON_IMAGES: 맛과 상관없는 공통 사진 {whole: 겉모습(동그란 하얀 찹쌀떡), giftset_wrapped: 보자기 선물세트,
+  giftset_open: 열린 선물세트}. 영상 탭이 컷 종류에 맞춰 골라 Higgsfield에 보냅니다(routes_sns.py _photo_set).
 - new_menu: 첫 화면 "신메뉴" 추천에 쓰는 표시
 """
+
+COMMON_IMAGES = {
+    "whole": "product_whole.jpg",
+    "giftset_wrapped": "product_giftset_wrapped.jpg",
+    "giftset_open": "product_giftset_open.jpg",
+}
 
 PRODUCTS = [
     {

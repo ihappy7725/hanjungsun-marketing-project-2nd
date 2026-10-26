@@ -118,7 +118,24 @@ REALISM_AVOID = ("no artificial CGI look, no fake physics, no over-saturated pla
 CONTINUITY = ("Continuity: everything changes gradually and naturally, nothing appears suddenly, "
               "and the rice cakes keep the same shape, color, size and filling in every shot",
               "연속성: 모든 변화는 단계적이고 자연스럽게, 갑자기 나타나는 것 없이, 모든 컷에서 찹쌀떡의 모양·색·크기·속 유지")
-PHOTO_MATCH = ("the final hero shot matches the attached product photo exactly", "마지막 히어로 컷은 첨부한 제품 사진과 정확히 일치")
+# 제품 사진은 컷 종류별로 보냅니다(routes_sns.py _photo_set): 겉모습 공통 사진 · 맛별 단면 · 선물세트
+PHOTO_MATCH = ("outside = the round white rice cake photo, filling = the cross-section photos",
+               "겉은 동그란 하얀 찹쌀떡 사진, 속은 단면 사진대로")
+PHOTO_GIFT = ("gift = the gift set photos", "선물은 선물세트 사진대로")
+# 속 컷(가르기·한입): 동그란 하얀 찹쌀떡에서 시작해 갈라지며 단면이 드러나게. 길이를 줄일 때(compact)는 뺍니다.
+START_WHOLE = ("starting from a whole round white rice cake", "동그란 하얀 찹쌀떡 그대로에서 시작")
+
+# 장면 글(영어)로 컷 종류를 정합니다: gift(선물·포장) → inside(가르기·단면·한입) → outside(겉모습)
+GIFT_WORDS = re.compile(r"\bgift|\bbox(es)?\b|wrap|bojagi|present\b|packag", re.I)
+INSIDE_WORDS = re.compile(r"\bhalf\b|halves|halved|apart|cross[- ]section|filling|inside|\bbit(e|es|ing|ten)\b|split|"
+                          r"\bcut (open|in half)|cream", re.I)
+
+
+def scene_kind(text):
+    """장면 글 → "gift" | "inside" | "outside". 어떤 제품 사진을 보낼지 정할 때 씁니다."""
+    if GIFT_WORDS.search(text or ""):
+        return "gift"
+    return "inside" if INSIDE_WORDS.search(text or "") else "outside"
 MUSIC_AVOID = ("no vocals, no lyrics, no familiar melodies", "보컬·가사·익숙한 멜로디 없음")
 # 프롬프트가 길면(PROMPT_LIMIT 초과) 금지 줄을 이 짧은 문장으로 씁니다.
 AVOID_SHORT = ("no text, logos or watermarks, no distorted hands, no product morphing, no CGI look or fake physics",
@@ -606,6 +623,7 @@ def _lines(doc, lang, compact):
     ratio = RATIO_WORDS.get(doc["ratio"], (doc["ratio"], doc["ratio"]))[lang]
     count = len(doc["scenes"])
     has_photo = bool(doc.get("image"))
+    has_gift = any(scene_kind(scene.get("en")) == "gift" for scene in doc["scenes"])
 
     def ko(table, value):
         return table.get(value, value) if lang else value  # 대응표에 없으면 영어 그대로
@@ -617,12 +635,15 @@ def _lines(doc, lang, compact):
             shots.append(f"{scene['time']} — {what}.")  # 긴 영상: 디테일 컷은 장면만 (카메라는 아래 카메라 줄을 따름)
             continue
         beat = style["beats"][_slot(i, count)][lang]
+        if not compact and scene_kind(scene.get("en")) == "inside":
+            what = f"{what}, {START_WHOLE[lang]}"
         line = f"{scene['time']} — {beat}: {shot}; {what}; {_action(style, i, count)[lang]}."
         if doc["sound"] and (i == 0 or _sfx(style, i, count) != _sfx(style, i - 1, count)):  # 앞 컷과 같은 효과음은 생략
             line += f" {'효과음' if lang else 'SFX'}: {_sfx(style, i, count)[lang]}."
         shots.append(line)
 
-    continuity = CONTINUITY[lang] + (f"; {PHOTO_MATCH[lang]}." if has_photo else ".")
+    photo = PHOTO_MATCH[lang] + (f", {PHOTO_GIFT[lang]}" if has_gift else "")
+    continuity = CONTINUITY[lang] + (f"; {photo}." if has_photo else ".")
     if lang:
         head = f"'{style['concept'][1]}' — 한정선 {style['genre'][1]}, {doc['duration']}초, {ratio}, {style['quality'][1]}."
         lock = f"제품: 한정선 {product} — {look}." if len(names) == 1 else (
@@ -720,7 +741,7 @@ KO_FIXED = (
     ("첨부한 제품 사진과 똑같이", "exactly matching the attached product photo"),
     ("컷마다 적은 효과음", "plus the sound effects noted per shot"),
     ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
-    CONTINUITY[::-1], PHOTO_MATCH[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
+    CONTINUITY[::-1], PHOTO_MATCH[::-1], PHOTO_GIFT[::-1], START_WHOLE[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
     ("한정선", "Hanjungsun"),
     LINEUP_SHELL[::-1], REFERENCE_NOTE[::-1], REFERENCE_SHORT[::-1],
 )

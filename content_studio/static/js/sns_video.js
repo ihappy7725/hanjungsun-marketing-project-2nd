@@ -273,37 +273,13 @@ export function renderVideo(root, doc, options) {
   makeImage.addEventListener("click", () => askGenerate("image"));
   makeCut.addEventListener("click", () => askGenerate("image", selected));
   generate.addEventListener("click", () => askGenerate("video"));
-  // 만들 수 있는 때: 고친 내용이 저장됐고 제품 사진이 있을 때 (사진은 필수)
+  // 만들 수 있는 때: 고친 내용이 저장됐고 제품 사진이 있을 때 (제품을 고르면 서버가 자동으로 넣음)
   const canGenerate = () => save.disabled && Boolean(doc.image);
   let locked = false;  // 요청이 들어갔는지 모를 때 다시 누르지 못하게
   genButtons.forEach((button) => { button.disabled = !canGenerate(); });
 
-  // 제품 사진 (필수): 희주 업로드 API(/media/api/upload)로 올리고, 문서 image에 새 버전으로 저장합니다.
-  const photoInput = el("input");
-  photoInput.type = "file";
-  photoInput.accept = "image/jpeg,image/png,image/webp";
-  photoInput.hidden = true;
-  const photoButton = el("button", "btn", doc.image ? "사진 바꾸기" : "사진 올리기");
-  photoButton.type = "button";
-  photoButton.addEventListener("click", () => photoInput.click());
-  const photoNote = el("span", "studio-hint", doc.image ? "" : "영상과 미리보기 이미지를 만들려면 제품 사진이 필요해요.");
-  const photoBox = el("div", "studio-video-photo");
-  if (doc.image) {
-    const thumb = el("img", "studio-video-photo-thumb");
-    thumb.src = doc.image.url;
-    thumb.alt = "제품 사진";
-    photoBox.append(thumb);
-  }
-  // 고른 제품마다 단면·포장 사진을 함께 보냅니다(바꾸기는 첫 사진만).
-  for (const ref of doc.ref_images || []) {
-    const thumb = el("img", "studio-video-photo-thumb");
-    thumb.src = ref.url;
-    thumb.alt = "함께 보내는 제품 사진";
-    photoBox.append(thumb);
-  }
-  photoBox.append(photoButton, photoInput, photoNote);
-
-  // 레퍼런스 (선택): 분위기·구도·색감 참고 이미지 4장·참고 영상 1개. 제품 사진처럼 미리보기를 보여 주고,
+  // 제품 사진은 칸 없이 서버가 고른 제품·컷 종류로 자동으로 보냅니다(routes_sns.py _photo_set).
+  // 레퍼런스 (선택): 분위기·구도·색감 참고 이미지 4장·참고 영상 1개. 썸네일 미리보기를 보여 주고,
   // ×로 빼거나 [+ 추가]로 넣으면 바로 새 버전으로 저장합니다(↶로 되돌리기).
   const REFS_MAX = 4;
   const refBox = el("div", "studio-video-photo");
@@ -362,26 +338,6 @@ export function renderVideo(root, doc, options) {
       refButton.disabled = false;
     }
   });
-  photoInput.addEventListener("change", async () => {
-    const file = photoInput.files[0];
-    if (!file) return;
-    photoButton.disabled = true;
-    photoNote.textContent = "사진을 올리는 중…";
-    try {
-      const form = new FormData();
-      form.append("image", file);
-      const response = await fetch(apiBase.replace(/api$/, "media/api/upload"), { method: "POST", body: form });
-      const data = await response.json().catch(() => ({ ok: false, error: "서버 응답을 읽지 못했습니다." }));
-      if (!data.ok) throw new Error(data.error || "사진을 올리지 못했습니다.");
-      const next = collect();
-      next.image = { file_id: data.file_id, url: data.url };
-      await saveDoc(next);
-    } catch (error) {
-      photoNote.textContent = `사진을 올리지 못했어요. (${error.message})`;
-      photoButton.disabled = false;
-    }
-  });
-
   // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
   const maxScenes = Math.min(doc.duration, 12);
   const addScene = el("button", "btn studio-video-add", `+ 컷 추가 (${doc.scenes.length}/${maxScenes})`);
@@ -425,8 +381,6 @@ export function renderVideo(root, doc, options) {
   const generateBlock = el("div", "studio-video-generate");
   generateBlock.append(
     el("h3", "", "③ 영상 만들기"),
-    el("h4", "", "제품 사진 (필수)"),
-    photoBox,
     el("h4", "", "레퍼런스 (선택)"),
     refBox,
     actions(makeImage, makeCut, generate),
@@ -484,7 +438,7 @@ export function renderVideo(root, doc, options) {
         el("li", "", `이번에 쓰일 크레딧: ${fmt(quote.credits)}`),
         el("li", "", `계정 남은 크레딧: ${fmt(quote.balance)} → 실행 후 약 ${fmt(quote.balance - quote.credits)}`),
         el("li", "", `오늘 대시보드 사용: ${fmt(quote.today_used)} / ${fmt(quote.daily_limit)}`),
-        el("li", "", "제품 사진 참고: 올린 사진"),
+        el("li", "", "제품 사진: 자동 (컷에 맞춰 겉모습·단면·선물세트)"),
       );
       const run = el("button", "btn dark", "실행");
       run.type = "button";
