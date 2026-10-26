@@ -72,20 +72,18 @@ class InsightRuleTests(unittest.TestCase):
         self.assertTrue(result["positioning"]["text"].startswith("근거 부족"))
         self.assertEqual(result["dropped"], 5)
 
-    def test_card_opinions_and_up_to_four_opinions(self):
+    def test_card_evidence_usable_in_opinions_up_to_four(self):
         cards = {"flavor": {"status": "ok", "rule": "규칙", "as_of": "2026-10-26",
                             "rows": [{"name": "코코넛", "rank": 1, "interest": 75.4, "supply": 3, "peak_months": [3], "kind": "gap"}]}}
         evidence = s.build_evidence(TREND, GUIDELINES, [], cards)
         self.assertIn("D-맛기회", evidence)
-        raw = {"card_opinions": {"flavor": {"text": "코코넛 1순위, 경쟁 제품 3개뿐", "tags": ["D-맛기회"]},
-                                 "price": {"text": "근거 없음", "tags": ["D-가격"]},  # 가격 카드 근거 없음 → 버림
-                                 "other": {"text": "x", "tags": ["D-맛기회"]}},       # 없는 카드 키
-               "opinions": [{"text": f"의견 {name}", "tags": ["K-다낭", "D-맛기회"]} for name in "가나다라마바"]}
+        raw = {"opinions": [{"text": "코코넛 경쟁 제품 3개뿐이라 1순위", "tags": ["D-맛기회", "T-과일"]}]
+               + [{"text": f"의견 {name}", "tags": ["K-다낭", "D-맛기회"]} for name in "가나다라마"],
+               "card_opinions": {"flavor": {"text": "x", "tags": ["D-맛기회"]}}}  # 화면에서 뺀 항목은 결과에 넣지 않음
         result = s.validate(raw, evidence, [], [10, 11, 12])
-        self.assertEqual(result["card_opinions"]["flavor"]["tags"], ["D-맛기회"])
-        self.assertIsNone(result["card_opinions"]["price"])
-        self.assertNotIn("other", result["card_opinions"])
+        self.assertEqual(result["opinions"][0]["tags"], ["D-맛기회", "T-과일"])
         self.assertEqual(len(result["opinions"]), s.MAX_OPINIONS)
+        self.assertNotIn("card_opinions", result)
 
     def test_input_validation(self):
         with self.assertRaises(s.InsightError):

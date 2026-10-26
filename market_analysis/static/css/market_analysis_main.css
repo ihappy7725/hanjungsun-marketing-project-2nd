@@ -272,46 +272,8 @@
 .market-analysis-page .ma-ai-opinion + .ma-ai-opinion { margin-top: var(--space-3); }
 .market-analysis-page .ma-ai-opinion p { margin: 0; font-size: 14px; line-height: 1.6; }
 .market-analysis-page .ma-ai-sources { margin-top: var(--space-2) !important; color: var(--muted); font-size: 13px !important; }
-.market-analysis-page .ma-ai-readiness { padding: var(--space-4) var(--space-6); border: 1px solid var(--line-soft); border-radius: var(--space-4); font-size: 13px; color: var(--muted); }
-.market-analysis-page .ma-ai-readiness summary { cursor: pointer; }
-.market-analysis-page .ma-ai-readiness ul { margin: var(--space-3) 0 0; padding-left: var(--space-6); }
 @media (max-width: 700px) {
  .market-analysis-page .ma-ai-form, .market-analysis-page .ma-ai-block { padding: var(--space-5); }
  .market-analysis-page .ma-ai-swot { grid-template-columns: 1fr; }
 }
 
-/* AI 인사이트 의사결정 카드 (ma-ai-card) */
-.market-analysis-page .ma-ai-cards { display: grid; gap: var(--space-4); min-width: 0; }
-.market-analysis-page .ma-ai-cards-head h2 { margin: 0; font-size: 18px; }
-.market-analysis-page .ma-ai-cards-head p { margin: var(--space-1) 0 0; color: var(--muted); font-size: 13px; }
-.market-analysis-page .ma-ai-cards-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-4); align-items: start; }
-.market-analysis-page .ma-ai-card { min-width: 0; display: grid; gap: var(--space-3); padding: var(--space-5) var(--space-6); border: 1px solid var(--line); border-radius: var(--space-5); background: var(--page-bg); }
-.market-analysis-page .ma-ai-card h3 { margin: 0; font-size: 16px; }
-.market-analysis-page .ma-ai-card-sub, .market-analysis-page .ma-ai-dim, .market-analysis-page .ma-ai-legend { margin: 0; color: var(--muted); font-size: 12px; }
-.market-analysis-page .ma-ai-table.is-compact { font-size: 13px; }
-.market-analysis-page .ma-ai-table.is-compact th, .market-analysis-page .ma-ai-table.is-compact td { padding: var(--space-2) var(--space-3); }
-.market-analysis-page .ma-ai-kind { display: inline-block; padding: 0 var(--space-3); border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: var(--paper); color: var(--muted); }
-.market-analysis-page .ma-ai-kind.is-gap { background: var(--celadon); color: var(--navy); }
-.market-analysis-page .ma-ai-kind.is-crowded { background: var(--orange); color: var(--navy); }
-.market-analysis-page .ma-ai-kind.is-contested { background: var(--beige); color: var(--ink); }
-.market-analysis-page .ma-ai-prices { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); font-size: 13px; }
-.market-analysis-page .ma-ai-prices li { display: grid; gap: var(--space-2); }
-.market-analysis-page .ma-ai-prices small { color: var(--muted); }
-.market-analysis-page .ma-ai-range { position: relative; height: 12px; border-radius: 6px; background: var(--line-soft); }
-.market-analysis-page .ma-ai-range .iqr, .market-analysis-page .ma-ai-legend .iqr { position: absolute; top: 0; height: 100%; border-radius: 6px; background: var(--celadon); }
-.market-analysis-page .ma-ai-range .mid, .market-analysis-page .ma-ai-legend .mid { position: absolute; top: -2px; width: 3px; height: 16px; margin-left: -1px; background: var(--navy); }
-.market-analysis-page .ma-ai-range .ours, .market-analysis-page .ma-ai-legend .ours { position: absolute; top: -3px; width: 10px; height: 10px; margin-left: -5px; border: 2px solid var(--page-bg); border-radius: 50%; background: var(--brown); }
-.market-analysis-page .ma-ai-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
-.market-analysis-page .ma-ai-legend span { position: relative !important; top: 0 !important; display: inline-block; margin: 0; }
-.market-analysis-page .ma-ai-legend .iqr { width: 16px; height: 8px; }
-.market-analysis-page .ma-ai-legend .mid { height: 10px; }
-.market-analysis-page .ma-ai-price-input { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: 13px; font-weight: 700; }
-.market-analysis-page .ma-ai-price-input input { width: 120px; padding: var(--space-2) var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--space-3); background: var(--control-bg); color: var(--ink); font: inherit; font-weight: 400; }
-.market-analysis-page .ma-ai-ours { margin: 0; font-size: 13px; }
-.market-analysis-page .ma-ai-card-opinion { padding: var(--space-4) var(--space-5); border-left: 3px solid var(--brown); border-radius: var(--space-3); background: color-mix(in srgb,var(--beige) 40%,var(--page-bg)); }
-.market-analysis-page .ma-ai-card-opinion b { font-size: 12px; color: var(--brown); }
-.market-analysis-page .ma-ai-card-opinion p { margin: var(--space-1) 0 0; font-size: 13px; line-height: 1.55; }
-.market-analysis-page .ma-ai-card-opinion.is-empty { margin: 0; color: var(--muted); font-size: 12px; }
-@media (max-width: 1100px) {
- .market-analysis-page .ma-ai-cards-grid { grid-template-columns: 1fr; }
-}

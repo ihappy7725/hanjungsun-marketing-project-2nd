@@ -555,7 +555,7 @@ function renderCulture() {
 // 설계: AI 인사이트 출력 내용 설계 (2026-10-26). 입력 6개(필수 3·선택 3) → 출력 11블록, 사실 문장마다 근거 태그.
 // 근거 태그·과일·타임라인 월은 서버가 정하고 검증합니다(services/insight_service.py). 결과는 저장하지 않습니다.
 const INSIGHT_URL = `/market_analysis/api/insight?country=${encodeURIComponent(data.country)}`;
-const insight = { options: null, form: { channels: [], fruits: [] }, result: null, loading: false, error: "", ourPrice: null };
+const insight = { options: null, form: { channels: [], fruits: [] }, result: null, loading: false, error: "" };
 
 function renderInsight() {
   const view = page.querySelector('[data-view="insight"]');
@@ -565,74 +565,8 @@ function renderInsight() {
       .catch(() => { view.innerHTML = `<p class="empty-note">AI 인사이트를 불러오지 못했습니다.</p>`; });
     return;
   }
-  view.innerHTML = `<div class="ma-ai">${insightCards()}${insightForm()}${insightResult()}${readinessPanel()}</div>`;
+  view.innerHTML = `<div class="ma-ai">${insightForm()}${insightResult()}</div>`;
   bindInsightForm(view);
-  view.querySelector('[data-ma="our-price"]')?.addEventListener("change", (event) => {
-    insight.ourPrice = Number(event.target.value) || null;  // 화면 계산에만 쓰고 저장하지 않음
-    renderInsight();
-  });
-}
-
-// 의사결정 카드: 서버 계산(맛 기회·가격 위치·채널 기회). AI 인사이트를 생성하면 카드마다 AI 의견이 붙습니다.
-const FLAVOR_KIND = { gap: ["빈틈", "관심 높고 경쟁 적음"], contested: ["경쟁 보통", "관심 높고 경쟁 보통"],
-  crowded: ["경쟁 많음", "경쟁 제품 많음"], low: ["관심 낮음", "검색 관심 낮음"] };
-
-function insightCards() {
-  const cards = insight.options.cards || {};
-  const won = (v) => `${Number(v).toLocaleString("ko-KR")}동`;
-  const ev = insight.result?.evidence || {};
-  const opinion = (key) => {
-    const o = insight.result?.result?.card_opinions?.[key];
-    if (!o) return insight.result ? `<p class="ma-ai-card-opinion is-empty">AI 의견 · 근거 부족</p>` : "";
-    return `<div class="ma-ai-card-opinion"><b>AI 의견</b><p>${esc(o.text)}</p>
-      <p class="ma-ai-sources">${o.tags.map((t) => `<span class="ma-ai-tag" title="${esc(ev[t]?.text || "")}">${esc(t)}</span> ${esc(ev[t]?.source || "")} (${esc(ev[t]?.date || "")})`).join(" · ")}</p></div>`;
-  };
-  const card = (title, sub, body, key) => `<article class="ma-ai-card"><h3>${esc(title)}</h3><p class="ma-ai-card-sub">${esc(sub)}</p>${body}${opinion(key)}</article>`;
-
-  const f = cards.flavor || {};
-  const flavorBody = f.status === "ok" ? `<table class="ma-ai-table is-compact"><thead><tr><th>과일</th><th>관심도</th><th>경쟁 제품</th><th>피크</th><th>판단</th></tr></thead>
-    <tbody>${f.rows.map((r) => `<tr class="is-${r.kind}"><td><strong>${esc(r.name)}</strong></td><td>${r.rank}위 · ${esc(r.interest)}</td>
-      <td>${r.supply}개</td><td>${esc(r.peak_months.join("·"))}월</td><td><span class="ma-ai-kind is-${r.kind}" title="${esc(FLAVOR_KIND[r.kind][1])}">${FLAVOR_KIND[r.kind][0]}</span></td></tr>`).join("")}</tbody></table>`
-    : `<p class="ma-ai-none">데이터 부족</p>`;
-
-  const p = cards.price || {};
-  const scale = p.overall ? Math.max(p.overall.max, insight.ourPrice || 0) : 1;
-  const pos = (v) => `${Math.min(100, Math.max(0, (v / scale) * 100)).toFixed(1)}%`;
-  const priceRow = (label, r) => (r.median === undefined ? `<li><span>${esc(label)}</span><span class="ma-ai-dim">${r.count}건 · 표본 부족</span></li>` : `
-    <li><span>${esc(label)} <small>${r.count}건</small></span>
-      <span class="ma-ai-range"><span class="iqr" style="left:${pos(r.p25)};width:calc(${pos(r.p75)} - ${pos(r.p25)})"></span><span class="mid" style="left:${pos(r.median)}"></span>
-        ${insight.ourPrice ? `<span class="ours" style="left:${pos(insight.ourPrice)}" title="우리 가격"></span>` : ""}</span>
-      <span class="ma-ai-dim">${won(r.p25)} · <b>${won(r.median)}</b> · ${won(r.p75)}</span></li>`);
-  const ourPosition = () => {
-    if (!insight.ourPrice || !p.overall) return "";
-    const o = p.overall, v = insight.ourPrice;
-    const where = v < o.p25 ? "하위 25% 아래(저가)" : v <= o.median ? "하위 25%~중간" : v <= o.p75 ? "중간~상위 25%" : "상위 25% 위(고가)";
-    return `<p class="ma-ai-ours">우리 가격 ${won(v)} → 시장 <b>${where}</b></p>`;
-  };
-  const priceBody = p.status === "ok" ? `<ul class="ma-ai-prices">${priceRow("전체", p.overall)}${p.rows.map((r) => priceRow(r.label, r)).join("")}</ul>
-    <p class="ma-ai-legend"><span class="iqr"></span> 하위25~상위25% <span class="mid"></span> 중간값 <span class="ours"></span> 우리 가격</p>
-    <label class="ma-ai-price-input">우리 100g당 가격(동) <input type="number" min="0" step="1000" data-ma="our-price" value="${insight.ourPrice || ""}" placeholder="예: 45000"></label>
-    ${ourPosition()}` : `<p class="ma-ai-none">데이터 부족</p>`;
-
-  const c = cards.channel || {};
-  const channelBody = c.status === "ok" ? `<table class="ma-ai-table is-compact"><thead><tr><th>채널</th><th>경쟁 판매</th><th>플랫폼 점유율</th></tr></thead>
-    <tbody>${c.rows.map((r) => `<tr><td><strong>${esc(r.channel)}</strong></td><td>${r.listings}건 (${r.listing_share}%)</td>
-      <td>${r.platform_share === null || r.platform_share === undefined ? "-" : `${r.platform_share}%`}</td></tr>`).join("")}</tbody></table>
-    <p class="ma-ai-dim">점유율: 4대 플랫폼 거래액 기준 (${esc(c.share_as_of || "-")}, Lazada는 Tiki 포함)</p>` : `<p class="ma-ai-none">데이터 부족</p>`;
-
-  return `<section class="ma-ai-cards">
-    <div class="ma-ai-cards-head"><h2>의사결정 카드</h2><p>트렌드 × 경쟁 조사 × 이커머스를 교차 계산 · 경쟁 조사 ${esc(f.as_of || p.as_of || "-")} 기준 · 맛·채널은 판매량이 아닌 공급(제품·판매처 수) 기준</p></div>
-    <div class="ma-ai-cards-grid">
-      ${card("맛 기회", "어떤 맛으로 내나", flavorBody, "flavor")}
-      ${card("가격 위치", "100g당 경쟁 판매가 분포", priceBody, "price")}
-      ${card("채널 기회", "어디서 먼저 파나", channelBody, "channel")}
-    </div></section>`;
-}
-
-function readinessPanel() {
-  return `<details class="ma-ai-readiness"><summary>데이터 현황</summary>
-    <ul>${data.readiness.map((r) => `<li><strong>${esc(r.label)}</strong> ${r.ready ? "준비됨" : "수집 전"}
-      ${r.total === null ? `${r.ready}개` : `${r.ready} / ${r.total}`}</li>`).join("")}</ul></details>`;
 }
 
 function insightForm() {
@@ -714,11 +648,9 @@ function insightResult() {
       r.channels.map((x) => [`<strong>${esc(x.channel)}</strong>`, esc(x.message), `${esc(x.content_packaging)} ${tags(x.tags)}`])))}
     ${block(7, "경쟁사 대비 포지셔닝", `<p>${esc(r.positioning.text)} ${tags(r.positioning.tags)}</p>`)}
     ${block(8, "SWOT 분석", `<div class="ma-ai-swot">${swotCell("S", "강점")}${swotCell("W", "약점")}${swotCell("O", "기회")}${swotCell("T", "위협")}</div>`)}
-    ${block(9, "규제·문화 체크", r.checks.length ? `<ul class="ma-ai-list">${r.checks.map((x) => `<li>${esc(x.text)} ${tags(x.tags)}</li>`).join("")}</ul>` : `<p class="ma-ai-none">해당 항목 없음</p>`)}
-    ${block(10, "AI 종합 의견 · 근거 기반", r.opinions.length ? r.opinions.map((x) => `<div class="ma-ai-opinion"><p><b>의견</b> ${esc(x.text)}</p>
+    ${block(9, "AI 종합 의견 · 근거 기반", r.opinions.length ? r.opinions.map((x) => `<div class="ma-ai-opinion"><p><b>의견</b> ${esc(x.text)}</p>
       <p class="ma-ai-sources"><b>근거</b> ${x.tags.map((t) => `${tags([t])} ${esc(ev[t].source)} (${esc(ev[t].date)})`).join(" · ")}</p></div>`).join("")
       : `<p class="ma-ai-none">근거 부족 · 의견 없음</p>`)}
-    ${block(11, "데이터 한계", `<ul class="ma-ai-list">${out.limits.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`)}
   </div>`;
 }
 
