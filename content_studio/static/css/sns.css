@@ -35,9 +35,9 @@
 .studio-page .studio-row.is-head { padding-block: var(--space-4); color: var(--muted); font-size: var(--fs-min); }
 .studio-page .studio-row > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .studio-page .studio-row-title { font-weight: 600; }
-.studio-page .studio-kind { justify-self: start; padding: var(--space-1) var(--space-3); border-radius: var(--radius); background: var(--badge-bg); color: var(--badge-ink); font-size: var(--fs-min); }
-.studio-page .studio-kind.is-video { background: var(--badge-red-bg); color: var(--badge-red-ink); }
-.studio-page .studio-kind.is-cardnews { background: var(--badge-green-bg); color: var(--badge-green-ink); }
+.studio-page .studio-kind { justify-self: start; padding: var(--space-1) var(--space-3); border-radius: 6px; background: color-mix(in srgb, var(--gold) 70%, var(--brown)); color: var(--on-dark); font-size: var(--fs-min); }  /* 포스터 (금색에 갈색을 섞은 머스터드) */
+.studio-page .studio-kind.is-video { background: var(--badge-red-bg); color: var(--on-dark); }
+.studio-page .studio-kind.is-cardnews { background: color-mix(in srgb, var(--green) 65%, var(--on-dark)); color: var(--on-dark); }
 
 /* 미리보기 팝업 (base.css dialog) */
 .studio-page .studio-preview-dialog { width: min(960px, 92vw); }
@@ -65,9 +65,9 @@
 }
 .studio-page .studio-rec:hover { border-color: var(--line-strong); }
 .studio-page .studio-rec-title { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-body); font-weight: 600; word-break: keep-all; }
-.studio-page .studio-rec-mark { padding: var(--space-1) var(--space-3); border-radius: var(--radius); background: var(--badge-bg); color: var(--badge-ink); font-size: var(--fs-min); font-weight: 700; white-space: nowrap; }
-.studio-page .studio-rec.is-dday .studio-rec-mark { background: var(--badge-red-bg); color: var(--badge-red-ink); }
-.studio-page .studio-rec.is-season .studio-rec-mark { background: var(--badge-green-bg); color: var(--badge-green-ink); }
+.studio-page .studio-rec-mark { padding: calc(var(--space-1) * 0.8) calc(var(--space-3) * 0.8); border-radius: 6px; background: color-mix(in srgb, var(--gold) 70%, var(--brown)); color: var(--on-dark); font-size: calc(var(--fs-min) * 0.8); font-weight: 700; white-space: nowrap; }  /* 제목 옆 작은 배지 (80%). NEW = 포스터 배지 색 */
+.studio-page .studio-rec.is-dday .studio-rec-mark { background: var(--badge-red-bg); color: var(--on-dark); }  /* = 영상 배지 */
+.studio-page .studio-rec.is-season .studio-rec-mark { background: color-mix(in srgb, var(--green) 65%, var(--on-dark)); color: var(--on-dark); }  /* 대표 = 카드뉴스 배지 */
 .studio-page .studio-rec-points { margin: 0; padding-left: var(--space-6); color: var(--ink); font-size: var(--fs-min); line-height: var(--line-height); word-break: keep-all; }  /* 한국어는 단어 단위 줄바꿈 */
 .studio-page .studio-rec-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; }  /* [포스터] [카드뉴스] [영상] */
 .studio-page .studio-rec-go .btn { min-height: 36px; padding: 0 var(--space-3); }  /* 좁은 카드에서도 한 줄 */
@@ -353,3 +353,29 @@
 .studio-page .studio-video-refs h3 { margin: 0 0 var(--space-4); }
 /* 묶음 사이 빈 줄: 영어 상자는 줄마다 div라 빈 줄에 높이를 줌 */
 .studio-page .studio-video-prompt-line:empty::before { content: "\00a0"; }
+/* 목록 보기 전환 (☰ 목록 / ▦ 썸네일): 테두리 없는 아이콘 버튼, 고른 쪽은 진하게 */
+.studio-page .studio-view-switch { display: flex; gap: var(--space-1); }
+.studio-page .studio-view-switch .btn { display: grid; place-items: center; width: 40px; min-height: 40px; padding: 0; }
+.studio-page .studio-view-switch .btn:not(.dark) { border-color: transparent; background: transparent; color: var(--muted); }
+.studio-page .studio-view-switch .btn:not(.dark):hover { background: var(--paper); color: var(--ink); }
+/* 썸네일 보기: 카드 격자 (미리보기 틀 4:5 같은 높이) */
+.studio-page .studio-list.is-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-6); padding-top: var(--space-5); border-top: 0; }
+.studio-page .studio-tile { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); text-align: left; }
+.studio-page .studio-tile-thumb { position: relative; overflow: hidden; aspect-ratio: 4 / 5; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+.studio-page .studio-tile:hover .studio-tile-thumb { border-color: var(--line-strong); }
+.studio-page .studio-tile-thumb img, .studio-page .studio-tile-thumb video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.studio-page .studio-tile-thumb .studio-editor-thumb { position: absolute; inset: var(--space-4); width: calc(100% - 2 * var(--space-4)); height: calc(100% - 2 * var(--space-4)); object-fit: contain; }
+.studio-page .studio-tile-thumb.is-text { padding: 48px var(--space-5) var(--space-5); }  /* 위 종류 배지 아래부터 */
+.studio-page .studio-tile-thumb.is-text .studio-scenes { padding-left: var(--space-5); list-style: decimal; color: var(--muted); }
+.studio-page .studio-tile-thumb .studio-kind { position: absolute; top: var(--space-3); left: var(--space-3); }
+.studio-page .studio-tile-pages { position: absolute; top: var(--space-3); right: var(--space-3); padding: var(--space-1) var(--space-3); border-radius: 6px; background: var(--white); color: var(--muted); font-size: var(--fs-min); }
+.studio-page .studio-tile-title { margin: 0; overflow: hidden; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.studio-page .studio-tile-meta { margin: 0; overflow: hidden; color: var(--muted); font-size: var(--fs-min); white-space: nowrap; text-overflow: ellipsis; }
+/* 미리보기 팝업 오른쪽 위 [삭제]: 회색 버튼 */
+.studio-page .studio-preview-dialog h2 { padding-right: 88px; }
+.studio-page .studio-preview-delete { position: absolute; top: var(--space-6); right: var(--space-6); border-color: transparent; background: var(--paper); color: var(--muted); }
+.studio-page .studio-preview-delete:hover { background: var(--line); color: var(--ink); }
+/* 삭제 확인 창 */
+.studio-page .studio-confirm-dialog { width: min(440px, 92vw); }
+.studio-page .studio-confirm-dialog .studio-confirm-title { margin: 0 0 var(--space-3); font-weight: 600; }
+.studio-page .studio-confirm-dialog .actions { margin-top: var(--space-6); }
