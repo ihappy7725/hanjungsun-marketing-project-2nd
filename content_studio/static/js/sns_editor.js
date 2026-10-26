@@ -6,22 +6,32 @@ import {
 } from "./sns_fonts.js";
 import { openRemoveBg } from "./sns_image.js";
 
-export const SIZES = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080] };
+// 3:4 · 4:3은 Higgsfield 그림 시안 비율 (designs.py SIZES와 같음)
+export const SIZES = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080],
+  "3:4": [1080, 1440], "4:3": [1440, 1080] };
 const LOCAL_ACTION = "__local__";  // 글꼴 목록의 "내 PC 글꼴 불러오기…"
 const LINE = 1.2;     // 줄 간격 (글자 크기의 배수)
 const MIN_SIZE = 2;   // 요소 최소 너비·높이 (%)
 const MAX_VIEW = 0.7; // 미리보기 최대 높이 (창 높이 대비)
 const UPLOAD_API = "/content_studio/media/api/upload";  // routes_media.py
 const REVIEW_API = "/content_studio/media/api/review";
-const BRIEF_API = "/content_studio/media/api/design-brief";
-const ASSISTANT_API = "/content_studio/media/api/design-assistant";
+const ASSISTANT_API = "/content_studio/media/api/design-assistant";  // 시안 3개의 장별 그림 프롬프트 (gpt-4o-mini)
+// 시안 그림 (유진 routes_sns.py, Higgsfield): 견적(무료) · 생성(크레딧) · 상태(무료)
+const IMAGE_QUOTE_API = "/content_studio/api/design-images/quote";
+const IMAGE_API = "/content_studio/api/design-images";
+const IMAGE_STATUS_API = "/content_studio/api/design-images/status";
+const IMAGE_POLL_MS = 4000;  // 상태 확인 간격
+const IMAGE_DONE = "completed";  // higgsfield.py DONE, FAILED
+const IMAGE_FAILED = ["failed", "nsfw", "canceled", "cancelled"];
+const ARTWORK_ROLE = "artwork";  // designs.py ARTWORK_ROLE: 그림 시안 장 전체를 덮는 그림. 고르거나 옮기지 않습니다.
+const IMAGE_MODE = "image";      // designs.py IMAGE_MODE: 그림 시안 문서
 const FIGMA_API = "/content_studio/media/api/figma-preview";
 const FIGMA_DESIGN_API = "/content_studio/media/api/figma/designs";  // 플러그인 창구 (주소 확인에도 씀)
 const BG_QUOTE_API = "/content_studio/media/api/design-bg/quote";  // AI 배경 그림 견적 (무료)
 const BG_API = "/content_studio/media/api/design-bg";              // AI 배경 그림 만들기 (유료, OpenAI 이미지 모델)
 const BG_ROLE = "background";  // designs.py BG_ROLE: 장 전체를 덮는 배경 그림. 고르거나 옮기지 않고 바탕처럼 둡니다.
 const RATIO_API = "/content_studio/media/api/design-ratio";        // 비율 바꾸기 (무료)
-const DESIGN_RATIOS = { poster: ["4:5", "9:16", "16:9", "1:1"], cardnews: ["4:5", "1:1"] };  // designs.py DESIGN_RATIOS
+const DESIGN_RATIOS = { poster: ["4:5", "3:4", "9:16", "1:1", "4:3", "16:9"], cardnews: ["4:5", "3:4", "1:1"] };  // designs.py DESIGN_RATIOS
 const CARD_PAGES = [3, 6];  // 카드뉴스 장수 (designs.py MIN_PAGES, MAX_PAGES)
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
@@ -168,9 +178,15 @@ async function postJson(url, body) {
   return data;
 }
 
-// ---------- AI 제안 카드 · 비용 줄 (renderChoices · promptForm이 같이 씀) ----------
-// 제안 카드: 실제 모양 미리보기 + 스타일 + 문구(베트남어·한국어 뜻). 카드 아무 곳이나 누르면 onPick (문구 펼치기는 제외).
-function candidateCard(item, isSelected, onPick) {
+// ---------- 그림 시안 카드 · 비용 줄 · 검수 결과 (renderChoices · renderDesign이 같이 씀) ----------
+const NOT_SENT = "not_sent";  // 생성 API가 중간에 멈춰 보내지 못한 장 (응답 jobs의 null)
+const pageDone = (page) => page.job?.status === IMAGE_DONE && Boolean(page.job.url);
+const pageFailed = (page) => IMAGE_FAILED.includes(page.job?.status);
+
+// 그림 시안 카드: 이름 · 스타일 · 진행(완료 n/장수) · 장별 그림 칸 · 넣은 문구(베트남어·한국어 뜻).
+// 카드 아무 곳이나 누르면 onPick (문구 펼치기는 제외).
+function imageCard(item, isSelected, onPick, ratio) {
+  const [W, H] = SIZES[ratio] || SIZES["4:5"];
   const card = el("section", `studio-editor-candidate${isSelected ? " is-selected" : ""}`);
   card.addEventListener("click", (event) => {
     if (event.target.closest("summary") || isSelected) return;
@@ -178,17 +194,103 @@ function candidateCard(item, isSelected, onPick) {
   });
   const choose = button(`${isSelected ? "✓ " : ""}${item.name}`, () => {}, isSelected ? "btn dark" : "btn");
   choose.setAttribute("aria-pressed", String(isSelected));
-  const words = el("details", "studio-editor-candidate-words");
-  words.open = item.pages.length === 1;
-  words.append(el("summary", "", item.pages.length > 1 ? `문구 보기 · ${item.pages.length}장` : "문구 보기"));
-  item.pages.forEach((page, pageNumber) => {
-    const vi = el("p", "", `${item.pages.length > 1 ? `${pageNumber + 1}장 · ` : ""}${page.title_vi}\n${page.body_vi}`);
-    vi.lang = "vi";
-    words.append(vi, el("p", "studio-hint", `${page.title_ko}\n${page.body_ko}`));
+  const total = item.pages.length;
+  const done = item.pages.filter(pageDone).length;
+  const failed = item.pages.filter(pageFailed).length;
+  const progress = done === total ? "완성" : `${done}/${total}장 완료${failed ? ` · 실패 ${failed}장` : ""}`;
+  const strip = el("div", `studio-editor-image-strip${total > 1 ? " is-pages" : ""}`);
+  item.pages.forEach((page, index) => {
+    const frame = el("div", "studio-editor-image-frame");
+    frame.style.aspectRatio = `${W} / ${H}`;
+    if (pageDone(page)) {
+      const img = el("img");
+      img.src = page.job.url;
+      img.alt = `${item.name} ${total > 1 ? `${index + 1}장` : ""} 그림`;
+      frame.append(img);
+    } else {
+      const unsent = page.job?.status === NOT_SENT;
+      frame.classList.toggle("is-failed", pageFailed(page) || unsent);
+      frame.append(el("span", "", pageFailed(page) ? "그리지 못함" : unsent ? "보내지 못함" : "그리는 중…"));
+    }
+    if (total > 1) frame.append(el("span", "studio-editor-image-no", String(index + 1)));
+    strip.append(frame);
   });
-  card.append(choose, item.style_label ? el("p", "studio-hint", `스타일 · ${item.style_label}`) : "",
-    item.design ? renderThumb(item.design) : "", words);
+  const words = el("details", "studio-editor-candidate-words");
+  words.append(el("summary", "", total > 1 ? `넣은 문구 보기 · ${total}장` : "넣은 문구 보기"),
+    el("p", "studio-hint", item.concept_ko));
+  item.pages.forEach((page, index) => {
+    for (const text of page.texts) {
+      const vi = el("p", "", `${total > 1 ? `${index + 1}장 · ` : ""}${text.vi}`);
+      vi.lang = "vi";
+      words.append(vi, el("p", "studio-hint", text.ko));
+    }
+  });
+  card.append(choose, el("p", "studio-hint", `스타일 · ${item.style_label} · ${progress}`), strip, words);
   return card;
+}
+
+// 확정한 그림 시안 → 문서 (designs.py IMAGE_MODE 설명과 같은 형식)
+function imageDesign(kind, ratio, item) {
+  return {
+    kind, ratio, demo: true, mode: IMAGE_MODE, style: item.style,
+    assistant: { name: item.name, prompt: item.concept_ko,
+      notice: `AI 그림 시안 · ${item.style_label} · 그림 속 글자와 제품 정보는 꼭 확인해 주세요.` },
+    pages: item.pages.map((page, index) => ({
+      layout: IMAGE_MODE, bg: "#ffffff", prompt: page.prompt_en, texts: page.texts,
+      elements: [{ id: `p${index + 1}-${ARTWORK_ROLE}`, role: ARTWORK_ROLE, type: "image",
+        x: 0, y: 0, w: 100, h: 100, z: 0, src: page.job?.url || "", radius: 0 }],
+    })),
+  };
+}
+
+// 광고 표현 검수 결과를 node에 그립니다. (편집기 [광고 표현 검수] · 시안 고르기 화면이 같이 씀)
+function fillReview(node, data) {
+  const nodes = [el("h3", "", "광고 표현 검수")];
+  const guide = data.guidelines || {};
+  nodes.push(el("p", "studio-hint", `현지 시장 분석 자료 · 상태: ${guide.status === "confirmed" ? "확정" : "검토 중"} · 검토일: ${guide.reviewed_at || "미등록"}`));
+  for (const rule of guide.prompt_rules || []) nodes.push(el("p", "", rule));
+  for (const item of [...(guide.visual_cautions || []), ...(guide.required_notices || [])]) {
+    if (item.rule) nodes.push(el("p", "is-warn", item.rule));
+  }
+  for (const source of guide.sources || []) {
+    if (!/^https?:\/\//.test(source.url || "")) continue;
+    const link = el("a", "", source.title || "기준 출처");
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    nodes.push(link);
+  }
+  if (!data.ready) {
+    nodes.push(el("p", "is-warn",
+      "검수 기준이 아직 준비되지 않았습니다. (현지 시장 분석 탭에서 준비 중) 걸린 표현이 없어도 '문제 없음'이 아닙니다."));
+  } else if (!data.findings.length) {
+    nodes.push(el("p", "", `걸린 표현이 없습니다. (글 ${data.checked}개 확인)`));
+  } else {
+    const list = el("ul", "studio-editor-findings");
+    for (const finding of data.findings) {
+      const block = finding.severity === "block";
+      const li = el("li", block ? "is-block" : "is-warn");
+      const head = el("p");
+      head.append(el("b", "", block ? "사용 금지" : "주의"), ` ${finding.matched.map((m) => m.keyword).join(", ")}`);
+      li.append(head, el("p", "studio-hint", `문구: ${finding.text}`));
+      if (finding.reason) li.append(el("p", "", `이유: ${finding.reason}`));
+      if (finding.suggestion) li.append(el("p", "", `바꿔 쓰기: ${finding.suggestion}`));
+      if (!finding.verified) li.append(el("p", "studio-hint", "원문 조항 미확인"));
+      for (const source of finding.sources || []) {
+        if (!/^https?:\/\//.test(source.url || "")) continue;
+        const link = el("a", "", source.title || source.url);
+        link.href = source.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        li.append(link);
+      }
+      list.append(li);
+    }
+    nodes.push(list);
+  }
+  nodes.push(el("p", "studio-hint", data.disclaimer), button("닫기", () => { node.hidden = true; }));
+  node.replaceChildren(...nodes);
+  node.hidden = false;
 }
 
 // 유료 생성의 토큰 수 · 예상 비용($) 한 줄 (+ 작은 설명). 비용 정보가 없으면 숨깁니다.
@@ -204,258 +306,221 @@ function fillUsage(node, data) {
   node.hidden = false;
 }
 
-// ---------- 새로 만들기: 시안 3개 고르기 ----------
-// sns.js(유진)가 포스터·카드뉴스 새로 만들기 화면에서 [보내기]를 누르면 부릅니다.
-// AI 3안(design-assistant)을 만들어 카드 3개로 보여 주고, [이 시안으로 확정]을 누르면 onCreate(design, { product_id })로 넘깁니다.
-// (저장은 sns.js의 기존 POST /api/chats, 실패하면 onCreate가 throw) 확인 창 없이 결과 아래에 비용 한 줄을 보여 줍니다.
+// ---------- 새로 만들기: 그림 시안 3개 고르기 (2026-10-26 유진 결정: 시안을 그림 모델로 통째로) ----------
+// sns.js(유진)가 포스터·카드뉴스 새로 만들기 [보내기]에서 부릅니다.
+//   ① 견적(유진 design-images/quote, 무료) → 확인 칸 [만들기]
+//   ② 그림 프롬프트(희주 design-assistant, gpt-4o-mini) → 그림 생성(유진 design-images, Higgsfield 크레딧)
+//   ③ 상태(유진 design-images/status)를 몇 초마다 확인해 시안 카드에 그림을 채움 (카드뉴스는 장마다 진행 표시)
+//   ④ [이 시안으로 확정] → onCreate(design, { product_id, product_ids }) (저장은 sns.js POST /api/chats, 실패하면 throw)
 // style: 스타일 버튼 값(designs.py STYLE_HINTS key, AI 추천은 ""). pages: 카드뉴스 장수(3~6).
-export function renderChoices(root, { kind, ratio, productId = null, style = "", pages = 5, request = "", onCreate } = {}) {
-  const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };  // 빈 초안: 사진은 고른 제품 대표 사진
+// productIds: 여러 제품(라인업). 유진 API가 product_id 하나만 받는 동안 첫 제품을 product_id로도 보냅니다.
+export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", pages = 5,
+  request = "", onCreate } = {}) {
+  const ids = (Array.isArray(productIds) && productIds.length ? productIds : [productId]).filter(Boolean);
+  const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages };
   const label = kind === "poster" ? "포스터" : "카드뉴스";
   const wrap = el("div", "studio-editor studio-editor-choices");
   const msg = el("p", "studio-hint");
   msg.setAttribute("role", "status");
+  const quoteBox = el("div", "studio-editor-quote");
   const cards = el("div", "studio-editor-candidates");
   const usage = el("p", "studio-editor-usage");
   usage.hidden = true;
+  const notice = el("p", "studio-editor-cost",
+    "그림 속 베트남어 글자는 AI가 틀리게 그릴 수 있어요. 확정 전에 그림 속 글자를 꼭 확인해 주세요. (아래 [넣은 문구 보기]가 원문이에요)");
+  notice.hidden = true;
+  const review = el("div", "studio-editor-review");
+  review.hidden = true;
   const actions = el("div", "studio-editor-actions");
-  let proposals = [];
+  let quote = null;
+  let proposals = [];  // [{name, concept_ko, style, style_label, pages: [{prompt_en, texts, job}]}]
   let selected = 0;
   let busy = false;
+  let locked = false;  // 요청은 들어갔는데 결과를 못 받음 → 비용이 나갔을 수 있어 다시 만들지 못하게
+  let sent = false;    // 그림 요청을 보냄 (프롬프트를 다시 쓰지 않음)
+  const count = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-  const confirm = button("이 시안으로 확정", async () => {
-    if (busy || !proposals[selected] || !onCreate) return;
-    busy = true;
-    confirm.disabled = retry.disabled = true;
-    msg.textContent = "고른 시안을 저장하는 중…";
-    try {
-      await onCreate(proposals[selected].design, { product_id: productId });  // 저장되면 sns.js가 편집 화면으로 넘어갑니다.
-    } catch {
-      msg.textContent = "시안을 저장하지 못했어요. 다시 눌러 주세요.";
-    } finally {
-      busy = false;
-      confirm.disabled = retry.disabled = false;
-    }
-  }, "btn dark");
-  const retry = button("다시 3개 만들기", generate);
-  confirm.hidden = retry.hidden = true;
-  actions.append(confirm, retry);
-  wrap.append(el("h2", "", `${label} 시안 고르기`), msg, cards, usage, actions);
+  const make = button("만들기", generate, "btn dark");
+  const confirm = button("이 시안으로 확정", confirmChoice, "btn dark");
+  const check = button("넣은 문구 광고 표현 검수", runReview);
+  const again = button("새로 다시 만들기", () => {
+    if (busy || locked) return;
+    clearTimeout(timer);
+    proposals = [];
+    sent = false;
+    selected = 0;
+    cards.replaceChildren();
+    usage.hidden = notice.hidden = review.hidden = true;
+    loadQuote();
+  });
+  confirm.hidden = check.hidden = again.hidden = true;
+  actions.append(confirm, check, again);
+  wrap.append(el("h2", "", `${label} 시안 고르기`), msg, quoteBox, cards, notice, review, usage, actions);
   root.replaceChildren(wrap);
+  let timer = null;
 
   function show() {
-    cards.replaceChildren(...proposals.map((item, index) => candidateCard(item, index === selected, () => {
+    cards.replaceChildren(...proposals.map((item, index) => imageCard(item, index === selected, () => {
       selected = index;
       show();
-    })));
+      updateActions();
+    }, ratio)));
   }
 
-  async function generate() {
-    if (busy) return;
-    busy = true;
-    confirm.disabled = retry.disabled = true;
-    cards.inert = true;
-    msg.textContent = `${label} 시안 3개를 만드는 중… (30초 정도 걸릴 수 있어요. 자동 재시도하지 않아요)`;
+  function updateActions() {
+    const running = proposals.some((item) => item.pages.some((page) => page.job && !pageDone(page) && !pageFailed(page)
+      && page.job.status !== NOT_SENT));
+    const ready = proposals[selected]?.pages.every(pageDone);
+    confirm.hidden = !sent;
+    confirm.disabled = busy || !ready;
+    confirm.title = ready ? "" : "이 시안의 그림이 다 그려지면 확정할 수 있어요";
+    check.hidden = !proposals.length;
+    again.hidden = !sent || running;
+    again.disabled = busy || locked;
+  }
+
+  // ① 견적 → 확인 칸
+  async function loadQuote() {
+    quoteBox.hidden = false;
+    quoteBox.replaceChildren(el("p", "", "비용을 확인하는 중…"));
+    msg.textContent = "";
     try {
-      const options = { request, product_id: productId, style: style || "", pages: kind === "poster" ? 1 : pages };
-      const data = await postJson(ASSISTANT_API, { design: base, options, confirm_paid: true });
+      quote = (await postJson(IMAGE_QUOTE_API, target)).quote;
       if (!wrap.isConnected) return;
-      proposals = data.proposals;
-      selected = 0;
+      showQuote();
+    } catch (error) {
+      quoteBox.replaceChildren(el("p", "is-warn", error.message), button("다시 확인", loadQuote));
+    }
+  }
+
+  function showQuote() {
+    make.disabled = busy || locked || !quote.allowed;
+    quoteBox.replaceChildren(
+      el("p", "", `시안 ${quote.proposals}개 × ${quote.pages}장 = 그림 ${quote.count}장`),
+      el("b", "", `${count(quote.credits)}크레딧 사용 · 오늘 ${count(quote.today_used)}/${count(quote.daily_limit)} · 잔액 ${count(quote.balance)}`),
+      el("p", "studio-hint", "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요."),
+      quote.allowed ? "" : el("p", "is-warn", quote.reason || "지금은 만들 수 없어요."),
+      make);
+  }
+
+  // ② 프롬프트 → 그림 생성
+  async function generate() {
+    if (busy || locked || !quote?.allowed) return;
+    busy = true;
+    make.disabled = true;
+    try {
+      if (!proposals.length) {  // 견적이 바뀌어 다시 누를 때는 이미 쓴 프롬프트를 그대로 씁니다.
+        msg.textContent = `${label} 시안 3개의 그림 프롬프트를 쓰는 중… (OpenAI)`;
+        const data = await postJson(ASSISTANT_API, {
+          design: { kind, ratio, demo: true, pages: [{ elements: [] }] }, confirm_paid: true,
+          options: { request, product_id: target.product_id, product_ids: ids, style: style || "", pages: target.pages },
+        });
+        if (!wrap.isConnected) return;
+        proposals = data.proposals.map((item) => ({ ...item, pages: item.pages.map((page) => ({ ...page, job: null })) }));
+        fillUsage(usage, data);
+      }
+      msg.textContent = `그림을 요청하는 중… (Higgsfield ${count(quote.credits)}크레딧)`;
+      const res = await fetch(IMAGE_API, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...target, prompts: proposals.map((item) => item.pages.map((page) => page.prompt_en)),
+          credits: quote.credits }),
+      });
+      const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
+      if (!wrap.isConnected) return;
+      if (res.status === 409 && data.quote) {  // 비용이 바뀌었거나 한도 초과 → 확인 칸을 다시
+        quote = data.quote;
+        showQuote();
+        msg.textContent = `${data.error} 비용을 다시 확인하고 [만들기]를 눌러 주세요.`;
+        return;
+      }
+      if (Array.isArray(data.jobs)) {
+        data.jobs.forEach((jobs, p) => (jobs || []).forEach((job, i) => {
+          const page = proposals[p]?.pages[i];
+          if (page) page.job = job ? { request_id: job.request_id, status: job.status, url: null } : { status: NOT_SENT };
+        }));
+      }
+      if (data.submitted) locked = true;
+      if (!data.ok && !data.submitted) throw new Error(data.error || "그림을 요청하지 못했어요.");
+      sent = true;
+      quoteBox.hidden = true;
+      notice.hidden = false;
+      msg.textContent = data.submitted ? data.error
+        : `그림을 그리는 중… 수십 초 걸려요. 다 된 시안부터 골라 확정할 수 있어요.${data.warning ? ` (${data.warning})` : ""}`;
       show();
-      fillUsage(usage, data);
-      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} 마음에 드는 시안을 골라 확정하세요.`;
-      confirm.hidden = false;
+      poll();
     } catch (error) {
       msg.textContent = error.message;
+      if (quote) showQuote();
     } finally {
       busy = false;
-      confirm.disabled = retry.disabled = false;
-      retry.hidden = false;
-      cards.inert = false;
+      if (!sent && quote) make.disabled = locked || !quote.allowed;
+      updateActions();
     }
   }
-  generate();
-}
 
-// ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
-// 첫 화면(renderStart)이 씁니다. (편집 화면 수정은 아래 입력창이 맡습니다) 저장은 onApply(design)가 하고, 실패하면 throw합니다.
-// extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
-// empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
-// productId: 고른 제품 id를 돌려주는 함수(첫 화면). 요청에 함께 보내 서버가 제품 목록으로 확인합니다.
-// initial: 처음 채울 조건(첫 화면에서 규격을 바꿔 다시 그릴 때). status: 처음 보일 안내.
-// 돌려주는 값: intro(제목·안내) · controls(조건·버튼) · results(제안·프롬프트) 묶음과, 순서대로 합친 nodes.
-function promptForm(doc, { onApply, isActive = () => true, extra = null, empty = null, productId = null,
-  initial = null, status = "" } = {}) {
-  const previous = initial || doc.assistant?.options || {};
-  const wish = el("textarea");
-  wish.rows = 4;
-  wish.maxLength = 1500;
-  wish.value = previous.request || "";
-  wish.placeholder = productId
-    ? "확인된 제품 정보와 원하는 내용을 적어 주세요. 위에서 고른 제품은 자동으로 들어가요. 예: 신메뉴 소개"
-    : "제품명, 확인된 제품 정보와 원하는 내용을 적어 주세요. 예: 망고스틴 찹쌀떡 신메뉴 소개";
-  const purpose = selectBox("", [["신메뉴 소개", "신메뉴 소개"], ["브랜드 소개", "브랜드 소개"], ["제품 정보", "제품 정보"], ["행사 안내", "행사 안내"], ["선물 제안", "선물 제안"]], previous.purpose || "신메뉴 소개", () => {});
-  const audience = el("input");
-  audience.value = previous.audience || "";
-  audience.maxLength = 1500;
-  audience.placeholder = "예: 다낭의 20~30대 디저트 소비자";
-  const mood = selectBox("", ["깔끔한 정보형", "사진 중심", "따뜻한 감성", "발랄하고 귀여운", "차분하고 고급스러운"].map((v) => [v, v]), previous.mood || "깔끔한 정보형", () => {});
-  const density = selectBox("", ["짧게", "보통", "설명 중심"].map((v) => [v, v]), previous.density || "짧게", () => {});
-  const pages = selectBox("", [3, 4, 5, 6].map((v) => [String(v), `${v}장`]), String(previous.pages || doc.pages.length), () => {});
-  if (!pages.value) pages.value = "5";
-  const msg = el("p", "studio-hint", status);
-  msg.setAttribute("role", "status");
-  const usage = el("p", "studio-editor-usage");  // 마지막 유료 생성의 토큰 수 · 예상 비용($)
-  usage.hidden = true;
-  const result = el("textarea", "studio-editor-prompt-result");
-  result.rows = 10;
-  result.maxLength = 12000;
-  result.setAttribute("aria-label", "제작 프롬프트 — 수정 후 AI에 반영할 수 있습니다");
-  result.hidden = true;
-  const candidates = el("div", "studio-editor-candidates");
-  let proposals = [], selected = 0;
-  const settingsBox = el("fieldset", "studio-editor-brief");
-  const wide = (node) => { node.classList.add("is-wide"); return node; };  // 두 칸을 다 쓰는 칸
-  settingsBox.append(el("legend", "", "제작 조건"));
-  if (extra) settingsBox.append(wide(extra));
-  settingsBox.append(wide(field(productId ? "요청" : "제품·요청", wish)), wide(field("대상", audience)),
-    field("목적", purpose), field("분위기", mood), field("글의 양", density));
-  if (doc.kind === "cardnews") settingsBox.append(field("장수", pages));
-  const syncEmpty = () => { if (empty) empty.hidden = proposals.length > 0 || !result.hidden; };
-  const options = () => ({ request: wish.value, purpose: purpose.value, audience: audience.value,
-    mood: mood.value, density: density.value, pages: doc.kind === "poster" ? 1 : Number(pages.value),
-    custom_prompt: result.hidden ? "" : result.value, ...(productId && { product_id: productId() }) });
-  const copy = button("복사", async () => {
+  // ③ 상태 확인 (몇 초마다, 다시 만들지 않음)
+  async function poll() {
+    if (!wrap.isConnected) return;
+    const waiting = proposals.flatMap((item) => item.pages.map((page) => page.job))
+      .filter((job) => job?.request_id && job.status !== IMAGE_DONE && !IMAGE_FAILED.includes(job.status));
+    if (!waiting.length) return finish();
     try {
-      await navigator.clipboard.writeText(result.value);
-      msg.textContent = "프롬프트를 복사했습니다. 외부 도구에서 사용할 수 있습니다.";
+      const res = await fetch(`${IMAGE_STATUS_API}?ids=${waiting.map((job) => job.request_id).join(",")}`);
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (!data.ok) throw new Error(data.error || "상태를 확인하지 못했어요.");
+      for (const job of waiting) {
+        const now = data.jobs?.[job.request_id];
+        if (now) Object.assign(job, { status: now.status, url: now.url || null });
+      }
+      show();
+      updateActions();
+    } catch (error) {
+      msg.textContent = `${error.message} 잠시 뒤 다시 확인해요.`;
+    }
+    if (wrap.isConnected) timer = setTimeout(poll, IMAGE_POLL_MS);
+  }
+
+  function finish() {
+    const failed = proposals.reduce((sum, item) => sum + item.pages.filter((page) => !pageDone(page)).length, 0);
+    msg.textContent = failed
+      ? `그림을 다 받았어요. 그리지 못한 장이 ${failed}장 있어요. 다 그려진 시안을 골라 확정해 주세요.`
+      : "그림을 다 받았어요. 마음에 드는 시안을 골라 [이 시안으로 확정]을 눌러 주세요.";
+    updateActions();
+  }
+
+  // 넣은 문구(원문) 광고 표현 검수: 고른 시안 기준
+  async function runReview() {
+    const item = proposals[selected];
+    if (!item) return;
+    review.hidden = false;
+    review.replaceChildren(el("p", "", "검수하는 중…"));
+    try {
+      fillReview(review, await postJson(REVIEW_API, { design: imageDesign(kind, ratio, item) }));
+    } catch (error) {
+      review.replaceChildren(el("p", "is-error", error.message), button("닫기", () => { review.hidden = true; }));
+    }
+  }
+
+  // ④ 확정
+  async function confirmChoice() {
+    const item = proposals[selected];
+    if (busy || !item || !item.pages.every(pageDone) || !onCreate) return;
+    busy = true;
+    updateActions();
+    msg.textContent = "고른 시안을 저장하는 중…";
+    try {
+      clearTimeout(timer);
+      await onCreate(imageDesign(kind, ratio, item), { product_id: target.product_id, product_ids: ids });
     } catch {
-      result.select();
-      msg.textContent = "Ctrl+C를 눌러 복사해 주세요.";
+      msg.textContent = "시안을 저장하지 못했어요. 다시 눌러 주세요.";
+      if (wrap.isConnected) poll();
+    } finally {
+      busy = false;
+      if (wrap.isConnected) updateActions();
     }
-  });
-  copy.hidden = true;
-  const apply = button("선택한 초안 적용", async () => {
-    if (!proposals[selected] || !onApply) return;
-    if (result.value !== proposals[selected].prompt) { msg.textContent = "수정한 프롬프트를 디자인에 반영하려면 AI 제안을 다시 생성해 주세요."; return; }
-    apply.disabled = true;
-    try {
-      await onApply(proposals[selected].design);
-    } catch { msg.textContent = "초안을 저장하지 못했습니다. 기존 작업은 유지됩니다."; }
-    finally { apply.disabled = false; }
-  }, "btn dark");
-  apply.hidden = true;
-  function showCandidates() {
-    candidates.replaceChildren(...proposals.map((item, index) => candidateCard(item, index === selected, () => {
-      selected = index;
-      result.value = item.prompt;
-      showCandidates();
-    })));
-    syncEmpty();
   }
-  const showUsage = (data) => fillUsage(usage, data);
-  function invalidate() {
-    proposals = [];
-    candidates.replaceChildren();
-    apply.hidden = true;
-    result.value = "";
-    result.hidden = copy.hidden = true;
-    syncEmpty();
-    msg.textContent = "조건을 바꿨습니다. 프롬프트 또는 AI 제안을 다시 만들어 주세요.";
-  }
-  settingsBox.addEventListener("input", invalidate);
-  const brief = button("기본 프롬프트 보기 (무료)", async () => {
-    brief.disabled = make.disabled = settingsBox.disabled = true;
-    try {
-      const data = await postJson(BRIEF_API, { design: doc, options: { ...options(), custom_prompt: "" } });
-      proposals = [];
-      candidates.replaceChildren();
-      apply.hidden = true;
-      result.value = data.prompt;
-      result.hidden = copy.hidden = false;
-      syncEmpty();
-      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.ai_ready ? "AI 연결 설정 있음." : "유료 AI는 PM1의 API 키 설정 후 사용할 수 있습니다."}`;
-    } catch (error) { msg.textContent = error.message; }
-    finally { brief.disabled = make.disabled = settingsBox.disabled = false; }
-  });
-  const make = button("AI 제안 3개 생성 (유료)", async () => {
-    if (!wish.value.trim()) { msg.textContent = "제품과 원하는 내용을 입력해 주세요."; return; }
-    make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = true;
-    candidates.inert = true;
-    msg.textContent = "AI 제안을 만드는 중… 자동 재시도하지 않습니다.";
-    try {
-      const data = await postJson(ASSISTANT_API, { design: doc, options: options(), confirm_paid: true });
-      if (!isActive()) return;
-      proposals = data.proposals;
-      selected = 0;
-      result.value = proposals[0].prompt;
-      result.hidden = copy.hidden = apply.hidden = false;
-      showCandidates();
-      candidates.scrollIntoView({ block: "nearest" });
-      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} 제안을 고르고 적용하세요.`;
-      showUsage(data);
-    } catch (error) { msg.textContent = error.message; }
-    finally {
-      make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
-      candidates.inert = false;
-    }
-  }, "btn dark");
-  const label = doc.kind === "poster" ? "포스터" : "카드뉴스";
-  const actions = el("div", "studio-editor-actions");
-  actions.append(brief, make);
-  const resultActions = el("div", "studio-editor-actions");
-  resultActions.append(apply, copy);
-  const styleNote = doc.kind === "poster"
-    ? "제안 3개는 서로 다른 스타일(큰 글자·매거진·메뉴판·팝·미니멀)과 색 조합으로 나와요."
-    : "표지 → 소개·포인트 → 마지막 장(저장·팔로우) 흐름의 캐러셀로, 제안마다 스타일이 달라요.";
-  const intro = [el("h2", "", `${label} AI 초안`),
-    el("p", "studio-hint", `베트남어 문구와 한국어 뜻을 함께 만들어요. ${styleNote}`),
-    el("p", "studio-editor-cost", "유료 버튼은 누를 때마다 OpenAI 비용이 나가요 (시험 예산 약 $5, 자동 차단 없음). 사진 생성 비용은 없어요.")];
-  const controls = [settingsBox, actions, msg, usage];
-  const results = [candidates, resultActions, result];
-  syncEmpty();
-  return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus(), options };
-}
 
-// ---------- 첫 화면 (작업이 아직 없을 때) ----------
-// sns.js(유진)가 포스터·카드뉴스 탭에 작업이 없을 때 부릅니다. 왼쪽 제작 조건 · 오른쪽 AI 초안 미리보기 두 칸이고,
-// 고른 초안은 onCreate(design, { product_id })로 새 작업에 저장합니다. (저장 실패 시 onCreate가 throw)
-// products: [{id, name_ko}] — 주면 제품 고르기 칸을 맨 앞에 넣습니다.
-// form·onFormChange: 입력 중인 조건을 sns.js가 들고 있다가, 규격을 바꿔 다시 그릴 때 form으로 돌려줍니다.
-export function renderStart(root, { kind, ratio, products = [], onCreate, form: saved = null, onFormChange } = {}) {
-  // 빈 초안: 색은 designs.py 기본 색 조합을 쓰도록 비워 둡니다.
-  const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };
-  const [W, H] = sizeOf(base);
-  const label = kind === "poster" ? "포스터" : "카드뉴스";
-  const wrap = el("div", "studio-editor studio-editor-start");
-  const side = el("div", "studio-editor-start-form");
-  const main = el("section", "studio-editor-start-result");
-
-  // 결과가 나오기 전 오른쪽: 고른 비율의 빈 틀 + 다음에 할 일
-  const empty = el("div", "studio-editor-empty");
-  const frame = el("div", "studio-editor-empty-frame", ratio);
-  frame.style.aspectRatio = `${W} / ${H}`;
-  empty.append(frame, el("p", "", `왼쪽 조건을 고르고 [AI 제안 3개 생성]을 누르면 여기에 ${label} 초안 3개가 나타나요.`),
-    el("p", "studio-hint", "마음에 드는 초안을 골라 적용하면 바로 편집 화면으로 넘어가요."));
-
-  const savedProduct = products.some((item) => item.id === saved?.product_id) ? saved.product_id : products[0]?.id;
-  const product = products.length ? selectBox("", products.map((item) => [item.id, item.name_ko]), savedProduct, () => {}) : null;
-  const form = promptForm(base, {
-    isActive: () => wrap.isConnected,
-    extra: product && field("제품", product),
-    empty,
-    productId: product && (() => product.value),
-    initial: saved,
-    status: saved && saved.ratio !== ratio ? "규격을 바꿨어요. 입력한 조건은 그대로예요. 프롬프트 또는 AI 제안을 다시 만들어 주세요." : "",
-    onApply: (design) => onCreate(design, { product_id: product ? product.value : null }),
-  });
-  // 조건을 고칠 때마다 sns.js에 알려, 규격을 바꿔 다시 그려도 입력이 남게 합니다.
-  if (onFormChange) side.addEventListener("input", () => onFormChange({ ...form.options(), ratio }));
-  side.append(...form.intro, ...form.controls);
-  main.append(el("h3", "", "AI 초안 미리보기"), empty, ...form.results);
-  wrap.append(side, main);
-  root.replaceChildren(wrap);
+  loadQuote();
 }
 
 // 지금 편집기에서 보고 있는 장 번호(0부터). sns.js가 대화로 고치기 요청에 page로 보냅니다.
@@ -504,7 +569,9 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   syncFigma();
 
   const find = (id) => page.elements.find((item) => item.id === id);
-  const pickable = (id) => { const item = id && find(id); return item && item.role !== BG_ROLE ? item : null; };
+  const isBacking = (item) => item.role === BG_ROLE || item.role === ARTWORK_ROLE;  // 바탕처럼 두는 그림
+  const pickable = (id) => { const item = id && find(id); return item && !isBacking(item) ? item : null; };
+  const imageDoc = draft.mode === IMAGE_MODE;  // 그림 시안: 그림 한 장으로 다룸 (비율 바꾸기·AI 배경 그림 없음)
   if (selectedId && !pickable(selectedId)) selectedId = null;
 
   async function save() {
@@ -589,7 +656,7 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
       return null;  // 아직 그리지 못하는 종류
     }
 
-    if (item.role === BG_ROLE) {  // 바탕처럼: Tab·화면 읽기에서 빼고, 눌러도 고르지 않습니다.
+    if (isBacking(item)) {  // 바탕처럼: Tab·화면 읽기에서 빼고, 눌러도 고르지 않습니다.
       node.classList.add("is-background");
       node.tabIndex = -1;
       node.removeAttribute("role");
@@ -616,8 +683,19 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   function renderTranslations() {
     translations.replaceChildren(el("summary", "", `${pageIndex + 1}장 문구 · 한국어 뜻`));
     if (draft.assistant) translations.append(el("p", "studio-hint", draft.assistant.notice));
+    // 그림 시안: 그림 속에 넣은 문구 원문(page.texts). 그림 속 글자가 이 원문과 같은지 확인합니다.
+    for (const text of page.texts || []) {
+      const row = el("div", "studio-editor-translation");
+      const vi = el("p", "", text.vi);
+      vi.lang = "vi";
+      row.append(vi, el("p", "", text.ko));
+      translations.append(row);
+    }
+    if (page.texts?.length) translations.append(el("p", "is-warn", "그림 속 글자가 위 원문과 같은지 꼭 확인해 주세요."));
     const items = page.elements.filter((item) => item.type === "text" && item.text_ko);
-    if (!items.length) translations.append(el("p", "studio-hint", "AI 제안을 적용하면 베트남어 문구와 한국어 뜻을 함께 보여줍니다."));
+    if (!items.length && !page.texts?.length) {
+      translations.append(el("p", "studio-hint", "AI 시안을 확정하면 베트남어 문구와 한국어 뜻을 함께 보여줍니다."));
+    }
     for (const item of items) {
       const row = el("div", "studio-editor-translation");
       const vi = el("p", "", item.text);
@@ -1041,16 +1119,20 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
 
     const make = button("🖼 AI 배경 그림 (유료)", makeBackground);
     make.disabled = bgBusy || bgLocked;
-    const decorate = [addSelect(), field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })),
-      make, page.elements.some((one) => one.role === BG_ROLE) && button("배경 그림 빼기", () => {
-        page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
-        draw();
-        updateBar();
-        save();
-      }),
-      button("✂️ 배경 제거", openRemoveBg)];  // 기존 배경 제거 창(sns_image.js)을 엽니다.
+    // 그림 시안은 장 전체가 그림이라 배경색·AI 배경 그림이 가려져 보이지 않습니다. (글·이모지 덧붙이기는 그대로)
+    const decorate = imageDoc ? [addSelect(), button("✂️ 배경 제거", openRemoveBg)]
+      : [addSelect(), field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })),
+        make, page.elements.some((one) => one.role === BG_ROLE) && button("배경 그림 빼기", () => {
+          page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
+          draw();
+          updateBar();
+          save();
+        }),
+        button("✂️ 배경 제거", openRemoveBg)];  // 기존 배경 제거 창(sns_image.js)을 엽니다.
 
-    const nodes = [head, section("비율", ratios)];
+    const nodes = [head, imageDoc
+      ? section(`비율 · ${draft.ratio}`, [el("p", "studio-hint", "그림 시안은 비율을 바꾸려면 원하는 비율로 새로 만들어 주세요.")])
+      : section("비율", ratios)];
     if (draft.kind === "cardnews" || multi) {
       renderPages();
       nodes.push(section(`장 · ${pageIndex + 1}/${draft.pages.length}`, [pagesBar]));
@@ -1201,58 +1283,10 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     review.hidden = false;
     review.replaceChildren(el("p", "", "검수하는 중…"));
     try {
-      renderReview(await postJson(REVIEW_API, { design: draft }));
+      fillReview(review, await postJson(REVIEW_API, { design: draft }));
     } catch (error) {
       review.replaceChildren(el("p", "is-error", error.message), button("닫기", () => { review.hidden = true; }));
     }
-  }
-
-  function renderReview(data) {
-    const nodes = [el("h3", "", "광고 표현 검수")];
-    const guide = data.guidelines || {};
-    nodes.push(el("p", "studio-hint", `현지 시장 분석 자료 · 상태: ${guide.status === "confirmed" ? "확정" : "검토 중"} · 검토일: ${guide.reviewed_at || "미등록"}`));
-    for (const rule of guide.prompt_rules || []) nodes.push(el("p", "", rule));
-    for (const item of [...(guide.visual_cautions || []), ...(guide.required_notices || [])]) {
-      if (item.rule) nodes.push(el("p", "is-warn", item.rule));
-    }
-    for (const source of guide.sources || []) {
-      if (!/^https?:\/\//.test(source.url || "")) continue;
-      const link = el("a", "", source.title || "기준 출처");
-      link.href = source.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      nodes.push(link);
-    }
-    if (!data.ready) {
-      nodes.push(el("p", "is-warn",
-        "검수 기준이 아직 준비되지 않았습니다. (현지 시장 분석 탭에서 준비 중) 걸린 표현이 없어도 '문제 없음'이 아닙니다."));
-    } else if (!data.findings.length) {
-      nodes.push(el("p", "", `걸린 표현이 없습니다. (글 ${data.checked}개 확인)`));
-    } else {
-      const list = el("ul", "studio-editor-findings");
-      for (const finding of data.findings) {
-        const block = finding.severity === "block";
-        const li = el("li", block ? "is-block" : "is-warn");
-        const head = el("p");
-        head.append(el("b", "", block ? "사용 금지" : "주의"), ` ${finding.matched.map((m) => m.keyword).join(", ")}`);
-        li.append(head, el("p", "studio-hint", `문구: ${finding.text}`));
-        if (finding.reason) li.append(el("p", "", `이유: ${finding.reason}`));
-        if (finding.suggestion) li.append(el("p", "", `바꿔 쓰기: ${finding.suggestion}`));
-        if (!finding.verified) li.append(el("p", "studio-hint", "원문 조항 미확인"));
-        for (const source of finding.sources || []) {
-          if (!/^https?:\/\//.test(source.url || "")) continue;
-          const link = el("a", "", source.title || source.url);
-          link.href = source.url;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          li.append(link);
-        }
-        list.append(li);
-      }
-      nodes.push(list);
-    }
-    nodes.push(el("p", "studio-hint", data.disclaimer), button("닫기", () => { review.hidden = true; }));
-    review.replaceChildren(...nodes);
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
