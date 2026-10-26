@@ -10,7 +10,7 @@ import re
 import shutil
 import subprocess
 
-from .videos import COMMON_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot, scene_kind
+from .videos import COMMON_AVOID, FOOD_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot, scene_kind
 
 # 결정 사항 (README 10장, 2026-10-24 유진)
 VIDEO_MODEL = "kling4_0"            # Kling 4.0
@@ -124,7 +124,7 @@ def image_prompt(doc, roles=(), index=0):
         f"Style: {style['keywords'][0]}.",
         f"Setting: {doc.get('background', '')}, {doc.get('mood', '')} mood, {doc.get('lighting', '')}.",
         "Keep the same setting, lighting and product look as the other shots of this video." if count > 1 else "",
-        COMMON_AVOID[0] + ".",
+        f"{COMMON_AVOID[0]}, {FOOD_AVOID[0]}.",
     ]
     return " ".join(part for part in parts if part)
 

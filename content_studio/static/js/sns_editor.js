@@ -26,7 +26,10 @@ const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", s
 const MOVE_STEP = 1;    // 방향키 한 번에 옮기는 거리 (%) · Shift와 함께 누르면 BIG_STEP
 const BIG_STEP = 5;
 const ROLE_NAMES = { title: "제목", subtitle: "부제", body: "본문", checks: "체크 항목", quote: "감성 문구", badge: "배지",
-  brand: "로고", page_no: "쪽 번호", photo: "제품 사진", deco: "장식 원", card: "본문 바탕", overlay: "사진 위 바탕", bar: "위쪽 줄" };
+  brand: "로고", page_no: "쪽 번호", photo: "제품 사진", deco: "장식 원", card: "본문 바탕", overlay: "사진 위 바탕", bar: "위쪽 줄",
+  label: "머리말", number: "번호", point: "목록 항목", dot: "번호 원", cta: "행동 유도", swipe: "넘겨 보기", frame: "테두리",
+  line: "줄", blob: "장식 원", ring: "사진 테두리", tag: "스티커 원", tag_text: "스티커 글", band: "제목 띠", block: "색 면",
+  photo_back: "사진 받침", quote_mark: "따옴표", connector: "이어지는 장식" };
 const TYPE_NAMES = { text: "글", image: "사진", shape: "도형", sticker: "이모지" };
 
 const measure = document.createElement("canvas").getContext("2d");
@@ -64,6 +67,7 @@ function graphemes(text) {
 // 상자보다 긴 한 단어(띄어쓰기 없는 한국어·해시태그·URL 등)는 글자 단위로 나눕니다.
 function wrapLines(ctx, item, maxWidth) {
   ctx.font = fontOf(item);
+  if ("letterSpacing" in ctx) ctx.letterSpacing = `${item.spacing || 0}px`;  // 글자 간격 (지원하는 브라우저)
   const lines = [];
   for (const paragraph of String(item.text || "").split("\n")) {
     let line = "";
@@ -183,6 +187,8 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   if (!pages.value) pages.value = "5";
   const msg = el("p", "studio-hint", status);
   msg.setAttribute("role", "status");
+  const usage = el("p", "studio-editor-usage");  // 마지막 유료 생성의 토큰 수 · 예상 비용($)
+  usage.hidden = true;
   const result = el("textarea", "studio-editor-prompt-result");
   result.rows = 10;
   result.maxLength = 12000;
@@ -242,10 +248,22 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
         vi.lang = "vi";
         words.append(vi, el("p", "studio-hint", `${page.title_ko}\n${page.body_ko}`));
       });
-      card.append(choose, item.design ? renderThumb(item.design) : "", words);
+      card.append(choose, item.style_label ? el("p", "studio-hint", `스타일 · ${item.style_label}`) : "",
+        item.design ? renderThumb(item.design) : "", words);
       return card;
     }));
     syncEmpty();
+  }
+  function showUsage(data) {
+    const cost = data.cost;
+    if (!cost) { usage.hidden = true; return; }
+    const count = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const usd = cost.usd > 0 && cost.usd < 0.0001 ? "< $0.0001" : `$${Number(cost.usd || 0).toFixed(4)}`;
+    usage.replaceChildren(
+      el("b", "", `이번 생성 ${count(cost.total_tokens)} 토큰 · 예상 비용 ${usd}`),
+      el("span", "", `${data.model} · 입력 ${count(cost.input_tokens)}${cost.cached_tokens ? ` (캐시 ${count(cost.cached_tokens)})` : ""} / 출력 ${count(cost.output_tokens)} 토큰`),
+      el("span", "", `OpenAI 공개 단가 기준 추정(${cost.price_checked} 확인). 실제 청구액은 OpenAI 사용 내역이 기준이에요.`));
+    usage.hidden = false;
   }
   function invalidate() {
     proposals = [];
@@ -285,7 +303,8 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
       result.hidden = copy.hidden = apply.hidden = false;
       showCandidates();
       candidates.scrollIntoView({ block: "nearest" });
-      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} ${data.model} · 입력 ${data.usage.input_tokens || 0} / 출력 ${data.usage.output_tokens || 0} 토큰. 제안을 고르고 적용하세요.`;
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} 제안을 고르고 적용하세요.`;
+      showUsage(data);
     } catch (error) { msg.textContent = error.message; }
     finally {
       make.disabled = brief.disabled = apply.disabled = settingsBox.disabled = result.disabled = false;
@@ -298,12 +317,12 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
   const resultActions = el("div", "studio-editor-actions");
   resultActions.append(apply, copy);
   const styleNote = doc.kind === "poster"
-    ? "포스터 스타일 설명은 참고 가이드예요. 배치·색은 기본 틀 그대로 적용돼요."
-    : "스타일은 검토용 제안이에요.";
+    ? "제안 3개는 서로 다른 스타일(큰 글자·매거진·메뉴판·팝·미니멀)과 색 조합으로 나와요."
+    : "표지 → 소개·포인트 → 마지막 장(저장·팔로우) 흐름의 캐러셀로, 제안마다 스타일이 달라요.";
   const intro = [el("h2", "", `${label} AI 초안`),
     el("p", "studio-hint", `베트남어 문구와 한국어 뜻을 함께 만들어요. ${styleNote}`),
     el("p", "studio-editor-cost", "유료 버튼은 누를 때마다 OpenAI 비용이 나가요 (시험 예산 약 $5, 자동 차단 없음). 사진 생성 비용은 없어요.")];
-  const controls = [settingsBox, actions, msg];
+  const controls = [settingsBox, actions, msg, usage];
   const results = [candidates, resultActions, result];
   syncEmpty();
   return { intro, controls, results, nodes: [...intro, ...controls, ...results], focus: () => wish.focus(), options };
@@ -437,6 +456,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
     node.setAttribute("aria-pressed", String(item.id === selectedId));
     Object.assign(node.style, {
       left: `${item.x}%`, top: `${item.y}%`, width: `${item.w}%`, height: `${item.h}%`, zIndex: item.z || 0,
+      transform: item.rotate ? `rotate(${item.rotate}deg)` : "",
+      opacity: item.opacity ?? "",
     });
 
     if (item.type === "text") {
@@ -445,6 +466,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
       Object.assign(node.style, {
         font: fontOf(item),
         lineHeight: LINE,
+        letterSpacing: item.spacing ? `${item.spacing}px` : "",
         color: item.color,
         textAlign: item.align || "left",
         padding: `0 ${pad}px`,
@@ -465,7 +487,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
         node.append(el("span", "", "제품 사진 자리"));
       }
     } else if (item.type === "shape") {
-      node.style.background = item.fill;
+      node.style.background = item.fill || "transparent";  // fill이 없으면 테두리만 있는 도형
+      node.style.border = item.stroke ? `${item.stroke_w || 2}px solid ${item.stroke}` : "";
       node.style.borderRadius = item.shape === "circle" ? "50%" : `${item.radius || 0}px`;
     } else if (item.type === "sticker") {
       node.classList.add("is-sticker");
@@ -869,7 +892,13 @@ export function renderDesign(root, doc, { onSave } = {}) {
           (value) => { item.align = value; draw(); save(); })),
       );
     } else if (item.type === "shape") {
-      tools.push(field("색", colorInput(item.fill, (value) => { item.fill = value; draw(); save(); })));
+      // 테두리만 있는 도형(fill 없음)은 테두리 색을 바꿉니다.
+      const outline = !item.fill && item.stroke;
+      tools.push(field("색", colorInput(outline ? item.stroke : item.fill, (value) => {
+        if (outline) item.stroke = value; else item.fill = value;
+        draw();
+        save();
+      })));
     } else if (item.type === "image") {
       tools.push(button("사진 바꾸기", async () => {
         const src = await pickPhoto();
@@ -1163,21 +1192,51 @@ function loadImage(src) {
   });
 }
 
+function shapePath(ctx, item, x, y, w, h) {
+  if (item.shape === "circle") {
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, Math.max(0, w / 2), Math.max(0, h / 2), 0, 0, Math.PI * 2);
+  } else {
+    roundedRect(ctx, x, y, w, h, item.radius || 0);
+  }
+}
+
+// 화면(CSS)과 같게: 상자 가운데를 기준으로 기울이고(rotate), 투명도(opacity)를 적용한 뒤 그립니다.
 async function paint(ctx, item, W, H) {
   const x = item.x / 100 * W;
   const y = item.y / 100 * H;
   const w = item.w / 100 * W;
   const h = item.h / 100 * H;
-
-  if (item.type === "shape") {
-    ctx.fillStyle = item.fill;
-    if (item.shape === "circle") {
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
-    } else {
-      roundedRect(ctx, x, y, w, h, item.radius || 0);
+  ctx.save();
+  try {
+    if (item.opacity !== undefined) ctx.globalAlpha = clamp(Number(item.opacity), 0, 1);
+    if (item.rotate) {
+      ctx.translate(x + w / 2, y + h / 2);
+      ctx.rotate(item.rotate * Math.PI / 180);
+      ctx.translate(-(x + w / 2), -(y + h / 2));
     }
-    ctx.fill();
+    await paintItem(ctx, item, x, y, w, h, W, H);
+  } finally {
+    ctx.restore();
+  }
+}
+
+async function paintItem(ctx, item, x, y, w, h, W, H) {
+  if (item.type === "shape") {
+    if (item.fill) {
+      ctx.fillStyle = item.fill;
+      shapePath(ctx, item, x, y, w, h);
+      ctx.fill();
+    }
+    if (item.stroke) {
+      // 화면의 border(상자 안쪽)와 같게 선 두께의 절반만큼 안으로 들여 그립니다.
+      const line = item.stroke_w || 2;
+      ctx.strokeStyle = item.stroke;
+      ctx.lineWidth = line;
+      shapePath(ctx, { ...item, radius: Math.max(0, (item.radius || 0) - line / 2) },
+        x + line / 2, y + line / 2, w - line, h - line);
+      ctx.stroke();
+    }
   } else if (item.type === "image") {
     if (!item.src) return;  // 빈 사진 자리는 내보내지 않습니다.
     const img = await loadImage(item.src);

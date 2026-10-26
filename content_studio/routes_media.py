@@ -20,7 +20,7 @@ from werkzeug.exceptions import NotFound
 from platform_core.extensions import db
 
 from . import bp
-from .designs import (SIZES, build_cardnews_prompt, build_design_brief, design_proposal_schema,
+from .designs import (SIZES, STYLES, build_cardnews_prompt, build_design_brief, design_proposal_schema,
                       design_texts, proposal_design, validate_proposals)
 from .models_sns import SnsChat
 
@@ -244,6 +244,29 @@ def _api_json(url, headers, payload=None):
     return json.loads(raw)
 
 
+# OpenAI 공개 단가(1M 토큰당 $). 바뀌면 여기만 고칩니다. 실제 청구액은 OpenAI 사용 내역이 기준입니다.
+ASSISTANT_MODEL = "gpt-4o-mini"
+PRICES = {"gpt-4o-mini": {"input": 0.15, "cached": 0.075, "output": 0.60}}
+PRICE_CHECKED = "2026-10-26"
+
+
+def _usage_cost(model, usage):
+    """응답의 usage로 토큰 수와 예상 비용($)을 계산합니다."""
+    usage = usage if isinstance(usage, dict) else {}
+    price = PRICES[model]
+    input_tokens = int(usage.get("input_tokens") or 0)
+    cached = min(input_tokens, int((usage.get("input_tokens_details") or {}).get("cached_tokens") or 0))
+    output_tokens = int(usage.get("output_tokens") or 0)
+    usd = ((input_tokens - cached) * price["input"] + cached * price["cached"]
+           + output_tokens * price["output"]) / 1_000_000
+    return {"input_tokens": input_tokens, "cached_tokens": cached, "output_tokens": output_tokens,
+            "total_tokens": input_tokens + output_tokens, "usd": round(usd, 6), "price_checked": PRICE_CHECKED}
+
+
+def _cost_note(cost):
+    return f" (이번 요청 {cost['total_tokens']:,} 토큰 · 예상 ${cost['usd']:.4f})" if cost else ""
+
+
 @bp.route("/media/api/design-brief", methods=["POST"])
 def design_brief():
     try:
@@ -270,29 +293,32 @@ def design_assistant():
     if not key:
         return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
     schema = design_proposal_schema(brief["pages"])
+    cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다.
     try:
         response = _api_json("https://api.openai.com/v1/responses",
                              {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                             {"model": "gpt-4o-mini", "store": False, "instructions": persona,
-                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 6500,
+                             {"model": ASSISTANT_MODEL, "store": False, "instructions": persona,
+                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 9000,
                               "text": {"format": {"type": "json_schema", "name": "design_proposals",
                                                    "strict": True, "schema": schema}}})
+        cost = _usage_cost(ASSISTANT_MODEL, response.get("usage"))
         if response.get("status") != "completed":
-            return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요.", 502)
+            return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요." + _cost_note(cost), 502)
         output = "".join(part.get("text", "") for item in response.get("output", [])
                          for part in item.get("content", []) if part.get("type") == "output_text")
         result = json.loads(output)
         validate_proposals(result, schema)
-        proposals = [{**item, "design": proposal_design(doc, item, options)} for item in result["proposals"]]
+        proposals = [{**item, "style_label": STYLES[item["style"]], "design": proposal_design(doc, item, options)}
+                     for item in result["proposals"]]
         return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
-                        "usage": response.get("usage", {}), "model": "gpt-4o-mini"})
+                        "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
     except HTTPError as error:
         message = "API 키 또는 사용 권한을 확인해 주세요." if error.code in (401, 403) else "OpenAI 요청이 실패했습니다. 한도·잔액·모델 접근 권한을 확인해 주세요."
         return _error(message, 502)
     except (URLError, TimeoutError, OSError):
         return _error("AI 응답을 받지 못했습니다. 사용 내역 확인 후 다시 실행해 주세요. 자동 재시도하지 않았습니다.", 502)
     except (ValueError, KeyError, TypeError, AttributeError):
-        return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다.", 502)
+        return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
 
 
 def _figma_selection(value):

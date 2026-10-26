@@ -35,7 +35,7 @@
     {% if tab == 'main' %}
     <div class="panelhead">
       <h2>지금 만들면 좋은 콘텐츠</h2>
-      <span class="studio-hint">신메뉴 · 기념일 D-day · 대표 메뉴 기준 <span class="demo">DEMO · 예시 데이터</span></span>
+      <span class="demo">DEMO · 예시 데이터</span>
     </div>
     <div class="studio-recs" data-role="recs"></div>
     {% endif %}
@@ -102,6 +102,8 @@
       <div class="studio-canvas" data-role="canvas"></div>
 
       <div class="studio-command">
+        {# 초안 뒤 입력 영역 접기·펼치기 (sns.js toggleCommand) — 입력 영역 오른쪽 위. 접으면 이 버튼과 결과 안내 줄만 남습니다. #}
+        <button type="button" class="btn studio-command-toggle" data-role="command-toggle" aria-expanded="true" hidden>접기 ▾</button>
         <form class="studio-command-form" data-role="chat-form">
           {# 영상 레퍼런스(분위기 참고 이미지 4장·영상 1개) 썸네일. sns.js가 영상 탭에서만 그립니다. #}
           <div class="studio-refs" data-role="refs" hidden></div>
