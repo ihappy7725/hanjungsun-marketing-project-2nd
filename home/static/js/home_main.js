@@ -261,9 +261,10 @@ async function initialize() {
         { event_id: 'demo_local_holiday', name: '지역 행사 준비', date: addDays(anchor, 42), type: 'anniversary', region: '다낭', source_name: '가상 행사', is_demo: true },
       ] },
       collaborations: { state: 'ok', items: [
-        { collaboration_id: 'demo_creator_a', influencer: '예시 크리에이터 A', main_platform: 'Instagram', status: 'confirmed', status_label: '계약 확정', shoot_date: addDays(anchor, 1), post_date: addDays(anchor, 6), requires_attention: true, next_action: '촬영 장소와 제품 전달 시간을 최종 확인합니다.', event_id: 'demo_gift_day', is_demo: true },
-        { collaboration_id: 'demo_creator_b', influencer: '예시 크리에이터 B', main_platform: 'TikTok', status: 'shot', status_label: '촬영 완료', post_date: addDays(anchor, 2), next_action: '게시 예약과 최종 영상 링크를 확인합니다.', event_id: 'demo_gift_day', is_demo: true },
-        { collaboration_id: 'demo_creator_c', influencer: '예시 크리에이터 C', main_platform: 'YouTube', status: 'sent', status_label: '제안 발송', post_date: addDays(anchor, 5), requires_attention: true, next_action: '제안 회신을 요청하고 촬영 가능일을 확인합니다.', event_id: 'demo_gift_day', is_demo: true },
+        // 협업 예시는 오늘 기준으로 배치해 오래된 브라우저 예시에서도 시연할 수 있게 합니다.
+        { collaboration_id: 'demo_creator_a', influencer: '예시 크리에이터 A', main_platform: 'Instagram', status: 'confirmed', status_label: '계약 확정', shoot_date: addDays(today, 10), post_date: addDays(today, 17), requires_attention: true, next_action: '제품 전달 시간 확인', event_id: 'demo_gift_day', is_demo: true },
+        { collaboration_id: 'demo_creator_b', influencer: '예시 크리에이터 B', main_platform: 'TikTok', status: 'shot', status_label: '촬영 완료', shoot_date: addDays(today, -1), post_date: addDays(today, 3), next_action: '최종 영상과 게시 예약 확인', event_id: 'demo_gift_day', is_demo: true },
+        { collaboration_id: 'demo_creator_c', influencer: '예시 크리에이터 C', main_platform: 'YouTube', status: 'sent', status_label: '회신 대기', shoot_date: '', post_date: addDays(today, 5), requires_attention: true, next_action: '제안 회신 요청·촬영 가능일 확인', event_id: 'demo_gift_day', is_demo: true },
       ] }, attention: { state: 'ok', items: [] },
       news: { state: 'ok', items: [
         ['선물 구매 고객을 위한 제품 소개', '선물 목적과 구매 상황을 나누어 고객 반응을 정리하는 가상 조사 자료입니다.', '선물세트 포장과 구성품을 보여주는 카드뉴스를 준비합니다.'],
