@@ -670,7 +670,6 @@ def _qr_block():
 
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o-mini"  # KPI README 3장
-_voc_ai_cache = {"result": None}
 
 VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜드 '한정선'의 고객 리뷰 분석가입니다.
 고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
@@ -812,8 +811,7 @@ def api_voc():
         # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
         "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
-        # 마지막 AI 분석 결과(서버 메모리 보관). AI 분석은 화면의 [AI로 분석]을 눌렀을 때만 실행합니다.
-        "ai": _voc_ai_cache["result"],
+        # AI 결과는 보내지 않습니다. AI 요약은 화면에서 [AI로 분석]을 눌렀을 때 /api/voc/analyze 응답으로만 보입니다.
     })
 
 
@@ -822,5 +820,4 @@ def api_voc_analyze():
     result, error = _call_openai(DEMO_REVIEWS, _read_survey_comments())
     if error:
         return jsonify({"ok": False, "error": error}), 502
-    _voc_ai_cache["result"] = result
     return jsonify({"ok": True, "ai": result})

@@ -641,7 +641,7 @@ function renderVocKeywords() {
 }
 
 // 창구별 요약은 [AI로 분석]을 누른 결과(channel_summaries)만 씁니다. 누르기 전(결과 없음)에는 null.
-// 마지막 AI 결과는 서버가 보관하므로, 한 번 누른 뒤에는 페이지를 다시 열어도 분석 시각과 함께 보입니다.
+// 결과는 이 화면에만 두고(vocAiResult) 서버는 보관하지 않으므로, 페이지를 다시 열면 다시 분석 전입니다.
 const AI_PENDING = "[AI로 분석]을 누르면 창구별 요약이 나옵니다.";
 const channelSummary = (ch) => (view.vocAiChannels || []).find((x) => x.channel === ch) || null;
 
@@ -2150,6 +2150,8 @@ function showError(name, message) {
 }
 
 let vocReviews = [];
+// 이 화면에서 [AI로 분석]을 눌러 받은 결과. 페이지를 다시 열면(F5) 비고, 머리줄 새로고침(⟳)에는 유지됩니다.
+let vocAiResult = null;
 
 async function loadSummary() {
   try {
@@ -2175,9 +2177,9 @@ async function loadVoc() {
     view.channels = data.channels || [];
     view.surveyComments = data.survey_comments || [];
     renderQr(data.qr);
-    if (data.ai) showVocAi(vocReviews, data.ai);
+    // AI 요약은 이 화면에서 [AI로 분석]을 눌렀을 때만 보입니다(그 전에는 요약 없이 안내만, 서버도 결과를 보관하지 않음).
+    if (vocAiResult) showVocAi(vocReviews, vocAiResult);
     else renderVoc(vocReviews, { text: "시연 분류", status: "demo", meta: "시연 문의·시연 분류" });
-    // AI 분석은 [AI로 분석]을 눌렀을 때만 실행합니다(그 전에는 요약 없이 안내만). 마지막 AI 결과는 서버가 보관합니다.
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }
@@ -2256,7 +2258,8 @@ async function analyzeVoc(button) {
   showError("voc-error", "");
   try {
     const data = await getJson(API.analyze, { method: "POST" });
-    showVocAi(vocReviews, data.ai);
+    vocAiResult = data.ai;
+    showVocAi(vocReviews, vocAiResult);
   } catch (err) {
     showError("voc-error", `${err.message}`);
   } finally {
