@@ -956,8 +956,46 @@ function syncSimUnit(summaryFailed = false) {
       ? (usdRate() ? `1달러 = ${num(usd.krw_per_usd)}원 (${usd.source}${usd.as_of ? ` ${usd.as_of}` : ""}) · ${vndNote}` : "달러 환율을 불러오는 중입니다…")
       : vndNote,
   );
+  updateSimPreview();  // 달러 환율을 늦게 받아도 미리보기 금액을 다시 맞춤
 }
 const estRevenue = (cost, roas) => (roas == null ? null : Math.round((cost * roas) / 100));
+// 본전 매출 = 집행 비용 × 손익분기 ROAS(서버 기준선) / 100. 예상 매출이 이보다 많으면 이익, 적으면 손해.
+const breakEvenRevenue = (cost) => Math.round((cost * sim.data.roas_bep_percent) / 100);
+function verdict(revenue, breakEven) {
+  const [key, text] = revenue > breakEven ? ["gain", "이익"] : revenue < breakEven ? ["loss", "손해"] : ["even", "본전"];
+  return el("strong", { text, className: `kpi-verdict is-${key}` });
+}
+const parseRoas = (text) => (text.trim() === "" ? null : Number(text.replace(/[^\d.]/g, "")));
+
+// 손익 미리보기: 폼 값이 바뀔 때마다 본전 매출 · 예상 매출 · 이익/손해를 보여 줍니다(목록에 넣기 전 판단용).
+function updateSimPreview() {
+  if (!sim.data) return;
+  const f = simForm().elements;
+  const bep = sim.data.roas_bep_percent;
+  const roas = parseRoas(f.roas.value);
+  const amount = parseMoney(f.amount.value);
+  const text = (s) => document.createTextNode(s);
+  if (roas == null || !Number.isFinite(roas)) {
+    return $("sim-preview").replaceChildren(text(`예상 ROAS를 넣으면 손익분기 ${pct(bep)} 기준으로 이익·손해를 알려 드립니다.`));
+  }
+  const m = currentMedia();
+  const label = m && sim.data.channels.find((c) => c.channel === m.roasFrom)?.label;
+  const basis = label && roas === simRoas(m.roasFrom) ? `${label} 실적 ${pct(roas)} 기준` : `직접 입력 ${pct(roas)} 기준`;
+  const gap = roas - bep;
+  if (!amount || (f.unit.value === "USD" && !usdRate())) {
+    const gapText = gap === 0 ? "손익분기와 같음" : `손익분기 ${pct(bep)}보다 ${Math.abs(gap).toFixed(1)}%p ${gap > 0 ? "높음" : "낮음"}`;
+    return $("sim-preview").replaceChildren(verdict(roas, bep), text(`${gapText} · 집행 예산을 넣으면 본전 매출을 계산합니다.`));
+  }
+  const cost = toKrw(amount, f.unit.value);
+  const breakEven = breakEvenRevenue(cost);
+  const revenue = estRevenue(cost, roas);
+  const diff = revenue - breakEven;
+  const result = diff > 0 ? `본전보다 ${krwMan(diff)} 많음` : diff < 0 ? `본전까지 ${krwMan(-diff)} 부족` : "딱 본전";
+  $("sim-preview").replaceChildren(
+    verdict(revenue, breakEven),
+    text(`본전 매출 ${krwMan(breakEven)} · 예상 매출 ${krwMan(revenue)} (추정 · ${basis}) → ${result}`),
+  );
+}
 
 function currentMedia() {
   return SIM_MEDIA[sim.type].find((m) => m.value === simForm().elements.media.value) || null;
@@ -988,6 +1026,7 @@ function onMediaChange() {
   setText("sim-media-help", currentMedia()?.help || "");
   if (sim.type === "kol") fillFormats();
   fillDefaultRoas();
+  updateSimPreview();
 }
 
 // KOL 콘텐츠 형태: 매체별 기본 형식 + 그 계정의 인플루언서 탭 단가 형식 + 직접 입력
@@ -1121,13 +1160,14 @@ function renderSim() {
         it.target ? `${it.media} · ${it.target}` : it.media,
         it.detail || "—",
         cost(it.cost_krw, it.cost_vnd),
-        it.roas == null ? "—" : pct(it.roas),
+        it.roas == null ? "—" : el("span", {}, [document.createTextNode(pct(it.roas)), verdict(it.revenue_krw, breakEvenRevenue(it.cost_krw))]),
         it.revenue_krw == null ? "—" : krwMan(it.revenue_krw),
         remove,
       ]);
     });
     subtotalRows.push(rows.length);
-    rows.push([`${SIM_TYPE_LABEL[type]} 소계`, `${list.length}건`, "", cost(sumOf(list, "cost_krw"), sumOf(list, "cost_vnd")), "", krwMan(sumOf(list, "revenue_krw")), ""]);
+    const listRevenue = list.some((it) => it.revenue_krw != null) ? krwMan(sumOf(list, "revenue_krw")) : "—";  // ROAS 없는 항목만이면 0 대신 —
+    rows.push([`${SIM_TYPE_LABEL[type]} 소계`, `${list.length}건`, "", cost(sumOf(list, "cost_krw"), sumOf(list, "cost_vnd")), "", listRevenue, ""]);
   });
   if (!rows.length) rows.push(["아직 추가한 항목이 없습니다", "", "", "", "", "", ""]);
   fillRows("sim-rows", rows);
@@ -1148,22 +1188,29 @@ function renderSim() {
   setText("sim-after-sub", after >= 0 ? ofTotal(after) : `총 예산 대비 ${pct((-after / total) * 100)} 초과`);
   $("sim-after-card").classList.toggle("is-over", after < 0);
 
-  const revenue = sumOf(sim.items, "revenue_krw");
-  if (sim.items.length && after < 0) {
-    const box = $("sim-summary");
-    box.replaceChildren(
-      warning(`예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다.`),
-      document.createTextNode(` (참고 예상 매출 ${krwMan(revenue)}, 예상 ROAS 기준)`),
-    );
-    box.hidden = false;
-    return;
-  }
-  setText(
-    "sim-summary",
-    !sim.items.length
-      ? "항목을 추가하면 집행 후 남는 예산을 바로 계산합니다."
-      : `집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다. 참고 예상 매출 ${krwMan(revenue)} (예상 ROAS 기준)`,
+  // 예상 매출 카드: 예상 ROAS가 있는 항목만 합산하고, 그 항목들의 본전 매출과 비교
+  const priced = sim.items.filter((it) => it.revenue_krw != null);
+  const revenue = sumOf(priced, "revenue_krw");
+  const breakEven = priced.reduce((s, it) => s + breakEvenRevenue(it.cost_krw), 0);
+  const unpriced = sim.items.length - priced.length;
+  setText("sim-revenue", priced.length ? krwMan(revenue) : "—");
+  $("sim-revenue-sub").replaceChildren(
+    ...(priced.length
+      ? [document.createTextNode(`본전 ${krwMan(breakEven)} · `), verdict(revenue, breakEven), document.createTextNode(unpriced ? ` (ROAS 없는 ${unpriced}건 제외)` : "")]
+      : [document.createTextNode(sim.items.length ? "예상 ROAS가 있는 항목이 없습니다" : "")]),
   );
+  const outlook = priced.length
+    ? [document.createTextNode(` 예상 매출 ${krwMan(revenue)} / 본전 매출 ${krwMan(breakEven)} → `), verdict(revenue, breakEven), document.createTextNode(" 예상 (예상 ROAS 기준 추정)")]
+    : [];
+  const box = $("sim-summary");
+  if (sim.items.length && after < 0) {
+    box.replaceChildren(warning(`예산 초과 ${krwMan(-after)} — 항목을 줄이거나 예산 조정이 필요합니다.`), ...outlook);
+  } else if (!sim.items.length) {
+    box.replaceChildren(document.createTextNode("항목을 추가하면 집행 후 남는 예산과 예상 매출을 바로 계산합니다."));
+  } else {
+    box.replaceChildren(document.createTextNode(`집행 후 총 예산의 ${pct((after / total) * 100)}가 남습니다.`), ...outlook);
+  }
+  box.hidden = false;
 }
 
 function addSimItem(form) {
@@ -1178,7 +1225,7 @@ function addSimItem(form) {
   if (!amount) return showError("sim-error", "집행 예산을 0보다 큰 숫자로 입력해 주세요.");
   if (f.unit.value === "USD" && !usdRate()) return showError("sim-error", "달러 환율을 아직 불러오지 못했습니다. 잠시 후 다시 누르거나 원화로 입력해 주세요.");
   const roasText = f.roas.value.trim();
-  const roas = roasText === "" ? null : Number(roasText.replace(/[^\d.]/g, ""));
+  const roas = parseRoas(roasText);
   if (roasText !== "" && !Number.isFinite(roas)) return showError("sim-error", "예상 ROAS는 숫자(%)로 입력해 주세요.");
 
   const costKrw = toKrw(amount, f.unit.value);
@@ -1822,10 +1869,17 @@ function exportXlsx() {
     const cost = sim.items.reduce((s, it) => s + it.cost_krw, 0);
     section(br, r, 1, 10, "집행 시뮬레이션 (추정 · 저장되지 않는 계산)");
     r += 1;
-    const st = table(br, r, 1, ["구분", "매체", "대상", "세부 내용", "집행 비용", "집행 비용(VND)", "예상 ROAS", "예상 매출"],
-      sim.items.map((it) => [SIM_TYPE_LABEL[it.type], it.media, it.target, it.detail, it.cost_krw, it.cost_vnd, it.roas, it.revenue_krw]),
-      ["text", "text", "text", "text", "krw", "vnd", "pct", "krw"],
-      { total: ["합계", "", "", "", cost, sim.items.reduce((s, it) => s + it.cost_vnd, 0), null, sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0)] });
+    // 본전 매출 · 판정은 예상 ROAS가 있는 항목만(없으면 빈칸), 합계도 그 항목끼리 비교
+    const judge = (revenue, breakEven) => (revenue > breakEven ? "이익" : revenue < breakEven ? "손해" : "본전");
+    const priced = sim.items.filter((it) => it.revenue_krw != null);
+    const revenueSum = priced.reduce((s, it) => s + it.revenue_krw, 0);
+    const breakEvenSum = priced.reduce((s, it) => s + breakEvenRevenue(it.cost_krw), 0);
+    const st = table(br, r, 1, ["구분", "매체", "대상", "세부 내용", "집행 비용", "집행 비용(VND)", "예상 ROAS", "예상 매출", "본전 매출", "판정"],
+      sim.items.map((it) => [SIM_TYPE_LABEL[it.type], it.media, it.target, it.detail, it.cost_krw, it.cost_vnd, it.roas, it.revenue_krw,
+        it.revenue_krw == null ? null : breakEvenRevenue(it.cost_krw), it.revenue_krw == null ? "" : judge(it.revenue_krw, breakEvenRevenue(it.cost_krw))]),
+      ["text", "text", "text", "text", "krw", "vnd", "pct", "krw", "krw", "text"],
+      { total: ["합계", "", "", "", cost, sim.items.reduce((s, it) => s + it.cost_vnd, 0), null, revenueSum,
+        priced.length ? breakEvenSum : null, priced.length ? judge(revenueSum, breakEvenSum) : ""] });
     r = st.last + 1;
     br.put(r, 1, "현재 잔여 가용 예산", { bold: true }).put(r, 5, sim.data.budget.remaining_krw, { fmt: FMT.krw, bold: true });
     br.put(r + 1, 1, "집행 후 남는 예산 (추정)", { bold: true }).put(r + 1, 5, sim.data.budget.remaining_krw - cost, { fmt: FMT.krw, bold: true, color: C.teal });
@@ -2245,6 +2299,7 @@ root.addEventListener("change", (event) => {
   if (event.target.matches('[data-kpi="sim-format"]')) onFormatChange();
   // 화폐를 바꾸면 불러온 KOL 단가를 그 화폐로 다시 채웁니다(단가가 없는 항목의 금액은 그대로).
   if (event.target.matches('[data-kpi="sim-unit"]')) { syncSimUnit(); syncQuote(); }
+  if (event.target.closest('[data-kpi="sim-form"]')) updateSimPreview();
   if (event.target.matches('[data-kpi-action="review-lang"]')) setReviewLang(event.target.value);
   if (event.target.matches('[data-kpi-action="review-filter"]')) setReviewFilter(event.target.value);
 });
@@ -2256,6 +2311,7 @@ root.addEventListener("input", (event) => {
     else { fillFormats(); setText("sim-quote-help", ""); }  // 탭에 없는 계정이면 매체 기본 형식만
   }
   if (event.target.matches('[data-kpi="sim-roas"]')) sim.roasEdited = event.target.value.trim() !== "";
+  if (event.target.closest('[data-kpi="sim-form"]')) updateSimPreview();
 });
 
 root.addEventListener("submit", (event) => {

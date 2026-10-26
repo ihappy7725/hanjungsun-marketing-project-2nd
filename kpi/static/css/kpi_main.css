@@ -303,10 +303,19 @@
 .kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 110px; }
 .kpi-page .kpi-sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .kpi-page .kpi-sim-subtotal td { background: var(--paper); font-weight: 600; }
-/* 결과 카드: 흰 카드 4칸, 금액은 크게 + 총 예산 대비 %(작게). '집행 후 남는 예산'은 녹색 바탕으로 강조 */
+/* 손익 판정: 이익 녹색 · 손해 벽돌빛(손익분기 미달과 같은 색) · 본전 회색 */
+.kpi-page .kpi-verdict { font-weight: 700; }
+.kpi-page .kpi-verdict.is-gain { color: var(--teal); }
+.kpi-page .kpi-verdict.is-loss { color: var(--kpi-red); }
+.kpi-page .kpi-verdict.is-even { color: var(--muted); }
+.kpi-page td .kpi-verdict { margin-left: var(--space-2); font-size: 0.85em; }
+.kpi-page .kpi-sim-preview { margin: 0; padding: var(--space-3) var(--space-4); border-left: 2px solid var(--line-strong); background: var(--page-bg); font-size: var(--fs-table); }
+.kpi-page .kpi-sim-preview .kpi-verdict { margin-right: var(--space-2); }
+.kpi-page .kpi-sim-result .kpi-verdict { font-family: inherit; font-size: inherit; line-height: inherit; }  /* 카드의 큰 금액 글씨 스타일을 받지 않게 */
+/* 결과 카드: 흰 카드 5칸, 금액은 크게 + 총 예산 대비 %(작게). '집행 후 남는 예산'은 녹색 바탕으로 강조 */
 .kpi-page .kpi-sim-result {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-4);
   margin-top: var(--space-5);
 }
