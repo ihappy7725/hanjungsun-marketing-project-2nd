@@ -330,7 +330,8 @@
 .home-page .home-resizable::-webkit-resizer { background: linear-gradient(135deg, transparent 45%, var(--line-strong) 45%, var(--line-strong) 55%, transparent 55%, transparent 70%, var(--line-strong) 70%, var(--line-strong) 80%, transparent 80%); }
 .home-page .home-main-column > .home-card { flex: 0 0 auto; }
 .home-page .home-mainpanel { height: clamp(560px, 68vh, 780px); max-height: none; min-height: 420px; background: var(--white); }
-.home-page #calendar-panel { background: var(--page-bg); }
+.home-page .home-mainpanel:has(#tab-calendar[aria-selected="true"]) > .home-paneltabs { margin-bottom: 0; }
+.home-page #calendar-panel { box-sizing: border-box; padding-top: var(--space-6); background: var(--page-bg); }
 .home-page #tab-calendar[aria-selected="true"] { background: var(--page-bg); border-bottom-color: var(--page-bg); }
 .home-page .home-calendar-body { background: var(--page-bg); }
 .home-page .home-day.is-today { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); }
@@ -347,8 +348,7 @@
 .home-page .home-collab-action { margin: var(--space-4) 0; }
 .home-page .home-collab-action strong { font-weight: var(--title-weight); color: var(--teal); }
 .home-page .home-task { padding-inline: var(--space-3); }
-.home-page .home-task.is-done { background: color-mix(in srgb, var(--teal) 7%, var(--paper)); }
-.home-page .home-task:has(.home-badge.warning) { background: color-mix(in srgb, var(--orange) 16%, var(--paper)); }
+.home-page .home-task:not(.is-done):has(.home-badge.warning) { background: color-mix(in srgb, var(--orange) 16%, var(--paper)); }
 
 /* 뉴스는 배경의 농도와 간격으로 나누고 바깥 테두리를 겹치지 않습니다. */
 .home-page .home-news .btn { border: 0; box-shadow: none; background: color-mix(in srgb, var(--teal) 7%, var(--paper)); color: var(--teal); }
