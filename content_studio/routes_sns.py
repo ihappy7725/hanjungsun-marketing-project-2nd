@@ -21,9 +21,9 @@ from . import bp
 from . import higgsfield
 from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
-from .products import PRODUCTS, get_product
-from .videos import (TITLE_LIMIT, ai_messages, apply_ai, make_draft, normalize_scenes, phrase_pairs, refresh_prompts,
-                     revise_draft, video_title)
+from .products import COMMON_IMAGES, PRODUCTS, get_product
+from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
+                     phrase_pairs, refresh_prompts, revise_draft, scene_kind, translate_messages, video_title)
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
@@ -33,9 +33,10 @@ DESIGN_KINDS = ("poster", "cardnews")  # 만들기·고치기 규칙은 희주 d
 
 @bp.route("/")
 def index():
-    tab = request.args.get("tab", "poster")
-    if tab not in TABS:
-        tab = "poster"
+    # 탭이 없으면 메인 탭(추천 + 세 탭 작업 목록)
+    tab = request.args.get("tab") or "main"
+    if tab not in ("main", *TABS):
+        tab = "main"
     # 포스터·카드뉴스 첫 화면(희주 renderStart)의 제품 고르기 칸에 쓰는 목록
     products = [{"id": item["id"], "name_ko": item["name_ko"]} for item in PRODUCTS]
     return render_template("content_studio/content_studio_index.html", tab=tab, products=products)
@@ -162,6 +163,18 @@ def _call_ai(kind, text, doc):
         current_app.logger.warning("콘텐츠 스튜디오 AI 실패: %s", g.ai_note)
         return None
     return result if result[1] else None
+
+
+def _ai_translate(lines, context):
+    """[저장] 때 아는 표현으로 못 바꾼 한국어 줄 → 영어 줄 목록(AI 번역, 하루 한도에서 1회).
+    키가 없거나 한도·실패면 None → 그 줄은 화면에 "영어에 반영하지 못한 줄"로 남습니다."""
+    if not os.environ.get("OPENAI_API_KEY", "").strip() or not _ai_take_turn():
+        return None
+    data, error = _openai_json(translate_messages(lines, context))
+    result = apply_translation(data, lines) if error is None else None
+    if result is None:
+        current_app.logger.warning("콘텐츠 스튜디오 AI 번역 실패: %s", error or "AI 답 형식 오류")
+    return result
 
 
 def _with_ai_note(reply):
@@ -393,20 +406,24 @@ def delete_chat(chat_id):
 # ---------- 첫 화면 ----------
 @bp.route("/api/gallery")
 def gallery():
+    """작업 목록(최신순). kind를 주면 그 탭만, 비우면 세 탭 모두(메인 탭)."""
     kind = request.args.get("kind")
-    if kind not in KINDS:
+    if kind and kind not in KINDS:
         return _error("탭 종류(kind)가 올바르지 않습니다.")
+    query = SnsChat.query.filter_by(kind=kind) if kind else SnsChat.query.filter(SnsChat.kind.in_(TABS))
     items = []
-    for chat in SnsChat.query.filter_by(kind=kind).order_by(SnsChat.updated_at.desc()):
+    for chat in query.order_by(SnsChat.updated_at.desc()):
         doc = chat.design.doc if chat.design else None
         item = {**_chat_info(chat)}
-        if kind == "video" and doc:
+        if chat.kind == "video" and doc:
+            job = doc.get("job") or {}
             item.update({
                 "summary": doc["summary"],
                 "ratio": doc["ratio"],
                 "duration": doc["duration"],
                 "scenes": doc["scenes"],
-                "video_url": doc["job"].get("video_url"),
+                "video_url": job.get("video_url"),
+                "job_status": job.get("status"),
                 "demo": doc.get("demo", False),
             })
         else:
@@ -444,7 +461,8 @@ def save_design(chat_id):
         # 직접 고친 프롬프트(custom)·장면이 바뀌어 영상이 달라지면 다시 검토가 필요합니다.
         before = chat.design.doc
         try:
-            doc = refresh_prompts(normalize_scenes(doc))  # 직접 고친 장면 시간 검사 + 영어·한국어 프롬프트
+            # 직접 고친 장면 시간 검사 + 영어·한국어 프롬프트(고친 한국어 중 모르는 표현은 AI 번역)
+            doc = refresh_prompts(normalize_scenes(doc), translate=_ai_translate)
         except (KeyError, TypeError):
             return _error("영상 결과물 형식이 올바르지 않습니다. (README 8장)")
         if before is None or doc["prompt"] != before.get("prompt"):
@@ -566,21 +584,58 @@ def _done(cut):
     return cut["request_id"] if cut and cut.get("status") == higgsfield.DONE else None
 
 
+def _static_photo(name):
+    path = os.path.join(bp.static_folder, "images", "sns", name) if name else None
+    return path if path and os.path.isfile(path) else None
+
+
+def _photo_set(doc, kinds, scene_text=""):
+    """보낼 제품 사진 [(경로, 역할 영어)]. kinds: 이번 요청에 들어가는 컷 종류(videos.py scene_kind) 집합.
+    고른 제품이 카탈로그(products.py)에 있으면 사진을 자동으로 고릅니다:
+    겉모습 → 공통 겉모습 사진 · 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) + 겉모습 · 선물 → 선물세트 2장 + 맛별 포장.
+    직접 올린 사진만 있는 예전 작업은 그 사진들(제품 사진 칸 + 참고 사진)을 그대로 씁니다."""
+    names = doc.get("products") or [doc.get("product")]
+    items = [item for name in names for item in PRODUCTS if item["name_ko"] == name]
+    image_url = (doc.get("image") or {}).get("url", "") if isinstance(doc.get("image"), dict) else ""
+    if not items or PHOTO_URL.match(image_url):
+        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
+        return [(path, "the product photo") for path in legacy if path]
+    whole = (_static_photo(COMMON_IMAGES["whole"]),
+             "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")
+    photos = []
+    if kinds & {"outside", "inside"}:
+        photos.append(whole)
+    if "inside" in kinds:
+        named = [item for item in items if PRODUCT_EN.get(item["name_ko"], "").lower() in scene_text.lower()]
+        for item in named or items:
+            en = PRODUCT_EN.get(item["name_ko"], item["name_ko"])
+            photos.append((_static_photo(item["images"].get("cut")), f"the cross-section of {en}, showing its filling"))
+    if "gift" in kinds:
+        photos += [(_static_photo(COMMON_IMAGES["giftset_wrapped"]), "the gift set box wrapped in pink bojagi cloth"),
+                   (_static_photo(COMMON_IMAGES["giftset_open"]), "the opened gift set box with individually wrapped rice cakes")]
+        for item in items:
+            en = PRODUCT_EN.get(item["name_ko"], item["name_ko"])
+            photos.append((_static_photo(item["images"].get("pack")), f"the individual wrapping of {en}"))
+    return [(path, role) for path, role in photos if path]
+
+
 def _gen_args(doc, target, index=0):
     """index: 미리보기 이미지를 만들 컷(0부터)."""
-    # 참고 사진: 제품 사진 칸(필수) + 나머지 제품 사진(단면·포장) + 사용자가 올린 레퍼런스 이미지 / 참고 영상
-    main = _photo_path(doc)
-    products = [_photo_path({"image": item}) for item in doc.get("ref_images") or []]
-    users = [_photo_path({"image": item}) for item in doc.get("user_refs") or []]
+    # 참고 사진: 컷 종류에 맞는 제품 사진(_photo_set) + 사용자가 올린 레퍼런스 이미지 / 참고 영상
+    scenes = doc.get("scenes") or []
+    users = [(path, "a mood reference (mood, composition and color only)")
+             for path in (_photo_path({"image": item}) for item in doc.get("user_refs") or []) if path]
     if target == "image":
-        return higgsfield.image_args(doc, photos=[path for path in (main, *products, *users) if path], index=index)
+        text = scenes[index]["en"] if 0 <= index < len(scenes) else ""
+        return higgsfield.image_args(doc, photos=[*_photo_set(doc, {scene_kind(text)}, text), *users], index=index)
     # 영상: 첫 컷 그림으로 시작, 마지막 컷 그림으로 끝(컷이 2개 이상일 때), 가운데 컷 그림은 참고 사진.
-    # 이미지 10장 한도라 중요한 순서로: 제품 사진 칸 → 가운데 컷 그림 → 나머지 제품 사진 → 레퍼런스
+    # 이미지 10장 한도라 중요한 순서로: 겉모습 사진 → 가운데 컷 그림 → 단면·선물세트 사진 → 레퍼런스
     cuts = [_done(cut) for cut in _cuts(doc)]
     start = cuts[0] if cuts else None
     end = cuts[-1] if len(cuts) > 1 else None
     middle = [job for job in cuts[1:-1] if job]
-    photos = [path for path in (main, *middle, *products, *users) if path]
+    products = [path for path, _ in _photo_set(doc, {scene_kind(scene.get("en")) for scene in scenes} | {"outside"})]
+    photos = [*products[:1], *middle, *products[1:], *(path for path, _ in users)]
     video = _ref_video_path(doc.get("ref_video"))
     return higgsfield.video_args(doc, start_image=start, end_image=end, photos=photos, videos=[video] if video else [])
 
