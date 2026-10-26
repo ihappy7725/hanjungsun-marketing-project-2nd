@@ -1,0 +1,91 @@
+{
+  "search_metadata": {
+    "id": "6ade5a92ee072e38253e4cde",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/vmWshUCQfqOcv04nNUGlq83GmIcQn41CTycYFesSrKQ/6ade5a92ee072e38253e4cde.md",
+    "created_at": "2026-10-25 19:37:54 UTC",
+    "processed_at": "2026-10-25 19:37:54 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22hoa+qu%E1%BA%A3+d%E1%BA%A7m%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/vmWshUCQfqOcv04nNUGlq83GmIcQn41CTycYFesSrKQ/6ade5a92ee072e38253e4cde.html",
+    "prettify_html_file": "https://serpapi.com/searches/vmWshUCQfqOcv04nNUGlq83GmIcQn41CTycYFesSrKQ/6ade5a92ee072e38253e4cde.prettify",
+    "total_time_taken": 1.87
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"hoa quả dầm\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "hoa quả dầm tô tịch",
+        "value": "+190%",
+        "extracted_value": 190,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+t%C3%B4+t%E1%BB%8Bch&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+t%C3%B4+t%E1%BB%8Bch&tz=-420"
+      },
+      {
+        "query": "hoa quả dầm hàm long",
+        "value": "+140%",
+        "extracted_value": 140,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+h%C3%A0m+long&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+h%C3%A0m+long&tz=-420"
+      },
+      {
+        "query": "hoa quả dầm thái phiên",
+        "value": "+50%",
+        "extracted_value": 50,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+th%C3%A1i+phi%C3%AAn&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+th%C3%A1i+phi%C3%AAn&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "sữa chua hoa quả dầm",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=s%E1%BB%AFa+chua+hoa+qu%E1%BA%A3+d%E1%BA%A7m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=s%E1%BB%AFa+chua+hoa+qu%E1%BA%A3+d%E1%BA%A7m&tz=-420"
+      },
+      {
+        "query": "làm hoa quả dầm",
+        "value": "87",
+        "extracted_value": 87,
+        "link": "https://trends.google.com/trends/explore?q=l%C3%A0m+hoa+qu%E1%BA%A3+d%E1%BA%A7m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%C3%A0m+hoa+qu%E1%BA%A3+d%E1%BA%A7m&tz=-420"
+      },
+      {
+        "query": "cách làm hoa quả dầm",
+        "value": "71",
+        "extracted_value": 71,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+hoa+qu%E1%BA%A3+d%E1%BA%A7m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+hoa+qu%E1%BA%A3+d%E1%BA%A7m&tz=-420"
+      },
+      {
+        "query": "hoa quả dầm hàm long",
+        "value": "59",
+        "extracted_value": 59,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+h%C3%A0m+long&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+h%C3%A0m+long&tz=-420"
+      },
+      {
+        "query": "hoa quả dầm tô tịch",
+        "value": "47",
+        "extracted_value": 47,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+t%C3%B4+t%E1%BB%8Bch&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+t%C3%B4+t%E1%BB%8Bch&tz=-420"
+      },
+      {
+        "query": "hoa quả dầm thái phiên",
+        "value": "45",
+        "extracted_value": 45,
+        "link": "https://trends.google.com/trends/explore?q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+th%C3%A1i+phi%C3%AAn&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+qu%E1%BA%A3+d%E1%BA%A7m+th%C3%A1i+phi%C3%AAn&tz=-420"
+      }
+    ]
+  }
+}

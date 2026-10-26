@@ -1,0 +1,292 @@
+{
+  "search_metadata": {
+    "id": "6ade5a90136b1a3608aa0fdb",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/jL3p4bkOj7vPVvvhDayqMtgpRVEQ1U4_szeduTfTheQ/6ade5a90136b1a3608aa0fdb.md",
+    "created_at": "2026-10-25 19:37:52 UTC",
+    "processed_at": "2026-10-25 19:37:52 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_TOPICS?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22b%C3%A1nh+n%E1%BA%BFp%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/jL3p4bkOj7vPVvvhDayqMtgpRVEQ1U4_szeduTfTheQ/6ade5a90136b1a3608aa0fdb.html",
+    "prettify_html_file": "https://serpapi.com/searches/jL3p4bkOj7vPVvvhDayqMtgpRVEQ1U4_szeduTfTheQ/6ade5a90136b1a3608aa0fdb.prettify",
+    "total_time_taken": 1.71
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"bánh nếp\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_TOPICS"
+  },
+  "related_topics": {
+    "rising": [
+      {
+        "topic": {
+          "value": "/m/0fszt",
+          "title": "Bánh ngọt",
+          "type": "Bánh mứt kẹo"
+        },
+        "value": "Đột phá",
+        "extracted_value": 390650,
+        "link": "https://trends.google.com/trends/explore?q=/m/0fszt&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0fszt&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/01nkt",
+          "title": "Phô mai",
+          "type": "Sản phẩm từ sữa"
+        },
+        "value": "Đột phá",
+        "extracted_value": 133350,
+        "link": "https://trends.google.com/trends/explore?q=/m/01nkt&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F01nkt&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0dxrf",
+          "title": "Rán",
+          "type": "Thức ăn"
+        },
+        "value": "+450%",
+        "extracted_value": 450,
+        "link": "https://trends.google.com/trends/explore?q=/m/0dxrf&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0dxrf&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/09qck",
+          "title": "Chuối",
+          "type": "Quả"
+        },
+        "value": "+160%",
+        "extracted_value": 160,
+        "link": "https://trends.google.com/trends/explore?q=/m/09qck&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F09qck&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0fkw3",
+          "title": "Bột",
+          "type": "Thực phẩm"
+        },
+        "value": "+70%",
+        "extracted_value": 70,
+        "link": "https://trends.google.com/trends/explore?q=/m/0fkw3&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0fkw3&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/12208sjy",
+          "title": "Đậu đỏ",
+          "type": "Cây họ đậu"
+        },
+        "value": "+60%",
+        "extracted_value": 60,
+        "link": "https://trends.google.com/trends/explore?q=/g/12208sjy&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F12208sjy&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/02rt8fd",
+          "title": "Bánh",
+          "type": "Món ăn"
+        },
+        "value": "+50%",
+        "extracted_value": 50,
+        "link": "https://trends.google.com/trends/explore?q=/m/02rt8fd&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F02rt8fd&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "topic": {
+          "value": "/g/11h4zq_pp5",
+          "title": "Bánh nếp",
+          "type": "Thức ăn"
+        },
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=/g/11h4zq_pp5&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F11h4zq_pp5&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/01dttb",
+          "title": "Gạo nếp",
+          "type": "Gạo"
+        },
+        "value": "63",
+        "extracted_value": 63,
+        "link": "https://trends.google.com/trends/explore?q=/m/01dttb&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F01dttb&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/02rt8fd",
+          "title": "Bánh",
+          "type": "Món ăn"
+        },
+        "value": "24",
+        "extracted_value": 24,
+        "link": "https://trends.google.com/trends/explore?q=/m/02rt8fd&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F02rt8fd&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0fkw3",
+          "title": "Bột",
+          "type": "Thực phẩm"
+        },
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=/m/0fkw3&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0fkw3&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/02cvpn",
+          "title": "Đậu xanh",
+          "type": "Đậu"
+        },
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=/m/02cvpn&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F02cvpn&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/01wv2",
+          "title": "Calo",
+          "type": "Chủ đề"
+        },
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=/m/01wv2&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F01wv2&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/04scj",
+          "title": "Thịt",
+          "type": "Thực phẩm"
+        },
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=/m/04scj&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F04scj&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0dxrf",
+          "title": "Rán",
+          "type": "Thức ăn"
+        },
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=/m/0dxrf&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0dxrf&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/09qck",
+          "title": "Chuối",
+          "type": "Quả"
+        },
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=/m/09qck&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F09qck&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0fszt",
+          "title": "Bánh ngọt",
+          "type": "Bánh mứt kẹo"
+        },
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=/m/0fszt&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0fszt&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0djtd",
+          "title": "Dừa",
+          "type": "Họ Cau"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/m/0djtd&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0djtd&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0dxlf",
+          "title": "Nướng",
+          "type": "Kỹ thuật nấu nướng"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/m/0dxlf&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0dxlf&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/027r06p",
+          "title": "Bột gạo",
+          "type": "Bột"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/m/027r06p&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F027r06p&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/0wy0f53",
+          "title": "Bánh giầy",
+          "type": "Thức ăn"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/m/0wy0f53&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F0wy0f53&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/g/12208sjy",
+          "title": "Đậu đỏ",
+          "type": "Cây họ đậu"
+        },
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=/g/12208sjy&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fg%2F12208sjy&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/012y0l",
+          "title": "Mochi",
+          "type": "Món"
+        },
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=/m/012y0l&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F012y0l&tz=-420"
+      },
+      {
+        "topic": {
+          "value": "/m/01nkt",
+          "title": "Phô mai",
+          "type": "Sản phẩm từ sữa"
+        },
+        "value": "1",
+        "extracted_value": 1,
+        "link": "https://trends.google.com/trends/explore?q=/m/01nkt&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_TOPICS&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%2Fm%2F01nkt&tz=-420"
+      }
+    ]
+  }
+}

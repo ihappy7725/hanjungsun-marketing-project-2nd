@@ -1,0 +1,347 @@
+{
+  "search_metadata": {
+    "id": "6ade772ab002579965ce22e5",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/LIcbFCpOIilDmo3WFmd3mLmJDWuLBdeGbbTYGz6wlPg/6ade772ab002579965ce22e5.md",
+    "created_at": "2026-10-25 21:39:54 UTC",
+    "processed_at": "2026-10-25 21:39:54 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/GEO_MAP?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22%5C%22s%E1%BB%AFa+tr%C3%A1i+c%C3%A2y%5C%22+%2B+%5C%22tr%C3%A0+tr%C3%A1i+c%C3%A2y%5C%22+%2B+%5C%22b%C3%A1nh+tr%C3%A1i+c%C3%A2y%5C%22+%2B+%5C%22k%E1%BA%B9o+tr%C3%A1i+c%C3%A2y%5C%22+%2B+%5C%22tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y%5C%22+%2B+%5C%22kem+tr%C3%A1i+c%C3%A2y%5C%22%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/LIcbFCpOIilDmo3WFmd3mLmJDWuLBdeGbbTYGz6wlPg/6ade772ab002579965ce22e5.html",
+    "prettify_html_file": "https://serpapi.com/searches/LIcbFCpOIilDmo3WFmd3mLmJDWuLBdeGbbTYGz6wlPg/6ade772ab002579965ce22e5.prettify",
+    "total_time_taken": 1.85
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "\"sữa trái cây\" + \"trà trái cây\" + \"bánh trái cây\" + \"kẹo trái cây\" + \"trái cây sấy\" + \"kem trái cây\"",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "GEO_MAP_0",
+    "region": "REGION"
+  },
+  "interest_by_region": [
+    {
+      "geo": "VN-SG",
+      "location": "Hồ Chí Minh",
+      "max_value_index": 0,
+      "value": "100",
+      "extracted_value": 100
+    },
+    {
+      "geo": "VN-59",
+      "location": "Cà Mau",
+      "max_value_index": 0,
+      "value": "97",
+      "extracted_value": 97
+    },
+    {
+      "geo": "VN-34",
+      "location": "Khánh Hòa",
+      "max_value_index": 0,
+      "value": "96",
+      "extracted_value": 96
+    },
+    {
+      "geo": "VN-39",
+      "location": "Đồng Nai",
+      "max_value_index": 0,
+      "value": "92",
+      "extracted_value": 92
+    },
+    {
+      "geo": "VN-33",
+      "location": "Đắk Lắk",
+      "max_value_index": 0,
+      "value": "89",
+      "extracted_value": 89
+    },
+    {
+      "geo": "VN-50",
+      "location": "Bến Tre",
+      "max_value_index": 0,
+      "value": "86",
+      "extracted_value": 86
+    },
+    {
+      "geo": "VN-35",
+      "location": "Lâm Đồng",
+      "max_value_index": 0,
+      "value": "84",
+      "extracted_value": 84
+    },
+    {
+      "geo": "VN-CT",
+      "location": "Cần Thơ",
+      "max_value_index": 0,
+      "value": "82",
+      "extracted_value": 82
+    },
+    {
+      "geo": "VN-57",
+      "location": "Bình Dương",
+      "max_value_index": 0,
+      "value": "77",
+      "extracted_value": 77
+    },
+    {
+      "geo": "VN-37",
+      "location": "Tây Ninh",
+      "max_value_index": 0,
+      "value": "76",
+      "extracted_value": 76
+    },
+    {
+      "geo": "VN-46",
+      "location": "Tiền Giang",
+      "max_value_index": 0,
+      "value": "75",
+      "extracted_value": 75
+    },
+    {
+      "geo": "VN-29",
+      "location": "Quảng Ngãi",
+      "max_value_index": 0,
+      "value": "72",
+      "extracted_value": 72
+    },
+    {
+      "geo": "VN-31",
+      "location": "Bình Định",
+      "max_value_index": 0,
+      "value": "70",
+      "extracted_value": 70
+    },
+    {
+      "geo": "VN-47",
+      "location": "tỉnh Kiên Giang",
+      "max_value_index": 0,
+      "value": "68",
+      "extracted_value": 68
+    },
+    {
+      "geo": "VN-49",
+      "location": "Vĩnh Long",
+      "max_value_index": 0,
+      "value": "67",
+      "extracted_value": 67
+    },
+    {
+      "geo": "VN-DN",
+      "location": "Đà Nẵng",
+      "max_value_index": 0,
+      "value": "67",
+      "extracted_value": 67
+    },
+    {
+      "geo": "VN-43",
+      "location": "Bà Rịa - Vũng Tàu",
+      "max_value_index": 0,
+      "value": "67",
+      "extracted_value": 67
+    },
+    {
+      "geo": "VN-41",
+      "location": "Long An",
+      "max_value_index": 0,
+      "value": "60",
+      "extracted_value": 60
+    },
+    {
+      "geo": "VN-26",
+      "location": "Thừa Thiên Huế",
+      "max_value_index": 0,
+      "value": "59",
+      "extracted_value": 59
+    },
+    {
+      "geo": "VN-44",
+      "location": "An Giang",
+      "max_value_index": 0,
+      "value": "49",
+      "extracted_value": 49
+    },
+    {
+      "geo": "VN-22",
+      "location": "Nghệ An",
+      "max_value_index": 0,
+      "value": "45",
+      "extracted_value": 45
+    },
+    {
+      "geo": "VN-HN",
+      "location": "Hà Nội",
+      "max_value_index": 0,
+      "value": "43",
+      "extracted_value": 43
+    },
+    {
+      "geo": "VN-HP",
+      "location": "Hải Phòng",
+      "max_value_index": 0,
+      "value": "29",
+      "extracted_value": 29
+    },
+    {
+      "geo": "VN-36",
+      "location": "Ninh Thuận",
+      "max_value_index": 0,
+      "value": "11",
+      "extracted_value": 11
+    },
+    {
+      "geo": "VN-40",
+      "location": "Bình Thuận",
+      "max_value_index": 0,
+      "value": "10",
+      "extracted_value": 10
+    },
+    {
+      "geo": "VN-72",
+      "location": "Đăk Nông",
+      "max_value_index": 0,
+      "value": "8",
+      "extracted_value": 8
+    },
+    {
+      "geo": "VN-58",
+      "location": "Bình Phước",
+      "max_value_index": 0,
+      "value": "8",
+      "extracted_value": 8
+    },
+    {
+      "geo": "VN-32",
+      "location": "Phú Yên",
+      "max_value_index": 0,
+      "value": "8",
+      "extracted_value": 8
+    },
+    {
+      "geo": "VN-55",
+      "location": "Bạc Liêu",
+      "max_value_index": 0,
+      "value": "7",
+      "extracted_value": 7
+    },
+    {
+      "geo": "VN-30",
+      "location": "Gia Lai",
+      "max_value_index": 0,
+      "value": "7",
+      "extracted_value": 7
+    },
+    {
+      "geo": "VN-45",
+      "location": "Đồng Tháp",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-27",
+      "location": "Quảng Nam",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-63",
+      "location": "Hà Nam",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-51",
+      "location": "Trà Vinh",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-73",
+      "location": "Hậu Giang",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-52",
+      "location": "Sóc Trăng",
+      "max_value_index": 0,
+      "value": "6",
+      "extracted_value": 6
+    },
+    {
+      "geo": "VN-05",
+      "location": "Sơn La",
+      "max_value_index": 0,
+      "value": "5",
+      "extracted_value": 5
+    },
+    {
+      "geo": "VN-56",
+      "location": "Bắc Ninh",
+      "max_value_index": 0,
+      "value": "4",
+      "extracted_value": 4
+    },
+    {
+      "geo": "VN-69",
+      "location": "Thái Nguyên",
+      "max_value_index": 0,
+      "value": "3",
+      "extracted_value": 3
+    },
+    {
+      "geo": "VN-13",
+      "location": "Quảng Ninh",
+      "max_value_index": 0,
+      "value": "3",
+      "extracted_value": 3
+    },
+    {
+      "geo": "VN-70",
+      "location": "Vĩnh Phúc",
+      "max_value_index": 0,
+      "value": "3",
+      "extracted_value": 3
+    },
+    {
+      "geo": "VN-21",
+      "location": "Thanh Hoá",
+      "max_value_index": 0,
+      "value": "3",
+      "extracted_value": 3
+    },
+    {
+      "geo": "VN-20",
+      "location": "Thái Bình",
+      "max_value_index": 0,
+      "value": "2",
+      "extracted_value": 2
+    },
+    {
+      "geo": "VN-61",
+      "location": "Hải Dương",
+      "max_value_index": 0,
+      "value": "2",
+      "extracted_value": 2
+    },
+    {
+      "geo": "VN-66",
+      "location": "Hưng Yên",
+      "max_value_index": 0,
+      "value": "2",
+      "extracted_value": 2
+    },
+    {
+      "geo": "VN-54",
+      "location": "Bắc Giang",
+      "max_value_index": 0,
+      "value": "1",
+      "extracted_value": 1
+    }
+  ]
+}

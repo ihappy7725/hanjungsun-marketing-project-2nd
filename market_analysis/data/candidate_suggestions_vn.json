@@ -1,481 +1,8 @@
 {
   "country": "VN",
-  "created_at": "2026-10-25T19:21:25+07:00",
+  "created_at": "2026-10-25T22:46:29+07:00",
   "period": "2025-06-22 2026-10-25",
   "categories": [
-    {
-      "id": "mochi",
-      "label": "떡·모찌",
-      "current": [
-        "mochi kem",
-        "daifuku",
-        "\"bánh dày\"",
-        "\"bánh trung thu mochi\"",
-        "\"bánh mochi nhật\""
-      ],
-      "proposed": [
-        {
-          "query": "daifuku",
-          "source": "현재 후보",
-          "recent_average": 35.7,
-          "change_rate": 6014.3,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "\"bánh dày\"",
-          "source": "현재 후보",
-          "recent_average": 35.2,
-          "change_rate": -18.1,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "mochi kem",
-          "source": "현재 후보",
-          "recent_average": 8.8,
-          "change_rate": 4.0,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "bánh trung thu mochi",
-          "source": "연관 인기",
-          "related_value": "74",
-          "recent_average": 4.3,
-          "change_rate": -40.2,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh mochi nướng",
-          "source": "연관 인기",
-          "related_value": "35",
-          "recent_average": 0.2,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "mochi nhật",
-          "source": "연관 인기",
-          "related_value": "32",
-          "recent_average": 2.6,
-          "change_rate": -54.4,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh mochi nhật",
-          "source": "연관 인기",
-          "related_value": "31",
-          "recent_average": 0.7,
-          "change_rate": -57.2,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh mochi dẻo",
-          "source": "연관 인기",
-          "related_value": "28",
-          "recent_average": 0.1,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh mochi nhật bản",
-          "source": "연관 인기",
-          "related_value": "14",
-          "recent_average": 0.1,
-          "change_rate": -81.8,
-          "is_new": false,
-          "data_status": "insufficient"
-        }
-      ],
-      "excluded": [
-        {
-          "query": "làm bánh mochi",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh mochi",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh nếp",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "bánh mochi bao nhiêu calo",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "công thức làm bánh mochi",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh mochi chấm kem sữa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh mochi nhân đậu đỏ",
-          "reason": "만드는 법"
-        }
-      ]
-    },
-    {
-      "id": "sticky-rice",
-      "label": "현지 찹쌀 디저트",
-      "current": [
-        "\"bánh nếp\"",
-        "\"chè trôi nước\"",
-        "\"bánh ít\"",
-        "\"bánh dẻo\""
-      ],
-      "proposed": [
-        {
-          "query": "\"bánh dẻo\"",
-          "source": "현재 후보",
-          "recent_average": 33.8,
-          "change_rate": -6.9,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "\"bánh ít\"",
-          "source": "현재 후보",
-          "recent_average": 21.0,
-          "change_rate": 6.3,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "\"chè trôi nước\"",
-          "source": "현재 후보",
-          "recent_average": 6.8,
-          "change_rate": 12.3,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "\"bánh nếp\"",
-          "source": "현재 후보",
-          "recent_average": 5.6,
-          "change_rate": 3.1,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "bánh nếp đậu xanh",
-          "source": "연관 인기",
-          "related_value": "11",
-          "recent_average": 0.2,
-          "change_rate": -33.3,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh nếp nướng",
-          "source": "연관 인기",
-          "related_value": "10",
-          "recent_average": 0.4,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "bánh nếp nhân đậu xanh",
-          "source": "연관 인기",
-          "related_value": "5",
-          "recent_average": 0.0,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "chuối nếp nướng",
-          "source": "연관 인기",
-          "related_value": "3",
-          "recent_average": 0.5,
-          "change_rate": 75.0,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "nấu chè trôi nước",
-          "source": "연관 인기",
-          "related_value": "100",
-          "recent_average": 0.5,
-          "change_rate": -12.5,
-          "is_new": false,
-          "data_status": "insufficient"
-        }
-      ],
-      "excluded": [
-        {
-          "query": "làm bánh nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh bột nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "bột nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "bánh gạo nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "cách làm bánh nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "gạo nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "cách làm bánh",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh bột nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh từ bột nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "bánh ít",
-          "reason": "대표 검색어와 같음"
-        },
-        {
-          "query": "bột gạo nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "bột nếp làm bánh gì",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "bánh tẻ",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "cách làm bánh từ bột nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh chưng",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "cách làm bánh bằng bột nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh dày",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "bánh tét",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "bánh giò",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "cách làm bánh rán",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh bao",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm bánh dày từ bột nếp",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bột nếp thái",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "làm chè trôi nước",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "bánh trôi nước",
-          "reason": "카테고리와 무관"
-        },
-        {
-          "query": "cách làm chè trôi nước",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách nấu chè trôi nước bằng bột nếp",
-          "reason": "재료·도구"
-        },
-        {
-          "query": "chè trôi nước bao nhiêu calo",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "công thức nấu chè trôi nước",
-          "reason": "만드는 법"
-        }
-      ]
-    },
-    {
-      "id": "fruit",
-      "label": "현지 과일 디저트",
-      "current": [
-        "kem dừa",
-        "kem xoài",
-        "\"hoa quả dầm\"",
-        "\"sữa chua trái cây\"",
-        "\"trái cây tô\""
-      ],
-      "proposed": [
-        {
-          "query": "kem dừa",
-          "source": "현재 후보",
-          "recent_average": 52.8,
-          "change_rate": 11.2,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "kem xoài",
-          "source": "현재 후보",
-          "recent_average": 6.7,
-          "change_rate": 14.3,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "\"hoa quả dầm\"",
-          "source": "현재 후보",
-          "recent_average": 4.2,
-          "change_rate": 88.9,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "sữa chua hoa quả dầm",
-          "source": "연관 인기",
-          "related_value": "100",
-          "recent_average": 0.2,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "hoa quả dầm hàm long",
-          "source": "연관 인기",
-          "related_value": "50",
-          "recent_average": 0.2,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "hoa quả dầm thái phiên",
-          "source": "연관 인기",
-          "related_value": "18",
-          "recent_average": 0.1,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "hoa quả dầm tô tịch",
-          "source": "연관 인기",
-          "related_value": "4",
-          "recent_average": 0.1,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "kem sữa dừa",
-          "source": "연관 인기",
-          "related_value": "82",
-          "recent_average": 7.3,
-          "change_rate": 69.2,
-          "is_new": false,
-          "data_status": "normal"
-        },
-        {
-          "query": "kem bơ dừa",
-          "source": "연관 인기",
-          "related_value": "30",
-          "recent_average": 0.8,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        }
-      ],
-      "excluded": [
-        {
-          "query": "làm hoa quả dầm",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm hoa quả dầm",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "hoa quả dầm hà nội",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "làm kem dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm kem dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm kem",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "làm kem sữa dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm kem chuối dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm kem sữa dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "cách làm kem bơ dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "kem dừa bao nhiêu calo",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "cách làm kem chuối cốt dừa",
-          "reason": "만드는 법"
-        },
-        {
-          "query": "kem dừa côn đảo hà nội",
-          "reason": "위치·가격"
-        }
-      ]
-    },
     {
       "id": "k-dessert",
       "label": "한국 디저트",
@@ -490,16 +17,16 @@
         {
           "query": "bingsu",
           "source": "현재 후보",
-          "recent_average": 50.0,
-          "change_rate": 114.3,
+          "recent_average": 50.2,
+          "change_rate": 123.0,
           "is_new": false,
           "data_status": "normal"
         },
         {
           "query": "hotteok",
           "source": "현재 후보",
-          "recent_average": 24.8,
-          "change_rate": 7350.0,
+          "recent_average": 25.2,
+          "change_rate": 2230.8,
           "is_new": false,
           "data_status": "normal"
         },
@@ -512,55 +39,55 @@
           "data_status": "normal"
         },
         {
-          "query": "the bingsu",
+          "query": "bánh mì hàn quốc",
           "source": "연관 인기",
-          "related_value": "6",
-          "recent_average": 0.7,
-          "change_rate": null,
+          "related_value": "100",
+          "recent_average": 1.8,
+          "change_rate": -60.4,
           "is_new": false,
           "data_status": "insufficient"
         },
         {
-          "query": "kem bingsu",
+          "query": "bánh gạo hàn quốc",
           "source": "연관 인기",
-          "related_value": "6",
+          "related_value": "91",
+          "recent_average": 2.6,
+          "change_rate": -27.9,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh mè hàn quốc",
+          "source": "연관 인기",
+          "related_value": "59",
+          "recent_average": 0.6,
+          "change_rate": 75.0,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh kem hàn quốc",
+          "source": "연관 인기",
+          "related_value": "36",
           "recent_average": 0.2,
           "change_rate": null,
           "is_new": false,
           "data_status": "insufficient"
         },
         {
-          "query": "boulevard bingsu",
+          "query": "bánh trung thu hàn quốc",
           "source": "연관 인기",
-          "related_value": "5",
+          "related_value": "32",
+          "recent_average": 0.9,
+          "change_rate": -15.4,
+          "is_new": false,
+          "data_status": "insufficient"
+        },
+        {
+          "query": "bánh mè đen hàn quốc",
+          "source": "연관 인기",
+          "related_value": "28",
           "recent_average": 0.2,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "mr bingsu",
-          "source": "연관 인기",
-          "related_value": "4",
-          "recent_average": 0.2,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "mrp bingsu & tea",
-          "source": "연관 인기",
-          "related_value": "3",
-          "recent_average": 0.1,
-          "change_rate": null,
-          "is_new": false,
-          "data_status": "insufficient"
-        },
-        {
-          "query": "sul bingsu",
-          "source": "연관 인기",
-          "related_value": "2",
-          "recent_average": 0.1,
           "change_rate": null,
           "is_new": false,
           "data_status": "insufficient"
@@ -568,32 +95,48 @@
       ],
       "excluded": [
         {
-          "query": "bingsu near me",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "mrp",
+          "query": "bánh gạo",
           "reason": "카테고리와 무관"
         },
         {
-          "query": "bingsu gần đây",
-          "reason": "위치·가격"
-        },
-        {
-          "query": "bingsu là gì",
-          "reason": "뜻·정보"
-        },
-        {
-          "query": "boulevard",
+          "query": "bánh trung thu",
           "reason": "카테고리와 무관"
         },
         {
-          "query": "bingsu đà nẵng",
-          "reason": "위치·가격"
+          "query": "bánh yonsei",
+          "reason": "카테고리와 무관"
         },
         {
-          "query": "bingsu hà nội",
-          "reason": "위치·가격"
+          "query": "vua bánh mì",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "phim vua bánh mì hàn quốc trọn bộ",
+          "reason": "다른 의미"
+        },
+        {
+          "query": "cách làm bánh gạo cay hàn quốc",
+          "reason": "만드는 법"
+        },
+        {
+          "query": "kem chống nắng",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem dưỡng ẩm",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem trị nám",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "kem ốc sên",
+          "reason": "카테고리와 무관"
+        },
+        {
+          "query": "phim hàn quốc",
+          "reason": "다른 의미"
         }
       ]
     }
