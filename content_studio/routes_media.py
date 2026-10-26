@@ -4,6 +4,7 @@ API는 /content_studio/media/api/... 아래에 둡니다. 예: @bp.route("/media
 업로드·결과 파일은 instance/uploads/content_studio/, instance/exports/content_studio/ 에 저장합니다.
 """
 import copy
+import io
 import os
 import re
 import uuid
@@ -11,7 +12,7 @@ import json
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, urlopen
 
 from flask import current_app, jsonify, request, send_from_directory
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -20,6 +21,7 @@ from werkzeug.exceptions import NotFound
 from platform_core.extensions import db
 
 from . import bp
+from . import higgsfield
 from .designs import (SIZES, STYLES, build_cardnews_prompt, build_design_brief, design_proposal_schema,
                       design_texts, proposal_design, validate_proposals)
 from .models_sns import SnsChat
@@ -163,6 +165,79 @@ def uploaded_photo(name):
     # Windows는 webp 종류를 몰라 직접 지정합니다.
     mimetype = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[name.rsplit(".", 1)[1]]
     return send_from_directory(_upload_dir(), name, mimetype=mimetype)
+
+
+# ---------- Higgsfield 생성물 보관 ----------
+GENERATED_NAME = re.compile(r"^hf_([0-9a-f-]{36})\.(png|mp4)$")
+
+
+def generated_image_path(url):
+    prefix = f"{bp.url_prefix}/media/generated/"
+    if not isinstance(url, str) or not url.startswith(prefix):
+        return None
+    name = url[len(prefix):]
+    match = GENERATED_NAME.fullmatch(name)
+    if not match or match[2] != "png" or not higgsfield.UUID.fullmatch(match[1]):
+        return None
+    path = os.path.join(current_app.config["EXPORT_ROOT"], "content_studio", name)
+    return path if os.path.isfile(path) else None
+
+
+def store_generated_result(job, kind):
+    """상태 API에서 받은 결과만 보관합니다. 브라우저가 보낸 외부 URL은 받지 않습니다."""
+    request_id = job.get("request_id")
+    if kind not in ("image", "video") or not isinstance(request_id, str) or not higgsfield.UUID.fullmatch(request_id):
+        raise higgsfield.HiggsfieldError("media", "생성 결과 번호를 확인하지 못했어요.")
+    ext = "png" if kind == "image" else "mp4"
+    name = f"hf_{request_id}.{ext}"
+    folder = _export_dir()
+    path = os.path.join(folder, name)
+    local_url = f"{bp.url_prefix}/media/generated/{name}"
+    if os.path.isfile(path):
+        return local_url
+    url = higgsfield.safe_media_url(job.get("url"))
+    limit = (20 if kind == "image" else 150) * 1024 * 1024
+    try:
+        req = Request(url, headers={"User-Agent": "Hanjeongseon-Content-Studio/1.0"})
+        with build_opener(higgsfield._NoRedirect()).open(req, timeout=60) as response:
+            mime = response.headers.get_content_type()
+            if (kind == "image" and mime not in ("image/jpeg", "image/png", "image/webp")) or (
+                    kind == "video" and mime not in ("video/mp4", "application/octet-stream")):
+                raise ValueError()
+            raw = response.read(limit + 1)
+        if not raw or len(raw) > limit:
+            raise ValueError()
+        if kind == "image":
+            with Image.open(io.BytesIO(raw)) as source:
+                if source.format not in ALLOWED_FORMATS or max(source.size) > MAX_SIDE:
+                    raise ValueError()
+                source.load()
+                image = ImageOps.exif_transpose(source).convert("RGBA")
+                output = io.BytesIO()
+                image.save(output, format="PNG")
+                raw = output.getvalue()
+        elif len(raw) < 12 or raw[4:8] != b"ftyp":
+            raise ValueError()
+        # 고정된 생성 ID 아래 새 파일만 쓰며, 완전히 받은 파일만 공개합니다.
+        temporary = os.path.join(folder, f".{uuid.uuid4().hex}.tmp")
+        try:
+            with open(temporary, "xb") as target:
+                target.write(raw)
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.remove(temporary)
+        return local_url
+    except (URLError, OSError, ValueError, UnidentifiedImageError, Image.DecompressionBombError):
+        raise higgsfield.HiggsfieldError("media", "생성은 끝났지만 결과 파일을 보관하지 못했어요. 다시 만들지 말고 상태를 다시 확인해 주세요.") from None
+
+
+@bp.route("/media/generated/<name>")
+def generated_result(name):
+    match = GENERATED_NAME.fullmatch(name)
+    if not match or not higgsfield.UUID.fullmatch(match[1]):
+        return _error("생성 결과를 찾을 수 없습니다.", 404)
+    return send_from_directory(_export_dir(), name, mimetype="image/png" if match[2] == "png" else "video/mp4")
 
 
 # ---------- 광고 표현 검수 (README 6장) ----------
@@ -402,6 +477,7 @@ def figma_design(chat_id):
 
 
 @bp.route("/media/api/figma/designs/<int:chat_id>/link", methods=["POST"])
+@higgsfield.serialized_design
 def figma_design_link(chat_id):
     """플러그인이 가져온 Figma 프레임 주소를 디자인 문서의 external_figma에 새 버전으로 남깁니다.
     미리 묻기(preflight)를 피하려고 플러그인은 text/plain으로 JSON을 보냅니다."""
@@ -434,6 +510,8 @@ def figma_image():
             response = uploaded_photo(match[1])
         elif match := NOBG_SRC_RE.match(src):
             response = remove_bg_result(match[1])
+        elif path := generated_image_path(src):
+            response = generated_result(os.path.basename(path))
         else:
             return _plugin_error("가져올 수 없는 사진 주소입니다.")
     except NotFound:

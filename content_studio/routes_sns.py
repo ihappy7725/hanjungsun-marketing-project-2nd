@@ -5,6 +5,7 @@ API는 /content_studio/api/... 아래에 둡니다.
 """
 import copy
 import json
+import logging
 import os
 import re
 import threading
@@ -13,15 +14,17 @@ import uuid
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-from flask import current_app, g, jsonify, render_template, request, send_from_directory, url_for
+from flask import current_app, g, jsonify, redirect, render_template, request, send_from_directory, url_for
 
 from platform_core.extensions import db
 
 from . import bp
 from . import higgsfield
-from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
+from .designs import (DESIGN_REVISE_HINT, apply_generated_image, image_generation_brief,
+                      image_generation_fingerprint, make_cardnews, make_poster, revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
+from .routes_media import generated_image_path, store_generated_result
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
                      phrase_pairs, refresh_prompts, revise_draft, scene_kind, translate_messages, video_title)
 
@@ -45,6 +48,78 @@ def index():
 # ---------- 도우미 ----------
 def _error(message, status=400):
     return jsonify({"ok": False, "error": message}), status
+
+
+class _OAuthLogFilter(logging.Filter):
+    def filter(self, record):
+        if "/content_studio/api/higgsfield/callback" in record.getMessage():
+            record.msg, record.args = "Higgsfield OAuth callback received (query omitted)", ()
+        return True
+
+
+# 개발 서버의 기본 요청 로그에도 OAuth code/state 쿼리가 남지 않게 합니다.
+logging.getLogger("werkzeug").addFilter(_OAuthLogFilter())
+
+
+def _same_origin_json():
+    if not request.is_json or request.headers.get("Sec-Fetch-Site") == "cross-site":
+        return False
+    origin = request.headers.get("Origin")
+    return not origin or origin.rstrip("/") == request.host_url.rstrip("/")
+
+
+@bp.route("/api/higgsfield/status")
+def higgsfield_status():
+    response = jsonify({"ok": True, **higgsfield.connection_status()})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@bp.route("/api/higgsfield/connect", methods=["POST"])
+def higgsfield_connect():
+    if not _same_origin_json():
+        return _error("이 화면의 연결 버튼으로 다시 시도해 주세요.", 403)
+    try:
+        callback = url_for("content_studio.higgsfield_callback", _external=True)
+        session_id, authorization_url = higgsfield.start_login(callback)
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    higgsfield.disconnect()
+    response = jsonify({"ok": True, "authorization_url": authorization_url})
+    response.set_cookie(higgsfield.COOKIE_NAME, session_id, max_age=higgsfield.SESSION_TTL,
+                        httponly=True, secure=request.is_secure, samesite="Lax", path=bp.url_prefix)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@bp.route("/api/higgsfield/callback")
+def higgsfield_callback():
+    connected = False
+    if not request.args.get("error"):
+        try:
+            higgsfield.finish_login(request.args.get("code"), request.args.get("state"), request.args.get("iss"))
+            connected = True
+        except higgsfield.HiggsfieldError:
+            pass  # 인증 URL·응답·예외에는 비밀 값이 있을 수 있어 로그에 남기지 않습니다.
+    if not connected:
+        higgsfield.disconnect()
+    response = redirect(url_for("content_studio.index", higgsfield="connected" if connected else "error"))
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    if not connected:
+        response.delete_cookie(higgsfield.COOKIE_NAME, path=bp.url_prefix)
+    return response
+
+
+@bp.route("/api/higgsfield/disconnect", methods=["POST"])
+def higgsfield_disconnect():
+    if not _same_origin_json():
+        return _error("이 화면에서 다시 시도해 주세요.", 403)
+    higgsfield.disconnect()
+    response = jsonify({"ok": True, **higgsfield.connection_status()})
+    response.delete_cookie(higgsfield.COOKIE_NAME, path=bp.url_prefix)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 def _get_chat(chat_id):
@@ -184,6 +259,7 @@ def _with_ai_note(reply):
 
 # ---------- 대화 ----------
 @bp.route("/api/messages", methods=["POST"])
+@higgsfield.serialized_design
 def post_message():
     body = request.get_json(silent=True) or {}
     text = (body.get("text") or "").strip()
@@ -335,6 +411,8 @@ def create_chat():
     if product is None:
         return _error("제품을 골라 주세요.")
     chat = SnsChat(kind=kind, title=_design_title(kind, design, product), product_id=product["id"])
+    for key in ("job", "keyframe", "keyframes", "generated_images"):
+        design.pop(key, None)
     chat.design = SnsDesign()
     chat.design.push(design)
     db.session.add(chat)
@@ -349,6 +427,7 @@ def _clean_title(value):
 
 
 @bp.route("/api/chats/<int:chat_id>", methods=["PATCH"])
+@higgsfield.serialized_design
 def rename_chat(chat_id):
     """영상 작업 이름 바꾸기. 모든 버전에 같은 제목을 적어 되돌려도 제목이 그대로입니다(새 버전·다시 검토 없음).
     빈 제목이면 직접 입력한 제목을 지우고 규칙 제목으로 돌아갑니다."""
@@ -394,6 +473,7 @@ def open_chat(chat_id):
 
 
 @bp.route("/api/chats/<int:chat_id>", methods=["DELETE"])
+@higgsfield.serialized_design
 def delete_chat(chat_id):
     chat = _get_chat(chat_id)
     if chat is None:
@@ -434,6 +514,7 @@ def gallery():
 
 # ---------- 버전 ----------
 @bp.route("/api/chats/<int:chat_id>/design", methods=["PUT"])
+@higgsfield.serialized_design
 def save_design(chat_id):
     chat = _get_chat(chat_id)
     if chat is None:
@@ -443,8 +524,19 @@ def save_design(chat_id):
         return _error("저장할 결과물(design)이 없습니다.")
     if doc.get("kind", chat.kind) != chat.kind:
         return _error("이 작업과 결과물의 탭 종류가 다릅니다.")
+    if chat.kind in DESIGN_KINDS:
+        problem = _check_design(chat.kind, doc)
+        if problem:
+            return _error(problem)
     if chat.design is None:
         chat.design = SnsDesign()
+    # 작업 번호·상태는 서버가 기록한 것만 유지합니다. 브라우저 입력으로 바꾸지 않습니다.
+    before = chat.design.doc or {}
+    for key in ("job", "keyframe", "keyframes", "generated_images"):
+        if key in before:
+            doc[key] = copy.deepcopy(before[key])
+        else:
+            doc.pop(key, None)
     doc.pop("phrase_pairs", None)  # 화면용 대응표·컷 이미지 목록은 저장하지 않습니다.
     doc.pop("cuts", None)
     if chat.kind == "video":
@@ -473,6 +565,7 @@ def save_design(chat_id):
     return jsonify({"ok": True, **_design_state(chat)})
 
 
+@higgsfield.serialized_design
 def _move(chat_id, step):
     chat = _get_chat(chat_id)
     if chat is None or chat.design is None:
@@ -494,12 +587,13 @@ def redo_design(chat_id):
     return _move(chat_id, "redo")
 
 
-# ---------- ③ 생성 (Higgsfield CLI) ----------
+# ---------- ③ 생성 (Higgsfield 구독 MCP) ----------
 # 미리보기 이미지(image)와 영상(video). 실행 전에 비용·계정 남은 크레딧·오늘 대시보드 사용량을 보여 주고,
 # 화면에서 [실행]을 눌러 확인한 비용(credits)이 지금 비용과 같을 때만 요청합니다.
 KST = timezone(timedelta(hours=9))
 TARGETS = {"image": ("keyframes", "image_url"), "video": ("job", "video_url")}
-RUNNING = ("queued", "in_progress", "processing")
+RUNNING = ("queued", "in_progress", "processing", "pending", "waiting", "dna", "script", "visuals", "vision", "flow", "ip_detect")
+_generation_lock = threading.Lock()  # 메모리 OAuth 세션과 같이 단일 서버 프로세스를 전제로 합니다.
 REF_IMAGES_MAX = 7  # 제품 4종 × 단면·포장 = 8장 중 제품 사진 칸 1장을 뺀 나머지
 
 
@@ -510,15 +604,16 @@ def _today_used():
     return round(sum(row.credits for row in rows), 2)
 
 
-def _video_chat(chat_id):
+def _generation_chat(chat_id):
     chat = _get_chat(chat_id)
-    if chat is None or chat.kind != "video" or chat.design is None or chat.design.doc is None:
+    if chat is None or chat.kind not in KINDS or chat.design is None or chat.design.doc is None:
         return None
     return chat
 
 
 def _target():
-    target = (request.get_json(silent=True) or {}).get("target") or request.args.get("target")
+    body = request.get_json(silent=True)
+    target = (body.get("target") if isinstance(body, dict) else None) or request.args.get("target")
     return target if target in TARGETS else None
 
 
@@ -619,9 +714,27 @@ def _photo_set(doc, kinds, scene_text=""):
     return [(path, role) for path, role in photos if path]
 
 
-def _gen_args(doc, target, index=0):
+def _gen_args(doc, target, index=0, product=None):
     """index: 미리보기 이미지를 만들 컷(0부터)."""
     # 참고 사진: 컷 종류에 맞는 제품 사진(_photo_set) + 사용자가 올린 레퍼런스 이미지 / 참고 영상
+    if doc.get("kind") in DESIGN_KINDS:
+        product = product or {}
+        prompt = image_generation_brief(doc, index, product)
+        photos = []
+        for element in doc["pages"][index]["elements"]:
+            if isinstance(element, dict) and element.get("type") == "image":
+                src = element.get("src")
+                path = _photo_path({"image": {"url": src}}) if isinstance(src, str) else None
+                path = path or generated_image_path(src)
+                if path and path not in photos:
+                    photos.append(path)
+        for photo in _product_photos(product):
+            path = _photo_path({"image": photo})
+            if path and path not in photos:
+                photos.append(path)
+        if not photos:
+            raise ValueError(PHOTO_REQUIRED)
+        return higgsfield.design_args(prompt, doc["ratio"], photos)
     scenes = doc.get("scenes") or []
     users = [(path, "a mood reference (mood, composition and color only)")
              for path in (_photo_path({"image": item}) for item in doc.get("user_refs") or []) if path]
@@ -714,210 +827,293 @@ def ref_video(name):
     return send_from_directory(folder, name, mimetype=REF_VIDEO_TYPES[f".{match.group(2)}"])
 
 
-def _scene_index():
-    """미리보기 이미지를 만들 컷(0부터). 없으면 None = 모든 컷."""
-    value = (request.get_json(silent=True) or {}).get("scene")
-    return value if isinstance(value, int) and not isinstance(value, bool) else None
-
-
-def _image_indexes(doc, scene):
-    count = len(doc.get("scenes") or [])
-    if scene is None:
+def _selected_indexes(chat, target):
+    body = request.get_json(silent=True) if request.method == "POST" else request.args
+    if not hasattr(body, "get"):
+        raise ValueError("요청 형식이 올바르지 않아요.")
+    if target == "video":
+        if chat.kind != "video":
+            raise ValueError("포스터·카드뉴스는 이미지로 만들 수 있어요.")
+        return [None]
+    key = "scene" if chat.kind == "video" else "page"
+    value = body.get(key)
+    if request.method == "GET" and isinstance(value, str) and value.isdecimal():
+        value = int(value)
+    count = len(chat.design.doc.get("scenes" if chat.kind == "video" else "pages") or [])
+    if not 1 <= count <= (20 if chat.kind == "video" else 6):
+        raise ValueError("먼저 제작할 내용을 준비해 주세요.")
+    if value is None:
         return list(range(count))
-    return [scene] if 0 <= scene < count else None
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < count:
+        raise ValueError("장 또는 장면 번호가 올바르지 않아요.")
+    return [value]
 
 
-def _quote(doc, target, scene=None):
-    """무료 확인: 이번 비용 · 계정 남은 크레딧 · 오늘 사용량. 실행할 수 없으면 reason에 이유.
-    미리보기 이미지는 컷마다 1장이라 비용 = 1장 비용(unit) × 장수(count). scene이 있으면 그 컷 1장만."""
-    if target == "image":
-        indexes = _image_indexes(doc, scene) or []
-        unit = higgsfield.cost(_gen_args(doc, "image", indexes[0] if indexes else 0))
-        credits = round(unit * len(indexes), 2)
-        cuts = _cuts(doc)
-        running = any(cuts[i] and cuts[i].get("status") in RUNNING for i in indexes)
-    else:
-        indexes, unit = [None], higgsfield.cost(_gen_args(doc, target))
-        credits = unit
-        running = (doc.get("job") or {}).get("status") in RUNNING
-    balance = higgsfield.balance()
+def _records(doc, target):
+    if target == "video":
+        return [doc.get("job")]
+    if doc.get("kind") == "video":
+        return _cuts(doc)
+    pages = doc.get("pages") or []
+    items = doc.get("generated_images") or []
+    return [(items[index] if index < len(items) and isinstance(items[index], dict) else None)
+            for index in range(len(pages))]
+
+
+def _has_uncertain_submission(chat_id):
+    # 제출 전 예약으로 새로고침·되돌리기·서버 재시작 뒤 중복 요청도 막습니다.
+    return SnsCreditLog.query.filter(SnsCreditLog.chat_id == chat_id,
+        db.or_(SnsCreditLog.request_id.like("pending:%"), SnsCreditLog.request_id.like("unknown:%"))).first() is not None
+
+
+def _quote(chat, target, indexes):
     used = _today_used()
+    quote = {"target": target, "credits": None, "unit": None, "count": len(indexes),
+             "scene": indexes[0] if len(indexes) == 1 and chat.kind == "video" else None,
+             "page": indexes[0] if len(indexes) == 1 and chat.kind != "video" else None,
+             "balance": None, "today_used": used, "daily_limit": higgsfield.DAILY_LIMIT,
+             "allowed": False, "reason": higgsfield.LOCK_REASON, "provider": higgsfield.PROVIDER,
+             "model": higgsfield.IMAGE_MODEL if target == "image" else higgsfield.VIDEO_MODEL}
+    if not higgsfield.GENERATION_ENABLED or higgsfield.DAILY_LIMIT is None:
+        return quote
+    if _has_uncertain_submission(chat.id):
+        quote["reason"] = "접수 여부를 확인 중인 요청이 있어요. 다시 만들지 말고 Higgsfield 내 작업을 확인해 주세요."
+        return quote
+    records = _records(chat.design.doc, target)
+    if any(records[index or 0] and records[index or 0].get("status") in RUNNING for index in indexes):
+        quote["reason"] = "이미 만들고 있어요. 상태를 확인해 주세요."
+        return quote
+    product = get_product(chat.product_id) or {}
+    units = [higgsfield.number(higgsfield.cost(_gen_args(chat.design.doc, target, index or 0, product))) for index in indexes]
+    credits = sum(units)
+    balance = higgsfield.number(higgsfield.balance())
     reason = None
-    if running:
-        reason = "이미 만드는 중입니다. 상태를 확인해 주세요."
-    elif used + credits > higgsfield.DAILY_LIMIT:
-        reason = f"오늘 대시보드 한도({higgsfield.DAILY_LIMIT})를 넘습니다. (오늘 {used:g} 사용)"
+    if higgsfield.number(used) + credits > higgsfield.number(higgsfield.DAILY_LIMIT):
+        reason = "오늘 정한 생성 예산을 넘어요."
     elif credits > balance:
-        reason = "계정에 남은 크레딧이 모자랍니다."
-    return {"target": target, "credits": credits, "unit": unit, "count": len(indexes), "scene": scene,
-            "balance": balance, "today_used": used,
-            "daily_limit": higgsfield.DAILY_LIMIT, "allowed": reason is None, "reason": reason}
+        reason = "계정에 남은 크레딧이 모자라요."
+    quote.update(credits=float(credits), unit=float(units[0]), units=[float(unit) for unit in units],
+                 balance=float(balance), allowed=reason is None, reason=reason)
+    return quote
 
 
-def _set_result(chat, target, job):
-    """지금 보고 있는 버전에 영상 작업 상태를 적습니다. (새 버전을 만들지 않음 — 되돌리기 목록이 늘지 않게)"""
-    key, url_key = TARGETS[target]
+def _set_jobs(chat, target, jobs):
     versions = copy.deepcopy(chat.design.versions)
     doc = versions[chat.design.current]
-    doc[key] = {"request_id": job["request_id"], "status": job["status"], url_key: job["url"]}
-    chat.design.versions = versions  # JSON 칸은 새 목록을 넣어야 저장됩니다.
-
-
-def _set_cuts(chat, jobs):
-    """지금 버전의 컷 미리보기 이미지를 바꿉니다. jobs = {컷 번호(0부터): 작업}. 지금 장면에 맞지 않는 옛 그림은 정리합니다."""
-    versions = copy.deepcopy(chat.design.versions)
-    doc = versions[chat.design.current]
-    cuts = _cuts(doc)
-    for index, job in jobs.items():
-        cuts[index] = {"request_id": job["request_id"], "status": job["status"], "image_url": job["url"],
-                       "scene": doc["scenes"][index]["en"]}
-    doc["keyframes"] = [cut for cut in cuts if cut]
-    doc.pop("keyframe", None)
+    changed_image = False
+    warning = None
+    if target == "video":
+        job = jobs.get(None)
+        if job:
+            doc["job"] = {"request_id": job["request_id"], "status": job["status"],
+                          "video_url": job.get("url"), "provider": higgsfield.PROVIDER}
+            if job.get("reviewed"):
+                doc["reviewed"] = True
+    elif chat.kind == "video":
+        cuts = _cuts(doc)
+        for index, job in jobs.items():
+            cuts[index] = {"request_id": job["request_id"], "status": job["status"], "image_url": job.get("url"),
+                           "scene": doc["scenes"][index]["en"], "provider": higgsfield.PROVIDER}
+        doc["keyframes"] = [cut for cut in cuts if cut]
+        doc.pop("keyframe", None)
+    else:
+        images = _records(doc, "image")
+        for index, job in jobs.items():
+            previous = images[index] or {}
+            fingerprint = job.get("fingerprint") or previous.get("fingerprint")
+            images[index] = {"request_id": job["request_id"], "status": job["status"], "image_url": job.get("url"),
+                             "fingerprint": fingerprint, "provider": higgsfield.PROVIDER}
+            if job["status"] == higgsfield.DONE and job.get("url"):
+                if fingerprint == image_generation_fingerprint(doc, index):
+                    doc = apply_generated_image(doc, index, job["url"])
+                    changed_image = True
+                else:
+                    images[index]["stale"] = True
+                    warning = "만드는 동안 편집 내용이 바뀌어 사진을 자동으로 바꾸지 않았어요. 생성 결과는 보관돼 있어요."
+        doc["generated_images"] = images
+        # 이전 버전에도 완료 상태를 적되 사진은 보존하여 되돌릴 수 있게 합니다.
+        for version in versions:
+            for entry in version.get("generated_images") or []:
+                if not isinstance(entry, dict):
+                    continue
+                match = next((job for job in jobs.values() if job["request_id"] and job["request_id"] == entry.get("request_id")), None)
+                if match:
+                    entry.update(status=match["status"], image_url=match.get("url"))
     chat.design.versions = versions
+    if changed_image:
+        chat.design.push(doc)
+    else:
+        versions[chat.design.current] = doc
+        chat.design.versions = versions
+    return warning
 
 
 def _hf_error(error):
-    status = 503 if error.code in ("missing", "login") else 502
+    status = 409 if error.code == "locked" else 503 if error.code in ("missing", "login", "configuration") else 502
     return jsonify({"ok": False, "error": str(error), "code": error.code}), status
 
 
 @bp.route("/api/chats/<int:chat_id>/generate/quote", methods=["POST"])
 def generate_quote(chat_id):
-    chat, target = _video_chat(chat_id), _target()
+    chat, target = _generation_chat(chat_id), _target()
     if chat is None:
-        return _error("영상 작업을 찾을 수 없습니다.", 404)
+        return _error("작업을 찾을 수 없어요.", 404)
     if target is None:
-        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
-    if not _photo_path(chat.design.doc):
-        return _error(PHOTO_REQUIRED)
-    scene = _scene_index()
-    if target == "image" and not _image_indexes(chat.design.doc, scene):
-        return _error("컷 번호가 올바르지 않습니다.")
+        return _error("만들 종류를 확인해 주세요.")
     try:
-        return jsonify({"ok": True, "quote": _quote(chat.design.doc, target, scene)})
+        indexes = _selected_indexes(chat, target)
+        return jsonify({"ok": True, "quote": _quote(chat, target, indexes)})
     except higgsfield.HiggsfieldError as error:
         return _hf_error(error)
+    except (ValueError, TypeError, KeyError):
+        return _error("제작 내용과 장·규격을 확인해 주세요.")
 
 
 @bp.route("/api/chats/<int:chat_id>/generate", methods=["POST"])
 def generate(chat_id):
-    """크레딧이 나가는 유일한 API. 화면에서 확인한 비용과 지금 비용이 같아야 보냅니다."""
-    chat, target = _video_chat(chat_id), _target()
+    # 첫 단계에서 검사합니다. 잠금 상태에서는 계정 조회·파일 업로드도 하지 않습니다.
+    if not higgsfield.GENERATION_ENABLED or higgsfield.DAILY_LIMIT is None:
+        return _hf_error(higgsfield.HiggsfieldError("locked", higgsfield.LOCK_REASON))
+    if not _same_origin_json():
+        return _error("이 화면의 만들기 버튼으로 실행해 주세요.", 403)
+    with _generation_lock:
+        return _generate_locked(chat_id)
+
+
+def _generate_locked(chat_id):
+    chat, target = _generation_chat(chat_id), _target()
     if chat is None:
-        return _error("영상 작업을 찾을 수 없습니다.", 404)
+        return _error("작업을 찾을 수 없어요.", 404)
     if target is None:
-        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
-    confirmed = (request.get_json(silent=True) or {}).get("credits")
-    doc = chat.design.doc
-    if not _photo_path(doc):
-        return _error(PHOTO_REQUIRED)
-    scene = _scene_index()
-    indexes = _image_indexes(doc, scene) if target == "image" else None
-    if target == "image" and not indexes:
-        return _error("컷 번호가 올바르지 않습니다.")
+        return _error("만들 종류를 확인해 주세요.")
+    if chat.kind == "video" and target == "video" and (request.get_json(silent=True) or {}).get("reviewed") is not True:
+        return _error("만들 내용을 확인한 뒤 영상 만들기를 눌러 주세요.", 409)
     try:
-        quote = _quote(doc, target, scene)
-        if confirmed is None or float(confirmed) != quote["credits"]:
-            return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        indexes = _selected_indexes(chat, target)
+        quote = _quote(chat, target, indexes)
         if not quote["allowed"]:
             return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
-        args = [_gen_args(doc, target, index) for index in indexes] if indexes else [_gen_args(doc, target)]
+        confirmed = higgsfield.number((request.get_json(silent=True) or {}).get("credits"))
+        if confirmed != higgsfield.number(quote["credits"]):
+            return jsonify({"ok": False, "error": "예상 비용이 바뀌었어요. 다시 확인해 주세요.", "quote": quote}), 409
+        product = get_product(chat.product_id) or {}
+        specs = [_gen_args(chat.design.doc, target, index or 0, product) for index in indexes]
     except higgsfield.HiggsfieldError as error:
         return _hf_error(error)
-    except (TypeError, ValueError):
-        return _error("확인한 비용(credits)이 올바르지 않습니다.")
-
-    # 미리보기 이미지는 컷마다 1건씩 보냅니다. 중간에 실패하면 거기서 멈추고, 이미 보낸 것만 저장·기록합니다.
-    model = higgsfield.IMAGE_MODEL if target == "image" else higgsfield.VIDEO_MODEL
-    jobs, sent, failure, unknown = {}, [], None, False
-    for index, one in zip(indexes or [None], args):
+    except (ValueError, TypeError, KeyError):
+        return _error("확인한 비용과 제작 내용을 확인해 주세요.")
+    spent = 0
+    for index, spec, unit in zip(indexes, specs, quote["units"]):
+        intent = uuid.uuid4().hex
+        log = SnsCreditLog(chat_id=chat.id, job_kind=target, model=quote["model"], credits=unit,
+                           request_id="pending:" + intent)
+        db.session.add(log)
+        # 전송 전에 반드시 저장합니다. 저장 실패 시 외부에 요청하지 않습니다.
         try:
-            job = higgsfield.create(one)
-        except higgsfield.HiggsfieldError as error:  # CLI가 실패를 알림 → 이 건은 크레딧이 나가지 않음
-            failure = error
-            break
-        except Exception:  # 요청은 들어갔을 수 있음(예: 작업 ID를 못 받음) → 크레딧을 기록하고 다시 누르지 않게
-            current_app.logger.exception("Higgsfield 생성 응답 처리 실패")
-            sent.append(None)
-            unknown = True
-            break
-        jobs[index] = job
-        sent.append(job["request_id"])
-    if not sent:
-        return _hf_error(failure)
-
-    # 여기부터는 요청이 Higgsfield에 들어간 뒤라, 오류가 나도 크레딧 기록은 꼭 남깁니다.
-    unit = quote["unit"]
-    spent = round(unit * len(sent), 2)
-    try:
-        _log_credits(chat, target, model, unit, sent)
-        if target == "image":
-            _set_cuts(chat, jobs)
-        elif jobs:
-            _set_result(chat, target, jobs[None])
-        _touch(chat)
-        db.session.commit()
-    except Exception:
-        current_app.logger.exception("Higgsfield 생성 뒤 저장 실패")
-        db.session.rollback()
-        return _submitted(chat, target, model, unit, sent)
-    if unknown:
-        return _submitted(chat, target, model, unit, [], spent)
-    data = {"ok": True, "spent": spent, "today_used": quote["today_used"] + spent,
-            "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)}
-    if failure:  # 일부 컷만 보냄
-        data["warning"] = f"{len(sent)}컷만 요청했어요. 나머지는 보내지 못했어요. ({failure})"
-    return jsonify(data)
-
-
-def _log_credits(chat, target, model, credits, request_ids):
-    for request_id in request_ids:
-        db.session.add(SnsCreditLog(chat_id=chat.id, job_kind=target, model=model, credits=credits,
-                                    request_id=str(request_id)[:64] if request_id else None))
-
-
-def _submitted(chat, target, model, credits, request_ids, spent=None):
-    """요청은 들어갔는데 결과를 화면에 연결하지 못했을 때: 크레딧만 기록하고(request_ids 건마다), 다시 누르지 말라는 안내를 JSON으로."""
-    try:
-        _log_credits(chat, target, model, credits, request_ids)
-        db.session.commit()
-    except Exception:
-        current_app.logger.exception("크레딧 기록 실패")
-        db.session.rollback()
-    return jsonify({"ok": False, "submitted": True, "spent": spent if spent is not None else round(credits * len(request_ids), 2),
-                    "error": "요청은 Higgsfield에 들어갔어요(크레딧 사용). 다시 누르지 말고, 결과는 Higgsfield 내 작업 목록에서 확인해 주세요."}), 202
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return _error("요청 기록을 저장하지 못해 만들기를 시작하지 않았어요.", 503)
+        fingerprint = image_generation_fingerprint(chat.design.doc, index) if chat.kind in DESIGN_KINDS else None
+        try:
+            job = higgsfield.create(spec)
+        except higgsfield.HiggsfieldError as error:
+            log.credits, log.request_id = 0, "rejected:" + intent
+            db.session.commit()
+            if spent:
+                return jsonify({"ok": True, "spent": spent, "warning": str(error), **_design_state(chat)})
+            return _hf_error(error)
+        except Exception:
+            log.request_id = "unknown:" + intent
+            try:
+                with higgsfield.DESIGN_LOCK:
+                    db.session.refresh(chat.design)
+                    _set_jobs(chat, target, {index: {"request_id": None, "status": "unknown", "url": None,
+                                                    "fingerprint": fingerprint}})
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()  # pending 예약이 남아 중복 제출을 막습니다.
+            return jsonify({"ok": False, "submitted": True, "spent": spent + unit,
+                            "error": "요청 접수 여부를 확인하지 못했어요. 다시 만들지 말고 Higgsfield 내 작업을 확인해 주세요.",
+                            **_design_state(chat)}), 202
+        log.request_id, log.model = job["request_id"], job.get("model", quote["model"])
+        # 즉시 끝난 응답도 다음 상태 조회에서 검증·보관한 뒤 화면에 적용합니다.
+        if job["status"] == higgsfield.DONE:
+            job["status"], job["url"] = "queued", None
+        job["fingerprint"] = fingerprint
+        spent += unit
+        try:
+            with higgsfield.DESIGN_LOCK:
+                # 생성 응답을 기다리는 동안 저장한 편집을 최신 문서에 병합합니다.
+                db.session.refresh(chat.design)
+                warning = None
+                if target == "image" and index >= len(_records(chat.design.doc, "image")):
+                    warning = "만드는 동안 장이 삭제됐어요. 완성 결과는 Higgsfield 내 작업에서 확인해 주세요."
+                else:
+                    if target == "video":
+                        job["reviewed"] = spec["params"]["prompt"] == (chat.design.doc.get("custom") or chat.design.doc.get("prompt"))
+                    warning = _set_jobs(chat, target, {index: job})
+                _touch(chat)
+                db.session.commit()
+        except Exception:
+            db.session.rollback()  # 전송 전 예약을 지우지 않습니다.
+            return jsonify({"ok": False, "submitted": True, "spent": spent,
+                            "error": "요청은 보냈지만 저장을 마치지 못했어요. 다시 만들지 말고 Higgsfield 내 작업을 확인해 주세요."}), 202
+    return jsonify({"ok": True, "spent": spent, "today_used": _today_used(), "warning": warning,
+                    "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)})
 
 
 @bp.route("/api/chats/<int:chat_id>/generate/status")
 def generate_status(chat_id):
-    """무료. 결과가 늦어도 다시 만들지 않고 상태만 확인합니다(이중 결제 방지). 완료되면 남은 크레딧도 돌려줍니다."""
-    chat, target = _video_chat(chat_id), _target()
+    chat, target = _generation_chat(chat_id), _target()
     if chat is None:
-        return _error("영상 작업을 찾을 수 없습니다.", 404)
+        return _error("작업을 찾을 수 없어요.", 404)
     if target is None:
-        return _error("만들 것(target: image/video)이 올바르지 않습니다.")
-    doc = chat.design.doc
+        return _error("만들 종류를 확인해 주세요.")
     try:
-        if target == "image":  # 만드는 중인 컷만 확인
-            cuts = _cuts(doc)
-            if not any(cuts):
-                return _error("아직 요청한 작업이 없습니다.")
-            jobs = {i: higgsfield.get_job(cut["request_id"]) for i, cut in enumerate(cuts)
-                    if cut and cut.get("status") in RUNNING}
-            running = any(job["status"] in RUNNING for job in jobs.values())
-        else:
-            request_id = (doc.get("job") or {}).get("request_id")
-            if not request_id or not higgsfield.UUID.fullmatch(str(request_id)):
-                return _error("아직 요청한 작업이 없습니다.")
+        indexes = _selected_indexes(chat, target)
+        records = _records(chat.design.doc, target)
+        selected = {index: records[index or 0] for index in indexes if records[index or 0]}
+        if not selected:
+            return _error("아직 요청한 작업이 없어요.")
+        jobs = {}
+        warning = None
+        for index, record in selected.items():
+            if record.get("status") in ("unknown", "submitting"):
+                warning = "접수 여부를 확인 중이에요. 다시 만들지 말고 Higgsfield 내 작업을 확인해 주세요."
+                continue
+            request_id = record.get("request_id")
+            if not isinstance(request_id, str) or not higgsfield.UUID.fullmatch(request_id):
+                raise ValueError()
+            # 이미 보관한 결과는 다시 받거나 생성하지 않습니다.
+            existing_url = record.get("video_url" if target == "video" else "image_url") or ""
+            if record.get("status") == higgsfield.DONE and existing_url.startswith(bp.url_prefix + "/media/generated/"):
+                continue
+            if record.get("status") in higgsfield.FAILED:
+                continue
             job = higgsfield.get_job(request_id)
-            running = job["status"] in RUNNING
-        balance = higgsfield.balance() if not running else None
+            if job["status"] == higgsfield.DONE:
+                job["url"] = store_generated_result(job, target)
+            job["fingerprint"] = record.get("fingerprint")
+            jobs[index] = job
+        if jobs:
+            with higgsfield.DESIGN_LOCK:
+                db.session.refresh(chat.design)
+                latest = _records(chat.design.doc, target)
+                # 페이지 순서·현재 버전이 바뀌었으면 작업 번호가 같은 곳에만 상태를 반영합니다.
+                matched = {}
+                for job in jobs.values():
+                    for position, record in enumerate(latest):
+                        if record and record.get("request_id") == job["request_id"]:
+                            matched[None if target == "video" else position] = job
+                if matched:
+                    warning = _set_jobs(chat, target, matched) or warning
+                    db.session.commit()
+                else:
+                    warning = "편집 중인 버전이 바뀌어 결과를 자동으로 덮어쓰지 않았어요."
+        return jsonify({"ok": True, "balance": None, "today_used": _today_used(),
+                        "daily_limit": higgsfield.DAILY_LIMIT, "warning": warning, **_design_state(chat)})
     except higgsfield.HiggsfieldError as error:
         return _hf_error(error)
-    if target == "image":
-        _set_cuts(chat, jobs)
-    else:
-        _set_result(chat, target, job)
-    db.session.commit()
-    return jsonify({"ok": True, "balance": balance, "today_used": _today_used(),
-                    "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)})
+    except (ValueError, TypeError, KeyError, IndexError):
+        return _error("저장된 작업 정보를 확인하지 못했어요. 다시 만들지 말고 연결을 확인해 주세요.")
