@@ -339,3 +339,17 @@
 .studio-page[data-tab="poster"] .studio-main, .studio-page[data-tab="cardnews"] .studio-main { padding: 0; border: 0; background: transparent; box-shadow: none; }
 /* 미리보기 팝업: [수정하기]로 할 수 있는 것 안내 */
 .studio-page .studio-preview-dialog .studio-preview-guide { margin: 0 0 var(--space-4); color: var(--ink); font-size: var(--fs-min); }
+/* 영상 편집 화면(초안 뒤, is-video-edit): 제목 왼쪽 · 비율·초·↶ ↷ 같은 줄 오른쪽 (제품 버튼은 숨김) */
+.studio-page .studio-work.is-video-edit .studio-settings { flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.studio-page .studio-work.is-video-edit .studio-title { flex: 1 1 240px; width: auto; min-width: 0; text-align: left; }
+.studio-page .studio-work.is-video-edit .studio-options { margin-left: auto; justify-content: flex-end; }
+/* 영상 ② 프롬프트: 영어·한국어 제목 줄과 상자 높이를 맞춤 (제목 줄은 [복사] 버튼 높이, 상자는 16줄) */
+.studio-page .studio-video-prompt-head { height: 44px; margin-bottom: var(--space-4); }
+.studio-page .studio-video-prompt-head h3 { min-width: 0; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }  /* 제목이 길어도 한 줄(두 칸 위치 맞춤) */
+.studio-page .studio-video-prompt-head h3 .studio-hint { display: inline; margin-left: var(--space-3); font-weight: 400; }
+.studio-page .studio-video-prompts .studio-video-prompt { box-sizing: border-box; height: calc(16 * var(--line-height) * var(--fs-min) + 2 * var(--space-4) + 2px); }
+/* 레퍼런스: ① 장면 구성과 ② 프롬프트 사이 */
+.studio-page .studio-video-refs { margin: var(--space-6) 0; }
+.studio-page .studio-video-refs h3 { margin: 0 0 var(--space-4); }
+/* 묶음 사이 빈 줄: 영어 상자는 줄마다 div라 빈 줄에 높이를 줌 */
+.studio-page .studio-video-prompt-line:empty::before { content: "\00a0"; }

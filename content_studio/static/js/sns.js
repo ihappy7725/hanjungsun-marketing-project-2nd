@@ -54,9 +54,11 @@ function daysUntil(dateText) {
   return Math.round((new Date(`${dateText}T00:00:00`) - today) / 86400000);
 }
 
+// 수정일: 2026/10/26
 function shortDate(iso) {
   const date = new Date(iso);
-  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+  const two = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}/${two(date.getMonth() + 1)}/${two(date.getDate())}`;
 }
 
 async function api(path, options = {}) {
@@ -386,7 +388,9 @@ function renderWork() {
   // 제품 고르기: 영상만. 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
   const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
     : settings.product_ids;
-  $("set-product").hidden = kind !== "video";
+  // 영상 초안 뒤에는 제품을 바꿀 수 없어 버튼을 숨기고, 제목 왼쪽 · 비율·초·↶ ↷ 오른쪽 한 줄로(is-video-edit, sns.css)
+  $("set-product").hidden = kind !== "video" || Boolean(doc);
+  $("work-screen").classList.toggle("is-video-edit", kind === "video" && Boolean(doc));
   // 영상 제목: 초안 전에는 입력값, 초안 뒤에는 그 작업 제목으로 고정해 보여 주고, 누르면 고칠 수 있습니다(이름 바꾸기).
   const title = $("set-title");
   title.hidden = kind !== "video";
