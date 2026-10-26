@@ -975,26 +975,19 @@ function updateSimPreview() {
   const roas = parseRoas(f.roas.value);
   const amount = parseMoney(f.amount.value);
   const text = (s) => document.createTextNode(s);
-  if (roas == null || !Number.isFinite(roas)) {
-    return $("sim-preview").replaceChildren(text(`예상 ROAS를 넣으면 손익분기 ${pct(bep)} 기준으로 이익·손해를 알려 드립니다.`));
-  }
-  const m = currentMedia();
-  const label = m && sim.data.channels.find((c) => c.channel === m.roasFrom)?.label;
-  const basis = label && roas === simRoas(m.roasFrom) ? `${label} 실적 ${pct(roas)} 기준` : `${f.roasPick.value === CUSTOM ? "직접 입력" : "선택한 값"} ${pct(roas)} 기준`;
-  const gap = roas - bep;
+  if (roas == null || !Number.isFinite(roas)) return $("sim-preview").replaceChildren(text("예상 ROAS 선택 시 손익 표시"));
+  // 명사형으로 필요한 정보만: 판정 · (예산이 있으면) 본전 매출 · 예상 매출 · 차액
   if (!amount || (f.unit.value === "USD" && !usdRate())) {
-    const gapText = gap === 0 ? "손익분기와 같음" : `손익분기 ${pct(bep)}보다 ${Math.abs(gap).toFixed(1)}%p ${gap > 0 ? "높음" : "낮음"}`;
-    return $("sim-preview").replaceChildren(verdict(roas, bep), text(`${gapText} · 집행 예산을 넣으면 본전 매출을 계산합니다.`));
+    const gap = roas - bep;
+    const gapText = gap ? ` · 손익분기 ${pctShort(bep)} 대비 ${gap > 0 ? "+" : "−"}${pctShort(Math.abs(gap))}p` : ` · 손익분기 ${pctShort(bep)}`;
+    return $("sim-preview").replaceChildren(verdict(roas, bep), text(gapText));
   }
   const cost = toKrw(amount, f.unit.value);
   const breakEven = breakEvenRevenue(cost);
   const revenue = estRevenue(cost, roas);
   const diff = revenue - breakEven;
-  const result = diff > 0 ? `본전보다 ${krwMan(diff)} 많음` : diff < 0 ? `본전까지 ${krwMan(-diff)} 부족` : "딱 본전";
-  $("sim-preview").replaceChildren(
-    verdict(revenue, breakEven),
-    text(`본전 매출 ${krwMan(breakEven)} · 예상 매출 ${krwMan(revenue)} (추정 · ${basis}) → ${result}`),
-  );
+  const result = diff > 0 ? ` · ${krwMan(diff)} 초과` : diff < 0 ? ` · ${krwMan(-diff)} 부족` : "";
+  $("sim-preview").replaceChildren(verdict(revenue, breakEven), text(` · 본전 매출 ${krwMan(breakEven)} · 예상 매출 ${krwMan(revenue)}${result}`));
 }
 
 function currentMedia() {
@@ -1050,33 +1043,23 @@ function onFormatChange() {
 
 // 예상 ROAS 드롭다운 단계(화면 안내용). 매체 실적값은 목록에 자동으로 더합니다.
 const ROAS_STEPS = [200, 250, 300, 350, 400, 500];
+const pctShort = (v) => `${Number.isInteger(v) ? v : v.toFixed(1)}%`;  // 300.0% → 300%
 
-// 예상 ROAS: 손익분기 기준 손해 · 본전 · 이익 묶음 드롭다운 + 직접 입력. 실제 값은 숨은 roas 칸에 둡니다.
+// 예상 ROAS: % 숫자만 보이는 드롭다운 + 직접 입력. 실제 값은 숨은 roas 칸에 둡니다(손해·이익은 미리보기 줄에서 표시).
 // 사용자가 고르거나 고치지 않았으면(roasEdited=false) 매체 실적값을 기본으로 고릅니다.
 function fillDefaultRoas() {
   if (!sim.data) return;
   const f = simForm().elements;
-  const bep = sim.data.roas_bep_percent;
   const m = currentMedia();
   const actual = m ? simRoas(m.roasFrom) : null;
   const label = m && sim.data.channels.find((c) => c.channel === m.roasFrom)?.label;
   if (!sim.roasEdited) f.roas.value = actual == null ? "" : String(actual);
 
   const opt = (value, text) => Object.assign(el("option", { text }), { value });
-  const group = (name, options) => {
-    const g = Object.assign(document.createElement("optgroup"), { label: name });
-    g.append(...options);
-    return g;
-  };
-  // 항목은 짧게: 손해·이익은 묶음 제목이 알려 주므로 숫자와 실적 표시만 둡니다.
-  const short = (v) => `${Number.isInteger(v) ? v : v.toFixed(1)}%`;
-  const step = (v) => opt(String(v), v === actual ? `${short(v)} · ${label} 실적` : short(v));
   const values = [...new Set([...ROAS_STEPS, ...(actual == null ? [] : [actual])])].sort((a, b) => a - b);
   $("sim-roas-pick").replaceChildren(
     ...(actual == null ? [opt("", "선택 안 함")] : []),
-    group(`손해 (${short(bep)} 미만)`, values.filter((v) => v < bep).map(step)),
-    group("본전", values.filter((v) => v === bep).map(step)),
-    group(`이익 (${short(bep)} 초과)`, values.filter((v) => v > bep).map(step)),
+    ...values.map((v) => opt(String(v), pctShort(v))),
     opt(CUSTOM, "직접 입력…"),
   );
   // 지금 값이 목록에 있으면 그 항목을, 없으면 '직접 입력'을 고르고 숫자 칸을 보입니다.
@@ -1084,7 +1067,7 @@ function fillDefaultRoas() {
   const listed = [...f.roasPick.options].some((o) => o.value === current && o.value !== CUSTOM);
   f.roasPick.value = listed ? current : CUSTOM;
   f.roas.hidden = listed;
-  setText("sim-roas-help", `${short(bep)} 미만 손해 · 초과 이익${actual == null ? " · 실적 없는 매체" : ""}`);
+  setText("sim-roas-help", actual == null ? "실적 없는 매체" : `${label} 실적 ${pctShort(actual)}`);
 }
 
 // 드롭다운 선택: 단계를 고르면 그 값을 쓰고, '직접 입력…'이면 숫자 칸을 열어 줍니다.
