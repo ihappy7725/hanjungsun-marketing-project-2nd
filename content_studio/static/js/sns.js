@@ -473,6 +473,12 @@ function renderWork() {
     button.title = ratioLocked ? "비율은 새로 만들 때 정해요" : "";
   }
   $("set-duration").closest("label").hidden = kind !== "video";
+  // 첫 생성 화면: 고른 비율 그대로의 사각형 + 오른쪽 레퍼런스 칸 (비율 버튼을 누르면 renderWork가 다시 그림)
+  // 포스터·카드뉴스는 [보내기]로 시안 3개를 보는 동안 숨깁니다(가운데 칸에 시안).
+  $("start-stage").hidden = Boolean(doc) || work.choosing;
+  const preview = $("ratio-preview");
+  preview.style.aspectRatio = current.ratio.replace(":", " / ");
+  preview.textContent = current.ratio;
   $("set-sound").hidden = true;  // 소리는 버튼 대신 입력창에 "소리 켜줘"로 바꿉니다.
   // 세 탭 모두 [← 첫 화면]·[☰ 이전 작업] 버튼과 이전 작업 칸 없이 씁니다(첫 화면은 위쪽 탭 버튼으로).
   $("go-home").hidden = $("history-toggle").hidden = true;
@@ -608,6 +614,7 @@ function startChoices(text) {
     style: settings.style || "",
     pages: settings.pages || 5,  // 카드뉴스만 씀
     request: text.trim(),
+    refs: settings.user_refs,    // 레퍼런스 이미지 [{file_id, url}] → design-images API의 ref_images
     onCreate: async (design, { product_id }) => {
       // 실패하면 throw → 희주 화면이 안내
       const data = await api("/chats", { method: "POST", body: { kind, design, product_id, title: settings.title } });
@@ -685,12 +692,18 @@ function currentRefs() {
   return doc ? { user_refs: doc.user_refs || [], ref_video: doc.ref_video || null } : settings;
 }
 
-// 입력창 옆 레퍼런스는 첫 생성 화면에서만. 초안 뒤에는 ③ 영상 만들기의 레퍼런스 칸(sns_video.js)에서 넣고 뺍니다.
+// 비율 사각형 오른쪽 레퍼런스 칸은 첫 생성 화면에서만. 영상 초안 뒤에는 ③ 영상 만들기의 레퍼런스 칸(sns_video.js)에서 넣고 뺍니다.
+// 포스터·카드뉴스는 이미지만(시안 그림의 분위기·구도·색 참고, renderChoices → design-images API).
+// 썸네일이 있으면 칸 안에 보이고, 안내 글은 칸 아래쪽으로 작게(is-filled, sns.css).
 function renderRefs() {
-  const show = kind === "video" && !work.doc;
-  $("ref-add").hidden = !show;
+  const show = !work.doc;
+  const imagesOnly = DESIGN_KINDS.includes(kind);
+  $("ref-drop-note").textContent = imagesOnly ? `이미지 ${USER_REFS_MAX}장` : `이미지 ${USER_REFS_MAX}장 · 영상 1개`;
+  $("ref-drop").setAttribute("aria-label", `레퍼런스 넣기 (${$("ref-drop-note").textContent})`);
+  $("ref-file").accept = imagesOnly ? "image/jpeg,image/png,image/webp"
+    : "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm";
   const { user_refs: images, ref_video: video } = currentRefs();
-  $("refs").hidden = !show || (!images.length && !video);
+  $("ref-drop").classList.toggle("is-filled", Boolean(images.length || video));
   if (!show) return;
   const item = (node, label, remove) => {
     const box = el("span", "studio-ref");
@@ -729,6 +742,7 @@ async function changeRefs(patch) {
 
 async function addRef(file) {
   const isVideo = file.type.startsWith("video/");
+  if (isVideo && DESIGN_KINDS.includes(kind)) return feedback("warn", `${KIND_LABELS[kind]} 레퍼런스는 이미지만 넣을 수 있어요.`);
   const refs = currentRefs();
   if (!isVideo && refs.user_refs.length >= USER_REFS_MAX) return feedback("warn", `레퍼런스 이미지는 ${USER_REFS_MAX}장까지 올릴 수 있어요.`);
   feedback("info", isVideo ? "참고 영상을 올리는 중…" : "레퍼런스 이미지를 올리는 중…");
@@ -783,6 +797,13 @@ function fitInput() {
   }
   input.style.height = "auto";
   input.style.height = `${input.scrollHeight + 2}px`;  // 위아래 테두리 1px씩
+}
+
+// 첫 생성 화면 입력 영역 너비 = 위 버튼 줄(제품~초) 너비. 포스터·카드뉴스는 스타일 줄이 더 넓으면 그 너비(sns.css --start-width).
+function fitStartWidth() {
+  const width = Math.max(page.querySelector(".studio-options").offsetWidth, $("style-row").offsetWidth);
+  if (width) $("work-screen").style.setProperty("--start-width", `${width}px`);
+  else $("work-screen").style.removeProperty("--start-width");
 }
 
 async function renameWork(title) {
@@ -881,7 +902,30 @@ function bindWork() {
   });
   // 한글 입력 중(조합 중) Enter는 글자 확정만 하고 보내지 않습니다.
   $("chat-input").addEventListener("input", fitInput);
-  $("ref-add").addEventListener("click", () => $("ref-file").click());
+  // 레퍼런스 칸: 빈 곳을 누르거나 Enter·Space → 파일 고르기 (썸네일·× 누름은 제외), 파일을 끌어다 놓으면 차례로 올림
+  const drop = $("ref-drop");
+  drop.addEventListener("click", (event) => {
+    // 숨은 파일 칸도 이 칸 안에 있어, 그 클릭이 다시 올라와도 또 열지 않게 뺍니다.
+    if (event.target === $("ref-file") || event.target.closest(".studio-ref")) return;
+    $("ref-file").click();
+  });
+  drop.addEventListener("keydown", (event) => {
+    if (event.target !== drop || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    $("ref-file").click();
+  });
+  drop.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    drop.classList.add("is-dragover");
+  });
+  drop.addEventListener("dragleave", (event) => {
+    if (!drop.contains(event.relatedTarget)) drop.classList.remove("is-dragover");
+  });
+  drop.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    drop.classList.remove("is-dragover");
+    for (const file of event.dataTransfer.files) await addRef(file);
+  });
   $("command-toggle").addEventListener("click", toggleCommand);
   $("ref-file").addEventListener("change", (event) => {
     const file = event.target.files[0];
@@ -913,6 +957,10 @@ if (page) {
   $("new").hidden = kind === "main";
   $("new").addEventListener("click", startNew);
   bindWork();
+  // 버튼이 보이거나 숨고, 줄이 바뀌거나, 작업 화면이 열려 버튼 줄 너비가 달라지면 입력 영역 너비를 다시 맞춥니다.
+  const startWidth = new ResizeObserver(fitStartWidth);
+  startWidth.observe(page.querySelector(".studio-options"));
+  startWidth.observe($("style-row"));
 
   const params = new URL(location.href).searchParams;
   const chatId = Number(params.get("chat"));

@@ -968,21 +968,37 @@ def _design_target(body):
     return kind, ratio, product, pages
 
 
-def _design_photos(product):
-    """시안 그림에 보낼 제품 사진 [(경로, 역할 영어)]: 겉모습 · 고른 맛 단면 · 개별 포장."""
+def _design_refs(value):
+    """레퍼런스 이미지(첫 화면 레퍼런스 칸, 희주 업로드 API로 올린 것) [{file_id, url}] → 서버 파일 경로 목록.
+    없으면 []. 4장을 넘거나 업로드 주소가 아니거나 파일이 사라졌으면 ValueError."""
+    if value in (None, []):
+        return []
+    if not isinstance(value, list) or len(value) > USER_REFS_MAX:
+        raise ValueError(f"레퍼런스 이미지는 {USER_REFS_MAX}장까지입니다.")
+    cleaned = [_clean_upload(item) for item in value]
+    paths = [_photo_path({"image": item}) if item else None for item in cleaned]
+    if not all(paths):
+        raise ValueError("레퍼런스 이미지를 찾을 수 없습니다. 다시 올려 주세요.")
+    return paths
+
+
+def _design_photos(product, refs=()):
+    """시안 그림에 보낼 사진 [(경로, 역할 영어)]: 제품 겉모습 · 고른 맛 단면 · 개별 포장 + 레퍼런스(분위기 참고)."""
     en = PRODUCT_EN.get(product["name_ko"], product["name_ko"])
     images = product.get("images") or {}
     photos = [(_static_photo(COMMON_IMAGES["whole"]),
                "the outside of the rice cakes: round, soft and white with rice-flour dusting"),
               (_static_photo(images.get("cut")), f"the cross-section of {en}, showing its filling"),
               (_static_photo(images.get("pack")), f"the individual wrapping of {en}")]
+    photos += [(path, "a mood reference (mood, composition and color only)") for path in refs]
     return [(path, role) for path, role in photos if path]
 
 
-def _design_quote(ratio, product, pages):
-    """무료 확인: 시안 3안 × 장수의 비용 · 남은 크레딧 · 오늘 사용량. 실행할 수 없으면 reason에 이유."""
+def _design_quote(ratio, photos, pages):
+    """무료 확인: 시안 3안 × 장수의 비용 · 남은 크레딧 · 오늘 사용량. 실행할 수 없으면 reason에 이유.
+    photos: 이번에 보낼 사진(_design_photos) — 참고 사진 수에 따라 비용이 달라질 수 있어 그대로 넣어 봅니다."""
     count = DESIGN_PROPOSALS * pages
-    unit = higgsfield.cost(higgsfield.design_image_args("poster", ratio, _design_photos(product)))
+    unit = higgsfield.cost(higgsfield.design_image_args("poster", ratio, photos))
     credits = round(unit * count, 2)
     balance = higgsfield.balance()
     used = _today_used()
@@ -998,10 +1014,12 @@ def _design_quote(ratio, product, pages):
 
 @bp.route("/api/design-images/quote", methods=["POST"])
 def design_images_quote():
-    """무료. body: {kind, ratio, product_id, pages(카드뉴스만)}"""
+    """무료. body: {kind, ratio, product_id, pages(카드뉴스만), ref_images(선택, [{file_id, url}] 4장까지)}"""
+    body = request.get_json(silent=True) or {}
     try:
-        _, ratio, product, pages = _design_target(request.get_json(silent=True) or {})
-        return jsonify({"ok": True, "quote": _design_quote(ratio, product, pages)})
+        _, ratio, product, pages = _design_target(body)
+        photos = _design_photos(product, _design_refs(body.get("ref_images")))
+        return jsonify({"ok": True, "quote": _design_quote(ratio, photos, pages)})
     except ValueError as error:
         return _error(str(error))
     except higgsfield.HiggsfieldError as error:
@@ -1023,15 +1041,17 @@ def _design_prompts(value, pages):
 
 @bp.route("/api/design-images", methods=["POST"])
 def design_images():
-    """크레딧이 나갑니다. body: {kind, ratio, product_id, pages, prompts: [[장별]×3], credits(화면에서 확인한 비용)}
+    """크레딧이 나갑니다. body: {kind, ratio, product_id, pages, prompts: [[장별]×3], credits(화면에서 확인한 비용),
+    ref_images(선택, 견적 때와 같은 목록)}
     견적과 같고 한도 안일 때만 장마다 1건씩 보냅니다. 중간에 실패하면 거기서 멈추고 이미 보낸 것만 기록합니다.
     응답 jobs: [[{request_id, status} 또는 None(못 보냄)] × 3안]"""
     body = request.get_json(silent=True) or {}
     try:
         _, ratio, product, pages = _design_target(body)
         prompts = _design_prompts(body.get("prompts"), pages)
+        photos = _design_photos(product, _design_refs(body.get("ref_images")))
         confirmed = body.get("credits")
-        quote = _design_quote(ratio, product, pages)
+        quote = _design_quote(ratio, photos, pages)
         if confirmed is None or float(confirmed) != quote["credits"]:
             return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
         if not quote["allowed"]:
@@ -1041,7 +1061,6 @@ def design_images():
     except higgsfield.HiggsfieldError as error:
         return _hf_error(error)
 
-    photos = _design_photos(product)
     jobs = [[None] * pages for _ in prompts]
     sent, failure, unknown = [], None, False
     for p, proposal in enumerate(prompts):
