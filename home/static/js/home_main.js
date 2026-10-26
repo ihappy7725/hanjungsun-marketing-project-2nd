@@ -52,8 +52,9 @@ export function ordered(tasks, today) {
   return [...tasks].sort((a, b) => group(a) - group(b) || (a.due_date || '9999').localeCompare(b.due_date || '9999') || a.title.localeCompare(b.title, 'ko'));
 }
 export function unfinished(t) { return !['done', 'cancelled'].includes(t.status); }
-export function calendarMonthSlots(height, weeks) {
-  return Math.min(DAY_SLOTS, Math.max(2, Math.floor((((height || 440) - 24) / weeks - 20) / 20)));
+export function calendarMonthSlots(height, weeks, width = 0) {
+  const limit = width > 0 && width < 560 ? 3 : DAY_SLOTS;
+  return Math.min(limit, Math.max(2, Math.floor((((height || 440) - 28) / weeks - 28) / 24)));
 }
 export function ganttTone(task, start, today) {
   if (task.status === 'done' || task.due_date < today) return 'past';
@@ -266,13 +267,53 @@ async function initialize() {
     if (e.kind === 'campaign') return `<button class="btn" data-select="${esc(e.id)}">이벤트 보기</button>`;
     return '';
   }
+  function monthEventState(e) {
+    // 월간 표시만 꾸밉니다. 다른 보기에서 사용하는 일정 객체나 저장 상태는 바꾸지 않습니다.
+    if (e.kind === 'task') {
+      const task = store.tasks.find(t => t.id === e.id);
+      if (!task) return { label: '', tone: '' };
+      const late = unfinished(task) && task.due_date && task.due_date < today;
+      return { label: late ? `기한 초과 · ${TASK_STATES[task.status]}` : TASK_STATES[task.status],
+        short: late ? '지연' : task.status === 'done' ? '✓' : task.status === 'doing' ? '진행' : TASK_STATES[task.status],
+        tone: late ? 'overdue' : task.status };
+    }
+    if (e.kind === 'campaign') {
+      const c = store.campaigns.find(item => item.id === e.id);
+      return { label: c ? CAMPAIGN_STATES[c.status] || '' : '',
+        tone: c ? ({ preparing: 'todo', active: 'doing', done: 'done', blocked: 'blocked', cancelled: 'cancelled', archived: 'archived' }[c.status] || '') : '' };
+    }
+    if (e.kind === 'creator') return { label: creators().find(c => c.collaboration_id === e.id)?.status_label || '', tone: '' };
+    return { label: '', tone: '' };
+  }
+  function monthEventDescription(e, state = monthEventState(e)) {
+    return `${e.title}${state.label ? ` · ${state.label}` : ''}${e.provisional ? ' · 법정일 기준, 연휴 기간 미확정' : ''}${e.campaignId ? ' · 이벤트 기준일' : ''}`;
+  }
+  function showMonthDay(day) {
+    const rows = calendarEvents().filter(e => e.date <= day && e.end >= day)
+      .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+    selectedDate = day; renderCalendar(); renderTasks();
+    root.querySelector(`[data-month-more="${day}"]`)?.focus();
+    openDialog(`${day} · 전체 일정 ${rows.length}건`, rows.map(e => {
+      const state = monthEventState(e);
+      return `<div class="home-agenda-row"><div><strong>${esc(e.title)}</strong><p class="home-signal-meta">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}${state.label ? ` · ${esc(state.label)}` : ''}${e.provisional ? ' · 연휴 기간 미확정' : ''}</p></div><button class="btn" type="button" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}">상세 보기</button></div>`;
+    }).join(''));
+  }
+  async function openMonthEvent(kind, eventId) {
+    const e = calendarEvents().find(item => item.kind === kind && item.id === eventId);
+    if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
+    if (dialog.open) dialog.close();
+    if (kind === 'task') editTask(eventId);
+    else if (kind === 'local') showLocalEvent(eventId);
+    else if (kind === 'campaign') { await changeCampaign(eventId); if (selected()?.id === eventId) showPanel('campaign'); }
+    else openDialog(e.title, `<p>${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}</p>${monthEventState(e).label ? `<p>${esc(monthEventState(e).label)}</p>` : ''}${eventAction(e)}`);
+  }
   function renderCalendar() {
     const events = calendarEvents(), at = date => events.filter(e => e.date <= date && e.end >= date);
     let start, end, weekCount = 5;
     if (view === 'month') {
       const first = `${cursor.slice(0, 7)}-01`, weekday = (new Date(first).getUTCDay() + 6) % 7;
       start = addDays(first, -weekday); const nextMonth = new Date(first); nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
-      const weeks = Math.max(5, Math.ceil((dayDiff(nextMonth.toISOString().slice(0, 10), first) + weekday) / 7)); weekCount = weeks; end = addDays(start, weeks * 7 - 1);
+      const weeks = Math.max(4, Math.ceil((dayDiff(nextMonth.toISOString().slice(0, 10), first) + weekday) / 7)); weekCount = weeks; end = addDays(start, weeks * 7 - 1);
     } else if (view === 'week') { start = addDays(cursor, -((new Date(cursor).getUTCDay() + 6) % 7)); end = addDays(start, 6); }
     else { start = `${cursor.slice(0, 7)}-01`; const next = new Date(start); next.setUTCMonth(next.getUTCMonth() + 1); end = addDays(next.toISOString().slice(0, 10), -1); }
     $('#calendar-period').textContent = view === 'week' ? `${shortDate(start)} – ${shortDate(end)}` : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
@@ -294,8 +335,8 @@ async function initialize() {
       return;
     }
     {
-      const monthSlots = calendarMonthSlots($('#calendar-body').clientHeight, weekCount);
-      let html = `<div class="home-month" data-week-count="${weekCount}" data-slots="${monthSlots}" style="--home-week-count:${weekCount}"><div class="home-weekdays">` + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('') + '</div>';
+      const monthSlots = calendarMonthSlots($('#calendar-body').clientHeight, weekCount, $('#calendar-body').clientWidth);
+      let html = `<div class="home-month" data-week-count="${weekCount}" data-slots="${monthSlots}" style="--home-week-count:${weekCount};--home-month-slots:${monthSlots}"><div class="home-weekdays">` + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('') + '</div>';
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
         const segments = periodSegments(events, weekStart).filter(segment => segment.lane < Math.max(1, monthSlots - 1));
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
@@ -304,21 +345,27 @@ async function initialize() {
           const day = addDays(weekStart, column - 1), allDayEvents = at(day);
           // 이어지는 일정은 기간 막대로만 보여 주고 날짜 칩에서는 뺍니다. 같은 일정이 두 번 나오지 않게 합니다.
           // 공휴일·축제 같은 현지 일정을 맨 위에 둡니다. 그날의 성격을 먼저 읽게 하기 위함입니다.
-          const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end) || !segments.some(segment => segment.event.id === e.id))
+          const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end))
             .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+          const hiddenPeriods = allDayEvents.filter(e => e.kind === 'local' && e.date < e.end && !segments.some(segment => segment.event.id === e.id)).length;
+          const occupiedLanes = segments.filter(segment => segment.start <= day && segment.end >= day)
+            .reduce((count, segment) => Math.max(count, segment.lane + 1), 0);
           // 하루에 보이는 것은 기간 막대까지 더해 DAY_SLOTS개까지입니다. 업무가 많아도 달력 높이가 변하지 않습니다.
-          const room = Math.max(0, monthSlots - laneCount);
+          const room = Math.max(0, monthSlots - occupiedLanes);
           let shown = Math.min(dayEvents.length, room);
-          if (dayEvents.length > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
-          const rest = dayEvents.length - shown;
-          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}${e.provisional ? ' is-provisional' : ''}" title="${esc(e.title)}${e.provisional ? ' · 법정일 기준, 연휴 기간 미확정' : ''}${e.campaignId ? ' · 이벤트 기준일' : ''}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
-          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
-          // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
-          if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
+          if (dayEvents.length + hiddenPeriods > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
+          const rest = dayEvents.length - shown + hiddenPeriods;
+          const chips = dayEvents.slice(0, shown).map(e => {
+            const state = monthEventState(e), description = monthEventDescription(e, state);
+            return `<button type="button" class="home-event ${e.kind}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" title="${esc(description)}" aria-label="${esc(description)}">${state.label ? `<span class="home-month-status" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}<span class="home-month-event-title">${esc(e.title)}</span></button>`;
+          }).join('') + (rest > 0 && room > 0 ? `<button type="button" class="home-more" data-month-more="${day}" aria-label="${day}, 숨겨진 일정 ${rest}건 · 전체 일정 보기">+${rest}개 더보기</button>` : '');
+          html += `<button class="home-day${day === today ? ' is-today' : ''}${day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}"${day === today ? ' aria-current="date"' : ''} aria-label="${day}${day === today ? ', 오늘' : ''}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
+          // 날짜 선택 버튼과 일정 버튼은 형제 요소로 배치해 중첩 버튼을 만들지 않습니다.
+          if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${occupiedLanes + 2} / -1">${chips}</span>`;
         }
         html += segments.map(segment => {
           const e = segment.event;
-          return `<button class="home-period-bar${e.provisional ? ' is-provisional' : ''}${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}" style="grid-column:${segment.column} / span ${segment.span};grid-row:${segment.lane + 2}" data-local="${esc(e.id)}" data-period-start="${segment.start}" data-period-end="${segment.end}" aria-label="${esc(e.title)}, ${e.date}부터 ${e.end}까지${segment.continuesBefore ? ', 앞 주에서 이어짐' : ''}${segment.continuesAfter ? ', 다음 주에 이어짐' : ''}">${segment.continuesBefore ? '<span aria-hidden="true">← </span>' : ''}${esc(e.title)}${segment.continuesAfter ? '<span aria-hidden="true"> →</span>' : ''}</button>`;
+          return `<button type="button" class="home-period-bar${e.provisional ? ' is-provisional' : ''}${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}" style="grid-column:${segment.column} / span ${segment.span};grid-row:${segment.lane + 2}" data-local="${esc(e.id)}" data-period-start="${segment.start}" data-period-end="${segment.end}" title="${esc(monthEventDescription(e))} · ${e.date} ~ ${e.end}" aria-label="${esc(e.title)}, ${e.date}부터 ${e.end}까지${segment.continuesBefore ? ', 앞 주에서 이어짐' : ''}${segment.continuesAfter ? ', 다음 주에 이어짐' : ''}${e.provisional ? ', 연휴 기간 미확정' : ''}">${segment.continuesBefore ? '<span aria-hidden="true">← </span>' : ''}${esc(e.title)}${segment.continuesAfter ? '<span aria-hidden="true"> →</span>' : ''}</button>`;
         }).join('') + '</div>';
       }
       $('#calendar-body').innerHTML = html + '</div>';
@@ -616,6 +663,8 @@ async function initialize() {
   }
   root.addEventListener('click', async event => {
     const button = event.target.closest('button'); if (!button) return;
+    if (button.dataset.monthMore) { showMonthDay(button.dataset.monthMore); return; }
+    if (button.dataset.monthKind) { await openMonthEvent(button.dataset.monthKind, button.dataset.monthId); return; }
     if (button.hasAttribute('data-cancel-delete')) dialog.close();
     if (button.dataset.confirmDelete) {
       const next = structuredClone(store), target = button.dataset.confirmDelete;
@@ -630,7 +679,11 @@ async function initialize() {
       const next = structuredClone(store), task = next.tasks.find(item => item.id === button.dataset.today);
       if (task) { task.due_date = today; task.fixed = true; if (await save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
     }
-    if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
+    if (button.dataset.date) {
+      const monthDate = Boolean(button.closest('.home-month'));
+      selectedDate = button.dataset.date; renderCalendar(); renderTasks();
+      if (monthDate) root.querySelector(`.home-month [data-date="${selectedDate}"]`)?.focus();
+    }
     if (button.dataset.move) moveTask(button.dataset.move);
     if (button.dataset.slot) { const [day] = button.dataset.slot.split(' '); selectedDate = day; renderCalendar(); renderTasks(); }
     if (button.dataset.task) editTask(button.dataset.task);
@@ -745,7 +798,7 @@ async function initialize() {
     const monthSizer = new ResizeObserver(() => {
       const month = $('.home-month');
       if ($('#calendar-panel').hidden || view !== 'month' || !month) return;
-      if (Number(month.dataset.slots) !== calendarMonthSlots($('#calendar-body').clientHeight, Number(month.dataset.weekCount))) renderCalendar();
+      if (Number(month.dataset.slots) !== calendarMonthSlots($('#calendar-body').clientHeight, Number(month.dataset.weekCount), $('#calendar-body').clientWidth)) renderCalendar();
     });
     monthSizer.observe($('#calendar-body'));
   }

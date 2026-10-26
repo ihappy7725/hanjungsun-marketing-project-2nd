@@ -533,3 +533,44 @@
   .home-page .home-calendar-widget .home-calendar-navigation { width: 100%; }
   .home-page .home-calendar-widget #calendar-period { flex: 1 1 auto; min-inline-size: 0; white-space: normal; overflow-wrap: anywhere; font-size: var(--fs-subheading); }
 }
+
+/* STEP 2: 월간 화면 안에서만 날짜 칸과 일정 밀도를 개선합니다. */
+.home-page .home-calendar-widget #calendar-body:has(> .home-month) { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.home-page .home-calendar-widget .home-month { --home-chip-h: calc(var(--space-7) + var(--space-1)); --home-day-head: calc(var(--space-7) + var(--space-4)); --home-month-weekdays-h: calc(var(--space-7) + var(--space-4)); min-width: 420px; min-height: calc(var(--home-month-weekdays-h) + var(--home-week-count) * (var(--home-day-head) + var(--home-month-slots) * (var(--home-chip-h) + var(--space-1)))); grid-template-rows: var(--home-month-weekdays-h) repeat(var(--home-week-count), minmax(0, 1fr)); gap: 0; }
+.home-page .home-calendar-widget .home-month .home-weekdays { align-items: center; background: var(--white); box-shadow: inset 0 -1px var(--line-soft); }
+.home-page .home-calendar-widget .home-month .home-weekday { padding: var(--space-2) var(--space-3); font-size: calc(var(--fs-table) * .9); font-weight: 500; }
+.home-page .home-calendar-widget .home-month .home-week { gap: 0; }
+.home-page .home-calendar-widget .home-month .home-day { align-items: flex-start; padding: var(--space-1) var(--space-2); background: var(--page-bg); color: var(--ink); box-shadow: inset -1px 0 var(--line-soft), inset 0 -1px var(--line-soft); transition: background-color 160ms ease; }
+.home-page .home-calendar-widget .home-month .home-day:hover { background: color-mix(in srgb, var(--teal) 3%, var(--page-bg)); filter: none; }
+.home-page .home-calendar-widget .home-month .home-day[aria-pressed="true"] { background: color-mix(in srgb, var(--teal) 8%, var(--page-bg)); outline: 0; }
+.home-page .home-calendar-widget .home-month .home-day.home-outside { opacity: 1; color: var(--muted); }
+.home-page .home-calendar-widget .home-month .home-day-number { display: grid; place-items: center; width: calc(var(--home-day-head) - var(--space-3)); height: calc(var(--home-day-head) - var(--space-3)); min-width: 0; font-family: var(--font-body); font-size: var(--fs-table); font-weight: 500; line-height: 1; }
+.home-page .home-calendar-widget .home-month .home-day.is-today .home-day-number { background: var(--teal); color: var(--on-dark); border-radius: 50%; font-weight: var(--title-weight); }
+.home-page .home-calendar-widget .home-month .home-day-events { gap: var(--space-1); padding: 0 var(--space-2); align-self: start; }
+.home-page .home-calendar-widget .home-month .home-event, .home-page .home-calendar-widget .home-month .home-period-bar, .home-page .home-calendar-widget .home-month .home-more { box-sizing: border-box; min-width: 0; min-height: var(--home-chip-h); height: var(--home-chip-h); padding: 0 var(--space-3); border: 0; border-radius: var(--space-2); font-family: var(--font-body); font-size: calc(var(--fs-table) * .85); font-weight: 500; line-height: var(--home-chip-h); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 160ms ease, box-shadow 160ms ease; }
+.home-page .home-calendar-widget .home-month .home-event { display: flex; align-items: center; gap: var(--space-2); width: 100%; pointer-events: auto; border-inline-start: 3px solid var(--line-strong); color: var(--ink); }
+.home-page .home-calendar-widget .home-month .home-event.local { background: var(--home-c-local); border-inline-start-color: var(--gold); }
+.home-page .home-calendar-widget .home-month .home-event.campaign { background: var(--home-c-campaign); border-inline-start-color: var(--teal); }
+.home-page .home-calendar-widget .home-month .home-event.schedule { background: var(--home-c-schedule); border-inline-start-color: var(--celadon); }
+.home-page .home-calendar-widget .home-month .home-event.task { background: var(--home-c-task); border-inline-start-color: var(--home-c-task-edge); }
+.home-page .home-calendar-widget .home-month .home-event.creator { background: var(--home-c-creator); border-inline-start-color: var(--orange); }
+.home-page .home-calendar-widget .home-month .home-month-event-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.home-page .home-calendar-widget .home-month .home-month-status { flex: 0 0 auto; max-width: 4em; overflow: hidden; text-overflow: ellipsis; font-size: calc(var(--fs-table) * .75); font-weight: var(--title-weight); }
+.home-page .home-calendar-widget .home-month .home-event.is-todo { background: color-mix(in srgb, var(--beige) 42%, var(--page-bg)); }
+.home-page .home-calendar-widget .home-month .home-event.is-doing { background: var(--teal); color: var(--on-dark); }
+.home-page .home-calendar-widget .home-month .home-event.is-done { background: color-mix(in srgb, var(--celadon) 42%, var(--page-bg)); color: var(--ink); opacity: 1; text-decoration: none; }
+.home-page .home-calendar-widget .home-month .home-event.is-overdue { background: color-mix(in srgb, var(--orange) 38%, var(--page-bg)); color: var(--ink); }
+.home-page .home-calendar-widget .home-month .home-event.is-overdue .home-month-status { color: color-mix(in srgb, var(--navy) 75%, var(--orange)); }
+.home-page .home-calendar-widget .home-month .home-period-bar { margin-inline: var(--space-2); background: var(--home-c-local); color: var(--ink); border-inline-start: 3px solid var(--gold); }
+.home-page .home-calendar-widget .home-month .home-period-bar.continues-before { margin-inline-start: 0; border-inline-start-width: 0; border-start-start-radius: 0; border-end-start-radius: 0; }
+.home-page .home-calendar-widget .home-month .home-period-bar.continues-after { margin-inline-end: 0; border-start-end-radius: 0; border-end-end-radius: 0; }
+.home-page .home-calendar-widget .home-month .home-event.is-provisional, .home-page .home-calendar-widget .home-month .home-period-bar.is-provisional { background: color-mix(in srgb, var(--gold) 8%, var(--page-bg)); color: var(--ink); border: 1px dashed var(--gold); border-inline-start: 3px dashed var(--gold); }
+.home-page .home-calendar-widget .home-month .home-period-bar.is-provisional.continues-before { border-inline-start-width: 0; }
+.home-page .home-calendar-widget .home-month .home-more { pointer-events: auto; width: 100%; background: transparent; color: var(--teal); text-align: left; }
+.home-page .home-calendar-widget .home-month .home-event:hover, .home-page .home-calendar-widget .home-month .home-period-bar:hover { filter: none; box-shadow: inset 0 0 0 1px var(--teal); }
+.home-page .home-calendar-widget .home-month .home-more:hover { background: color-mix(in srgb, var(--teal) 7%, var(--page-bg)); filter: none; }
+.home-page .home-calendar-widget .home-month .home-day:focus-visible, .home-page .home-calendar-widget .home-month .home-event:focus-visible, .home-page .home-calendar-widget .home-month .home-period-bar:focus-visible, .home-page .home-calendar-widget .home-month .home-more:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.home-page .home-calendar-widget .home-month .home-event.is-doing:focus-visible { outline-color: var(--on-dark); }
+@media (prefers-reduced-motion: reduce) {
+  .home-page .home-calendar-widget .home-month .home-day, .home-page .home-calendar-widget .home-month .home-event, .home-page .home-calendar-widget .home-month .home-period-bar, .home-page .home-calendar-widget .home-month .home-more { transition: none; }
+}
