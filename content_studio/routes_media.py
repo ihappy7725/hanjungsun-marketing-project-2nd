@@ -24,7 +24,7 @@ from platform_core.extensions import db
 
 from . import bp
 from .designs import (SIZES, STYLES, background_element, background_photos, background_prompt,
-                      build_cardnews_prompt, build_design_brief, design_proposal_schema, design_texts,
+                      build_cardnews_prompt, build_design_brief, change_ratio, design_proposal_schema, design_texts,
                       proposal_design, validate_proposals)
 from .models_sns import SnsChat, SnsCreditLog
 from .products import get_product
@@ -653,6 +653,20 @@ def design_bg():
                         "daily_limit": IMAGE_DAILY_LIMIT})
     finally:
         _image_lock.release()
+
+
+# ---------- 비율 바꾸기 (무료, AI 아님) ----------
+@bp.route("/media/api/design-ratio", methods=["POST"])
+def design_ratio():
+    """비율을 바꾼 새 문서를 돌려줍니다. 저장은 편집기가 기존 저장 경로(onSave)로 합니다."""
+    try:
+        body = _media_body()
+        doc, _ = _design_request({"design": body.get("design"), "options": {}})
+        return jsonify({"ok": True, "design": change_ratio(doc, body.get("ratio"))})
+    except ValueError as error:
+        return _error(str(error))
+    except (TypeError, KeyError, AttributeError):
+        return _error("초안 형식이 올바르지 않아 비율을 바꾸지 못했습니다.")
 
 
 @bp.route("/media/design-bg/<file_id>.jpg")
