@@ -1,6 +1,6 @@
 {% extends "platform_core/base.html" %}
 
-{% block title %}KPI{% endblock %}
+{% block title %}마케팅 성과{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('kpi.static', filename='css/kpi_main.css') }}">
@@ -31,7 +31,7 @@
 <div class="kpi-page">
   <header class="pagehead kpi-head">
     <div>
-      <h1>KPI</h1>
+      <h1>마케팅 성과</h1>
     </div>
     <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
@@ -330,7 +330,7 @@
     <section class="panel kpi-panel" data-kpi-panel="ga4">
       <div class="panelhead">
         <div>
-          <h2><span data-kpi="ga4-title">GA4 트래픽 · 전환</span> {{ info("유효 참여율 = 참여 세션(10초 이상 등) ÷ 전체 세션 × 100\n쇼피 구매처 이동 클릭률 = 쇼피 이동 클릭 ÷ 전체 세션 × 100\n팜플렛 QR 유입 = utm_source=pamphlet 세션") }}</h2>
+          <h2><span data-kpi="ga4-title">GA4 트래픽 · 전환</span> {{ info("유효 참여율 = 참여 세션(10초 이상 등) ÷ 전체 세션 × 100\n매장 예약·길찾기 클릭률 = 매장 예약·길찾기 클릭 ÷ 전체 세션 × 100\n팜플렛 QR 유입 = utm_source=pamphlet 세션") }}</h2>
         </div>
         <div class="kpi-tools">
 
@@ -351,7 +351,7 @@
               <span class="kpi-sub-text" data-kpi="ga4-engagement-sub"></span>
             </div>
             <div>
-              <span class="kpi-metric-label">쇼피 이동 클릭률</span>
+              <span class="kpi-metric-label">매장 예약·길찾기 클릭률</span>
               <strong data-kpi="ga4-ctr">—</strong>
               <span class="kpi-sub-text" data-kpi="ga4-ctr-sub"></span>
             </div>
@@ -371,7 +371,7 @@
           </div>
           <div class="kpi-detail">
             <p class="kpi-note" data-kpi="ga4-note"></p>
-            <!-- 전환 대체 지표: 한정선 사이트의 쇼피 이동 대신 데모 매장의 주요 이벤트·수익으로 형식을 확인합니다. -->
+            <!-- 전환 대체 지표: 한정선 사이트의 매장 예약·길찾기 클릭 대신 데모 매장의 주요 이벤트·수익으로 형식을 확인합니다. -->
             <dl class="kpi-ga4-conv" data-kpi="ga4-conv"></dl>
             <div data-kpi="ga4-channel-section">
               <p class="kpi-detail-title">

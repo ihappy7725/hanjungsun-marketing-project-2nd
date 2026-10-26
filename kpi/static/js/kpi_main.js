@@ -369,8 +369,8 @@ function renderGa4(data) {
   const g = data.ga4;
   setText("ga4-engagement", pct(g.engagement_rate_percent));
   setText("ga4-engagement-sub", g.engaged_sessions == null ? "참여 세션 열 없음" : `${num(g.engaged_sessions)} / ${num(g.sessions)} 세션`);
-  setText("ga4-ctr", pct(g.shopee_ctr_percent));
-  setText("ga4-ctr-sub", `${num(g.shopee_clicks)}회 이동`);
+  setText("ga4-ctr", pct(g.store_action_ctr_percent));
+  setText("ga4-ctr-sub", `${num(g.store_action_clicks)}회 클릭`);
   setText("ga4-pamphlet", num(g.pamphlet_sessions));
   setText("ga4-note", g.note);
   // 확대 시: 전환 대체 지표(주요 이벤트 · 비율 · 평균 참여 시간 · 수익) — 값이 없으면 칸을 숨깁니다.
@@ -1322,7 +1322,7 @@ window.addEventListener("scroll", hideTip, { capture: true, passive: true });
 
 // ---------- 내보내기 (PDF 보고서 · 엑셀) ----------
 // [내보내기] 메뉴: PDF 보고서(새 창 미리보기 → [PDF로 저장]) · 엑셀(.xlsx, 새 라이브러리 없이 kpi_xlsx.js로 생성)
-const REPORT_TITLE = "KPI 보고서";
+const REPORT_TITLE = "마케팅 성과 보고서";
 const DATA_NOTE = "데이터 상태: 예산·ROAS·VOC는 시연 데이터, GA4는 공식 데모 계정(한정선 데이터 아님), AI 요약은 사람 검수 전 결과입니다. '추정'은 계산·가정으로 나온 값입니다.";
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -1481,7 +1481,7 @@ function reportCoverBlocks(highlights) {
   };
   const head = add("div", "kpi-rpt-cover");
   const meta = add("dl", "kpi-cover-meta");
-  [["기준월", view.summary?.campaign_month || "—"], ["작성", stamp()], ["범위", "베트남 · 전체 채널"], ["작성 부서", "마케팅 · KPI"]].forEach(([k, v]) => {
+  [["기준월", view.summary?.campaign_month || "—"], ["작성", stamp()], ["범위", "베트남 · 전체 채널"], ["작성 부서", "마케팅"]].forEach(([k, v]) => {
     const row = add("div");
     row.append(add("dt", "", k), add("dd", "", v));
     meta.append(row);
@@ -1517,7 +1517,7 @@ function paginateReport(doc, blocks) {
     const head = doc.createElement("header");
     head.className = "kpi-rpt-pagehead";
     head.innerHTML = "<span></span><span></span>";
-    head.children[0].textContent = "한정선 베트남 · KPI 보고서";
+    head.children[0].textContent = `한정선 베트남 · ${REPORT_TITLE}`;
     head.children[1].textContent = `기준월 ${view.summary?.campaign_month || "—"}`;
     content = doc.createElement("div");
     content.className = "kpi-rpt-content";
@@ -1722,7 +1722,7 @@ function xlsxKit() {
 
 function exportXlsx() {
   const d = view.summary;
-  if (!d) return showNotice("KPI 데이터를 아직 불러오지 못해 엑셀을 만들 수 없습니다. [새로고침] 후 다시 눌러 주세요.");
+  if (!d) return showNotice("마케팅 성과 데이터를 아직 불러오지 못해 엑셀을 만들 수 없습니다. [새로고침] 후 다시 눌러 주세요.");
   showNotice("");
   const { C, S, FMT, section, table } = xlsxKit();
   const { budget: b, totals: t, fx } = d;
@@ -1740,7 +1740,7 @@ function exportXlsx() {
   sum.gridLines = false;
   sum.widths = [2, 18, 14, 14, 14, 14, 14, 14, 18];
   let r = 0;
-  sum.put(r, 1, "한정선 베트남 KPI 보고서", S.title).merge(r, 1, r, 8).height(r, 30);
+  sum.put(r, 1, `한정선 베트남 ${REPORT_TITLE}`, S.title).merge(r, 1, r, 8).height(r, 30);
   r += 1;
   sum.put(r, 1, `기준월 ${d.campaign_month} · 작성 ${made} · 범위 베트남 전체 채널`, S.sub).merge(r, 1, r, 8);
   r += 1;
@@ -2004,7 +2004,7 @@ function exportXlsx() {
         ["주요 이벤트", g.key_events, null, ""],
         ["평균 참여 시간(초)", g.avg_engagement_sec, null, ""],
         ["수익(USD)", g.revenue_usd, null, "데모 매장 매출"],
-        ["쇼피 이동 클릭률 (시연)", g.shopee_ctr_percent, null, `${num(g.shopee_clicks)}회 이동 · 한정선 사이트 전용 이벤트라 시연 비율`],
+        ["매장 예약·길찾기 클릭률 (시연)", g.store_action_ctr_percent, null, `${num(g.store_action_clicks)}회 클릭 · 한정선 사이트 전용 이벤트라 시연 비율`],
         ["팜플렛 QR 유입 (시연)", g.pamphlet_sessions, null, "utm_source=pamphlet 세션 · 시연 비율"],
       ], ["text", "dec2", "text", "text"]);
       [[0, "pct"], [1, "pct"], [2, "int"], [3, "sec"], [4, "usd"], [5, "pct"], [6, "int"]].forEach(([k, kind]) => {
@@ -2054,7 +2054,7 @@ function exportXlsx() {
   }
 
   const today = new Date();
-  downloadXlsx(`KPI_${d.campaign_month}_${today.getFullYear()}${pad2(today.getMonth() + 1)}${pad2(today.getDate())}.xlsx`, sheets);
+  downloadXlsx(`마케팅성과_${d.campaign_month}_${today.getFullYear()}${pad2(today.getMonth() + 1)}${pad2(today.getDate())}.xlsx`, sheets);
 }
 
 // ---------- 블록 확대 애니메이션 ----------
@@ -2171,7 +2171,7 @@ async function loadSummary() {
   } catch (err) {
     syncSimUnit(true);
     root.querySelector(".kpi-legend-note").hidden = false;
-    root.querySelector(".kpi-legend-note").textContent = `KPI 데이터를 불러오지 못했습니다: ${err.message}`;
+    root.querySelector(".kpi-legend-note").textContent = `마케팅 성과 데이터를 불러오지 못했습니다: ${err.message}`;
   }
 }
 
