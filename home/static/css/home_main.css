@@ -279,7 +279,7 @@
 .home-page .home-card .btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: var(--control-height); padding-inline: var(--space-5); }
 .home-page .home-side-column .home-text-btn { min-height: 28px; padding: var(--space-1) var(--space-3); }
 .home-page .home-task:last-child, .home-page .home-opportunity:last-child, .home-page .home-collaboration:last-child { border-bottom: 0; }
-.home-page .home-side-top-inner { display: flex; flex-direction: column; gap: var(--space-6); }
+.home-page .home-side-panels { display: flex; flex-direction: column; gap: var(--space-6); }
 .home-page .home-work-card { display: flex; flex-direction: column; min-height: 0; }
 .home-page .home-work-card > .home-progress-card { flex: 0 0 auto; padding-bottom: var(--space-6); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line-strong); }
 .home-page .home-work-card > .home-today-card { display: flex; flex-direction: column; min-height: 0; }
@@ -287,27 +287,22 @@
 .home-page .home-work-card .home-task-list { overflow-y: auto; min-height: 0; max-height: 360px; }
 .home-page .home-work-card .home-undated { overflow-y: auto; max-height: 180px; flex-shrink: 0; }
 @media (min-width: 1361px) {
-  .home-page .home-grid { grid-template-areas: "calendar overview" "news collaborations"; grid-template-rows: auto auto; }
-  .home-page .home-main-column, .home-page .home-side-column { display: contents; }
-  .home-page .home-mainpanel { grid-area: calendar; }
-  .home-page .home-news { grid-area: news; }
-  .home-page .home-side-top { grid-area: overview; position: relative; min-height: 0; }
-  .home-page .home-side-top-inner { position: absolute; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
-  .home-page .home-side-top-inner > .home-card { min-height: 0; overflow: auto; }
+  .home-page .home-side-column { position: relative; min-height: 0; }
+  .home-page .home-side-panels { position: absolute; inset: 0; display: grid; grid-template-rows: repeat(3, minmax(240px, 1fr)); align-items: stretch; align-content: stretch; overflow: auto; }
+  .home-page .home-side-panels > .home-card { min-height: 240px; overflow: auto; align-self: stretch; }
   .home-page .home-work-card > .home-today-card { flex: 1 1 auto; }
   .home-page .home-work-card .home-task-list { flex: 1 1 auto; max-height: none; }
   .home-page .home-work-card .home-undated { max-height: 35%; }
   .home-page .home-opportunities { display: flex; flex-direction: column; height: 100%; min-height: 0; }
   .home-page .home-opportunities > .home-panel-head, .home-page .home-opportunities > .home-range { flex: 0 0 auto; }
   .home-page #opportunity-list { flex: 1 1 auto; min-height: 0; max-height: none; }
-  .home-page .home-collaborations-card { grid-area: collaborations; min-height: 0; background: var(--page-bg); }
   .home-page .home-collaborations { display: flex; flex-direction: column; height: 100%; min-height: 0; }
   .home-page .home-collaborations > .home-panel-head { flex: 0 0 auto; }
   .home-page #collaboration-list { flex: 1 1 auto; min-height: 0; max-height: none; }
 }
 @media print {
   .home-page .home-main-column, .home-page .home-side-column { display: block; }
-  .home-page .home-side-top-inner { position: static; display: block; }
+  .home-page .home-side-panels { position: static; display: block; }
   .home-page .home-work-card .home-task-list { max-height: none; overflow: visible; }
 }
 .home-page .home-event.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
@@ -328,4 +323,54 @@
   .home-page .home-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
   .home-page .home-controls label:last-of-type { grid-column: 1 / -1; }
   .home-page .home-paneltab { flex: 1; min-width: 0; padding-inline: var(--space-5); }
+}
+
+/* 크기 조절은 화면 배치에만 적용하며 업무 기록과 별도로 초기화합니다. */
+.home-page .home-resizable { box-sizing: border-box; resize: both; overflow: auto; width: 100%; max-width: 100%; min-width: min(260px, 100%); min-height: 240px; }
+.home-page .home-resizable::-webkit-resizer { background: linear-gradient(135deg, transparent 45%, var(--line-strong) 45%, var(--line-strong) 55%, transparent 55%, transparent 70%, var(--line-strong) 70%, var(--line-strong) 80%, transparent 80%); }
+.home-page .home-main-column > .home-card { flex: 0 0 auto; }
+.home-page .home-mainpanel { height: clamp(560px, 68vh, 780px); max-height: none; min-height: 420px; background: var(--page-bg); border-color: color-mix(in srgb, var(--teal) 28%, var(--line)); }
+.home-page .home-calendar-body { background: var(--page-bg); }
+.home-page .home-day.is-today { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); }
+.home-page .home-resize-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.home-page .home-resize-tools .home-text-btn { min-height: 28px; }
+.home-page .home-collaborations-card { background: color-mix(in srgb, var(--celadon) 24%, var(--paper)); }
+.home-page .home-collab-summary { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); margin-bottom: var(--space-5); color: var(--muted); }
+.home-page .home-collab-summary strong { color: var(--teal); }
+.home-page .home-collaboration { padding: var(--space-5) 0; }
+.home-page .home-collab-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0; }
+.home-page .home-collab-dates > div { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.home-page .home-collab-dates dt { color: var(--muted); }
+.home-page .home-collab-dates dd { margin: 0; }
+.home-page .home-collab-action { margin: var(--space-4) 0; }
+.home-page .home-collab-action strong { font-weight: var(--title-weight); color: var(--teal); }
+.home-page .home-task { padding-inline: var(--space-3); }
+.home-page .home-task.is-done { background: color-mix(in srgb, var(--teal) 7%, var(--paper)); }
+.home-page .home-task:has(.home-badge.warning) { background: color-mix(in srgb, var(--orange) 16%, var(--paper)); }
+
+/* 뉴스는 배경의 농도와 간격으로 나누고 바깥 테두리를 겹치지 않습니다. */
+.home-page .home-news .btn { border: 0; box-shadow: none; background: color-mix(in srgb, var(--teal) 7%, var(--paper)); color: var(--teal); }
+.home-page .home-news .btn:hover { background: color-mix(in srgb, var(--teal) 14%, var(--paper)); }
+.home-page .home-news #news-translate { border: 0; }
+.home-page .home-news #news-translate[aria-pressed="true"] { background: var(--teal); color: var(--on-dark); }
+.home-page .home-news-query { padding: var(--space-3) var(--space-5); background: color-mix(in srgb, var(--teal) 5%, var(--paper)); }
+.home-page .home-news #news-query { border: 0; background: transparent; box-shadow: none; }
+.home-page .home-news .btn:focus-visible, .home-page .home-news #news-query:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.home-page .home-news-block.is-search { display: flex; flex-direction: column; height: 340px; min-height: 240px; padding: var(--space-6); border: 0; background: var(--page-bg); }
+.home-page .home-news-block.is-search > .home-news-heading, .home-page .home-news-block.is-search > .home-news-help { flex: 0 0 auto; }
+.home-page .home-news-results { flex: 1 1 auto; height: auto; min-height: 96px; resize: none; }
+.home-page .home-news-block.is-verified { padding: 0; border: 0; background: transparent; }
+.home-page .home-news-grid .home-news-item { align-self: stretch; border: 0; background: color-mix(in srgb, var(--beige) 48%, var(--paper)); }
+.home-page .home-news-grid .home-news-item:nth-child(2) { background: color-mix(in srgb, var(--celadon) 38%, var(--paper)); }
+.home-page .home-news-grid .home-news-item:nth-child(3) { background: color-mix(in srgb, var(--orange) 22%, var(--paper)); }
+.home-page .home-news .home-suggestion { padding: var(--space-5) 0; border: 0; border-top: 1px solid color-mix(in srgb, var(--teal) 18%, var(--line)); background: transparent; }
+.home-page .home-news-details { border: 0; }
+@media (max-width: 1360px) {
+  .home-page .home-side-panels > .home-card { height: 420px; }
+  .home-page .home-work-card > .home-today-card { flex: 1 1 auto; }
+}
+@media print {
+  .home-page .home-resizable { width: 100% !important; height: auto !important; min-height: 0; resize: none; overflow: visible; }
+  .home-page .home-side-panels { position: static; display: block; overflow: visible; }
+  .home-page .home-resize-tools { display: none; }
 }
