@@ -1,6 +1,10 @@
 /* 콘텐츠 스튜디오 화면 전체 스타일 [유진]
    선택자는 .studio-page / .studio-chat / .studio-tabs 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
-.studio-tabs { display: flex; gap: var(--space-3); margin-bottom: var(--space-6); }
+/* 탭 줄: 현지조사 탭(market_analysis .ma-tabs)과 같은 값 — 글자 탭, 아래 구분선, 지금 탭은 금색 밑줄 + 진한 글씨 */
+.studio-tabs { display: flex; gap: var(--space-1); margin: var(--space-7) 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.studio-tabs a { padding: var(--space-5) var(--space-6); border-bottom: 2px solid transparent; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.studio-tabs a:hover { color: var(--ink); }
+.studio-tabs a[aria-current="page"] { border-bottom-color: var(--gold); color: var(--ink); font-weight: 600; }
 .studio-page [hidden] { display: none !important; }  /* display: grid 등이 hidden 속성을 덮지 않게 */
 
 /* ---------- 안내 줄 ---------- */
@@ -49,24 +53,27 @@
 .studio-page .studio-scenes b { margin-right: var(--space-2); font-family: var(--font-serif); font-weight: 400; }
 
 /* 메인 탭 추천 카드 (4개): 제목 [D-day · 대표 · NEW] → 개조식 2줄 → 만들 종류 버튼 */
-.studio-page .studio-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: var(--space-6); }  /* 넓은 화면 2×2 */
+.studio-page .studio-recs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); }  /* 넓은 화면 한 줄 4칸 */
 .studio-page .studio-rec {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-6);
+  padding: var(--space-5);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--control-bg);
 }
 .studio-page .studio-rec:hover { border-color: var(--line-strong); }
-.studio-page .studio-rec-title { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.studio-page .studio-rec-title { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-body); font-weight: 600; word-break: keep-all; }
 .studio-page .studio-rec-mark { padding: var(--space-1) var(--space-3); border-radius: var(--radius); background: var(--badge-bg); color: var(--badge-ink); font-size: var(--fs-min); font-weight: 700; white-space: nowrap; }
 .studio-page .studio-rec.is-dday .studio-rec-mark { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .studio-rec.is-season .studio-rec-mark { background: var(--badge-green-bg); color: var(--badge-green-ink); }
-.studio-page .studio-rec-points { margin: 0; padding-left: var(--space-6); color: var(--ink); font-size: var(--fs-min); line-height: var(--line-height); }
-.studio-page .studio-rec-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: auto; }  /* 만들기 [포스터] [카드뉴스] [영상] */
-.studio-page .studio-rec-go > span { margin-right: var(--space-2); color: var(--brown); font-size: var(--fs-min); font-weight: 600; }
+.studio-page .studio-rec-points { margin: 0; padding-left: var(--space-6); color: var(--ink); font-size: var(--fs-min); line-height: var(--line-height); word-break: keep-all; }  /* 한국어는 단어 단위 줄바꿈 */
+.studio-page .studio-rec-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; }  /* 만들기 [포스터] [카드뉴스] [영상] */
+.studio-page .studio-rec-go > span { flex-basis: 100%; color: var(--brown); font-size: var(--fs-min); font-weight: 600; }  /* "만들기"는 버튼 줄 위 한 줄 */
+.studio-page .studio-rec-go .btn { min-height: 36px; padding: 0 var(--space-3); }  /* 좁은 카드에서도 한 줄 */
+@media (max-width: 1100px) { .studio-page .studio-recs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .studio-page .studio-recs { grid-template-columns: minmax(0, 1fr); } }
 /* 영상 검토 상태 배지 (sns_video.js) */
 .studio-page .badge.dday { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .badge.season { background: var(--badge-green-bg); color: var(--badge-green-ink); }
@@ -282,3 +289,22 @@
 .studio-page .studio-home, .studio-page .studio-main, .studio-page .studio-history { border-radius: var(--radius); box-shadow: var(--shadow); }
 .studio-page .studio-home { padding: var(--panel-padding); }
 .studio-page .studio-tabs { overflow-x: auto; }
+
+/* 포스터·카드뉴스 편집기 도구 줄(희주 sns_editor.js .studio-editor-bar): 일반 버튼은 테두리 없이, 마우스를 올리면 옅은 배경.
+   진한 버튼(.dark)과 선택 상자는 그대로 둡니다. (유진 화면 정리, 희주에게 알림) */
+/* 장 번호(.studio-editor-pages)·위쪽 비율 버튼·↶ ↷도 같은 모양 (지금 장·지금 비율은 진한 버튼 그대로) */
+.studio-page .studio-editor-bar .btn:not(.dark), .studio-page .studio-editor-pages .btn:not(.dark),
+.studio-page [data-role="set-ratio"] .btn:not(.dark), .studio-page .studio-options .actions .btn,
+.studio-page .studio-list-tools .btn:not(.dark) { border-color: transparent; background: transparent; }
+.studio-page .studio-editor-bar .btn:not(.dark):hover, .studio-page .studio-editor-pages .btn:not(.dark):hover,
+.studio-page [data-role="set-ratio"] .btn:not(.dark):not(:disabled):hover, .studio-page .studio-options .actions .btn:not(:disabled):hover,
+.studio-page .studio-list-tools .btn:not(.dark):hover { background: var(--paper); }
+.studio-page .studio-editor-bar .btn:not(.dark):focus-visible, .studio-page .studio-editor-pages .btn:not(.dark):focus-visible,
+.studio-page [data-role="set-ratio"] .btn:focus-visible, .studio-page .studio-options .actions .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* 포스터·카드뉴스 초안 뒤 고정된 비율 표시("비율 4:5"): 버튼이 아니라 글자처럼 */
+.studio-page [data-role="set-ratio"] .btn.is-fixed { border-color: transparent; background: transparent; color: var(--muted); opacity: 1; cursor: default; }
+/* 메인 목록 도구: 제목 줄 오른쪽에 종류 필터 · 정렬 · 검색 (버튼은 위 테두리 없는 모양, 검색칸은 영상 제목 칸과 같은 모양) */
+.studio-page .panelhead:has(.studio-list-tools) { flex-wrap: wrap; gap: var(--space-4); }
+.studio-page .studio-list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); margin-left: auto; }
+.studio-page .studio-list-search { width: 220px; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); font-size: var(--fs-body); }
+.studio-page .studio-list-search:focus { border-color: var(--brown); outline: none; }

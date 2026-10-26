@@ -100,15 +100,52 @@ function workRow(item) {
   return row;
 }
 
+// 목록 도구(메인만 종류 필터 · 정렬 · 제목 검색). 받아 온 목록을 화면에서만 거릅니다.
+const listView = { kind: "", newest: true, query: "", items: [] };
+const EMPTY_NOTE = $("gallery-empty")?.textContent || "";
+
+function renderList() {
+  const query = listView.query.trim().toLowerCase();
+  const items = listView.items
+    .filter((item) => (!listView.kind || item.kind === listView.kind) && (!query || item.title.toLowerCase().includes(query)))
+    .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1) * (listView.newest ? 1 : -1));
+  const head = el("div", "studio-row is-head");
+  head.append(...["종류", "제목", "제품", "상태", "수정일"].map((text) => el("span", "", text)));
+  $("gallery").replaceChildren(head, ...items.map(workRow));
+  const total = listView.items.length;
+  $("gallery-count").textContent = !total ? "" : items.length === total ? `${total}개` : `${total}개 중 ${items.length}개`;
+  $("gallery-empty").textContent = total ? "조건에 맞는 작업이 없습니다." : EMPTY_NOTE;
+  $("gallery-empty").hidden = items.length > 0;
+  $("gallery").hidden = items.length === 0;
+}
+
+function bindListTools() {
+  for (const button of $("list-kind")?.children || []) {
+    button.addEventListener("click", () => {
+      listView.kind = button.dataset.value;
+      for (const other of $("list-kind").children) {
+        other.classList.toggle("dark", other === button);
+        other.setAttribute("aria-pressed", String(other === button));
+      }
+      renderList();
+    });
+  }
+  $("list-sort").addEventListener("click", () => {
+    listView.newest = !listView.newest;
+    $("list-sort").textContent = listView.newest ? "최신순 ↓" : "오래된 순 ↑";
+    renderList();
+  });
+  $("list-search").addEventListener("input", (event) => {
+    listView.query = event.target.value;
+    renderList();
+  });
+}
+
 async function loadGallery() {
   try {
     const { items } = await api(kind === "main" ? "/gallery" : `/gallery?kind=${kind}`);
-    const head = el("div", "studio-row is-head");
-    head.append(...["종류", "제목", "제품", "상태", "수정일"].map((text) => el("span", "", text)));
-    $("gallery").replaceChildren(head, ...items.map(workRow));
-    $("gallery-count").textContent = items.length ? `${items.length}개` : "";
-    $("gallery-empty").hidden = items.length > 0;
-    $("gallery").hidden = items.length === 0;
+    listView.items = items;
+    renderList();
   } catch (error) {
     $("gallery").replaceChildren();
     notify(`작업 목록을 불러오지 못했습니다. (${error.message})`);
@@ -320,11 +357,14 @@ function renderWork() {
   const doc = work.doc;
   const current = doc ? { ratio: doc.ratio, duration: doc.duration, sound: doc.sound } : settings;
   // 비율 버튼은 탭이 지원하는 것만 보이고(data-kinds), 길이·소리는 영상 전용입니다.
-  // 포스터·카드뉴스는 대화로 비율을 바꾸지 못해(designs.py revise_design) 초안 뒤에는 끕니다.
+  // 포스터·카드뉴스는 대화로 비율을 바꾸지 못해(designs.py revise_design) 초안 뒤에는 지금 비율만 "비율 4:5" 글자로 보여 줍니다.
   const ratioLocked = Boolean(doc) && DESIGN_KINDS.includes(kind);
   for (const button of $("set-ratio").children) {
-    button.hidden = !(button.dataset.kinds || "video poster").split(" ").includes(kind);
-    button.classList.toggle("dark", button.dataset.value === current.ratio);
+    const isCurrent = button.dataset.value === current.ratio;
+    button.hidden = !(button.dataset.kinds || "video poster").split(" ").includes(kind) || (ratioLocked && !isCurrent);
+    button.classList.toggle("dark", isCurrent && !ratioLocked);
+    button.classList.toggle("is-fixed", ratioLocked && isCurrent);
+    button.textContent = ratioLocked && isCurrent ? `비율 ${button.dataset.value}` : button.dataset.value;
     button.disabled = ratioLocked;
     button.title = ratioLocked ? "비율은 새로 만들 때 정해요" : "";
   }
@@ -684,6 +724,7 @@ if (page) {
   // 되돌리기·다시하기를 제품·비율·길이 줄 끝에 둡니다(가운데 한 줄).
   page.querySelector(".studio-options").append($("undo").parentElement);
   if (kind === "main") $("recs").replaceChildren(...recommendations().map(recCard));
+  bindListTools();
   $("new").hidden = kind === "main";
   $("new").addEventListener("click", startNew);
   bindWork();

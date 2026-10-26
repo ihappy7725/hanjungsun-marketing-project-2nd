@@ -21,9 +21,9 @@ from . import bp
 from . import higgsfield
 from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
-from .products import PRODUCTS, get_product
-from .videos import (TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes, phrase_pairs,
-                     refresh_prompts, revise_draft, translate_messages, video_title)
+from .products import COMMON_IMAGES, PRODUCTS, get_product
+from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
+                     phrase_pairs, refresh_prompts, revise_draft, scene_kind, translate_messages, video_title)
 
 TABS = ("poster", "cardnews", "video")
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
@@ -584,21 +584,58 @@ def _done(cut):
     return cut["request_id"] if cut and cut.get("status") == higgsfield.DONE else None
 
 
+def _static_photo(name):
+    path = os.path.join(bp.static_folder, "images", "sns", name) if name else None
+    return path if path and os.path.isfile(path) else None
+
+
+def _photo_set(doc, kinds, scene_text=""):
+    """보낼 제품 사진 [(경로, 역할 영어)]. kinds: 이번 요청에 들어가는 컷 종류(videos.py scene_kind) 집합.
+    고른 제품이 카탈로그(products.py)에 있으면 사진을 자동으로 고릅니다:
+    겉모습 → 공통 겉모습 사진 · 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) + 겉모습 · 선물 → 선물세트 2장 + 맛별 포장.
+    직접 올린 사진만 있는 예전 작업은 그 사진들(제품 사진 칸 + 참고 사진)을 그대로 씁니다."""
+    names = doc.get("products") or [doc.get("product")]
+    items = [item for name in names for item in PRODUCTS if item["name_ko"] == name]
+    image_url = (doc.get("image") or {}).get("url", "") if isinstance(doc.get("image"), dict) else ""
+    if not items or PHOTO_URL.match(image_url):
+        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
+        return [(path, "the product photo") for path in legacy if path]
+    whole = (_static_photo(COMMON_IMAGES["whole"]),
+             "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")
+    photos = []
+    if kinds & {"outside", "inside"}:
+        photos.append(whole)
+    if "inside" in kinds:
+        named = [item for item in items if PRODUCT_EN.get(item["name_ko"], "").lower() in scene_text.lower()]
+        for item in named or items:
+            en = PRODUCT_EN.get(item["name_ko"], item["name_ko"])
+            photos.append((_static_photo(item["images"].get("cut")), f"the cross-section of {en}, showing its filling"))
+    if "gift" in kinds:
+        photos += [(_static_photo(COMMON_IMAGES["giftset_wrapped"]), "the gift set box wrapped in pink bojagi cloth"),
+                   (_static_photo(COMMON_IMAGES["giftset_open"]), "the opened gift set box with individually wrapped rice cakes")]
+        for item in items:
+            en = PRODUCT_EN.get(item["name_ko"], item["name_ko"])
+            photos.append((_static_photo(item["images"].get("pack")), f"the individual wrapping of {en}"))
+    return [(path, role) for path, role in photos if path]
+
+
 def _gen_args(doc, target, index=0):
     """index: 미리보기 이미지를 만들 컷(0부터)."""
-    # 참고 사진: 제품 사진 칸(필수) + 나머지 제품 사진(단면·포장) + 사용자가 올린 레퍼런스 이미지 / 참고 영상
-    main = _photo_path(doc)
-    products = [_photo_path({"image": item}) for item in doc.get("ref_images") or []]
-    users = [_photo_path({"image": item}) for item in doc.get("user_refs") or []]
+    # 참고 사진: 컷 종류에 맞는 제품 사진(_photo_set) + 사용자가 올린 레퍼런스 이미지 / 참고 영상
+    scenes = doc.get("scenes") or []
+    users = [(path, "a mood reference (mood, composition and color only)")
+             for path in (_photo_path({"image": item}) for item in doc.get("user_refs") or []) if path]
     if target == "image":
-        return higgsfield.image_args(doc, photos=[path for path in (main, *products, *users) if path], index=index)
+        text = scenes[index]["en"] if 0 <= index < len(scenes) else ""
+        return higgsfield.image_args(doc, photos=[*_photo_set(doc, {scene_kind(text)}, text), *users], index=index)
     # 영상: 첫 컷 그림으로 시작, 마지막 컷 그림으로 끝(컷이 2개 이상일 때), 가운데 컷 그림은 참고 사진.
-    # 이미지 10장 한도라 중요한 순서로: 제품 사진 칸 → 가운데 컷 그림 → 나머지 제품 사진 → 레퍼런스
+    # 이미지 10장 한도라 중요한 순서로: 겉모습 사진 → 가운데 컷 그림 → 단면·선물세트 사진 → 레퍼런스
     cuts = [_done(cut) for cut in _cuts(doc)]
     start = cuts[0] if cuts else None
     end = cuts[-1] if len(cuts) > 1 else None
     middle = [job for job in cuts[1:-1] if job]
-    photos = [path for path in (main, *middle, *products, *users) if path]
+    products = [path for path, _ in _photo_set(doc, {scene_kind(scene.get("en")) for scene in scenes} | {"outside"})]
+    photos = [*products[:1], *middle, *products[1:], *(path for path, _ in users)]
     video = _ref_video_path(doc.get("ref_video"))
     return higgsfield.video_args(doc, start_image=start, end_image=end, photos=photos, videos=[video] if video else [])
 
