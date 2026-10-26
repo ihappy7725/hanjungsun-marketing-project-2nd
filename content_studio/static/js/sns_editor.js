@@ -309,15 +309,16 @@ function fillUsage(node, data) {
 
 // ---------- 새로 만들기: 그림 시안 3개 고르기 (2026-10-26 유진 결정: 시안을 그림 모델로 통째로) ----------
 // sns.js(유진)가 포스터·카드뉴스 새로 만들기 [보내기]에서 부릅니다.
-//   ① 견적(유진 design-images/quote, 무료) → 확인 칸 [만들기]
+//   ① 견적(유진 design-images/quote, 무료) → 크레딧 확인 팝업(영상 탭과 같은 dialog) [만들기] / [취소 → onBack]
 //   ② 그림 프롬프트(희주 design-assistant, gpt-4o-mini) → 그림 생성(유진 design-images, Higgsfield 크레딧)
 //   ③ 상태(유진 design-images/status)를 몇 초마다 확인해 시안 카드에 그림을 채움 (카드뉴스는 장마다 진행 표시)
 //   ④ [이 시안으로 확정] → onCreate(design, { product_id, product_ids }) (저장은 sns.js POST /api/chats, 실패하면 throw)
 // style: 스타일 버튼 값(designs.py STYLE_HINTS key, AI 추천은 ""). pages: 카드뉴스 장수(3~6).
 // productIds: 여러 제품(라인업). 유진 API가 product_id 하나만 받는 동안 첫 제품을 product_id로도 보냅니다.
 // refs: 레퍼런스 이미지 [{file_id, url}] (없으면 []). 견적·생성 API에 ref_images로 그대로 넘깁니다.
+// onBack: 조건 바꾸기 화면으로 돌아가기 (팝업 [취소] · [← 조건 바꾸기]). 없으면 [← 조건 바꾸기]를 숨깁니다.
 export function renderChoices(root, { kind, ratio, productId = null, productIds = null, style = "", pages = 5,
-  request = "", refs = [], onCreate } = {}) {
+  request = "", refs = [], onCreate, onBack = null } = {}) {
   const ids = (Array.isArray(productIds) && productIds.length ? productIds : [productId]).filter(Boolean);
   const target = { kind, ratio, product_id: ids[0] || null, product_ids: ids, pages: kind === "poster" ? 1 : pages,
     ref_images: Array.isArray(refs) ? refs : [] };
@@ -325,7 +326,6 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
   const wrap = el("div", "studio-editor studio-editor-choices");
   const msg = el("p", "studio-hint");
   msg.setAttribute("role", "status");
-  const quoteBox = el("div", "studio-editor-quote");
   const cards = el("div", "studio-editor-candidates");
   const usage = el("p", "studio-editor-usage");
   usage.hidden = true;
@@ -343,9 +343,11 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
   let sent = false;    // 그림 요청을 보냄 (프롬프트를 다시 쓰지 않음)
   const count = (value) => Number(value || 0).toLocaleString("ko-KR");
 
-  const make = button("만들기", generate, "btn dark");
+  const back = button("← 조건 바꾸기", goBack);
+  back.hidden = !onBack;
   const confirm = button("이 시안으로 확정", confirmChoice, "btn dark");
   const check = button("넣은 문구 광고 표현 검수", runReview);
+  const retry = button("다시 시도", loadQuote);  // 견적·프롬프트·생성이 실패했을 때 (견적부터 다시)
   const again = button("새로 다시 만들기", () => {
     if (busy || locked) return;
     clearTimeout(timer);
@@ -356,11 +358,62 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     usage.hidden = notice.hidden = review.hidden = true;
     loadQuote();
   });
-  confirm.hidden = check.hidden = again.hidden = true;
-  actions.append(confirm, check, again);
-  wrap.append(el("h2", "", `${label} 시안 고르기`), msg, quoteBox, cards, notice, review, usage, actions);
+  confirm.hidden = check.hidden = again.hidden = retry.hidden = true;
+  actions.append(confirm, check, again, retry);
+  const head = el("div", "studio-editor-choices-head");
+  head.append(back, el("h2", "", `${label} 시안 고르기`));
+  wrap.append(head, msg, cards, notice, review, usage, actions);
   root.replaceChildren(wrap);
   let timer = null;
+
+  // [← 조건 바꾸기]: 그림을 이미 요청했으면 만든 시안이 사라진다고 한 번 확인합니다.
+  function goBack() {
+    if (!onBack || busy) return;
+    if (sent && !window.confirm("만든 시안은 사라져요. (크레딧은 이미 사용했어요) 조건 바꾸기로 돌아갈까요?")) return;
+    clearTimeout(timer);
+    onBack();
+  }
+
+  // 크레딧 확인 팝업 (sns_video.js confirmDialog와 같은 모양: base.css dialog). [만들기]면 true, [취소]·Esc면 false.
+  function creditDialog(q) {
+    return new Promise((resolve) => {
+      const dialog = el("dialog");
+      const lines = el("ul");
+      lines.append(
+        el("li", "", `이번에 쓰일 크레딧: ${count(q.credits)}`),
+        el("li", "", `계정 남은 크레딧: ${count(q.balance)} → 실행 후 약 ${count(q.balance - q.credits)}`),
+        el("li", "", `오늘 대시보드 사용: ${count(q.today_used)} / ${count(q.daily_limit)}`),
+        el("li", "", "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요."),
+      );
+      const run = el("button", "btn dark", "만들기");
+      run.type = "button";
+      run.disabled = !q.allowed;
+      const cancel = el("button", "btn", "취소");
+      cancel.type = "button";
+      const row = el("div", "actions");
+      row.append(run, cancel);
+      dialog.append(el("h2", "", `${label} 시안 만들기`),
+        el("p", "studio-hint", `${q.model || "그림 모델"} · 시안 ${q.proposals}개 × ${q.pages}장 = ${q.count}장 (장당 ${count(q.unit)})`),
+        lines);
+      if (!q.allowed) dialog.append(el("p", "badge dday", q.reason || "지금은 만들 수 없어요."));
+      dialog.append(row);
+      const close = (answer) => { dialog.close(); dialog.remove(); resolve(answer); };
+      run.addEventListener("click", () => close(true));
+      cancel.addEventListener("click", () => close(false));
+      dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
+      wrap.append(dialog);
+      dialog.showModal();
+    });
+  }
+
+  // 팝업을 띄우고, [만들기]면 생성 · [취소]면 조건 바꾸기로 (onBack이 없으면 다시 시도 버튼만)
+  async function ask() {
+    if (!wrap.isConnected) return;
+    if (await creditDialog(quote)) return generate();
+    if (onBack) return onBack();
+    msg.textContent = "만들기를 취소했어요.";
+    retry.hidden = false;
+  }
 
   function show() {
     cards.replaceChildren(...proposals.map((item, index) => imageCard(item, index === selected, () => {
@@ -380,37 +433,31 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
     check.hidden = !proposals.length;
     again.hidden = !sent || running;
     again.disabled = busy || locked;
+    retry.disabled = busy;
   }
 
-  // ① 견적 → 확인 칸
+  // ① 견적 → 크레딧 확인 팝업
   async function loadQuote() {
-    quoteBox.hidden = false;
-    quoteBox.replaceChildren(el("p", "", "비용을 확인하는 중…"));
-    msg.textContent = "";
+    if (busy) return;
+    retry.hidden = true;
+    msg.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
     try {
       quote = (await postJson(IMAGE_QUOTE_API, target)).quote;
       if (!wrap.isConnected) return;
-      showQuote();
+      msg.textContent = "";
+      ask();
     } catch (error) {
-      quoteBox.replaceChildren(el("p", "is-warn", error.message), button("다시 확인", loadQuote));
+      msg.textContent = error.message;  // 예: Higgsfield 로그인 필요 (유진 PC에서만 생성돼요)
+      retry.hidden = false;
     }
-  }
-
-  function showQuote() {
-    make.disabled = busy || locked || !quote.allowed;
-    quoteBox.replaceChildren(
-      el("p", "", `시안 ${quote.proposals}개 × ${quote.pages}장 = 그림 ${quote.count}장`),
-      el("b", "", `${count(quote.credits)}크레딧 사용 · 오늘 ${count(quote.today_used)}/${count(quote.daily_limit)} · 잔액 ${count(quote.balance)}`),
-      el("p", "studio-hint", "그림 프롬프트를 쓰는 OpenAI 비용(1센트 미만)이 따로 조금 나가요. 자동 재시도하지 않아요."),
-      quote.allowed ? "" : el("p", "is-warn", quote.reason || "지금은 만들 수 없어요."),
-      make);
   }
 
   // ② 프롬프트 → 그림 생성
   async function generate() {
     if (busy || locked || !quote?.allowed) return;
     busy = true;
-    make.disabled = true;
+    retry.hidden = true;
+    let reask = false;  // 409(비용 바뀜·한도) → 새 견적으로 팝업을 다시
     try {
       if (!proposals.length) {  // 견적이 바뀌어 다시 누를 때는 이미 쓴 프롬프트를 그대로 씁니다.
         msg.textContent = `${label} 시안 3개의 그림 프롬프트를 쓰는 중… (OpenAI)`;
@@ -430,10 +477,10 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       });
       const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
       if (!wrap.isConnected) return;
-      if (res.status === 409 && data.quote) {  // 비용이 바뀌었거나 한도 초과 → 확인 칸을 다시
+      if (res.status === 409 && data.quote) {  // 비용이 바뀌었거나 한도 초과 → 새 견적으로 팝업을 다시
         quote = data.quote;
-        showQuote();
-        msg.textContent = `${data.error} 비용을 다시 확인하고 [만들기]를 눌러 주세요.`;
+        msg.textContent = `${data.error} 비용을 다시 확인해 주세요.`;
+        reask = true;
         return;
       }
       if (Array.isArray(data.jobs)) {
@@ -445,7 +492,6 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       if (data.submitted) locked = true;
       if (!data.ok && !data.submitted) throw new Error(data.error || "그림을 요청하지 못했어요.");
       sent = true;
-      quoteBox.hidden = true;
       notice.hidden = false;
       msg.textContent = data.submitted ? data.error
         : `그림을 그리는 중… 수십 초 걸려요. 다 된 시안부터 골라 확정할 수 있어요.${data.warning ? ` (${data.warning})` : ""}`;
@@ -453,12 +499,12 @@ export function renderChoices(root, { kind, ratio, productId = null, productIds 
       poll();
     } catch (error) {
       msg.textContent = error.message;
-      if (quote) showQuote();
+      retry.hidden = locked;
     } finally {
       busy = false;
-      if (!sent && quote) make.disabled = locked || !quote.allowed;
-      updateActions();
+      if (wrap.isConnected) updateActions();
     }
+    if (reask) ask();
   }
 
   // ③ 상태 확인 (몇 초마다, 다시 만들지 않음)

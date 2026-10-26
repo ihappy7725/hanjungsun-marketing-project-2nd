@@ -861,7 +861,12 @@ def _option_products(options):
 # 그림은 유진 쪽 Higgsfield API가 만들고, 제품 참고 사진 문장도 그쪽에서 프롬프트 끝에 붙입니다.
 # 브랜드 색: 크림·브라운·골드 (값은 이 파일의 기존 색과 같음)
 BRAND_COLORS = {"cream": "#f6e7c8", "brown": "#6b4226", "gold": "#f2c14e"}
-IMAGE_PROMPT_MAX = 1200  # 장 프롬프트 글자 수 (유진 API 한도 2000자 안에서 참고 사진 문장 자리를 남김)
+IMAGE_PROMPT_MAX = 1500  # 장 프롬프트 글자 수 (연출 묘사용. 유진 API 한도 2000자 안에서 끝 줄·빠진 문구 자리를 남김)
+# 그림 속 글자는 베트남어만 (2026-10-27 유진 요청). 한글·한자가 보이면 그림을 만들기 전에 멈춥니다.
+FOREIGN_SCRIPT_RE = re.compile(r"[ᄀ-ᇿ㄰-㆏가-힣぀-ヿ一-鿿]")
+VIETNAMESE_ONLY_RULE = ("All text in the image must be exactly the quoted Vietnamese text (brand HANJUNGSUN excepted); "
+                        "no Korean, Chinese or any other text.")
+VIETNAMESE_ONLY_ERROR = "AI가 그림 글자에 베트남어가 아닌 글자(한국어 등)를 넣어 적용하지 않았어요. 다시 만들어 주세요. (그림 크레딧은 쓰지 않았어요)"
 IMAGE_TEXTS_MAX = 4      # 장마다 그림에 넣을 문구 수
 # 확정한 그림 시안 문서 (sns_editor.js renderChoices가 만듦):
 #   {kind, ratio, demo, mode: "image", style, assistant: {name, prompt, notice},
@@ -905,7 +910,10 @@ def build_design_brief(doc, options):
              "pages": count,
              "products": [{"id": item["id"], "name_ko": item["name_ko"], "name_vi": item.get("name_vi", ""),
                            "flavor_en": item["id"].replace("_", " ")} for item in products],
-             "brand": BRAND, "brand_colors": BRAND_COLORS, "style_options": STYLES,
+             "brand": BRAND, "brand_colors": BRAND_COLORS,
+             "colors_notice": "행사·시즌이 요청에 있으면 행사 색을 쓰고(예: 발렌타인 = 크림·분홍 + 진한 빨강 곡선), 없으면 브랜드 색",
+             "text_language": "그림 속 글자는 베트남어만 (HANJUNGSUN 제외). 한국어로 받은 문구는 베트남어로 바꿔 넣기",
+             "style_options": STYLES,
              "prompt_max_chars": IMAGE_PROMPT_MAX, "texts_per_page_max": IMAGE_TEXTS_MAX,
              "local_guidelines": rules,
              "guidelines_notice": "제공된 지침만 참고" if rules else "현지 검수 기준 준비 중"}
@@ -931,16 +939,20 @@ def image_proposal_schema(count):
 
 def finish_image_proposals(proposals):
     """검사를 마친 시안에 스타일 이름을 붙이고, 넣을 문구가 프롬프트에 그대로 들어 있게 맞춥니다.
-    (검수는 texts 원문으로 하므로, 프롬프트에 빠진 문구는 끝에 정확한 글자로 붙입니다)"""
+    (검수는 texts 원문으로 하므로, 프롬프트에 빠진 문구는 끝에 정확한 글자로 붙입니다)
+    그림 속 글자는 베트남어만: 넣을 문구나 프롬프트에 한글·한자가 있으면 ValueError (그림을 만들기 전에 멈춤),
+    모든 장 프롬프트 끝에 다른 글자를 넣지 말라는 줄을 붙입니다."""
     finished = []
     for item in proposals:
         pages = []
         for page in item["pages"]:
             prompt = page["prompt_en"].strip()
+            if FOREIGN_SCRIPT_RE.search(prompt) or any(FOREIGN_SCRIPT_RE.search(text["vi"]) for text in page["texts"]):
+                raise ValueError(VIETNAMESE_ONLY_ERROR)
             missing = [text["vi"] for text in page["texts"] if text["vi"] not in prompt]
             if missing:
                 prompt += " Render this exact Vietnamese text with correct tone marks: " + "; ".join(f'"{vi}"' for vi in missing) + "."
-            pages.append({"prompt_en": prompt, "texts": page["texts"]})
+            pages.append({"prompt_en": f"{prompt} {VIETNAMESE_ONLY_RULE}", "texts": page["texts"]})
         finished.append({**item, "pages": pages, "style_label": STYLES[item["style"]]})
     return finished
 
