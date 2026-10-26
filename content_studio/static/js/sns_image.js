@@ -1,5 +1,5 @@
 // 사진 편집 창 (자르기·보정·배경 제거) [희주]
-// 위쪽 [✂️ 배경 제거] 버튼(data-role="remove-bg")에 팝업을 붙입니다. README 5장
+// 포스터·카드뉴스 편집기의 [✂️ 배경 제거] 버튼이 openRemoveBg()로 이 팝업을 엽니다. README 5장
 const API = "/content_studio/media/api/remove-bg";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
@@ -37,7 +37,7 @@ function readSize(file) {
   });
 }
 
-function setup(button) {
+function setup() {
   const dialog = buildDialog();
   const $ = (name) => dialog.querySelector(`[data-act="${name}"]`);
   const pick = $("pick"), matting = $("matting"), run = $("run"), msg = $("msg");
@@ -123,8 +123,16 @@ function setup(button) {
 
   $("close").addEventListener("click", () => dialog.close());
   dialog.addEventListener("cancel", (event) => { if (busy) event.preventDefault(); });
-  button.addEventListener("click", () => dialog.showModal());
+  return dialog;
 }
 
+// 창은 처음 열 때 한 번만 만들고, 닫았다 열어도 고른 사진·결과를 그대로 둡니다.
+let dialog = null;
+export function openRemoveBg() {
+  dialog ||= setup();
+  dialog.showModal();
+}
+
+// 위쪽 버튼이 아직 남아 있으면(유진 템플릿 반영 전) 같은 창을 엽니다.
 const removeBgButton = document.querySelector('[data-role="remove-bg"]');
-if (removeBgButton) setup(removeBgButton);
+if (removeBgButton) removeBgButton.addEventListener("click", openRemoveBg);
