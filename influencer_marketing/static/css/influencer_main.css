@@ -159,25 +159,13 @@
 .influencer-page details summary{cursor:pointer;font-weight:600}
 .influencer-page .im-raw{white-space:pre-wrap;font-size:var(--fs-body);background:var(--im-sunk);padding:var(--space-4);border-radius:var(--radius);margin:var(--space-3) 0 0}
 
-/* 달력 */
-.influencer-page .im-calhead{display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-4);flex-wrap:wrap}
-.influencer-page .im-calhead h2{font-size:var(--fs-panel-title);margin:0;min-width:120px}
-.influencer-page .im-calhead .im-legend{margin:0 0 0 auto}
-.influencer-page .im-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--im-line);border-radius:var(--im-r);overflow:hidden;background:var(--im-line);gap:var(--space-1)}
-.influencer-page .im-dow{background:var(--im-sunk);font-size:var(--fs-body);color:var(--im-muted);font-weight:600;padding:var(--space-3);text-align:center}
-.influencer-page .im-day{background:var(--im-surface);min-height:96px;padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-1);min-width:0;cursor:pointer}
-.influencer-page .im-day.is-out{background:var(--im-sunk);color:var(--im-faint)}
-.influencer-page .im-day.is-sel{outline:2px solid var(--im-accent);outline-offset:-2px}
-.influencer-page .im-d{font-size:var(--fs-body);font-weight:600;font-family:var(--im-mono)}
-.influencer-page .im-day.is-today .im-d{background:var(--im-accent);color:var(--im-accent-ink);border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
-.influencer-page .im-ev{font-size:var(--fs-body);padding:var(--space-1) var(--space-2);border-radius:var(--radius);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.influencer-page .im-ev.neg{border:1px dashed var(--im-accent);color:var(--im-accent)}
-.influencer-page .im-ev.shoot{background:var(--im-accent-soft);color:var(--im-accent)}
-.influencer-page .im-ev.conf{background:var(--im-bean);color:var(--on-dark);font-weight:600}
-.influencer-page .im-ev.post{background:var(--im-ok-soft);color:var(--im-ok)}
+/* 일정 표시 칩 (Ver_017: 달력 탭은 없애고 요약 '14일 일정'에서만 사용) */
+.influencer-page .im-ev{font-size:var(--fs-body);font-weight:600;padding:var(--space-1) var(--space-2) var(--space-1) var(--space-3);border-radius:var(--radius);border-left:4px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.influencer-page .im-ev.neg{background:var(--im-warn);color:var(--on-dark);border-left-color:color-mix(in srgb,var(--im-warn) 60%,black)}
+.influencer-page .im-ev.shoot{background:var(--im-accent);color:var(--im-accent-ink);border-left-color:color-mix(in srgb,var(--im-accent) 60%,black)}
+.influencer-page .im-ev.conf{background:var(--im-bean);color:var(--on-dark);font-weight:700;border-left-color:color-mix(in srgb,var(--im-bean) 55%,black)}
+.influencer-page .im-ev.post{background:var(--im-ok);color:var(--on-dark);border-left-color:color-mix(in srgb,var(--im-ok) 60%,black)}
 .influencer-page .im-ev.clash{box-shadow:inset 0 0 0 2px var(--im-bad)}
-.influencer-page .im-more{font-size:var(--fs-body);color:var(--im-muted)}
-@media (max-width:640px){.influencer-page .im-day{min-height:58px}.influencer-page .im-day .im-ev{font-size:var(--fs-body);min-height:26px;padding:0}}
 
 /* 단가 */
 .influencer-page .im-chart svg{width:100%;height:auto;display:block}
@@ -214,3 +202,65 @@
 .influencer-page .im-btn { min-height: var(--control-height); padding: var(--space-4) var(--space-6); border-radius: var(--radius); }
 .influencer-page .im-panel h2 { font-size: var(--fs-panel-title); }
 @media (max-width: 650px) { .influencer-page .im-panel { padding: var(--space-6); } }
+
+/* ---------- Ver_017: 스크롤을 줄인 배치 ---------- */
+/* 표는 화면 높이 안에서만 스크롤 · 머리글 고정 */
+.influencer-page .im-tblwrap.is-scroll{max-height:62vh;overflow:auto}
+.influencer-page .im-tblwrap.is-scroll thead th{position:sticky;top:0;z-index:1}
+.influencer-page .im-fgrid .is-span2{grid-column:span 2}
+@media (max-width:480px){.influencer-page .im-fgrid .is-span2{grid-column:1/-1}}
+.influencer-page .im-seg.is-compact button{padding:var(--space-2) var(--space-4)}
+.influencer-page .im-fold{margin-top:var(--space-4)}
+.influencer-page .im-fold>summary{font-weight:500;color:var(--im-muted)}
+/* 인플루언서 기준 한 줄 */
+.influencer-page .im-crit{margin:0 0 var(--space-5);padding:var(--space-3) var(--space-5);background:var(--im-sunk);border-radius:var(--radius);font-size:var(--fs-body);line-height:var(--line-height)}
+.influencer-page .im-crit b{margin-right:var(--space-3)}
+/* 요약: 진행 단계 */
+.influencer-page .im-funnel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-6)}
+@media (max-width:900px){.influencer-page .im-funnel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.influencer-page .im-fstep{position:relative;background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-5)}
+.influencer-page .im-fstep span{font-size:var(--fs-body);color:var(--im-muted)}
+.influencer-page .im-fstep b{display:block;font-size:var(--fs-h1);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
+.influencer-page .im-fstep em{font-style:normal;font-size:var(--fs-body);color:var(--im-faint);display:block}
+.influencer-page .im-fconv{position:absolute;top:var(--space-4);right:var(--space-4);font-style:normal;font-size:var(--fs-body);color:var(--im-accent);font-family:var(--im-mono)}
+.influencer-page .im-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6);margin-bottom:var(--space-6)}
+@media (max-width:1160px){.influencer-page .im-grid3{grid-template-columns:minmax(0,1fr)}}
+.influencer-page .im-panel.is-tight h2{margin-bottom:var(--space-4)}
+.influencer-page .im-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+.influencer-page .im-mini span{font-size:var(--fs-body);color:var(--im-muted);display:block}
+.influencer-page .im-mini b{display:block;font-size:var(--fs-panel-title);font-weight:700;font-variant-numeric:tabular-nums}
+.influencer-page .im-mini em{font-style:normal;font-size:var(--fs-body);color:var(--im-faint)}
+.influencer-page .im-todo.is-dense li{padding:var(--space-3) 0;align-items:center}
+/* 발굴: API 한 줄 상태 · 하위 탭 */
+.influencer-page .im-apiline{display:flex;gap:var(--space-4);align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-5);border:1px solid var(--im-line);border-radius:var(--radius);background:var(--im-surface);margin-bottom:var(--space-5);font-size:var(--fs-body)}
+.influencer-page .im-apiline .is-ok{color:var(--im-ok)}
+.influencer-page .im-apiline .is-bad{color:var(--im-bad)}
+.influencer-page .im-apiline .is-off{color:var(--im-muted)}
+.influencer-page .im-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin-bottom:var(--space-5)}
+@media (max-width:760px){.influencer-page .im-subtabs{grid-template-columns:minmax(0,1fr)}}
+.influencer-page .im-subtabs button{appearance:none;text-align:left;border:1px solid var(--im-line);background:var(--im-surface);border-radius:var(--im-r);padding:var(--space-4) var(--space-5);cursor:pointer;display:flex;flex-direction:column;gap:var(--space-1)}
+.influencer-page .im-subtabs button b{font-weight:600}
+.influencer-page .im-subtabs button span{font-size:var(--fs-body);color:var(--im-muted)}
+.influencer-page .im-subtabs button[aria-selected="true"]{border-color:var(--im-accent);background:var(--im-accent-soft);box-shadow:inset 0 -3px 0 var(--im-accent)}
+.influencer-page .im-subtabs button[aria-selected="true"] b{color:var(--im-accent)}
+.influencer-page .im-saved{display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4) var(--space-5);border-radius:var(--radius);background:var(--im-ok-soft);font-size:var(--fs-body)}
+.influencer-page .im-saved b{color:var(--im-ok)}
+.influencer-page .im-saved span{color:var(--im-muted)}
+/* 광고 단가: 첫 칸 관리 버튼 · 산출 기준 카드 */
+.influencer-page .im-acts{display:flex;gap:var(--space-2)}
+.influencer-page .im-tblwrap tr.is-editing td{background:var(--im-accent-soft)}
+.influencer-page .im-basis{display:grid;grid-template-columns:56px minmax(0,1fr);gap:var(--space-4) var(--space-5);margin:0;font-size:var(--fs-body)}
+.influencer-page .im-basis dt{color:var(--im-muted);font-weight:600}
+.influencer-page .im-basis dd{margin:0;min-width:0}
+.influencer-page .im-basis input[type=number]{padding:var(--space-2) var(--space-3)}
+.influencer-page .im-tiers{display:grid;grid-template-columns:max-content max-content max-content;gap:var(--space-1) var(--space-5);align-items:baseline}
+.influencer-page .im-tiers span{font-family:var(--im-mono);font-variant-numeric:tabular-nums}
+.influencer-page .im-tiers em{font-style:normal;color:var(--im-faint)}
+.influencer-page .im-tblwrap.is-short{max-height:46vh}
+.influencer-page .im-bars.is-wide .im-bar{grid-template-columns:minmax(0,200px) minmax(0,1fr) 44px}
+.influencer-page .im-basis.is-2col{grid-template-columns:56px minmax(0,1fr) 56px minmax(0,1fr)}
+@media (max-width:1160px){.influencer-page .im-basis.is-2col{grid-template-columns:56px minmax(0,1fr)}}
+/* Ver_018: 요약 계산 범위 띠 (시연 데이터 포함 / 실제 데이터만) */
+.influencer-page .im-ovmode{display:flex;gap:var(--space-4);align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-5);border-radius:var(--radius);background:var(--im-sunk);margin-bottom:var(--space-5);font-size:var(--fs-body)}
+.influencer-page .im-ovmode.is-demo{background:var(--im-warn-soft)}
+.influencer-page .im-ovmode.is-demo b{color:var(--im-warn)}
