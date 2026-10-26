@@ -85,26 +85,39 @@
              포스터·카드뉴스: 초안 전에만, 비우면 1장 제목 글자. 문구는 sns.js가 탭에 맞게 바꿉니다. #}
           <input type="text" class="studio-title" data-role="set-title" maxlength="30" autocomplete="off"
                  placeholder="영상 제목" aria-label="영상 제목">
-          {# 제품·비율·길이 한 줄 묶음. 첫 생성 화면(is-start)에서는 제목 아래 가운데에 놓입니다(sns.css). #}
+          {# 제품·비율·길이 한 줄 묶음. 첫 생성 화면(is-start)에서는 제목 아래 가운데에 놓입니다(sns.css).
+             묶음마다 [이름 글자 + 버튼] 칸(studio-option). 이름 글자는 첫 생성 화면에서만, 버튼이 숨으면 칸째 숨김(sns.css). #}
           <div class="studio-options">
           {# 제품 고르기 (products.py). 영상: [전체] 또는 여러 개, 안 고르면 입력 문장에서 찾음. 포스터·카드뉴스: 한 개(초안 전에만), [전체] 숨김 #}
-          <div class="studio-seg studio-product" data-role="set-product" role="group" aria-label="제품">
-            <button type="button" class="btn" data-value="all">전체</button>
-            {% for product in products %}<button type="button" class="btn" data-value="{{ product.id }}">{{ product.name_ko|replace(" 찹쌀떡", "") }}</button>{% endfor %}
+          <div class="studio-option">
+            <span class="studio-option-label">제품</span>
+            <div class="studio-seg studio-product" data-role="set-product" role="group" aria-label="제품">
+              <button type="button" class="btn" data-value="all">전체</button>
+              {% for product in products %}<button type="button" class="btn" data-value="{{ product.id }}">{{ product.name_ko|replace(" 찹쌀떡", "") }}</button>{% endfor %}
+            </div>
           </div>
-          <div class="studio-seg" data-role="set-ratio">
-            <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">4:5</button>
-            <button type="button" class="btn" data-value="9:16">9:16</button>
-            <button type="button" class="btn" data-value="16:9">16:9</button>
-            <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
+          <div class="studio-option">
+            <span class="studio-option-label">비율</span>
+            <div class="studio-seg" data-role="set-ratio">
+              <button type="button" class="btn" data-value="4:5" data-kinds="poster cardnews">4:5</button>
+              <button type="button" class="btn" data-value="9:16">9:16</button>
+              <button type="button" class="btn" data-value="16:9">16:9</button>
+              <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
+            </div>
           </div>
           {# 카드뉴스 장수 (초안 전에만, 기본 5) #}
-          <div class="studio-seg" data-role="set-pages" role="group" aria-label="장수" hidden>
-            {% for count in [3, 4, 5, 6] %}<button type="button" class="btn" data-value="{{ count }}" aria-label="{{ count }}장">{{ count }}</button>{% endfor %}
+          <div class="studio-option">
+            <span class="studio-option-label">장수</span>
+            <div class="studio-seg" data-role="set-pages" role="group" aria-label="장수" hidden>
+              {% for count in [3, 4, 5, 6] %}<button type="button" class="btn" data-value="{{ count }}" aria-label="{{ count }}장">{{ count }}</button>{% endfor %}
+            </div>
           </div>
-          <label class="studio-duration" title="영상 길이 5~30초">
-            <input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이(초, 5~30)">초
-          </label>
+          <div class="studio-option">
+            <span class="studio-option-label">길이</span>
+            <label class="studio-duration" title="영상 길이 5~30초">
+              <input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이(초, 5~30)">초
+            </label>
+          </div>
           <button type="button" class="btn" data-role="set-sound">소리 끔</button>
           </div>
           {# 포스터·카드뉴스 스타일 줄 (한 개, 초안 전에만). 값은 designs.py STYLE_HINTS key — 고른 느낌을 AI 3안 지시문에 참고로만 넣습니다. ""은 AI 추천 #}
@@ -119,6 +132,17 @@
               <button type="button" class="btn" data-value="minimal">미니멀</button>
             </div>
           </div>
+          {# 첫 생성 화면(영상, 포스터·카드뉴스 시안 고르기 전): 고른 비율 미리보기 사각형(가운데에서 조금 왼쪽) + 오른쪽 점선 레퍼런스 칸.
+             레퍼런스 칸: 누르면 파일 고르기, 끌어다 놓기도 됨. 올린 썸네일은 칸 안에(sns.js renderRefs).
+             영상은 이미지 4장·영상 1개, 포스터·카드뉴스는 이미지 4장(그림 모델이라 영상 참고 불가). 안내 글은 sns.js가 탭에 맞게 #}
+          <div class="studio-start-stage" data-role="start-stage" hidden>
+            <div class="studio-ratio-preview" data-role="ratio-preview" aria-hidden="true"></div>
+            <div class="studio-ref-drop" data-role="ref-drop" role="button" tabindex="0" aria-label="레퍼런스 넣기">
+              <div class="studio-refs" data-role="refs"></div>
+              <p class="studio-ref-drop-hint">+ 레퍼런스<small><span data-role="ref-drop-note">이미지 4장 · 영상 1개</span><br>누르거나 끌어다 놓기</small></p>
+              <input type="file" data-role="ref-file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden>
+            </div>
+          </div>
         </div>
         <div class="actions">
           <button type="button" class="btn" data-role="undo" title="되돌리기 (Ctrl+Z)" disabled>↶</button>
@@ -131,13 +155,10 @@
         {# 초안 뒤 입력 영역 접기·펼치기 (sns.js toggleCommand) — 입력 영역 오른쪽 위. 접으면 이 버튼과 결과 안내 줄만 남습니다. #}
         <button type="button" class="btn studio-command-toggle" data-role="command-toggle" aria-expanded="true" hidden>접기 ▾</button>
         <form class="studio-command-form" data-role="chat-form">
-          {# 영상 레퍼런스(분위기 참고 이미지 4장·영상 1개) 썸네일. sns.js가 영상 탭에서만 그립니다. #}
-          <div class="studio-refs" data-role="refs" hidden></div>
-          {# 여러 줄 입력칸: Enter 보내기, Shift+Enter 줄바꿈 (sns.js). 영상 탭은 흰색 3줄(sns.css) #}
+          {# 여러 줄 입력칸: Enter 보내기, Shift+Enter 줄바꿈 (sns.js). 영상 탭은 흰색 3줄(sns.css)
+             영상 레퍼런스는 위 비율 사각형 오른쪽 점선 칸(ref-drop)에서 넣습니다. #}
           <textarea data-role="chat-input" rows="1" autocomplete="off"
                     placeholder="추가로 원하는 점을 편하게 적어 주세요"></textarea>
-          <button type="button" class="btn studio-ref-add" data-role="ref-add" hidden>+ 레퍼런스</button>
-          <input type="file" data-role="ref-file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden>
           <button type="submit" class="btn dark">보내기</button>
         </form>
         <div class="studio-feedback" data-role="feedback" aria-live="polite">
