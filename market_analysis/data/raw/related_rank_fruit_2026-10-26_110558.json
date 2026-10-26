@@ -1,0 +1,322 @@
+{
+  "search_metadata": {
+    "id": "6aded1aa1f56faf03a9421b6",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/jJcFXCI3iGZ-98mX0_2qVkyIKPnjBXuQuGeNX02pXF0/6aded1aa1f56faf03a9421b6.md",
+    "created_at": "2026-10-26 04:06:02 UTC",
+    "processed_at": "2026-10-26 04:06:02 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22tr%C3%A1i+c%C3%A2y%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/jJcFXCI3iGZ-98mX0_2qVkyIKPnjBXuQuGeNX02pXF0/6aded1aa1f56faf03a9421b6.html",
+    "prettify_html_file": "https://serpapi.com/searches/jJcFXCI3iGZ-98mX0_2qVkyIKPnjBXuQuGeNX02pXF0/6aded1aa1f56faf03a9421b6.prettify",
+    "total_time_taken": 2.15
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "trái cây",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "trái cây bắt đầu bằng chữ t",
+        "value": "Đột phá",
+        "extracted_value": 10000,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+b%E1%BA%AFt+%C4%91%E1%BA%A7u+b%E1%BA%B1ng+ch%E1%BB%AF+t&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+b%E1%BA%AFt+%C4%91%E1%BA%A7u+b%E1%BA%B1ng+ch%E1%BB%AF+t&tz=-420"
+      },
+      {
+        "query": "giỏ trái cây 20/10",
+        "value": "Đột phá",
+        "extracted_value": 6100,
+        "link": "https://trends.google.com/trends/explore?q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y+20/10&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y+20%2F10&tz=-420"
+      },
+      {
+        "query": "mẹ mua hai gói trái cây sấy hết tất cả",
+        "value": "+900%",
+        "extracted_value": 900,
+        "link": "https://trends.google.com/trends/explore?q=m%E1%BA%B9+mua+hai+g%C3%B3i+tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y+h%E1%BA%BFt+t%E1%BA%A5t+c%E1%BA%A3&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%E1%BA%B9+mua+hai+g%C3%B3i+tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y+h%E1%BA%BFt+t%E1%BA%A5t+c%E1%BA%A3&tz=-420"
+      },
+      {
+        "query": "lẵng trái cây",
+        "value": "+170%",
+        "extracted_value": 170,
+        "link": "https://trends.google.com/trends/explore?q=l%E1%BA%B5ng+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=l%E1%BA%B5ng+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "cây bần",
+        "value": "+140%",
+        "extracted_value": 140,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A2y+b%E1%BA%A7n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A2y+b%E1%BA%A7n&tz=-420"
+      },
+      {
+        "query": "máy làm lạnh nước trái cây",
+        "value": "+110%",
+        "extracted_value": 110,
+        "link": "https://trends.google.com/trends/explore?q=m%C3%A1y+l%C3%A0m+l%E1%BA%A1nh+n%C6%B0%E1%BB%9Bc+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%C3%A1y+l%C3%A0m+l%E1%BA%A1nh+n%C6%B0%E1%BB%9Bc+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "cách làm giỏ trái cây",
+        "value": "+110%",
+        "extracted_value": 110,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1ch+l%C3%A0m+gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1ch+l%C3%A0m+gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "kingfood",
+        "value": "+110%",
+        "extracted_value": 110,
+        "link": "https://trends.google.com/trends/explore?q=kingfood&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kingfood&tz=-420"
+      },
+      {
+        "query": "hộp trái cây quà tặng",
+        "value": "+100%",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=h%E1%BB%99p+tr%C3%A1i+c%C3%A2y+qu%C3%A0+t%E1%BA%B7ng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=h%E1%BB%99p+tr%C3%A1i+c%C3%A2y+qu%C3%A0+t%E1%BA%B7ng&tz=-420"
+      },
+      {
+        "query": "trái bần",
+        "value": "+100%",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+b%E1%BA%A7n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+b%E1%BA%A7n&tz=-420"
+      },
+      {
+        "query": "trái cây nhập khẩu hoa biển",
+        "value": "+100%",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+nh%E1%BA%ADp+kh%E1%BA%A9u+hoa+bi%E1%BB%83n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+nh%E1%BA%ADp+kh%E1%BA%A9u+hoa+bi%E1%BB%83n&tz=-420"
+      },
+      {
+        "query": "bánh tart trái cây",
+        "value": "+90%",
+        "extracted_value": 90,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+tart+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+tart+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "code chiến trường trái cây",
+        "value": "+90%",
+        "extracted_value": 90,
+        "link": "https://trends.google.com/trends/explore?q=code+chi%E1%BA%BFn+tr%C6%B0%E1%BB%9Dng+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=code+chi%E1%BA%BFn+tr%C6%B0%E1%BB%9Dng+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trái bằng lăng",
+        "value": "+80%",
+        "extracted_value": 80,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+b%E1%BA%B1ng+l%C4%83ng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+b%E1%BA%B1ng+l%C4%83ng&tz=-420"
+      },
+      {
+        "query": "sốt nên ăn trái cây gì",
+        "value": "+80%",
+        "extracted_value": 80,
+        "link": "https://trends.google.com/trends/explore?q=s%E1%BB%91t+n%C3%AAn+%C4%83n+tr%C3%A1i+c%C3%A2y+g%C3%AC&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=s%E1%BB%91t+n%C3%AAn+%C4%83n+tr%C3%A1i+c%C3%A2y+g%C3%AC&tz=-420"
+      },
+      {
+        "query": "trái cây bổ máu",
+        "value": "+70%",
+        "extracted_value": 70,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+b%E1%BB%95+m%C3%A1u&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+b%E1%BB%95+m%C3%A1u&tz=-420"
+      },
+      {
+        "query": "giỏ trái cây",
+        "value": "+40%",
+        "extracted_value": 40,
+        "link": "https://trends.google.com/trends/explore?q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "ăn trái cây",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=%C4%83n+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=%C4%83n+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "nước trái cây",
+        "value": "42",
+        "extracted_value": 42,
+        "link": "https://trends.google.com/trends/explore?q=n%C6%B0%E1%BB%9Bc+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=n%C6%B0%E1%BB%9Bc+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "hoa trái cây",
+        "value": "30",
+        "extracted_value": 30,
+        "link": "https://trends.google.com/trends/explore?q=hoa+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=hoa+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "sữa trái cây",
+        "value": "29",
+        "extracted_value": 29,
+        "link": "https://trends.google.com/trends/explore?q=s%E1%BB%AFa+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=s%E1%BB%AFa+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "giỏ trái cây",
+        "value": "25",
+        "extracted_value": 25,
+        "link": "https://trends.google.com/trends/explore?q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=gi%E1%BB%8F+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "hình trái cây",
+        "value": "25",
+        "extracted_value": 25,
+        "link": "https://trends.google.com/trends/explore?q=h%C3%ACnh+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=h%C3%ACnh+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trà trái cây",
+        "value": "24",
+        "extracted_value": 24,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A0+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A0+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "các loại trái cây",
+        "value": "23",
+        "extracted_value": 23,
+        "link": "https://trends.google.com/trends/explore?q=c%C3%A1c+lo%E1%BA%A1i+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=c%C3%A1c+lo%E1%BA%A1i+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "bánh trái cây",
+        "value": "18",
+        "extracted_value": 18,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trái cây nhập khẩu",
+        "value": "15",
+        "extracted_value": 15,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+nh%E1%BA%ADp+kh%E1%BA%A9u&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+nh%E1%BA%ADp+kh%E1%BA%A9u&tz=-420"
+      },
+      {
+        "query": "trái đất",
+        "value": "14",
+        "extracted_value": 14,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+%C4%91%E1%BA%A5t&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+%C4%91%E1%BA%A5t&tz=-420"
+      },
+      {
+        "query": "vườn trái cây",
+        "value": "14",
+        "extracted_value": 14,
+        "link": "https://trends.google.com/trends/explore?q=v%C6%B0%E1%BB%9Dn+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=v%C6%B0%E1%BB%9Dn+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trái cây tươi",
+        "value": "13",
+        "extracted_value": 13,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+t%C6%B0%C6%A1i&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+t%C6%B0%C6%A1i&tz=-420"
+      },
+      {
+        "query": "trái cây cúng",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+c%C3%BAng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+c%C3%BAng&tz=-420"
+      },
+      {
+        "query": "trái cây tiếng anh",
+        "value": "11",
+        "extracted_value": 11,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+ti%E1%BA%BFng+anh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+ti%E1%BA%BFng+anh&tz=-420"
+      },
+      {
+        "query": "kẹo trái cây",
+        "value": "11",
+        "extracted_value": 11,
+        "link": "https://trends.google.com/trends/explore?q=k%E1%BA%B9o+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=k%E1%BA%B9o+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "nước ép trái cây",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=n%C6%B0%E1%BB%9Bc+%C3%A9p+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=n%C6%B0%E1%BB%9Bc+%C3%A9p+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trái cây sấy",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y&tz=-420"
+      },
+      {
+        "query": "trái cây việt nam",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+vi%E1%BB%87t+nam&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+vi%E1%BB%87t+nam&tz=-420"
+      },
+      {
+        "query": "trái cây ngon",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+c%C3%A2y+ngon&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+c%C3%A2y+ngon&tz=-420"
+      },
+      {
+        "query": "kem trái cây",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "máy ép",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=m%C3%A1y+%C3%A9p&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%C3%A1y+%C3%A9p&tz=-420"
+      },
+      {
+        "query": "máy ép trái cây",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=m%C3%A1y+%C3%A9p+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%C3%A1y+%C3%A9p+tr%C3%A1i+c%C3%A2y&tz=-420"
+      },
+      {
+        "query": "trái lý",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=tr%C3%A1i+l%C3%BD&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=tr%C3%A1i+l%C3%BD&tz=-420"
+      },
+      {
+        "query": "hộp trái cây",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=h%E1%BB%99p+tr%C3%A1i+c%C3%A2y&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=h%E1%BB%99p+tr%C3%A1i+c%C3%A2y&tz=-420"
+      }
+    ]
+  }
+}

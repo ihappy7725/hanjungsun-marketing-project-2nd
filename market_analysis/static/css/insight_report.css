@@ -1,0 +1,52 @@
+/* AI 인사이트 보고서 [상준]
+   보고서 미리보기 iframe 안에서만 읽습니다(market_analysis_main.js reportDocument). 대시보드 화면에는 쓰지 않습니다.
+   색·글꼴은 platform_core/static/css/base.css 변수만 씁니다. 화면 = A4 쪽 미리보기, 인쇄 = A4 PDF. */
+
+@page { size: A4; margin: 14mm; }
+
+.ma-report { margin: 0; padding: var(--space-8) 0; background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ma-report-page { box-sizing: border-box; width: 210mm; min-height: 297mm; margin: 0 auto var(--space-8); padding: 16mm; background: var(--page-bg); box-shadow: var(--shadow-overlay); }
+
+/* 표지 */
+.ma-report-cover { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.ma-report-logo { width: 150px; height: auto; }
+.ma-report-kicker { margin: var(--space-10) 0 var(--space-2); color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+.ma-report-cover h1 { margin: 0; font-family: var(--font-title); font-size: 34px; font-weight: var(--title-weight); line-height: 1.3; }
+.ma-report-hero { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; margin: var(--space-8) 0; }
+.ma-report-hero img { display: block; width: 100%; max-height: 120mm; object-fit: contain; }
+.ma-report-slogan { max-width: 150mm; margin: 0 0 var(--space-9); padding: var(--space-6) var(--space-7); border-top: 2px solid var(--teal); border-bottom: 2px solid var(--teal); font-size: 18px; font-weight: 700; line-height: 1.6; }
+.ma-report-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); width: 100%; margin: 0; }
+.ma-report-meta div { padding: var(--space-4); background: var(--white); }
+.ma-report-meta dt { color: var(--muted); font-size: 11px; }
+.ma-report-meta dd { margin: var(--space-1) 0 0; font-size: 13px; font-weight: 700; }
+
+/* 본문: 대시보드 결과 블록(ma-ai-*)과 같은 구조 */
+.ma-report-body { display: grid; align-content: start; gap: var(--space-5); }
+.ma-report .ma-ai-block { break-inside: avoid; padding: var(--space-5) var(--space-6); border: 1px solid var(--line); background: var(--page-bg); }
+.ma-report .ma-ai-block h3 { display: flex; align-items: center; gap: var(--space-4); margin: 0 0 var(--space-4); font-size: 16px; }
+.ma-report .ma-ai-block h3 span { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--primary); color: var(--on-dark); font-size: 12px; }
+.ma-report .ma-ai-conclusion { margin: 0; padding: var(--space-5) var(--space-6); border-left: 4px solid var(--teal); background: var(--primary-soft); font-size: 16px; font-weight: 700; line-height: 1.5; }
+.ma-report .ma-ai-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ma-report .ma-ai-table th { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+.ma-report .ma-ai-table td { padding: var(--space-3); border-bottom: 1px solid var(--line-soft); vertical-align: top; line-height: 1.5; }
+.ma-report .ma-ai-table tr { break-inside: avoid; }
+.ma-report .ma-ai-tag { display: inline-block; margin: 1px var(--space-1); padding: 0 var(--space-2); background: var(--badge-bg); color: var(--badge-ink); font-family: var(--font-mono); font-size: 10px; white-space: nowrap; }
+.ma-report .ma-ai-none { margin: 0; color: var(--muted); font-size: 13px; }
+.ma-report .ma-ai-timeline { margin: 0; padding-left: var(--space-7); display: grid; gap: var(--space-3); font-size: 13px; line-height: 1.5; }
+.ma-report .ma-ai-swot { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.ma-report .ma-ai-swot-cell { padding: var(--space-4); border-top: 3px solid var(--teal); background: var(--white); }
+.ma-report .ma-ai-swot-cell.is-w, .ma-report .ma-ai-swot-cell.is-t { border-top-color: var(--orange); }
+.ma-report .ma-ai-swot-cell h4 { margin: 0 0 var(--space-3); font-size: 13px; }
+.ma-report .ma-ai-swot-cell ul { margin: 0; padding-left: var(--space-6); display: grid; gap: var(--space-2); font-size: 12px; line-height: 1.5; }
+.ma-report .ma-ai-swot-cell small { color: var(--muted); }
+.ma-report .ma-ai-opinion { break-inside: avoid; padding: var(--space-4); background: var(--white); }
+.ma-report .ma-ai-opinion + .ma-ai-opinion { margin-top: var(--space-3); }
+.ma-report .ma-ai-opinion p { margin: 0; font-size: 13px; line-height: 1.6; }
+.ma-report .ma-ai-sources { margin-top: var(--space-2) !important; color: var(--muted); font-size: 12px !important; }
+
+/* 인쇄(PDF): 쪽 여백은 @page가 맡고, 표지는 한 쪽을 채운 뒤 본문을 새 쪽에서 시작 */
+@media print {
+  .ma-report { padding: 0; background: var(--page-bg); }
+  .ma-report-page { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+  .ma-report-cover { height: calc(297mm - 28mm); break-after: page; }
+}

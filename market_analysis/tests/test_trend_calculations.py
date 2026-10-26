@@ -146,14 +146,15 @@ class CalculationTests(unittest.TestCase):
         ]
         result, meta = combine_regions(by_category)
         rows = {row["geo"]: row for row in result}
-        self.assertEqual(meta, {"method": "rank_average", "compared": 3})
-        # 등수 a(R1 1·R2 2·R3 3), b(R2 1·R1 2·R3 3), c(R1 1, R2·R3 동점 2.5) -> 평균 1.3 / 1.8 / 2.8
-        self.assertEqual([row["geo"] for row in result[:3]], ["R1", "R2", "R3"])
-        self.assertEqual([(rows[g]["avg_rank"], rows[g]["interest"]) for g in ("R1", "R2", "R3")],
-                         [(1.3, 83.3), (1.8, 58.3), (2.8, 8.3)])
-        # 한 카테고리에 값이 없거나(R4) 모두 0인(R5) 지역은 0으로 채우지 않고 순위에서 뺍니다.
-        for geo in ("R4", "R5"):
-            self.assertEqual((rows[geo]["rank"], rows[geo]["avg_rank"], rows[geo]["data_status"]), (None, None, "insufficient"))
+        self.assertEqual(meta, {"method": "rank_average", "compared": 4})
+        # 한 카테고리에 값이 없는 지역(R4)도 비교하고, 빠진 c는 공동 꼴찌(4위)로 계산합니다.
+        # 등수 a(R1 1·R4 2·R2 3·R3 4), b(R2 1·R4 2·R1 3·R3 4), c(R1 1, R2·R3 동점 2.5, R4 4) -> 평균 1.7 / 2.2 / 2.7 / 3.5
+        self.assertEqual([row["geo"] for row in result[:4]], ["R1", "R2", "R4", "R3"])
+        self.assertEqual([(rows[g]["avg_rank"], rows[g]["interest"]) for g in ("R1", "R2", "R4", "R3")],
+                         [(1.7, 77.8), (2.2, 61.1), (2.7, 44.4), (3.5, 16.7)])
+        self.assertEqual(rows["R4"]["data_status"], "normal")
+        # 모든 카테고리가 0인 지역(R5)만 순위에서 뺍니다.
+        self.assertEqual((rows["R5"]["rank"], rows["R5"]["avg_rank"], rows["R5"]["data_status"]), (None, None, "insufficient"))
 
     def test_regions_one_category_spike_does_not_dominate(self):
         def region(geo, value):

@@ -1,0 +1,238 @@
+{
+  "search_metadata": {
+    "id": "6aded05ba02ca98529bffae6",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/N72gO_uj2RPWQD45TFviaNAhl2cAzmuN5dGRliXfBSA/6aded05ba02ca98529bffae6.md",
+    "created_at": "2026-10-26 04:00:27 UTC",
+    "processed_at": "2026-10-26 04:00:27 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22b%C3%A1nh+h%C3%A0n%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/N72gO_uj2RPWQD45TFviaNAhl2cAzmuN5dGRliXfBSA/6aded05ba02ca98529bffae6.html",
+    "prettify_html_file": "https://serpapi.com/searches/N72gO_uj2RPWQD45TFviaNAhl2cAzmuN5dGRliXfBSA/6aded05ba02ca98529bffae6.prettify",
+    "total_time_taken": 1.42
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "bánh hàn",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "bánh vừng hàn quốc",
+        "value": "Đột phá",
+        "extracted_value": 99900,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+v%E1%BB%ABng+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+v%E1%BB%ABng+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "vua bánh mì hàn quốc tập 1 thuyết minh",
+        "value": "+1.650%",
+        "extracted_value": 1650,
+        "link": "https://trends.google.com/trends/explore?q=vua+b%C3%A1nh+m%C3%AC+h%C3%A0n+qu%E1%BB%91c+t%E1%BA%ADp+1+thuy%E1%BA%BFt+minh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=vua+b%C3%A1nh+m%C3%AC+h%C3%A0n+qu%E1%BB%91c+t%E1%BA%ADp+1+thuy%E1%BA%BFt+minh&tz=-420"
+      },
+      {
+        "query": "bánh trung thu",
+        "value": "+400%",
+        "extracted_value": 400,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+trung+thu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+trung+thu&tz=-420"
+      },
+      {
+        "query": "bánh trung thu hàn quốc",
+        "value": "+350%",
+        "extracted_value": 350,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+trung+thu+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+trung+thu+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh mochi hàn quốc",
+        "value": "+50%",
+        "extracted_value": 50,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "bánh hàn quốc",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh mì",
+        "value": "22",
+        "extracted_value": 22,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%AC&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%AC&tz=-420"
+      },
+      {
+        "query": "bánh mì hàn quốc",
+        "value": "16",
+        "extracted_value": 16,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%AC+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%AC+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh gạo",
+        "value": "16",
+        "extracted_value": 16,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+g%E1%BA%A1o&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+g%E1%BA%A1o&tz=-420"
+      },
+      {
+        "query": "bánh gạo hàn quốc",
+        "value": "14",
+        "extracted_value": 14,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+g%E1%BA%A1o+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+g%E1%BA%A1o+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh trung thu",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+trung+thu&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+trung+thu&tz=-420"
+      },
+      {
+        "query": "bánh mè hàn quốc",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%A8+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%A8+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh kem",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+kem&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+kem&tz=-420"
+      },
+      {
+        "query": "bánh kem hàn quốc",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+kem+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+kem+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh trung thu hàn quốc",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+trung+thu+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+trung+thu+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh mè đen hàn quốc",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%A8+%C4%91en+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%A8+%C4%91en+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh cuốn",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+cu%E1%BB%91n&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+cu%E1%BB%91n&tz=-420"
+      },
+      {
+        "query": "bánh mì mè hàn quốc",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%AC+m%C3%A8+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%AC+m%C3%A8+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh hàn quốc ngon",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+h%C3%A0n+qu%E1%BB%91c+ngon&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+h%C3%A0n+qu%E1%BB%91c+ngon&tz=-420"
+      },
+      {
+        "query": "bánh phô mai hàn quốc",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+ph%C3%B4+mai+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+ph%C3%B4+mai+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh canh",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+canh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+canh&tz=-420"
+      },
+      {
+        "query": "bánh cá hàn quốc",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+c%C3%A1+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+c%C3%A1+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh xếp hàn quốc",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+x%E1%BA%BFp+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+x%E1%BA%BFp+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh kẹo hàn quốc",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+k%E1%BA%B9o+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+k%E1%BA%B9o+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh quy hàn quốc",
+        "value": "3",
+        "extracted_value": 3,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+quy+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+quy+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh mochi hàn quốc",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+mochi+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh sinh nhật hàn quốc",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+sinh+nh%E1%BA%ADt+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+sinh+nh%E1%BA%ADt+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh mì mè đen hàn quốc",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+m%C3%AC+m%C3%A8+%C4%91en+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+m%C3%AC+m%C3%A8+%C4%91en+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "vua bánh mì",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=vua+b%C3%A1nh+m%C3%AC&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=vua+b%C3%A1nh+m%C3%AC&tz=-420"
+      },
+      {
+        "query": "bánh rán hàn quốc",
+        "value": "2",
+        "extracted_value": 2,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+r%C3%A1n+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+r%C3%A1n+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      }
+    ]
+  }
+}

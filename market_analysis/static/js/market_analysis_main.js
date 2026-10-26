@@ -123,13 +123,10 @@ function renderCountryBar() {
   page.querySelector('[data-ma="country-chips"]').innerHTML = data.countries
     .map((c) => `<a class="ma-chip${c.code === data.country ? " is-active" : ""}" href="?country=${esc(c.code)}&tab=${esc(state.tab)}">${esc(c.name)}</a>`)
     .join("");
-  const items = data.competitors.items;
-  const summary = data.competitors.summary || {};
+  // 언어 코드는 데이터에 소문자(ISO 639)로 있으므로 화면에서만 통화 코드처럼 대문자로 보여 줍니다
   page.querySelector('[data-ma="country-info"]').innerHTML = `
-    <div><dt>언어 · 통화</dt><dd>${esc(country.language)} · ${esc(country.currency || "—")}</dd></div>
-    <div><dt>우선 도시</dt><dd>${esc(country.city)}</dd></div>
-    <div><dt>경쟁 제품</dt><dd>${items.length ? `${summary.product_count || items.length}개` : "수집 전"}</dd></div>
-    <div><dt>판매 정보</dt><dd>${items.length ? `${summary.listing_count || 0}건` : "수집 전"}</dd></div>`;
+    <div><dt>언어 · 통화</dt><dd>${esc(String(country.language || "—").toUpperCase())} · ${esc(country.currency || "—")}</dd></div>
+    <div><dt>우선 도시</dt><dd>${esc(country.city)}</dd></div>`;
 }
 
 // ---------- 1. 트렌드 분석 ----------
@@ -492,17 +489,21 @@ function renderCulture() {
   // 색: 선물 포장에 권하는 색 / 피하는 색
   const prefs = d.color_preferences || {};
   const colorRow = (x) => `<li><span class="ma-cg-chip" aria-hidden="true">${COLOR_SWATCH[x.color] || "◻"}</span><strong>${esc(x.color)}</strong><span class="ma-cg-dim">${esc(x.meaning)}</span></li>`;
-  const colors = `<div class="ma-cg-two">
+  // 옆 사진 카드(베트남 상징물)와 높이를 맞추려고 두 상자를 위아래로 쌓습니다(.ma-cg-stack)
+  const colors = `<div class="ma-cg-two ma-cg-stack">
     <div class="ma-cg-box is-good"><h3>권하는 색</h3><ul class="ma-cg-list">${(prefs.prefer || []).map(colorRow).join("") || empty()}</ul></div>
     <div class="ma-cg-box is-bad"><h3>피하는 색</h3><ul class="ma-cg-list">${(prefs.avoid || []).map(colorRow).join("") || empty()}</ul></div></div>`;
 
-  // 뗏 상징물: 사진 카드 (사진 출처는 이용 조건상 작게 표시)
+  // 상징물: 사진 카드. 사진 출처(CC BY 등 이용 조건상 필수)는 사진 위가 아니라 카드 아래 한 줄로 모읍니다
   const credit = new Map((d.symbol_images || []).map(img => [img.file, img.credit]));
   const symbols = (d.tet_symbols || []).map(x => `
     <article class="ma-cg-photo">
-      <figure><img src="${esc(CULTURE_IMG(x.image))}" alt="${esc(x.name)}" loading="lazy">${credit.get(x.image) ? `<figcaption>${esc(credit.get(x.image))}</figcaption>` : ""}</figure>
+      <figure><img src="${esc(CULTURE_IMG(x.image))}" alt="${esc(x.name)}" loading="lazy"></figure>
       <div class="ma-cg-photo-body"><div><strong>${esc(x.name)}</strong><span class="ma-cg-tag">${esc(x.region)}</span></div><p>${esc(x.fact)}</p></div>
     </article>`).join("");
+  const credits = (d.tet_symbols || []).map(x => credit.get(x.image)).filter(Boolean);
+  const symbolBody = `<div class="ma-cg-photos">${symbols || empty()}</div>
+    ${credits.length ? `<p class="ma-cg-note">사진: ${credits.map(esc).join(" · ")}</p>` : ""}`;
 
   // 숫자: 큰 숫자
   const numbers = d.numbers || {};
@@ -517,9 +518,17 @@ function renderCulture() {
     <li><strong>${esc(x.title)}</strong>${x.tag ? `<span class="ma-cg-tag is-warn">${esc(x.tag)}</span>` : ""}<p>${esc(x.fact)}</p></li>`).join("")}</ul>`;
   const avoidList = `<div class="ma-cg-cols">${adItems((d.rules || []).map(r => ({ title: r[0], tag: r[1], fact: `피할 예 · ${r[2]}` })))}</div>`;
   const checkList = adItems((d.notices || []).map(n => ({ title: n[0], fact: n[1] })));
+  // 광고 올리기 전 확인 + 피할 표현: 담당자가 가장 중요하게 보는 영역이라 한 섹션으로 묶어 강조합니다
+  const adWarning = `
+    <section class="ma-cg-section ma-cg-alert"><header class="ma-cg-head"><h2>⚠️ 광고 올리기 전 꼭 확인</h2><p>최종 판단: 현지 검수자</p></header>
+      <h3 class="ma-cg-alert-h3">✅ 올리기 전 확인</h3><div class="ma-cg-cols">${checkList}</div>
+      <h3 class="ma-cg-alert-h3">🚫 피할 표현 <span class="ma-cg-dim">증빙 없는 최상급·비교·건강 효과 주장 주의</span></h3>${avoidList}
+    </section>`;
 
   // 온라인 구매 채널 (Metric 데이터 기사): 숫자 카드 + 점유율 막대 + 짧은 설명
   const ec = d.ecommerce_facts || {};
+  // "공식몰 집중"은 화면에서만 뺍니다(옆 카드와 높이 맞춤). 데이터·AI 인사이트에는 남아 있습니다
+  const ecNotes = (ec.notes || []).filter(n => n.title !== "공식몰 집중");
   const ecCards = (ec.cards || []).map(x => `
     <li>${icon(x.icon)}<span class="ma-cg-stat">${esc(x.value)}</span><strong>${esc(x.label)}</strong><span class="ma-cg-dim">${esc(x.note)} · ${esc(x.as_of)}</span></li>`).join("");
   const shares = (ec.shares?.items || []).map(x => `
@@ -528,12 +537,17 @@ function renderCulture() {
       <span class="ma-cg-share-value">${esc(x.share)}%</span><span class="ma-cg-dim">${esc(x.prev)}</span></li>`).join("");
   const ecBody = `<ul class="ma-cg-stats">${ecCards || empty()}</ul>
     ${shares ? `<h3 class="ma-cg-h3">플랫폼 점유율 (${esc(ec.shares.as_of)} 거래액 기준)</h3><ul class="ma-cg-shares">${shares}</ul>` : ""}
-    ${(ec.notes || []).length ? rows(ec.notes) : ""}`;
+    ${ecNotes.length ? rows(ecNotes) : ""}`;
 
-  // 디저트 소비 문화: 소비 장면별 묶음 카드 (chè·명절 떡·선물 과자·카페·당 줄이기)
-  const dessertGroups = (d.dessert_culture || []).map(g => `
-    <article class="ma-cg-group"><h3>${esc(g.title)}<span class="ma-cg-dim">${esc(g.as_of)} 기준</span></h3>
-      <ul>${g.items.map(item => `<li>${esc(item)}</li>`).join("")}</ul></article>`).join("");
+  // 디저트 소비 문화: 중요한 4개 장면만 이 순서로 표시 (선물용 과자는 데이터·AI 인사이트에는 남음, 2026-10-26 담당자 결정)
+  const DESSERT_SHOWN = [["명절 떡·디저트", "🎎"], ["일상 디저트 chè", "🍧"], ["카페 문화", "☕"], ["당 줄이기 흐름", "🥤"]];
+  const dessertByTitle = new Map((d.dessert_culture || []).map(g => [g.title, g]));
+  const dessertGroups = DESSERT_SHOWN.filter(([title]) => dessertByTitle.has(title)).map(([title, emoji]) => {
+    const g = dessertByTitle.get(title);
+    return `
+    <article class="ma-cg-group"><h3><span aria-hidden="true">${emoji}</span>${esc(g.title)}<span class="ma-cg-dim">${esc(g.as_of)} 기준</span></h3>
+      <ul>${g.items.map(item => `<li>${esc(item)}</li>`).join("")}</ul></article>`;
+  }).join("");
 
   // 넓은 화면은 2칸 배치(.ma-cg-pair), 좁은 화면은 1칸
   const pair = (left, right) => `<div class="ma-cg-pair">${left}${right}</div>`;
@@ -542,11 +556,10 @@ function renderCulture() {
     ${pair(section("디지털·SNS 이용", "광고 채널 선택 참고", `<ul class="ma-cg-stats">${facts || empty()}</ul>`),
       section("온라인 구매 채널", "판매 채널 선택 참고 · Shopee·TikTok Shop·Lazada·Tiki", ecBody))}
     ${section("디저트 소비 문화", "베트남 사람들이 디저트를 먹는 장면", `<div class="ma-cg-groups">${dessertGroups || rows(d.dessert_facts)}</div>`)}
-    ${pair(section("뗏(설) 상징물", "시즌 포장·광고 모티프 · 지역별 차이", `<div class="ma-cg-photos">${symbols || empty()}</div>`),
+    ${pair(section("베트남 상징물", "시즌 포장·광고 모티프 · 지역별 차이", symbolBody),
       section("선물 포장 색", "지역·세대에 따라 차이 있음", colors))}
     ${pair(section("선물 예절", "선물 세트·사은품 기획 시 확인", rows(d.gift_etiquette)), section("숫자", "가격 끝자리·입수·세트 구성 참고", numberBody))}
-    ${section("광고 올리기 전 확인", "최종 판단: 현지 검수자", `<div class="ma-cg-cols">${checkList}</div>`)}
-    ${section("광고 피할 표현", "증빙 없는 최상급·비교·건강 효과 주장 주의", avoidList)}
+    ${adWarning}
   </div>`;
 }
 
@@ -616,12 +629,25 @@ function bindInsightForm(view) {
       insight.error = error.message;
     }
     insight.loading = false; renderInsight();
+    if (insight.result && !insight.error) openReport();  // 결과가 나오면 보고서 미리보기를 바로 엽니다
   });
 }
 
 function insightResult() {
   const out = insight.result;
   if (!out) return "";
+  const input = out.input;
+  return `<div class="ma-ai-result">
+    <div class="ma-ai-report-bar">
+      <p class="ma-ai-meta">${esc(input.goal_label)} · ${esc(input.period_label)} · ${esc(input.channel_labels.join(", "))} · 생성 ${esc(out.generated_at)} · 저장되지 않음</p>
+      <button type="button" data-ma="report-open">보고서 미리보기 · PDF</button>
+    </div>
+    ${insightBlocks(out)}
+  </div>`;
+}
+
+// 결과 9블록. 화면(insightResult)과 보고서(reportDocument)가 같이 씁니다
+function insightBlocks(out) {
   const r = out.result, ev = out.evidence;
   const tags = (list) => (list || []).map((t) => ev[t]
     ? `<span class="ma-ai-tag" title="${esc(`${ev[t].source} · ${ev[t].date}\n${ev[t].text}`)}">${esc(t)}</span>` : "").join("");
@@ -632,9 +658,7 @@ function insightResult() {
   const swotCell = (key, label) => `<div class="ma-ai-swot-cell is-${key.toLowerCase()}"><h4>${key} ${label}</h4>${(r.swot[key] || []).length
     ? `<ul>${r.swot[key].map((x) => `<li>${esc(x.text)} ${tags(x.tags)}${x.response ? `<br><small>대응 · ${esc(x.response)}</small>` : ""}</li>`).join("")}</ul>`
     : `<p class="ma-ai-none">근거 부족</p>`}</div>`;
-  const input = out.input;
-  return `<div class="ma-ai-result">
-    <p class="ma-ai-meta">${esc(input.goal_label)} · ${esc(input.period_label)} · ${esc(input.channel_labels.join(", "))} · 생성 ${esc(out.generated_at)} · 저장되지 않음</p>
+  return `
     ${block(1, "한 줄 결론", `<p class="ma-ai-conclusion">${esc(r.conclusion)}</p>`)}
     ${block(2, "핵심 인사이트", table(["사실 (근거)", "한정선에 주는 의미", "할 일"],
       r.insights.map((x) => [`${esc(x.fact)} ${tags(x.tags)}`, esc(x.meaning), esc(x.action)])))}
@@ -650,8 +674,60 @@ function insightResult() {
     ${block(8, "SWOT 분석", `<div class="ma-ai-swot">${swotCell("S", "강점")}${swotCell("W", "약점")}${swotCell("O", "기회")}${swotCell("T", "위협")}</div>`)}
     ${block(9, "AI 종합 의견 · 근거 기반", r.opinions.length ? r.opinions.map((x) => `<div class="ma-ai-opinion"><p><b>의견</b> ${esc(x.text)}</p>
       <p class="ma-ai-sources"><b>근거</b> ${x.tags.map((t) => `${tags([t])} ${esc(ev[t].source)} (${esc(ev[t].date)})`).join(" · ")}</p></div>`).join("")
-      : `<p class="ma-ai-none">근거 부족 · 의견 없음</p>`)}
-  </div>`;
+      : `<p class="ma-ai-none">근거 부족 · 의견 없음</p>`)}`;
+}
+
+// ---------- AI 인사이트 보고서 (미리보기 · PDF) ----------
+// 보고서는 iframe 안의 별도 문서로 만들어 대시보드 스타일과 섞이지 않게 하고, PDF는 브라우저 인쇄(→ PDF로 저장)로 받습니다.
+// 표지 그림은 공용 이미지입니다. 제품 사진은 content_studio public.py가 생기면 바꿉니다(유진 요청 중, 2026-10-26).
+const REPORT_CSS = ["/platform_core/static/css/fonts.css", "/platform_core/static/css/base.css",
+  "/market_analysis/static/css/insight_report.css"];
+const REPORT_LOGO = "/platform_core/static/images/hanjungsun_logo_wide.png";
+const REPORT_COVER = "/platform_core/static/images/inkwash_tteok.png";
+
+function reportDocument(out) {
+  const input = out.input;
+  const date = String(out.generated_at || "").slice(0, 10);
+  const meta = [["목표", input.goal_label], ["기간", input.period_label], ["주력 채널", input.channel_labels.join(", ")], ["생성일", date]];
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+    <title>한정선_베트남_수출_마케팅_전략_${esc(date)}</title>
+    ${REPORT_CSS.map((href) => `<link rel="stylesheet" href="${href}">`).join("")}</head>
+  <body class="ma-report">
+    <section class="ma-report-page ma-report-cover">
+      <img class="ma-report-logo" src="${REPORT_LOGO}" alt="한정선">
+      <p class="ma-report-kicker">VIETNAM EXPORT MARKETING STRATEGY</p>
+      <h1>한정선 베트남 수출 마케팅 전략</h1>
+      <figure class="ma-report-hero"><img src="${REPORT_COVER}" alt=""></figure>
+      <p class="ma-report-slogan">${esc(out.result.conclusion)}</p>
+      <dl class="ma-report-meta">${meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+    </section>
+    <section class="ma-report-page ma-report-body">${insightBlocks(out)}</section>
+  </body></html>`;
+}
+
+function openReport() {
+  if (!insight.result) return;
+  let dialog = page.querySelector('[data-ma="report"]');
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.className = "ma-report-dialog";
+    dialog.dataset.ma = "report";
+    dialog.innerHTML = `
+      <div class="ma-report-bar"><strong>AI 인사이트 보고서 미리보기</strong>
+        <button type="button" class="ma-report-pdf" data-ma="report-pdf">PDF 저장</button>
+        <button type="button" class="ma-report-close" data-ma="report-close">닫기</button></div>
+      <iframe class="ma-report-frame" title="AI 인사이트 보고서"></iframe>`;
+    page.append(dialog);
+  }
+  dialog.querySelector("iframe").srcdoc = reportDocument(insight.result);
+  dialog.showModal();
+}
+
+// 인쇄 창에서 "PDF로 저장"을 고르면 파일로 받습니다(파일 이름 = 보고서 title)
+function printReport() {
+  const frame = page.querySelector('[data-ma="report"] iframe');
+  frame?.contentWindow?.focus();
+  frame?.contentWindow?.print();
 }
 
 // ---------- 탭 · 이벤트 ----------
@@ -683,6 +759,9 @@ page.addEventListener("click", (event) => {
   if (d.segment !== undefined) { state.segment = d.segment; state.page = 1; return renderCompetitor(); }
   if (d.page) { state.page = Number(d.page); return renderCompetitor(); }
   if (d.detail !== undefined) return openDetail(Number(d.detail));
+  if (d.ma === "report-open") return openReport();
+  if (d.ma === "report-pdf") return printReport();
+  if (d.ma === "report-close") return page.querySelector('[data-ma="report"]').close();
   if (d.ma === "detail-close") page.querySelector('[data-ma="detail"]').close();
 });
 

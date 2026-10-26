@@ -260,7 +260,7 @@ def parse_regions(raw, region_labels):
     rows.sort(key=lambda row: -row["interest"])
     for rank, row in enumerate(rows, start=1):
         row["rank"] = rank
-        row["data_status"] = "normal" if row["interest"] > 0 else "insufficient"
+        row["data_status"] = "normal"  # 0 = 그 지역 검색이 적음(데이터 부족 아님, 2026-10-26 담당자 결정)
     return rows
 
 
@@ -269,7 +269,8 @@ def combine_regions(by_category):
 
     카테고리마다 지수 높은 순으로 등수를 매기고(동점은 같은 등수들의 평균), 등수 평균이 낮을수록 상위입니다.
     카테고리 크기·비중과 상관없이 모든 카테고리를 똑같이 반영해, 한 카테고리에 끌려가지 않습니다.
-    모든 카테고리에 값이 있는 지역만 비교하며, 빠진 카테고리를 0으로 채우지 않습니다.
+    어느 카테고리에든 값이 있는 지역은 모두 비교합니다. Google이 0을 주거나 빠뜨린 카테고리는 검색이 적다는 뜻이므로
+    그 카테고리의 공동 꼴찌 등수로 계산합니다(2026-10-26 담당자 결정). 모든 카테고리가 0인 지역만 순위에서 뺍니다.
     interest = 막대 길이용 점수(모든 카테고리 1위 = 100, 모두 꼴찌 = 0), avg_rank = 표시용 평균 등수.
     반환: (rows, {"method": "rank_average", "compared": 비교한 지역 수})
     """
@@ -281,7 +282,9 @@ def combine_regions(by_category):
             region["categories"][category["id"]] = row["interest"]
     compared, rest = [], []
     for region in regions.values():
-        if len(region["categories"]) == len(by_category) and any(region["categories"].values()):
+        if any(region["categories"].values()):
+            for category in by_category:  # 빠진 카테고리 = 검색 적음 → 0으로 두어 공동 꼴찌 등수가 되게 합니다
+                region["categories"].setdefault(category["id"], 0)
             compared.append(region)
         else:
             region.update({"interest": None, "avg_rank": None, "rank": None, "data_status": "insufficient"})
@@ -734,8 +737,6 @@ class TrendService:
                 "rising_value": row.get("rising_value"),
             } for row in ranking_section.get("items", [])]
             status = item.get("data_status", "empty")
-            if status == "normal" and (item.get("recent_average") or 0) < MIN_INTEREST:
-                status = "insufficient"
             result.append({
                 "id": category["id"],
                 "label": category["label"],

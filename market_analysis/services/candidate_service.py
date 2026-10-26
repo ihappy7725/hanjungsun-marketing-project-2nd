@@ -24,7 +24,8 @@ EXCLUDE_PATTERNS = {
     "뜻·정보": ("là gì", "calo", "bao nhiêu calo", "what is"),
     "숙제·문학": ("bài thơ", "phân tích", "lớp ", "thơ"),
     # 2026-10-25 확인: xôi lạc = 축구 중계 사이트, chè thái nguyên = 녹차 산지
-    "다른 의미": ("bóng đá", "trực tiếp", "xôi lạc", "phim", "thái nguyên"),
+    # 2026-10-26 확인: vua bánh mì = 드라마 제빵왕 김탁구, thuyết minh = 더빙(드라마 회차 검색)
+    "다른 의미": ("bóng đá", "trực tiếp", "xôi lạc", "phim", "thái nguyên", "vua bánh mì", "thuyết minh"),
     # 2026-10-26 확인: 메뉴가 아닌 가게 상호 ("bánh mochi sweet"도 함께 걸립니다)
     "가게·브랜드": ("mochi sweet", "merino", "the bingsu", "boulevard", "mr bingsu", "mrp", "sul bingsu",
                 "hata bingsu", "bunny bingsu"),
