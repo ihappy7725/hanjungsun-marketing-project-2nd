@@ -155,10 +155,10 @@
   VIEWS.overview = {
     mount(v) {
       // Ver_023: 데이터 신뢰도·구성 패널과 패널 제목 옆 설명을 뺐어요. 시연 데이터가 있으면 맨 위에 'DEMO · 예시 데이터' 한 줄
-      // Ver_023: 14일 일정을 빼고 예산 현황·오늘의 할 일·촬영일 확정을 같은 크기 정사각형 3칸으로
+      // Ver_023: 14일 일정을 빼고, 예산 현황은 전체 폭 가로 띠 / 오늘의 할 일·촬영일 확정은 같은 높이 2칸
       v.innerHTML = `<div class="im-funnel" id="ovFun"></div>
       <div class="im-ovgrid">
-        <div class="im-panel"><h2>예산 현황</h2><div id="ovBud"></div></div>
+        <div class="im-panel im-ovbud"><h2>예산 현황</h2><div id="ovBud"></div></div>
         <div class="im-panel"><h2>오늘의 할 일 <small>급한 순서 · 최대 5개</small></h2><div id="ovTodo"></div></div>
         <div class="im-panel" id="ovPickP"><h2>촬영일 확정</h2><div id="ovPick"></div></div></div>`;
     },
@@ -199,27 +199,27 @@
     budget(v) {
       const Q = realQuotes().map(q => ({ q, m: quoteMetrics(q) })).filter(x => x.m.usd && !isOutlier(x.m));
       const sum = a => a.reduce((s, x) => s + x.m.usd, 0), qs = Q.filter(x => x.q.layer === 'quote'), cs = Q.filter(x => x.q.layer === 'contract'), both = [...qs, ...cs];
-      const rate = S.settings.rateSavedAt ? `환율 입력일 ${esc(S.settings.rateSavedAt)}` : '<span style="color:var(--im-warn)">환율 미입력(예시값)</span>';
       const outN = realQuotes().length - Q.length;
-      $('#ovBud', v).innerHTML = !both.length && outN ? `<p style="margin:0">기록 ${outN}건이 모두 이상값이라 합계에서 뺐어요. [광고 단가]에서 통화·자릿수를 확인하세요.</p>` : both.length ? `<div class="im-mini"><div><span>견적 합계</span><b>${usd$(sum(qs))}</b><em>${qs.length}건</em></div><div><span>계약 합계</span><b>${usd$(sum(cs))}</b><em>${cs.length}건</em></div><div><span>평균 단가</span><b>${usd$(sum(both) / both.length)}</b><em>게시물 1건</em></div></div>
-        <p class="im-muted im-small" style="margin:8px 0 0">≈ ${grp(sum(both) * (+S.settings.vndPerUsd || 26300))} VND · ${rate}${outN ? ` · 이상값 ${outN}건 제외` : ''}</p>`
+      $('#ovBud', v).innerHTML = !both.length && outN ? `<p style="margin:0">기록 ${outN}건이 모두 이상값이라 합계에서 뺐어요. [광고 단가]에서 통화·자릿수를 확인하세요.</p>` : both.length ? `<div class="im-mini"><div><span>견적 합계</span><b>${usd$(sum(qs))}</b><em>${qs.length}건</em></div><div><span>계약 합계</span><b>${usd$(sum(cs))}</b><em>${cs.length}건</em></div><div><span>평균 단가</span><b>${usd$(sum(both) / both.length)}</b><em>게시물 1건</em></div></div>`
         : '<p class="im-muted" style="margin:0">아직 기록한 견적이 없어요. [광고 단가]에서 받은 견적을 추가하면 합계와 평균이 나와요.</p>';
     },
   };
 
   /* ================= 인플루언서 목록 ================= */
+  // 표 열 비율(%): 인플루언서·분야·TikTok·Facebook·YouTube·Instagram·대표 채널 조회수·규모·상태. 위 필터 칸도 같은 비율(CSS .im-lfilters)
+  const LCOLS = [24, 12, 8, 8, 8, 8, 11, 10, 11];
   VIEWS.list = {
     mount(v) {
       const f = S.flt;
-      v.innerHTML = `<div class="im-filters">
+      v.innerHTML = `<div class="im-filters im-lfilters">
         <label class="im-field">검색<input type="search" id="fq" placeholder="이름, 핸들, 메모" value="${esc(f.q)}"></label>
         <label class="im-field">분야<select id="fseg">${segOptions(f.seg, '전체', '미분류')}</select></label>
         <label class="im-field">대표 플랫폼<select id="fpf"><option value="">전체</option>${PF.map(p => `<option value="${p.k}" ${f.pf === p.k ? 'selected' : ''}>${p.n}</option>`).join('')}</select></label>
-        <label class="im-field">규모<select id="ftier"><option value="">전체</option>${TIERS.map(t => `<option value="${t.k}" ${f.tier === t.k ? 'selected' : ''}>${t.n} (${t.label})</option>`).join('')}</select></label>
+        <label class="im-field">규모<select id="ftier"><option value="">전체</option>${TIERS.map(t => `<option value="${t.k}" ${f.tier === t.k ? 'selected' : ''}>${t.n}</option>`).join('')}</select></label>
         <label class="im-field">상태<select id="fst"><option value="">전체</option>${STATUS.map(([k, n]) => `<option value="${k}" ${f.st === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-        <div class="im-row" style="gap:6px"><button type="button" class="im-btn is-primary" id="addInf">+ 추가</button></div></div>
-        <div class="im-tblwrap is-scroll"><table class="im-ltable"><colgroup>${[24, 12, 9, 9, 9, 9, 11, 7, 10].map(w => `<col style="width:${w}%">`).join('')}</colgroup><thead><tr id="lhead"></tr></thead><tbody id="lbody"></tbody></table></div>
-        <p class="im-muted im-small" id="lcount" style="margin:8px 2px 0"></p>`;
+        </div>
+        <div class="im-tblwrap is-scroll"><table class="im-ltable"><colgroup>${LCOLS.map(w => `<col style="width:${w}%">`).join('')}</colgroup><thead><tr id="lhead"></tr></thead><tbody id="lbody"></tbody></table></div>
+        <div class="im-row" style="margin-top:8px"><span class="im-muted im-small im-grow" id="lcount"></span><button type="button" class="im-btn is-primary" id="addInf">+ 추가</button></div>`;
       const on = (id, k) => { $('#' + id, v).oninput = e => { S.flt[k] = e.target.value; this.update(v); }; };
       on('fq', 'q'); on('fseg', 'seg'); on('fpf', 'pf'); on('ftier', 'tier'); on('fst', 'st');
       $('#addInf', v).onclick = () => openEditor(null);
@@ -239,13 +239,14 @@
       $$('#lhead th[data-s]', v).forEach(th => { th.onclick = () => { if (f.sort === th.dataset.s) f.dir *= -1; else { f.sort = th.dataset.s; f.dir = th.dataset.s === 'name' ? 1 : -1; } this.update(v); }; });
       const cell = (i, k) => { const p = (i.pf || {})[k]; if (!p || !+p.f) return '<td class="r im-faint">–</td>'; return `<td class="r im-num">${short(p.f)}</td>`; };
       $('#lbody', v).innerHTML = L.length ? L.map(i => { const m = mainPf(i), tr = maxF(i) ? tierOf(maxF(i)) : null; return `<tr class="is-click" data-id="${esc(i.id)}">
-          <td><div class="im-nm">${esc(i.name)}${i.example ? ' <span class="im-demo">예시</span>' : ''}</div><div class="im-sub">${[i.handle, i.city].filter(Boolean).map(esc).join(' · ')}</div></td>
+          <td><div class="im-nm">${esc(i.name)}</div><div class="im-sub">${[i.handle, i.city].filter(Boolean).map(esc).join(' · ')}</div></td>
           <td>${esc(i.category || '–')}</td>${PF.map(p => cell(i, p.k)).join('')}
           <td class="r im-num">${m && m.v ? short(m.v) + ` <span class="im-pf pf-${m.k}"><i></i></span>` : '<span class="im-faint">–</span>'}</td>
           <td>${tr ? tr.n : '–'}</td><td>${statusChip(i.status || 'candidate')}</td></tr>`; }).join('')
         : `<tr><td colspan="9"><div class="im-empty" style="border:0">${S.inf.size ? '조건에 맞는 인플루언서가 없어요' : '등록된 인플루언서가 없어요. + 추가 또는 [발굴]에서 후보를 등록하세요.'}</div></td></tr>`;
       $$('#lbody tr[data-id]', v).forEach(tr => { tr.onclick = () => openEditor(tr.dataset.id); });
       $('#lcount', v).textContent = `${L.length}명 표시 · 전체 ${S.inf.size}명`;
+      const tw = $('.im-tblwrap', v); $('.im-lfilters', v).style.paddingRight = Math.max(0, tw.offsetWidth - tw.clientWidth - 1) + 'px';  // 표 세로 스크롤바만큼
     },
   };
 
@@ -501,7 +502,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     mount(v) {
       S.qEdit = null;
       // Ver_023: 입력 칸은 [+ 단가 기록]·[수정]을 누를 때만 펼치고, '단가 산출 기준' 카드는 없앴어요 (환율은 표 아래 한 줄)
-      v.innerHTML = `<div class="im-panel" style="margin-bottom:var(--space-6)"><h2>단가 기록 <small>1천회당·1천명당·CPV는 VND(₫)</small><span class="im-grow"></span><button type="button" class="im-btn is-primary is-sm" id="qNew">+ 단가 기록</button><a class="im-btn is-sm" href="${API}export/quotes.csv">단가 기록 CSV</a></h2>
+      v.innerHTML = `<div class="im-panel" style="margin-bottom:var(--space-6)"><h2>단가 기록 <small>1천회당·1천명당·CPV는 VND</small><span class="im-grow"></span><button type="button" class="im-btn is-primary is-sm" id="qNew">+ 단가 기록</button><a class="im-btn is-sm" href="${API}export/quotes.csv">단가 기록 CSV</a></h2>
           <div class="im-tblwrap is-scroll is-short"><table><thead><tr><th>관리</th><th>인플루언서</th><th>채널·형식·구분</th><th class="r">금액 (USD 환산)</th><th class="r">조회 1천회당</th><th class="r">팔로워 1천명당</th><th class="r">CPV</th><th>규모</th></tr></thead><tbody id="qBody"></tbody></table></div>
           <div class="im-row im-small" style="margin-top:8px;gap:6px"><span>환율 1 USD =</span><input type="number" id="xV" value="${esc(S.settings.vndPerUsd)}" aria-label="1달러당 동" style="width:110px"><span>VND ·</span><input type="number" id="xK" value="${esc(S.settings.krwPerUsd)}" aria-label="1달러당 원" style="width:90px"><span>KRW</span><button type="button" class="im-btn is-sm" id="xSave">저장</button><span id="xState"></span></div></div>
       <div class="im-panel" id="qFormP" style="margin-bottom:var(--space-6)" hidden><h2 id="qFormT">단가 기록 추가</h2><div class="im-fgrid">
@@ -559,7 +560,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
           <td><b>${esc(m.i?.name || q.name || '삭제됨')}</b><div class="im-sub">${esc(q.date || '')}${q.cond ? ' · ' + esc(q.cond) : ''}</div></td>
           <td><span class="im-pf pf-${q.platform}"><i></i>${PFN[q.platform] || ''}</span><div class="im-sub">${esc(q.format || '')} · ${LAYERS[q.layer] || ''}</div></td>
           <td class="r im-num">${grp(q.amount)} <span class="im-faint">${esc(q.cur)}</span><div class="im-sub">$${grp(m.usd)}</div></td>
-          <td class="r im-num">${m.cpm != null ? grp(m.cpm) + ' ₫' : '–'}</td><td class="r im-num">${m.perK != null ? grp(m.perK) + ' ₫' : '–'}</td><td class="r im-num">${m.cpv != null ? grp(m.cpv) + ' ₫' : '–'}</td>
+          <td class="r im-num">${m.cpm != null ? grp(m.cpm) + ' VND' : '–'}</td><td class="r im-num">${m.perK != null ? grp(m.perK) + ' VND' : '–'}</td><td class="r im-num">${m.cpv != null ? grp(m.cpv) + ' VND' : '–'}</td>
           <td>${m.tier ? `<span title="공개 참고가 ${tierRange(m.tier)}">${m.tier.n}</span>` : '<span class="im-faint">–</span>'}</td></tr>`; }).join('')
         : '<tr><td colspan="8"><div class="im-empty" style="border:0">[+ 단가 기록]으로 받은 견적·계약 금액을 추가하세요.</div></td></tr>';
       $$('[data-qd]', v).forEach(b => { b.onclick = () => armButton(b, '확인', async () => { if (await delQuote(b.dataset.qd)) { if (S.qEdit === b.dataset.qd) this.resetForm(v); toast('삭제했어요'); } }); });
@@ -605,21 +606,12 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
   const needUrl = i => Object.values(i.pf || {}).some(ch => ch && ch.need_url && !ch.url);
   const SL_ORDER = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Google'];
   const searchLinks = r => r.search_links && Object.keys(r.search_links).length ? `<div class="im-sub">직접 찾기: ${SL_ORDER.filter(k => r.search_links[k]).map(k => `<a href="${esc(r.search_links[k])}" target="_blank" rel="noopener">${k}</a>`).join(' · ')}</div>` : '';
-  // 참고 자료 CSV(reference_data) 결과의 분류 색 칩. 색은 팀 토큰만 사용
-  const REF_COLOR = { 초록: ['var(--im-ok)', 'var(--on-dark)'], 연두: ['var(--im-ok-soft)', 'var(--im-ok)'], 노랑: ['var(--im-warn-soft)', 'var(--im-warn)'],
-    회색: ['var(--im-sunk)', 'var(--im-muted)'], 주황: ['var(--im-warn-soft)', 'var(--im-bad)'], 빨강: ['var(--im-bad-soft)', 'var(--im-bad)'], 보라: ['var(--im-accent-soft)', 'var(--im-accent)'] };
-  const refChip = r => {
-    if (!r.ref_class && !r.ref_identity) return '';
-    const [bg, fg] = REF_COLOR[r.ref_color] || REF_COLOR['회색'];
-    const warn = r.ref_identity && r.ref_identity.startsWith('이름만') ? '<div class="im-sub" style="color:var(--im-warn)">순위 계정과 같은 계정인지 확인 필요(이름만 일치)</div>' : '';
-    return `<div class="im-sub"><span class="im-chip" style="background:${bg};color:${fg}">${esc(r.ref_class || '')}${r.ref_color ? ' · ' + esc(r.ref_color) : ''}</span>${r.ref_food !== '' && r.ref_food != null ? ` 식품 관련성 ${esc(r.ref_food)}/3` : ''}${r.ref_rank ? ' · ' + esc(r.ref_rank) : ''}</div>${r.ref_fol_src && r.followers != null ? `<div class="im-sub">팔로워: ${esc(r.ref_fol_src)}</div>` : ''}${warn}`;
-  };
   /* 화면에 보이는 조회 방법: YouTube Data API + 참고 자료 CSV(NoxInfluencer).
      Modash·HypeAuditor·Phyllo·TikTok One 연결 코드는 discovery.py·external_api.py에 그대로 있고 화면에서만 뺐어요 (Ver_017) */
   const shownProvider = p => p.key === 'youtube' || p.ref;
   const TTO_URL = 'https://ads.tiktok.com/creative';
   const DSUBS = [['find', '후보 탐색'], ['manual', '직접 등록']];  // Ver_023: '파일 자동 정제' 하위 탭은 화면에서 뺌 (/api/discovery/import-csv 경로는 그대로)
-  const SORTS = [['base', '기본 순서 (Nox 순위·검색 순서)'], ['fol', '인기순 (팔로워 많은 순)'], ['views', '조회수 많은 순']];
+  const SORTS = [['base', '기본 순서'], ['fol', '인기순'], ['views', '조회수 순']];
   S.disc = S.disc || { platform: 'tt', provider: '', cats: ['Dessert', 'Korean Food'], rows: [], sel: new Set(), meta: null, source: '', segment: '', sub: 'find', sort: 'base', tier: '', country: 'Vietnam', language: 'vi' };
   const SEGS = C.segments || [];
   const segOf = name => SEGS.find(x => x.name === name);
@@ -630,7 +622,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       <div class="im-panel" data-pane="find">
         <div class="im-fgrid"><label class="im-field is-span2">분야<select id="dSeg">${segOptions(D.segment, '선택하지 않음')}</select></label></div>
         <div class="im-fgrid" style="margin-top:12px">
-          <label class="im-field">플랫폼<select id="dPf">${[['tt', 'TikTok'], ['ig', 'Instagram'], ['yt', 'YouTube']].map(([k, n]) => `<option value="${k}" ${D.platform === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+          <label class="im-field">플랫폼<select id="dPf">${[['tt', 'TikTok'], ['ig', 'Instagram'], ['yt', 'YouTube'], ['fb', 'Facebook']].map(([k, n]) => `<option value="${k}" ${D.platform === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
           <label class="im-field is-span2">조회할 곳<select id="dProv"></select></label>
           <label class="im-field">규모<select id="dTier"><option value="">전체</option>${TIERS.map(t => `<option value="${t.k}" ${D.tier === t.k ? 'selected' : ''}>${t.n} (${t.label})</option>`).join('')}</select></label>
           <label class="im-field is-span2">정렬<select id="dSort">${SORTS.map(([k, n]) => `<option value="${k}" ${D.sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -725,21 +717,18 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     },
     results(v) {
       const D = S.disc, box = $('#dRes', v);
-      if (!D.rows.length) { box.innerHTML = '<div class="im-empty">[후보 검색]을 누르면 후보가 여기에 나와요</div>'; $('#dReg', v).disabled = true; $('#dMeta', v).textContent = ''; $('#dNotice', v).innerHTML = ''; return; }
+      if (!D.rows.length) { box.innerHTML = `<div class="im-empty">${D.meta ? '이 플랫폼에는 대시보드 기준(팔로워·구독자 1천 이상, 대시보드 분야)에 맞는 후보가 아직 없어요' : '[후보 검색]을 누르면 후보가 여기에 나와요'}</div>`; $('#dReg', v).disabled = true; $('#dMeta', v).textContent = ''; $('#dNotice', v).innerHTML = ''; return; }
       this.notice(v);
       const m = D.meta || {}, pfName = PFN[m.platform || D.platform];
-      $('#dMeta', v).textContent = m.ref ? `${m.label}${m.as_of ? '(' + m.as_of.slice(2).replace(/-/g, '/') + ' 기준)' : ''} · 전체 ${m.total}개 중 ${pfName} ${m.platform_total}개${m.hidden_excluded ? ` · 제외(D) 등급 ${m.hidden_excluded}개 숨김` : ''}${m.below_nano ? ` · 팔로워 1천 미만 ${m.below_nano}개 제외(Nano 미만)` : ''} → 검색 조건 적용 후 ${D.rows.length}개${(m.after_filter ?? D.rows.length) < (m.returned ?? 0) ? ` (규모 조건 밖 ${m.returned - m.after_filter}개 숨김)` : ''}${D.rows.some(r => r.no_url) ? ` · 주소 직접 확인 필요 ${D.rows.filter(r => r.no_url).length}개` : ''}` : m.csv ? `파일 ${D.rows.length}명${(m.errors || []).length ? ` · 오류 ${m.errors.length}줄` : ''}` : `${pfName} · 받은 결과 ${m.returned ?? D.rows.length}건 → 조건 적용 후 ${D.rows.length}건`;
+      $('#dMeta', v).textContent = m.ref ? `${m.label}${m.as_of ? '(' + m.as_of.slice(2).replace(/-/g, '/') + ' 기준)' : ''} · 전체 ${m.total}개 중 ${pfName} ${m.platform_total}개${(m.hidden_excluded || 0) + (m.below_nano || 0) ? ` · 대시보드 기준 밖 ${(m.hidden_excluded || 0) + (m.below_nano || 0)}개 제외` : ''} → 검색 조건 적용 후 ${D.rows.length}개${(m.after_filter ?? D.rows.length) < (m.returned ?? 0) ? ` (규모 조건 밖 ${m.returned - m.after_filter}개 숨김)` : ''}` : m.csv ? `파일 ${D.rows.length}명${(m.errors || []).length ? ` · 오류 ${m.errors.length}줄` : ''}` : `${pfName} · 받은 결과 ${m.returned ?? D.rows.length}건 → 조건 적용 후 ${D.rows.length}건`;
       const visible = {followers: D.rows.some(r => r.followers != null), views: D.rows.some(r => r.median_views != null || r.avg_views != null), er: D.rows.some(r => r.er != null), vn: D.rows.some(r => r.vn_audience != null)};
-      const emptyCell = '<span class="im-faint im-small">미공개</span>';
-      const metricHeaders = `${visible.followers ? `<th class="r">${((D.meta || {}).platform || D.platform) === 'yt' ? '구독자 수' : '팔로워'}</th>` : ''}${visible.views ? '<th class="r">조회수</th>' : ''}${visible.er ? '<th class="r">참여율</th>' : ''}${visible.vn ? '<th class="r">베트남 시청자</th>' : ''}`;
-      box.innerHTML = `<div class="im-tblwrap is-scroll"><table><thead><tr><th><input type="checkbox" id="dAll" aria-label="모두 선택"></th><th>계정</th>${metricHeaders}<th>출처·신뢰도</th><th>등록 여부</th></tr></thead><tbody>${this.order().map(i => { const r = D.rows[i]; return `<tr>
-        <td><input type="checkbox" data-i="${i}" ${D.sel.has(i) ? 'checked' : ''} ${r.duplicate ? 'disabled' : ''} aria-label="${esc(r.name)} 선택"></td>
-        <td>${r.display_name !== undefined ? (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${r.handle && !r.handle.startsWith('UC') ? '@' + esc(r.handle) : esc(r.name)}</b></a>${r.handle && !r.handle.startsWith('UC') ? ` <span class="im-muted">${esc(r.name)}</span>` : ''} <span class="im-chip st-shot">프로필 링크</span>` : `<b>${esc(r.name)}</b> <span class="im-chip st-replied">주소 직접 확인 필요</span>`) + (r.display_name && r.display_name !== r.name ? `<div class="im-sub">Nox 표기: ${esc(r.display_name)}</div>` : '') + searchLinks(r) : r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name || r.handle)}</b></a>` : `<b>${esc(r.name)}</b>`}${refChip(r)}<div class="im-sub"><span class="im-pf pf-${r.platform}"><i></i>${PFN[r.platform]}</span> ${r.handle ? '@' + esc(r.handle) : '<span class="im-faint">주소 미확인</span>'}${r.country ? ' · ' + esc(r.country) : ''}</div>${r.enriched ? `<div class="im-sub">지표 채움: ${esc(r.enriched)}</div>` : ''}${(r.cleansing || []).length ? `<div class="im-sub" style="color:var(--im-warn)">정제: ${esc(r.cleansing.join(', '))}</div>` : ''}</td>
+      const emptyCell = '<span class="im-faint">–</span>';
+      const metricHeaders = `${visible.followers ? `<th class="r">${((D.meta || {}).platform || D.platform) === 'yt' ? '구독자 수' : '팔로워'}</th>` : ''}`;  // Ver_023: 조회수·베트남 시청자 열은 결과 표에서 뺌
+      box.innerHTML = `<div class="im-tblwrap is-scroll"><table class="im-dres"><thead><tr><th><input type="checkbox" id="dAll" aria-label="모두 선택"></th><th>계정</th>${metricHeaders}</tr></thead><tbody>${this.order().map(i => { const r = D.rows[i]; return `<tr>
+        <td><input type="checkbox" data-i="${i}" ${D.sel.has(i) ? 'checked' : ''} ${r.duplicate ? `disabled title="이미 등록됨: ${esc(r.duplicate_of.name)}"` : ''} aria-label="${esc(r.name)} 선택"></td>
+        <td>${r.display_name !== undefined ? (/^https?:/.test(r.url || '') ? `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${r.handle && !r.handle.startsWith('UC') ? '@' + esc(r.handle) : esc(r.name)}</b></a>${r.handle && !r.handle.startsWith('UC') ? ` <span class="im-muted">${esc(r.name)}</span>` : ''}` : `<b>${esc(r.name)}</b>`) + (r.display_name && r.display_name !== r.name ? `<div class="im-sub">Nox 표기: ${esc(r.display_name)}</div>` : '') : /^https?:/.test(r.url || '') ? `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name || r.handle)}</b></a>` : `<b>${esc(r.name)}</b>`}<div class="im-sub"><span class="im-pf pf-${r.platform}"><i></i>${PFN[r.platform]}</span> ${r.handle ? '@' + esc(r.handle) : ''}${r.country ? ' · ' + esc(r.country) : ''}</div>${r.enriched ? `<div class="im-sub">지표 채움: ${esc(r.enriched)}</div>` : ''}${(r.cleansing || []).length ? `<div class="im-sub" style="color:var(--im-warn)">정제: ${esc(r.cleansing.join(', '))}</div>` : ''}</td>
         ${visible.followers ? `<td class="r im-num">${r.followers != null ? short(r.followers) : emptyCell}</td>` : ''}
-        ${visible.views ? `<td class="r im-num">${r.median_views != null ? short(r.median_views) + '<div class="im-sub">중앙값</div>' : r.avg_views != null ? short(r.avg_views) + '<div class="im-sub">평균</div>' : emptyCell}</td>` : ''}
-        ${visible.er ? `<td class="r im-num">${r.er != null ? pct(r.er) : emptyCell}</td>` : ''}${visible.vn ? `<td class="r im-num">${r.vn_audience != null ? pct(r.vn_audience) : emptyCell}</td>` : ''}
-        <td>${esc(r.provider || '')}<div class="im-sub">${esc(srcLabel(r.source_type))} ${confChip(r.confidence)} · ${esc(r.collected_on || '')}</div>${r.est_cost != null ? `<div class="im-sub">SaaS 추정 광고비 ${grp(r.est_cost)} (계약가 아님)</div>` : ''}</td>
-        <td>${r.duplicate ? `<span class="im-chip st-declined">등록됨</span><div class="im-sub">${esc(r.duplicate_of.name)}</div>` : r.no_url ? '<span class="im-chip st-sent">신규</span><div class="im-sub" style="color:var(--im-warn)">주소 직접 확인 필요<br>등록 후 편집 창에서 주소 입력</div>' : '<span class="im-chip st-sent">신규</span>'}</td></tr>`; }).join('')}</tbody></table></div>`;
+        </tr>`; }).join('')}</tbody></table></div>`;
       const upd = () => { $('#dReg', v).disabled = !D.sel.size; $('#dReg', v).textContent = D.sel.size ? `선택한 후보 ${D.sel.size}명 등록` : '선택한 후보 등록'; };
       $$('input[data-i]', box).forEach(c => { c.onchange = () => { const i = +c.dataset.i; c.checked ? D.sel.add(i) : D.sel.delete(i); upd(); }; });
       $('#dAll', box).onchange = e => { D.rows.forEach((r, i) => { if (!r.duplicate) e.target.checked ? D.sel.add(i) : D.sel.delete(i); }); this.results(v); };

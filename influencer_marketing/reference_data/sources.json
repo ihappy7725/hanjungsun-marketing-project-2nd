@@ -2,7 +2,16 @@
   "_설명": "이 폴더의 CSV는 [발굴] → '조회할 곳'에 선택지로 나타납니다. 새 CSV를 넣으면 아래 sources 목록에 file·label·as_of를 한 덩어리 추가하세요(추가하지 않아도 파일 이름으로 보입니다). 자세한 내용은 README.md를 보세요.",
   "sources": [
     {
+      "file": "creator_list_vn.csv",
+      "label": "베트남 크리에이터 목록",
+      "note": "",
+      "as_of": "2026-10-26",
+      "detail": "",
+      "kind": "real"
+    },
+    {
       "file": "Ver_003_real_verified.csv",
+      "hidden": true,
       "label": "NoxInfluencer",
       "note": "",
       "as_of": "2026-10-24",
