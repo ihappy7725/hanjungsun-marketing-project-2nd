@@ -21,7 +21,9 @@
 
 {% macro expand_button() -%}
 <button type="button" class="kpi-expand" data-kpi-action="expand" aria-label="블록 확대" title="확대">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  {# 기본: 바깥으로 뻗는 확대 아이콘 / 확대된 블록: 안으로 모이는 축소 아이콘 (CSS가 바꿔 보여 줌) #}
+  <svg class="kpi-ico-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  <svg class="kpi-ico-collapse" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
 </button>
 {%- endmacro %}
 
@@ -115,7 +117,7 @@
 
           <section class="kpi-sim" data-kpi="sim" aria-label="예산 집행 시뮬레이션">
             <p class="kpi-detail-title">
-              집행 시뮬레이션 <span class="kpi-status is-fallback">추정</span>
+              집행 시뮬레이션 <span class="kpi-est">추정</span>
               {{ info("집행 후 잔여 예산 = 현재 잔여 가용 예산 − 집행 예정 비용 합계\n원화 환산 = VND × 기준 환율(100 VND당 원) ÷ 100\n예상 매출(참고) = 집행 비용 × 예상 ROAS ÷ 100\n예상 ROAS 기본값: KOL 협찬은 인플루언서 채널 실적, 공식 매체는 매체별 실적(직접 수정 가능)\n(저장되지 않는 추정입니다)") }}
             </p>
             <!-- 단일 입력 폼: 집행 유형(KOL 협찬 / 공식 매체 광고)에 따라 아래 칸이 바뀝니다. -->
@@ -180,7 +182,7 @@
 
             <div class="table-wrap">
               <table class="kpi-table kpi-t-sim">
-                <thead><tr><th class="is-text">구분</th><th class="is-text">매체 및 대상</th><th class="is-text">세부 내용</th><th>집행 비용</th><th>예상 ROAS</th><th>예상 매출</th><th>관리</th></tr></thead>
+                <thead><tr><th class="is-text">구분</th><th class="is-text">매체 및 대상</th><th class="is-text">세부 내용</th><th>집행 비용</th><th>예상 ROAS <span class="kpi-est">추정</span></th><th>예상 매출 <span class="kpi-est">추정</span></th><th>관리</th></tr></thead>
                 <tbody data-kpi="sim-rows"></tbody>
               </table>
             </div>
@@ -190,7 +192,7 @@
               <div><span>KOL 협찬 예정</span><strong data-kpi="sim-planned-kol">—</strong><small data-kpi="sim-planned-kol-sub"></small></div>
               <div><span>공식 매체 예정</span><strong data-kpi="sim-planned-paid">—</strong><small data-kpi="sim-planned-paid-sub"></small></div>
               <!-- 결과 카드: 가장 중요한 '집행 후 남는 예산'을 강조 -->
-              <div class="kpi-sim-key" data-kpi="sim-after-card"><span>집행 후 남는 예산</span><strong data-kpi="sim-after">—</strong><small data-kpi="sim-after-sub"></small></div>
+              <div class="kpi-sim-key" data-kpi="sim-after-card"><span>집행 후 남는 예산 <span class="kpi-est">추정</span></span><strong data-kpi="sim-after">—</strong><small data-kpi="sim-after-sub"></small></div>
             </div>
             <p class="kpi-note" data-kpi="sim-summary">항목을 추가하면 집행 후 남는 예산을 바로 계산합니다.</p>
           </section>
@@ -245,7 +247,8 @@
         </div>
       </div>
       <div class="kpi-panel-body">
-        <p class="kpi-ai-summary" data-kpi="voc-summary"></p>
+        <!-- AI 요약: 창구별 한 줄 요약 + 유의할 점. AI 분석 전에는 데이터로 센 자동 집계를 보여 줍니다. -->
+        <div class="kpi-ai-summary" data-kpi="voc-summary"></div>
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">
           <div class="kpi-chart kpi-chart-small">

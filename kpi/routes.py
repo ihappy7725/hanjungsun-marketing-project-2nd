@@ -676,7 +676,8 @@ VOC_PROMPT = """당신은 베트남 시장에 진출한 한국 찹쌀떡 브랜�
 고객은 제품 팜플렛 하단 QR로 Zalo OA · KakaoTalk · WhatsApp 중 한 창구에 들어와 1:1 문의·후기를 남기고 설문에 답합니다.
 아래 JSON의 messages는 1:1 문의·후기(대부분 베트남어, 일부 한국어)이고, survey는 설문 주관식 의견(한국어)입니다.
 messages의 각 글을 한국어로 자연스럽게 번역하고 감성(sentiment)과 핵심 토픽(keyword_tag)을 분류한 뒤,
-전체 요약과 창구별 요약을 한국어로 작성하세요. survey는 번역하지 말고 요약 근거로만 쓰세요.
+창구별 요약을 한국어로 작성하세요. survey는 번역하지 말고 요약 근거로만 쓰세요.
+요약은 반드시 이번 입력의 글에서 실제로 많이 나온 내용만 근거로 하고, 이 지시문의 표현을 그대로 옮겨 쓰지 마세요.
 
 - sentiment는 Positive, Neutral, Negative 중 하나
 - keyword_tag는 당도/맛, 포장/보냉, 가격, 선물용, 문의/기타 중 하나 (한정선은 배송을 하지 않으므로 포장·보냉·휴대 관련 내용은 포장/보냉,
@@ -684,20 +685,16 @@ messages의 각 글을 한국어로 자연스럽게 번역하고 감성(sentimen
 - review_id는 입력 값을 그대로 사용
 - translated_kr는 쿠팡 구매 후기처럼 자연스러운 구어체 존댓말 1~2문장
   (예: "~하더라고요", "~했어요!", "~네요..", 필요하면 "ㅠ"), 원문에 없는 내용은 더하지 말 것
-- summary_kr는 짧은 평서문 2문장 이하. 첫 문장은 가장 많이 나온 긍정 요인, 둘째 문장은 가장 많이 나온 불만 요인
-  각 문장은 40자 이내, "~입니다/~습니다"로 끝내고 쉼표로 여러 내용을 잇지 말 것
-  수식어·추측·과장 없이 리뷰에 있는 내용만 근거로 작성 (예: "맛과 식감에 대한 만족이 가장 많습니다. 포장 상태와 가격에 대한 불만이 있습니다.")
-
 - channel_summaries는 Zalo_OA, KakaoTalk, WhatsApp 세 창구 각각 하나씩(그 창구의 messages + survey 근거)
-  summary: 그 창구 의견을 한 문장(40자 이내, "~입니다/~습니다")
-  keep: 고객이 만족해 계속 유지할 점 1~2개를 짧은 명사구로(예: "보냉 박스 동봉")
-  improve: 불만·요청이 많아 개선할 점 1~2개를 짧은 명사구로(예: "보관 방법 안내")
-  근거가 없으면 빈 배열, 원문에 없는 내용은 만들지 말 것
+  summary: 그 창구에서 가장 많이 나온 의견을 한 문장(40자 이내, "~입니다/~습니다", 창구마다 다른 내용)
+  caution: 마케터가 유의해야 할 점 한 문장(40자 이내). 반복되는 불만·요청이나 응대 문제 중 가장 시급한 것
+  keep: 고객이 만족해 계속 유지할 점 1~2개를 짧은 명사구로
+  improve: 불만·요청이 많아 개선할 점 1~2개를 짧은 명사구로
+  근거가 없으면 빈 문자열·빈 배열, 원문에 없는 내용·수치는 만들지 말 것
 
 다음 JSON 형식으로만 답하세요:
 {"reviews": [{"review_id": "...", "translated_kr": "...", "sentiment": "...", "keyword_tag": "..."}],
- "summary_kr": "...",
- "channel_summaries": [{"channel": "Zalo_OA", "summary": "...", "keep": ["..."], "improve": ["..."]}]}
+ "channel_summaries": [{"channel": "Zalo_OA", "summary": "...", "caution": "...", "keep": ["..."], "improve": ["..."]}]}
 
 입력:
 """
@@ -754,7 +751,8 @@ def _call_openai(reviews, survey=()):
         return None, "OpenAI 응답에 분석 결과가 없습니다."
     as_list = lambda v: [str(x) for x in v][:2] if isinstance(v, list) else []  # noqa: E731
     channel_summaries = [
-        {"channel": c["channel"], "summary": str(c.get("summary") or ""), "keep": as_list(c.get("keep")), "improve": as_list(c.get("improve"))}
+        {"channel": c["channel"], "summary": str(c.get("summary") or ""), "caution": str(c.get("caution") or ""),
+         "keep": as_list(c.get("keep")), "improve": as_list(c.get("improve"))}
         for c in parsed.get("channel_summaries") or []
         if isinstance(c, dict) and c.get("channel") in REVIEW_CHANNELS
     ]
@@ -762,7 +760,6 @@ def _call_openai(reviews, survey=()):
         "model": model,
         "reviewed": False,  # AI 번역·분류는 사람이 검수하기 전 결과입니다.
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
-        "summary_kr": str(parsed.get("summary_kr") or ""),
         "channel_summaries": channel_summaries,
         "reviews": analyzed,
         **_voc_stats(analyzed),
@@ -812,9 +809,8 @@ def api_voc():
         # 설문 의견은 번역 대상이 아니라 데이터의 한국어를 그대로 씁니다(창구별 목록에 함께 표시, AI 창구별 요약의 근거).
         "survey_comments": _read_survey_comments(),
         "qr": _qr_block(),
+        # 마지막 AI 분석 결과(서버 메모리 보관). AI 분석은 화면의 [AI로 분석]을 눌렀을 때만 실행합니다.
         "ai": _voc_ai_cache["result"],
-        # 키가 있으면 화면이 처음 열릴 때 AI 정제를 한 번 자동 실행합니다(결과는 서버 메모리에 보관).
-        "ai_available": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
     })
 
 

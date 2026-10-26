@@ -9,14 +9,20 @@
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
 .kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-navy: #3b5b8c; }
-/* VOC 색: 청록(만족) · 머스터드(보통) · 코랄(불만) 3색 조합, 기존보다 채도를 살짝 올림. 키워드 막대는 청록 진하게/연하게 */
+/* VOC 색: 예산 트래킹과 같은 4색(녹색 · 분홍 · 밝은 남색 · 아이보리)만 씁니다.
+   행동이 필요한 것일수록 진한 색: 불만 = 밝은 남색(가장 진함) · 만족 = 녹색 · 보통 = 아이보리. 키워드 1위 = 남색, 나머지 = 아이보리 */
 .kpi-page {
-  --kpi-voc-good: #2e8b7a;
-  --kpi-voc-mid: #e2b95b;
-  --kpi-voc-bad: #e8705a;
-  --kpi-voc-bad-soft: #f3b2a5;
-  --kpi-voc-good-soft: #a8d5cc;
+  --kpi-voc-good: var(--teal);
+  --kpi-voc-mid: var(--beige);
+  --kpi-voc-bad: var(--kpi-navy);
+  --kpi-voc-bad-soft: var(--kpi-pink);
+  --kpi-voc-good-soft: var(--celadon);
+  --kpi-voc-key: var(--kpi-navy);
+  --kpi-voc-key-soft: var(--beige);
 }
+/* '추정' 표시: 박스 없이 작고 연한 회색 글씨(계산·가정으로 나온 값 옆에 붙임) */
+.kpi-page .kpi-est { margin-left: var(--space-1); color: var(--muted); font-size: 0.72em; font-weight: 400; letter-spacing: 0; opacity: .85; vertical-align: 0.1em; }
+.kpi-page .kpi-sim-key .kpi-est { color: inherit; opacity: .7; }  /* 녹색 강조 카드 위에서는 카드 글씨색을 연하게 */
 /* 빨강(차분한 벽돌빛): 손익분기 미달·예산 초과 경고 / 밝은 남색: 예산 인플루언서 예상 */
 /* 조치가 필요한 문구(⚠ 손익분기 미달 → 예산 조정 검토, 예산 초과) */
 .kpi-page .kpi-warn { color: var(--kpi-red); font-weight: 700; }
@@ -184,6 +190,10 @@
 }
 .kpi-page .kpi-expand:hover { color: var(--ink); border-color: var(--muted); }
 .kpi-page .kpi-expand svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+/* 확대된 블록은 축소 아이콘으로 바꿔 보여 줍니다. */
+.kpi-page .kpi-expand .kpi-ico-collapse,
+.kpi-page .kpi-panel.is-expanded .kpi-expand .kpi-ico-expand { display: none; }
+.kpi-page .kpi-panel.is-expanded .kpi-expand .kpi-ico-collapse { display: block; }
 
 /* ---------- 확대 상태 ---------- */
 .kpi-page .kpi-backdrop { position: fixed; inset: 0; z-index: 25; background: var(--backdrop); }
@@ -420,8 +430,17 @@
   background: var(--paper);
   font-size: var(--fs-min);
   line-height: var(--line-height);
-  white-space: pre-line;  /* 'AI 요약' 제목과 문장마다 줄을 나눔 */
 }
+/* AI 요약 창: 제목 줄 + 창구마다 한 줄(창구 | 요약 | ⚠ 유의할 점). 기본 화면은 한 줄로 자르고 확대 화면은 줄바꿈 */
+.kpi-page .kpi-ai-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.kpi-page .kpi-ai-head small { color: var(--muted); font-size: 0.8em; }
+.kpi-page .kpi-ai-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
+.kpi-page .kpi-ai-row b { font-weight: 700; }
+.kpi-page .kpi-ai-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kpi-page .kpi-ai-row .kpi-ai-caution { color: var(--kpi-voc-bad); }
+.kpi-page .kpi-panel.is-expanded .kpi-ai-row span { white-space: normal; }
+.kpi-page .kpi-ai-meta { margin-top: var(--space-1); color: var(--muted); font-size: 0.8em; }
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-ai-meta:not(.is-loading) { display: none; }  /* 기본 화면은 줄 수를 줄임(분석 시각은 확대 화면) */
 .kpi-page .kpi-ai-summary:empty { display: none; }  /* 요약이 없으면 빈 회색 줄을 남기지 않음 */
 .kpi-page .kpi-detail-title { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-5) 0 var(--space-3); font-size: var(--fs-min); font-weight: 600; }
 

@@ -16,7 +16,7 @@ const charts = {};
 const view = {
   currency: "KRW", summary: null,
   reviewLang: "ko", reviewFilter: "all", reviewChannel: "all", reviewPage: 1, reviews: [],
-  surveyComments: [], channels: [], vocAiChannels: [],
+  surveyComments: [], channels: [], vocAiChannels: [], vocAiMeta: null,
 };
 const REVIEW_PAGE_SIZE = 10;
 
@@ -205,10 +205,13 @@ function renderBudget(data) {
   doughnut("budget", parts.map((x) => x[0]), parts.map((x) => x[1]), parts.map((x) => x[2]));
   setText("remaining-pct", pct(b.remaining_percent));
 
+  // '추정': 인플루언서 예상(견적 기준)과, 그 예상을 뺀 잔여 가용 예산
+  const estimated = new Set(["인플루언서 예상", "잔여 가용 예산"]);
   const rows = parts.map(([label, value, color]) => {
     const swatch = el("span", { className: "kpi-swatch" });
     swatch.style.background = color;
-    return el("div", {}, [el("dt", {}, [swatch, document.createTextNode(label)]), el("dd", { text: krwMan(value) })]);
+    const est = estimated.has(label) ? [el("span", { className: "kpi-est", text: "추정" })] : [];
+    return el("div", {}, [el("dt", {}, [swatch, document.createTextNode(label), ...est]), el("dd", { text: krwMan(value) })]);
   });
   rows.push(el("div", {}, [el("dt", { text: "총 배정 예산" }), el("dd", { text: krwMan(b.total_krw) })]));
   if (b.remaining_krw < 0) rows.push(el("div", {}, [el("dt", {}, [badge("예산 초과", "red")]), el("dd", { text: krwMan(-b.remaining_krw) })]));
@@ -567,6 +570,7 @@ function renderVoc(reviews, source) {
     charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
   }
 
+  renderVocSummaryBox();
   renderVocChannelBars();
   renderVocKeywords();
   renderVocSummaries();
@@ -606,8 +610,8 @@ function renderVocChannelBars() {
 // 확대 화면: 핵심 키워드 Top 5 (창구 블록에서 고른 창구 기준, 1위만 진한 청록)
 function renderVocKeywords() {
   const top = Object.entries(countBy(channelList(view.reviewChannel), "keyword_tag")).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const strong = cssVar("--kpi-voc-good");
-  const soft = cssVar("--kpi-voc-good-soft");
+  const strong = cssVar("--kpi-voc-key");
+  const soft = cssVar("--kpi-voc-key-soft");
   setText("voc-keyword-scope", view.reviewChannel === "all" ? "전체 창구" : PLATFORM_LABEL[view.reviewChannel] || view.reviewChannel);
   drawChart("keywords", {
     type: "bar",
@@ -642,16 +646,41 @@ function autoChannelSummary(ch) {
   const neg = list.length ? Math.round((list.filter((r) => r.sentiment === "Negative").length / list.length) * 100) : 0;
   return {
     channel: ch,
+    // 요약 = 잘되는 점(만족 비율 · 가장 많은 칭찬 주제), 유의할 점(caution) = 가장 많은 불만
     summary: !list.length ? "의견이 없습니다."
-      : bad.length ? `불만 ${neg}% · '${bad[0][0]}' 불만이 ${num(bad[0][1])}건으로 가장 많습니다.` : "불만 의견이 없습니다.",
+      : `만족 ${positivePct(list)}% · 불만 ${neg}% · ${keep.length ? `'${keep[0][0]}' 칭찬이 가장 많습니다.` : "칭찬 의견이 적습니다."}`,
     keep: keep.map(([k, n]) => `${k} ${num(n)}건`),
     improve: improve.map(([k, n]) => `${k} ${num(n)}건`),
+    caution: bad.length ? `'${bad[0][0]}' 불만 ${num(bad[0][1])}건` : improve.length ? `'${improve[0][0]}' 보통 의견 ${num(improve[0][1])}건` : "",
   };
+}
+
+// AI 요약 창(기본 화면 위): 창구마다 한 줄 요약 + ⚠ 유의할 점.
+// AI로 분석하기 전에는 데이터로 센 자동 집계를, 분석 후에는 AI 결과를 보여 줍니다(두 화면이 다르게 보임).
+function renderVocSummaryBox() {
+  const ai = view.vocAiChannels || [];
+  const meta = view.vocAiMeta;
+  const isAi = ai.length > 0;
+  const head = el("div", { className: "kpi-ai-head" }, [
+    el("strong", { text: isAi ? "AI 요약" : "자동 집계" }),
+    el("small", { text: isAi ? "" : "[AI로 분석]을 누르면 AI 요약으로 바뀝니다" }),
+  ]);
+  const rows = view.channels.map((ch) => {
+    const s = (isAi && ai.find((x) => x.channel === ch)) || autoChannelSummary(ch);
+    const caution = s.caution || (s.improve || [])[0] || "";
+    return el("div", { className: "kpi-ai-row" }, [
+      el("b", { text: PLATFORM_LABEL[ch] || ch }),
+      el("span", { text: s.summary || "—" }),
+      el("span", { className: "kpi-ai-caution", text: caution ? `⚠ ${caution}` : "" }),
+    ]);
+  });
+  const foot = isAi && meta ? [el("div", { className: "kpi-ai-meta", text: `${meta.model} · ${meta.analyzed_at} 분석 · 사람 검수 전` })] : [];
+  $("voc-summary").replaceChildren(head, ...rows, ...foot);
 }
 
 function renderVocSummaries() {
   const ai = view.vocAiChannels || [];
-  setText("voc-summary-source", ai.length ? "AI · 검수 전" : "자동 집계 (AI 아님)");
+  setText("voc-summary-source", ai.length ? "AI 분석" : "자동 집계 (AI 분석 전)");
   $("voc-ch-summaries").replaceChildren(...view.channels.map((ch) => {
     const s = ai.find((x) => x.channel === ch) || autoChannelSummary(ch);
     const list = channelList(ch);
@@ -833,17 +862,13 @@ function showVocAi(demoReviews, ai) {
   const byId = Object.fromEntries(ai.reviews.map((r) => [r.review_id, r]));
   const merged = demoReviews.map((r) => ({ ...r, ...(byId[r.review_id] || { translated_kr: "", sentiment: null, keyword_tag: null }) }));
   view.vocAiChannels = ai.channel_summaries || [];
+  view.vocAiMeta = { model: ai.model, analyzed_at: ai.analyzed_at };
   renderVoc(merged, {
     text: "OpenAI 분석 · 검수 전",
     status: "live",
     title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
     meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전) · 원문은 시연 리뷰`,
   });
-  // 'AI 요약' 제목을 첫 문장 앞에 붙이고, 문장마다 줄을 나눠 짧게 읽히도록 표시합니다.
-  const summary = (ai.summary_kr || "").trim().replace(/([.!?。])\s+/g, "$1\n");
-  const box = $("voc-summary");
-  box.replaceChildren(el("strong", { text: "AI 요약 · 검수 전 " }), document.createTextNode(summary || "요약이 비어 있습니다."));
-  box.hidden = false;
 }
 
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
@@ -1246,7 +1271,7 @@ function setExpanded(panel) {
   root.querySelectorAll(".kpi-expand").forEach((btn) => {
     const open = btn.closest(".kpi-panel") === panel;
     btn.setAttribute("aria-label", open ? "원래 크기로" : "블록 확대");
-    btn.title = open ? "닫기 (Esc)" : "확대";
+    btn.title = open ? "축소 (Esc)" : "확대";
   });
   resizeCharts();
 }
@@ -1293,18 +1318,11 @@ async function loadVoc() {
     renderQr(data.qr);
     if (data.ai) showVocAi(vocReviews, data.ai);
     else renderVoc(vocReviews, { text: "시연 분류", status: "demo", meta: "시연 문의·시연 분류" });
-    // 기본값: 베트남어 리뷰를 AI가 한국어로 다듬어 보여 줍니다. 키가 있으면 처음 한 번 자동 실행(서버가 결과 보관).
-    if (!data.ai && data.ai_available && !vocAutoTried) {
-      vocAutoTried = true;
-      setText("voc-summary", "AI가 베트남어 리뷰를 한국어로 다듬는 중…");
-      analyzeVoc(root.querySelector('[data-kpi-action="voc-analyze"]'));
-    }
+    // AI 분석은 [AI로 분석]을 눌렀을 때만 실행합니다(그 전에는 자동 집계). 마지막 AI 결과는 서버가 보관합니다.
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }
 }
-
-let vocAutoTried = false;
 
 // ---------- 블록 순서 바꾸기 (위젯) — 순서는 이 브라우저에만 저장 ----------
 const ORDER_KEY = "kpi-board-order";
@@ -1374,13 +1392,13 @@ root.addEventListener("dragend", () => {
 async function analyzeVoc(button) {
   button.disabled = true;
   button.textContent = "분석 중…";
+  $("voc-summary").append(el("div", { className: "kpi-ai-meta is-loading", text: "AI가 창구별 문의·설문을 분석하는 중… (최대 2분)" }));
   showError("voc-error", "");
   try {
     const data = await getJson(API.analyze, { method: "POST" });
     showVocAi(vocReviews, data.ai);
   } catch (err) {
     showError("voc-error", `${err.message}`);
-    setText("voc-summary", "");
   } finally {
     button.disabled = false;
     button.textContent = "AI로 분석";
