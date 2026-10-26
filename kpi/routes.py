@@ -796,6 +796,7 @@ def api_simulator():
             for c in summary["channels"]
         ],
         "ad_channels": [c["channel"] for c in DEMO_CHANNELS if c["channel"] != "Influencer"],
+        "roas_bep_percent": ROAS_BEP_PERCENT,  # 본전 매출 · 이익/손해 판정 기준
         "influencers": _simulator_influencers(),
         "influencer_list": _simulator_influencer_list(),
     })

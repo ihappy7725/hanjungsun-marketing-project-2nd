@@ -35,9 +35,17 @@
     </div>
     <div class="kpi-head-side">
       <span class="badge" data-kpi="month">기준월 —</span>
-      <button type="button" class="btn" data-kpi-action="reset-order" title="블록 순서를 처음 배치로 되돌립니다">기본 순서로</button>
-      <button type="button" class="btn" data-kpi-action="refresh">새로고침</button>
-      <button type="button" class="btn dark" data-kpi-action="export-pdf" title="KPI 전체를 A4 보고서로 열고 인쇄 창에서 'PDF로 저장'">PDF 내보내기</button>
+      <!-- 내보내기: PDF 보고서(미리보기 후 저장) · 엑셀(.xlsx) -->
+      <div class="kpi-export">
+        <button type="button" class="btn dark" data-kpi-action="export-menu" aria-haspopup="menu" aria-expanded="false">내보내기</button>
+        <div class="kpi-export-menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-kpi-action="export-pdf">PDF 보고서<small>미리보기 후 PDF로 저장</small></button>
+          <button type="button" role="menuitem" data-kpi-action="export-xlsx">엑셀 (.xlsx)<small>표 데이터 · 문의 전체</small></button>
+        </div>
+      </div>
+      <button type="button" class="btn kpi-refresh" data-kpi-action="refresh" aria-label="새로고침" title="새로고침">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg>
+      </button>
     </div>
   </header>
 
@@ -156,8 +164,10 @@
                     <option value="도달">도달</option>
                   </select>
                 </label>
+                <!-- 예상 ROAS: 손익분기 기준 손해 · 본전 · 이익 묶음 드롭다운, '직접 입력…'을 고르면 숫자 칸이 나옵니다 -->
                 <label class="field">예상 ROAS(%)
-                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 300" data-kpi="sim-roas">
+                  <select name="roasPick" data-kpi="sim-roas-pick"></select>
+                  <input type="text" name="roas" inputmode="decimal" autocomplete="off" placeholder="예: 320" aria-label="예상 ROAS 직접 입력(%)" data-kpi="sim-roas" hidden>
                   <small class="kpi-sim-help" data-kpi="sim-roas-help"></small>
                 </label>
                 <div class="kpi-sim-row">
@@ -173,6 +183,8 @@
                   </label>
                 </div>
               </div>
+              <!-- 손익 미리보기: 예상 ROAS · 집행 예산을 넣는 즉시 본전 매출 · 예상 매출 · 이익/손해 -->
+              <p class="kpi-sim-preview" data-kpi="sim-preview" aria-live="polite"></p>
               <div class="kpi-sim-foot">
                 <small class="kpi-sim-help" data-kpi="sim-rate-help"></small>
                 <button type="submit" class="btn dark">목록에 추가</button>
@@ -192,6 +204,7 @@
               <div><span>현재 잔여 가용 예산</span><strong data-kpi="sim-now">—</strong><small data-kpi="sim-now-sub"></small></div>
               <div><span>KOL 협찬 예정</span><strong data-kpi="sim-planned-kol">—</strong><small data-kpi="sim-planned-kol-sub"></small></div>
               <div><span>공식 매체 예정</span><strong data-kpi="sim-planned-paid">—</strong><small data-kpi="sim-planned-paid-sub"></small></div>
+              <div><span>예상 매출 <span class="kpi-est">추정</span></span><strong data-kpi="sim-revenue">—</strong><small data-kpi="sim-revenue-sub"></small></div>
               <!-- 결과 카드: 가장 중요한 '집행 후 남는 예산'을 강조 -->
               <div class="kpi-sim-key" data-kpi="sim-after-card"><span>집행 후 남는 예산 <span class="kpi-est">추정</span></span><strong data-kpi="sim-after">—</strong><small data-kpi="sim-after-sub"></small></div>
             </div>
