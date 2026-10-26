@@ -453,19 +453,26 @@ async function initialize() {
     const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
     $('#news-list').innerHTML = news.map(n => {
-      // 화면에는 원문으로 가는 링크 하나만 둡니다. 교차 출처와 확인 범위는 자료 파일에 그대로 보관합니다.
+      // 등록된 출처·대조 내용·확인 범위를 표시합니다. 이 화면이 원문을 새로 검증하는 것은 아닙니다.
       const sources = Array.isArray(n.sources) ? n.sources : [];
       const link = safeUrl(n.url) || safeUrl(sources[0]?.url);
       const evidence = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : esc(n.source || '출처 미제공');
+      const sourceDetails = sources.map(source => {
+        const address = safeUrl(source.url);
+        const label = source.role === 'primary' ? '원문' : source.role === 'independent_corrob' ? '교차 출처' : '참고 출처';
+        return `<li><strong>${label} · ${esc(source.publisher)}</strong>${source.title ? `<span>${esc(source.title)}</span>` : ''}${source.supports ? `<p>${esc(source.supports)}</p>` : ''}${address ? `<a href="${esc(address)}" target="_blank" rel="noopener noreferrer">자료 열기 ↗</a>` : ''}</li>`;
+      }).join('');
       return `<article class="home-news-item">
         <div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}</div>
         <h3>${esc(n.title)}</h3>
         ${n.is_demo ? badge('예시 데이터 (DEMO)') : `<p class="home-news-brief">${esc(newsPreview(n.summary))}</p>`}
         ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion))}</p><span class="home-news-caution">참여·제품 적용 여부는 별도 확인이 필요합니다.</span></div>` : ''}
-        <details class="home-news-details"><summary>자세히 보기</summary>
+        <details class="home-news-details"><summary>자세히 보기 · 출처와 확인 범위</summary>
           ${n.is_demo ? '' : `<h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>`}
           ${n.suggestion ? `<h4>적용 제안 · 전체 내용</h4><p>${esc(n.suggestion)}</p>` : ''}
           ${n.verified_at ? `<p class="home-signal-meta">담당자 확인 ${esc(n.verified_at)}</p>` : ''}
+          ${sourceDetails ? `<h4>어디서 확인했나요?</h4><ul class="home-news-sources">${sourceDetails}</ul>` : ''}
+          ${n.verification_notes ? `<h4>등록 당시 확인한 내용과 한계</h4><p>${esc(n.verification_notes)}</p>` : ''}
         </details>
         <div class="home-news-links">${n.is_demo ? '' : evidence}${n.suggestion ? '<a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a>' : ''}</div>
       </article>`;
