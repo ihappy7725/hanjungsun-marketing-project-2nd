@@ -20,6 +20,9 @@ const FIGMA_DESIGN_API = "/content_studio/media/api/figma/designs";  // 플러�
 const BG_QUOTE_API = "/content_studio/media/api/design-bg/quote";  // AI 배경 그림 견적 (무료)
 const BG_API = "/content_studio/media/api/design-bg";              // AI 배경 그림 만들기 (유료, OpenAI 이미지 모델)
 const BG_ROLE = "background";  // designs.py BG_ROLE: 장 전체를 덮는 배경 그림. 고르거나 옮기지 않고 바탕처럼 둡니다.
+const RATIO_API = "/content_studio/media/api/design-ratio";        // 비율 바꾸기 (무료)
+const DESIGN_RATIOS = { poster: ["4:5", "9:16", "16:9", "1:1"], cardnews: ["4:5", "1:1"] };  // designs.py DESIGN_RATIOS
+const CARD_PAGES = [3, 6];  // 카드뉴스 장수 (designs.py MIN_PAGES, MAX_PAGES)
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -41,7 +44,6 @@ const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(unde
 let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다. (모듈 안 변수)
 let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
 let focusAfterRender = false;  // 키보드로 고치다 저장하면, 다시 그린 뒤 선택한 요소로 초점을 돌려줍니다.
-let promptCache = null;  // 오른쪽 프롬프트 칸. 저장 후 다시 그려도 같은 작업이면 입력·AI 제안을 유지합니다.
 // AI 배경 그림: 만드는 동안 저장으로 편집기가 다시 그려져도, 결과는 가장 최근 편집기(applyBackground)에 깝니다.
 let applyBackground = null;
 let bgBusy = false;    // 만드는 중 (한 번에 한 장)
@@ -166,8 +168,118 @@ async function postJson(url, body) {
   return data;
 }
 
+// ---------- AI 제안 카드 · 비용 줄 (renderChoices · promptForm이 같이 씀) ----------
+// 제안 카드: 실제 모양 미리보기 + 스타일 + 문구(베트남어·한국어 뜻). 카드 아무 곳이나 누르면 onPick (문구 펼치기는 제외).
+function candidateCard(item, isSelected, onPick) {
+  const card = el("section", `studio-editor-candidate${isSelected ? " is-selected" : ""}`);
+  card.addEventListener("click", (event) => {
+    if (event.target.closest("summary") || isSelected) return;
+    onPick();
+  });
+  const choose = button(`${isSelected ? "✓ " : ""}${item.name}`, () => {}, isSelected ? "btn dark" : "btn");
+  choose.setAttribute("aria-pressed", String(isSelected));
+  const words = el("details", "studio-editor-candidate-words");
+  words.open = item.pages.length === 1;
+  words.append(el("summary", "", item.pages.length > 1 ? `문구 보기 · ${item.pages.length}장` : "문구 보기"));
+  item.pages.forEach((page, pageNumber) => {
+    const vi = el("p", "", `${item.pages.length > 1 ? `${pageNumber + 1}장 · ` : ""}${page.title_vi}\n${page.body_vi}`);
+    vi.lang = "vi";
+    words.append(vi, el("p", "studio-hint", `${page.title_ko}\n${page.body_ko}`));
+  });
+  card.append(choose, item.style_label ? el("p", "studio-hint", `스타일 · ${item.style_label}`) : "",
+    item.design ? renderThumb(item.design) : "", words);
+  return card;
+}
+
+// 유료 생성의 토큰 수 · 예상 비용($) 한 줄 (+ 작은 설명). 비용 정보가 없으면 숨깁니다.
+function fillUsage(node, data) {
+  const cost = data.cost;
+  if (!cost) { node.hidden = true; return; }
+  const count = (value) => Number(value || 0).toLocaleString("ko-KR");
+  const usd = cost.usd > 0 && cost.usd < 0.0001 ? "< $0.0001" : `$${Number(cost.usd || 0).toFixed(4)}`;
+  node.replaceChildren(
+    el("b", "", `이번 생성 ${count(cost.total_tokens)} 토큰 · 예상 비용 ${usd}`),
+    el("span", "", `${data.model} · 입력 ${count(cost.input_tokens)}${cost.cached_tokens ? ` (캐시 ${count(cost.cached_tokens)})` : ""} / 출력 ${count(cost.output_tokens)} 토큰`),
+    el("span", "", `OpenAI 공개 단가 기준 추정(${cost.price_checked} 확인). 실제 청구액은 OpenAI 사용 내역이 기준이에요.`));
+  node.hidden = false;
+}
+
+// ---------- 새로 만들기: 시안 3개 고르기 ----------
+// sns.js(유진)가 포스터·카드뉴스 새로 만들기 화면에서 [보내기]를 누르면 부릅니다.
+// AI 3안(design-assistant)을 만들어 카드 3개로 보여 주고, [이 시안으로 확정]을 누르면 onCreate(design, { product_id })로 넘깁니다.
+// (저장은 sns.js의 기존 POST /api/chats, 실패하면 onCreate가 throw) 확인 창 없이 결과 아래에 비용 한 줄을 보여 줍니다.
+// style: 스타일 버튼 값(designs.py STYLE_HINTS key, AI 추천은 ""). pages: 카드뉴스 장수(3~6).
+export function renderChoices(root, { kind, ratio, productId = null, style = "", pages = 5, request = "", onCreate } = {}) {
+  const base = { kind, ratio, demo: true, pages: [{ elements: [] }] };  // 빈 초안: 사진은 고른 제품 대표 사진
+  const label = kind === "poster" ? "포스터" : "카드뉴스";
+  const wrap = el("div", "studio-editor studio-editor-choices");
+  const msg = el("p", "studio-hint");
+  msg.setAttribute("role", "status");
+  const cards = el("div", "studio-editor-candidates");
+  const usage = el("p", "studio-editor-usage");
+  usage.hidden = true;
+  const actions = el("div", "studio-editor-actions");
+  let proposals = [];
+  let selected = 0;
+  let busy = false;
+
+  const confirm = button("이 시안으로 확정", async () => {
+    if (busy || !proposals[selected] || !onCreate) return;
+    busy = true;
+    confirm.disabled = retry.disabled = true;
+    msg.textContent = "고른 시안을 저장하는 중…";
+    try {
+      await onCreate(proposals[selected].design, { product_id: productId });  // 저장되면 sns.js가 편집 화면으로 넘어갑니다.
+    } catch {
+      msg.textContent = "시안을 저장하지 못했어요. 다시 눌러 주세요.";
+    } finally {
+      busy = false;
+      confirm.disabled = retry.disabled = false;
+    }
+  }, "btn dark");
+  const retry = button("다시 3개 만들기", generate);
+  confirm.hidden = retry.hidden = true;
+  actions.append(confirm, retry);
+  wrap.append(el("h2", "", `${label} 시안 고르기`), msg, cards, usage, actions);
+  root.replaceChildren(wrap);
+
+  function show() {
+    cards.replaceChildren(...proposals.map((item, index) => candidateCard(item, index === selected, () => {
+      selected = index;
+      show();
+    })));
+  }
+
+  async function generate() {
+    if (busy) return;
+    busy = true;
+    confirm.disabled = retry.disabled = true;
+    cards.inert = true;
+    msg.textContent = `${label} 시안 3개를 만드는 중… (30초 정도 걸릴 수 있어요. 자동 재시도하지 않아요)`;
+    try {
+      const options = { request, product_id: productId, style: style || "", pages: kind === "poster" ? 1 : pages };
+      const data = await postJson(ASSISTANT_API, { design: base, options, confirm_paid: true });
+      if (!wrap.isConnected) return;
+      proposals = data.proposals;
+      selected = 0;
+      show();
+      fillUsage(usage, data);
+      msg.textContent = `${data.rules_ready ? "현지 지침 포함." : "현지 검수 기준 준비 중."} 마음에 드는 시안을 골라 확정하세요.`;
+      confirm.hidden = false;
+    } catch (error) {
+      msg.textContent = error.message;
+    } finally {
+      busy = false;
+      confirm.disabled = retry.disabled = false;
+      retry.hidden = false;
+      cards.inert = false;
+    }
+  }
+  generate();
+}
+
 // ---------- 프롬프트 · AI 초안 (제작 조건 → 기본 프롬프트 → AI 제안 3개 → 적용) ----------
-// 편집기 오른쪽 칸(promptPanel)과 첫 화면(renderStart)이 같이 씁니다. 저장은 onApply(design)가 하고, 실패하면 throw합니다.
+// 첫 화면(renderStart)이 씁니다. (편집 화면 수정은 아래 입력창이 맡습니다) 저장은 onApply(design)가 하고, 실패하면 throw합니다.
 // extra: 제작 조건 맨 앞에 넣을 칸(첫 화면의 제품 고르기). isActive: 화면이 아직 열려 있는지.
 // empty: 결과가 없을 때만 보일 안내(첫 화면 오른쪽 빈 틀).
 // productId: 고른 제품 id를 돌려주는 함수(첫 화면). 요청에 함께 보내 서버가 제품 목록으로 확인합니다.
@@ -234,44 +346,15 @@ function promptForm(doc, { onApply, isActive = () => true, extra = null, empty =
     finally { apply.disabled = false; }
   }, "btn dark");
   apply.hidden = true;
-  // 제안 카드: 실제 모양 미리보기 + 문구(베트남어·한국어 뜻). 카드 아무 곳이나 누르면 고릅니다.
   function showCandidates() {
-    candidates.replaceChildren(...proposals.map((item, index) => {
-      const isSelected = index === selected;
-      const card = el("section", `studio-editor-candidate${isSelected ? " is-selected" : ""}`);
-      card.addEventListener("click", (event) => {
-        if (event.target.closest("summary") || selected === index) return;
-        selected = index;
-        result.value = item.prompt;
-        showCandidates();
-      });
-      const choose = button(`${isSelected ? "✓ " : ""}${item.name}`, () => {}, isSelected ? "btn dark" : "btn");
-      choose.setAttribute("aria-pressed", String(isSelected));
-      const words = el("details", "studio-editor-candidate-words");
-      words.open = item.pages.length === 1;
-      words.append(el("summary", "", item.pages.length > 1 ? `문구 보기 · ${item.pages.length}장` : "문구 보기"));
-      item.pages.forEach((page, pageNumber) => {
-        const vi = el("p", "", `${item.pages.length > 1 ? `${pageNumber + 1}장 · ` : ""}${page.title_vi}\n${page.body_vi}`);
-        vi.lang = "vi";
-        words.append(vi, el("p", "studio-hint", `${page.title_ko}\n${page.body_ko}`));
-      });
-      card.append(choose, item.style_label ? el("p", "studio-hint", `스타일 · ${item.style_label}`) : "",
-        item.design ? renderThumb(item.design) : "", words);
-      return card;
-    }));
+    candidates.replaceChildren(...proposals.map((item, index) => candidateCard(item, index === selected, () => {
+      selected = index;
+      result.value = item.prompt;
+      showCandidates();
+    })));
     syncEmpty();
   }
-  function showUsage(data) {
-    const cost = data.cost;
-    if (!cost) { usage.hidden = true; return; }
-    const count = (value) => Number(value || 0).toLocaleString("ko-KR");
-    const usd = cost.usd > 0 && cost.usd < 0.0001 ? "< $0.0001" : `$${Number(cost.usd || 0).toFixed(4)}`;
-    usage.replaceChildren(
-      el("b", "", `이번 생성 ${count(cost.total_tokens)} 토큰 · 예상 비용 ${usd}`),
-      el("span", "", `${data.model} · 입력 ${count(cost.input_tokens)}${cost.cached_tokens ? ` (캐시 ${count(cost.cached_tokens)})` : ""} / 출력 ${count(cost.output_tokens)} 토큰`),
-      el("span", "", `OpenAI 공개 단가 기준 추정(${cost.price_checked} 확인). 실제 청구액은 OpenAI 사용 내역이 기준이에요.`));
-    usage.hidden = false;
-  }
+  const showUsage = (data) => fillUsage(usage, data);
   function invalidate() {
     proposals = [];
     candidates.replaceChildren();
@@ -382,9 +465,10 @@ export function currentPage() {
 
 // ---------- 편집기 ----------
 // root 안에 포스터·카드뉴스 문서(README 8장 형식)를 그립니다. onSave(newDoc)는 Promise를 돌려줍니다.
-// 카드뉴스처럼 여러 장이면 포스터 왼쪽 장 번호 버튼으로 장을 옮깁니다.
-// 배치: 위쪽 도구 줄 · 왼쪽(장 번호 + 포스터) · 오른쪽(프롬프트 · 문구 · 검수 · Figma)
-export function renderDesign(root, doc, { onSave } = {}) {
+// 배치: 가운데 초안(끌어서·두 번 눌러 고치기) · 오른쪽 고정 칸(비율·장·↶ ↷·내보내기·검수·꾸미기·선택한 요소·문구·Figma).
+// 말로 고치기는 아래 입력창(sns.js 유진)이 맡습니다.
+// onUndo·onRedo·canUndo·canRedo: sns.js가 넘기는 되돌리기·다시하기. 없으면 오른쪽 칸의 ↶ ↷를 숨깁니다.
+export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = false, canRedo = false } = {}) {
   const draft = structuredClone(doc);
   if (pageIndex >= draft.pages.length) pageIndex = 0;
   let page = draft.pages[pageIndex];
@@ -392,15 +476,15 @@ export function renderDesign(root, doc, { onSave } = {}) {
   let scale = 1;
   let action = null;   // 끌기·크기 조절 중인 정보
   let editing = false; // 글자 수정 중에는 다시 그리지 않습니다.
+  let ratioBusy = false;
 
-  const wrap = el("div", "studio-editor");
+  const wrap = el("div", "studio-editor studio-editor-work");
   const pagesBar = el("div", "studio-editor-pages");
-  const bar = el("div", "studio-editor-bar");
   const view = el("div", "studio-editor-view");
   const stage = el("div", "studio-editor-stage");
   const review = el("div", "studio-editor-review");  // 광고 표현 검수 결과
   const translations = el("details", "studio-editor-translations");
-  translations.open = true;
+  translations.open = false;  // 오른쪽 칸을 짧게: 눌러서 펼칩니다.
   review.hidden = true;
   stage.setAttribute("role", "group");
   stage.setAttribute("aria-label",
@@ -408,13 +492,11 @@ export function renderDesign(root, doc, { onSave } = {}) {
   stage.style.width = `${W}px`;
   stage.style.height = `${H}px`;
   view.append(stage);
-  const left = el("div", "studio-editor-left");   // 장 번호(세로) + 포스터
-  const side = el("aside", "studio-editor-side"); // 프롬프트 · 문구 · 검수 · Figma
-  const body = el("div", "studio-editor-body");
-  left.append(pagesBar, view);
-  side.append(promptPanel(), translations, review);
-  body.append(left, side);
-  wrap.append(bar, body);
+  const center = el("div", "studio-editor-center");  // 가운데 초안
+  const side = el("aside", "studio-editor-panel");   // 오른쪽 고정 칸 (updateBar가 채움)
+  side.setAttribute("aria-label", "편집 기능");
+  center.append(view);
+  wrap.append(center, side);
   root.replaceChildren(wrap);
   let externalPanel = null;  // Figma 칸 (renderExternal)
   renderExternal();
@@ -645,8 +727,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
       panel.append(el("p", "studio-hint", `외부 편집 결과 · 마지막 반영: ${Number.isNaN(date.getTime()) ? "확인 필요" : date.toLocaleString("ko-KR")}`), img,
         el("p", "studio-hint", "위 편집기와 다운로드는 대시보드 원본입니다. 외부 수정 결과가 원본 요소에 자동 반영되지는 않습니다."));
     }
-    if (externalPanel) externalPanel.replaceWith(panel);
-    else side.append(panel);
+    if (externalPanel?.isConnected) externalPanel.replaceWith(panel);  // 처음에는 updateBar가 오른쪽 칸 맨 아래에 붙입니다.
     externalPanel = panel;
   }
 
@@ -676,25 +757,71 @@ export function renderDesign(root, doc, { onSave } = {}) {
   const observer = new ResizeObserver(fit);
   observer.observe(view);
 
-  // ---------- 장 번호 (카드뉴스) ----------
+  // ---------- 장 (카드뉴스): 장 번호 · 이 장 복사해서 추가 · 이 장 삭제 ----------
   function renderPages() {
-    pagesBar.hidden = draft.pages.length < 2;
-    pagesBar.replaceChildren(el("span", "", "장"), ...draft.pages.map((_, index) => {
+    const nodes = draft.pages.map((_, index) => {
       const node = button(String(index + 1), () => goPage(index), index === pageIndex ? "btn dark" : "btn");
       if (index === pageIndex) node.setAttribute("aria-current", "page");
+      node.setAttribute("aria-label", `${index + 1}장`);
       return node;
-    }));
+    });
+    if (draft.kind === "cardnews") {
+      const add = button("＋ 장 추가", addPage);
+      add.title = "지금 장을 복사해 바로 뒤에 넣어요";
+      add.disabled = draft.pages.length >= CARD_PAGES[1];
+      const remove = button("이 장 삭제", removePage);
+      remove.disabled = draft.pages.length <= CARD_PAGES[0];
+      nodes.push(add, remove);
+    }
+    pagesBar.replaceChildren(...nodes);
   }
 
   function goPage(index) {
-    if (index === pageIndex) return;
+    if (index !== pageIndex) openPage(index);
+  }
+
+  function openPage(index) {
     pageIndex = index;
     page = draft.pages[index];
     selectedId = null;
-    renderPages();
     draw();
     updateBar();
     loadFontsFor(page).then(() => { if (wrap.isConnected && page === draft.pages[index]) draw(); });
+  }
+
+  function addPage() {
+    if (draft.pages.length >= CARD_PAGES[1]) return;
+    const copied = structuredClone(page);
+    const stamp = Date.now().toString(36);
+    copied.elements.forEach((item, index) => { item.id = `${item.id}-${stamp}${index}`; });  // 장마다 id가 겹치지 않게
+    draft.pages.splice(pageIndex + 1, 0, copied);
+    openPage(pageIndex + 1);
+    save();
+  }
+
+  function removePage() {
+    if (draft.pages.length <= CARD_PAGES[0]) return;
+    draft.pages.splice(pageIndex, 1);
+    openPage(Math.min(pageIndex, draft.pages.length - 1));
+    save();
+  }
+
+  // ---------- 비율 바꾸기 (무료) ----------
+  // 서버(designs.py change_ratio)가 새 비율에 맞춘 문서를 돌려주고, 저장하면 sns.js가 새 문서로 다시 그립니다.
+  async function changeRatio(value) {
+    if (value === draft.ratio || ratioBusy || !onSave) return;
+    ratioBusy = true;
+    updateBar();
+    status.textContent = "비율을 바꾸는 중…";
+    try {
+      const data = await postJson(RATIO_API, { design: draft, ratio: value });
+      await onSave(data.design);
+    } catch (error) {
+      status.textContent = error.message || "비율을 바꾸지 못했어요.";
+    } finally {
+      ratioBusy = false;
+      if (wrap.isConnected) updateBar();
+    }
   }
 
   // ---------- 요소 추가 · 순서 · 사진 ----------
@@ -871,26 +998,76 @@ export function renderDesign(root, doc, { onSave } = {}) {
     return select;
   }
 
-  function updateBar() {
-    const item = find(selectedId);
-    const tools = [];
-    if (draft.demo) tools.push(el("span", "demo", "DEMO · 예시 데이터"));
-    tools.push(addSelect(), button("✂️ 배경 제거", openRemoveBg));  // 기존 배경 제거 창(sns_image.js)을 엽니다.
+  // ---------- 오른쪽 고정 칸 ----------
+  // 고르기·장 옮기기·저장 때마다 다시 채웁니다. 검수 결과·문구·Figma 칸은 같은 노드를 다시 붙여 펼친 상태를 유지합니다.
+  function section(title, nodes, className = "") {
+    const box = el("section", `studio-editor-panel-section ${className}`.trim());
+    const row = el("div", "studio-editor-panel-row");
+    row.append(...nodes.filter(Boolean));
+    box.append(el("h3", "", title), row);
+    return box;
+  }
 
-    if (!item) {
-      tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
-      const make = button("🖼 AI 배경 그림 (유료)", makeBackground);
-      make.disabled = bgBusy || bgLocked;
-      tools.push(make);
-      if (page.elements.some((one) => one.role === BG_ROLE)) {
-        tools.push(button("배경 그림 빼기", () => {
-          page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
-          draw();
-          updateBar();
-          save();
-        }));
-      }
-    } else if (item.type === "text") {
+  function updateBar() {
+    const item = pickable(selectedId);
+    const head = el("div", "studio-editor-panel-head");
+    if (draft.demo) head.append(el("span", "demo", "DEMO · 예시 데이터"));
+    head.append(status);
+
+    const ratios = (DESIGN_RATIOS[draft.kind] || [draft.ratio]).map((value) => {
+      const node = button(value, () => changeRatio(value), value === draft.ratio ? "btn dark" : "btn");
+      node.setAttribute("aria-pressed", String(value === draft.ratio));
+      node.disabled = ratioBusy;
+      return node;
+    });
+
+    const history = [];
+    if (onUndo) {
+      const undo = button("↶ 되돌리기", onUndo);
+      undo.title = "Ctrl+Z";
+      undo.disabled = !canUndo;
+      history.push(undo);
+    }
+    if (onRedo) {
+      const redo = button("↷ 다시하기", onRedo);
+      redo.title = "Ctrl+Shift+Z";
+      redo.disabled = !canRedo;
+      history.push(redo);
+    }
+
+    const multi = draft.pages.length > 1;
+    const exports = [button(multi ? "이 장 PNG" : "PNG", () => download("png")),
+      button(multi ? "이 장 JPG" : "JPG", () => download("jpg")), multi && button("모든 장 PNG", downloadAll)];
+
+    const make = button("🖼 AI 배경 그림 (유료)", makeBackground);
+    make.disabled = bgBusy || bgLocked;
+    const decorate = [addSelect(), field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })),
+      make, page.elements.some((one) => one.role === BG_ROLE) && button("배경 그림 빼기", () => {
+        page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
+        draw();
+        updateBar();
+        save();
+      }),
+      button("✂️ 배경 제거", openRemoveBg)];  // 기존 배경 제거 창(sns_image.js)을 엽니다.
+
+    const nodes = [head, section("비율", ratios)];
+    if (draft.kind === "cardnews" || multi) {
+      renderPages();
+      nodes.push(section(`장 · ${pageIndex + 1}/${draft.pages.length}`, [pagesBar]));
+    }
+    if (history.length) nodes.push(section("되돌리기", history));
+    nodes.push(section("내보내기", exports), section("검수", [button("광고 표현 검수", runReview)]), review,
+      section("꾸미기", decorate));
+    nodes.push(item
+      ? section(`선택한 요소 · ${ROLE_NAMES[item.role] || TYPE_NAMES[item.type] || "요소"}`, itemTools(item), "is-selected")
+      : el("p", "studio-hint", "초안에서 요소를 누르면 여기서 글꼴·크기·색을 바꿀 수 있어요."));
+    side.replaceChildren(...nodes, translations, externalPanel);
+  }
+
+  // 선택한 요소 도구: 종류별 칸 + 순서 · 삭제
+  function itemTools(item) {
+    const tools = [];
+    if (item.type === "text") {
       const size = el("input");
       size.type = "number";
       size.min = "8";
@@ -937,29 +1114,20 @@ export function renderDesign(root, doc, { onSave } = {}) {
       tools.push(field("이모지", selectBox("", EMOJIS.map((emoji) => [emoji, emoji]), item.emoji,
         (value) => { item.emoji = value; draw(); save(); })));
     }
-    if (item) {
-      tools.push(
-        button("맨 앞", () => reorder(item, "top")),
-        button("앞으로", () => reorder(item, "up")),
-        button("뒤로", () => reorder(item, "down")),
-        button("맨 뒤", () => reorder(item, "bottom")),
-      );
-      tools.push(button("삭제", () => {
+    tools.push(
+      button("맨 앞", () => reorder(item, "top")),
+      button("앞으로", () => reorder(item, "up")),
+      button("뒤로", () => reorder(item, "down")),
+      button("맨 뒤", () => reorder(item, "bottom")),
+      button("삭제", () => {
         page.elements = page.elements.filter((other) => other.id !== item.id);
         selectedId = null;
         draw();
         updateBar();
         save();
-      }));
-    }
-
-    const multi = draft.pages.length > 1;
-    tools.push(el("span", "studio-editor-spacer"), status, button("검수", runReview));
-    tools.push(
-      button(multi ? "이 장 PNG" : "PNG 받기", () => download("png")),
-      button(multi ? "이 장 JPG" : "JPG 받기", () => download("jpg")));
-    if (multi) tools.push(button("모든 장 PNG", downloadAll));
-    bar.replaceChildren(...tools);
+      }),
+    );
+    return tools;
   }
 
   // ---------- AI 배경 그림 (OpenAI 이미지 모델 · 유료) ----------
@@ -1085,27 +1253,6 @@ export function renderDesign(root, doc, { onSave } = {}) {
     }
     nodes.push(el("p", "studio-hint", data.disclaimer), button("닫기", () => { review.hidden = true; }));
     review.replaceChildren(...nodes);
-  }
-
-  // 기존 작업 안에서 AI 제안을 적용하므로 유진 담당 생성·저장 경로는 바꾸지 않습니다.
-  // 같은 작업(chat · 종류)이면 만들어 둔 칸을 다시 붙이고, 칸이 쓰는 문서와 저장 함수만 최신으로 바꿉니다.
-  function promptPanel() {
-    const key = `${new URL(location.href).searchParams.get("chat")}:${draft.kind}`;
-    if (promptCache?.key === key) {
-      for (const name of Object.keys(promptCache.doc)) delete promptCache.doc[name];
-      Object.assign(promptCache.doc, structuredClone(draft));
-      promptCache.onSave = onSave;
-      return promptCache.panel;
-    }
-    const formDoc = structuredClone(draft);
-    const panel = el("section", "studio-editor-prompt studio-editor-prompt-panel");
-    const form = promptForm(formDoc, {
-      isActive: () => panel.isConnected,
-      onApply: async (design) => { if (promptCache?.onSave) await promptCache.onSave(design); },
-    });
-    panel.append(...form.nodes);
-    promptCache = { key, panel, doc: formDoc, onSave };
-    return panel;
   }
 
   // 장마다 PNG 한 장씩 받습니다. 브라우저가 "여러 파일 다운로드"를 물으면 허용해 주세요.
@@ -1243,9 +1390,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
   }
   stage.addEventListener("dblclick", startEdit);
 
-  renderPages();
   draw();
-  updateBar();
+  updateBar();  // 오른쪽 칸 (장 번호도 여기서 그림)
   fit();
   if (focusAfterRender) focusItem(selectedId);
   // 웹글꼴을 받은 뒤 글자 폭이 달라지므로 다시 그립니다.

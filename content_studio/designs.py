@@ -858,6 +858,13 @@ def build_design_brief(doc, options):
     if kind == "cardnews" and count < MIN_PAGES:
         raise ValueError("카드뉴스는 3~6장입니다.")
     persona = (Path(__file__).parent / "prompts" / f"{kind}_base.md").read_text(encoding="utf-8")
+    # 새로 만들기 화면의 스타일 버튼: 고른 느낌을 참고로만 넣습니다(3개가 서로 다른 틀인 것은 그대로).
+    style = options.get("style") or None
+    if style is not None and style not in STYLE_HINTS:
+        raise ValueError("스타일 값이 올바르지 않습니다.")
+    if style:
+        persona += (f"\n\n[참고 분위기 - 마케터가 고른 느낌: {STYLES[style]}]\n- {STYLE_HINTS[style]}\n"
+                    "- 제안 3개 모두 이 느낌을 색·글꼴·문구에 조금씩 반영한다. style(틀)은 서로 달라도 된다.")
     rules = _guideline_rules()
     brief = {**fields, "kind": kind, "ratio": doc["ratio"], "pages": count,
              "product": product and {"id": product["id"], "name_ko": product["name_ko"],
@@ -877,6 +884,14 @@ def build_design_brief(doc, options):
 # 요소에 붙는 선택 칸: rotate(도, 시계 방향) · opacity(0~1) · spacing(글자 간격 px) · stroke·stroke_w(도형 테두리, fill이 없으면 속이 빔)
 # paint: 색 조합의 어느 색을 칠했는지({"color": "text"} 등). 색 조합을 바꿀 때 이 정보로 다시 칠합니다.
 STYLES = {"bold": "큰 글자형", "editorial": "매거진형", "menu": "메뉴판형", "pop": "팝·스티커형", "minimal": "여백 미니멀형"}
+# 새로 만들기 화면의 스타일 버튼: 고르면 AI 3안 지시문(build_design_brief)에 "참고 분위기"로만 넣습니다(틀을 강제하지 않음).
+STYLE_HINTS = {
+    "bold": "한눈에 꽂히는 큰 제목과 강한 대비. 짧고 힘 있는 문구, 제품 사진은 크게, 활기찬 색",
+    "editorial": "잡지 화보처럼 정돈되고 고급스러운 느낌. 명조 계열 제목, 차분한 색, 여백과 얇은 선",
+    "menu": "카페 메뉴판처럼 깔끔하게 정리된 정보. 메뉴 이름과 짧은 설명 중심, 따뜻하고 단정한 색",
+    "pop": "발랄하고 귀여운 SNS 느낌. 밝은 색, 살짝 기울어진 요소와 스티커, 경쾌한 말투",
+    "minimal": "넓은 여백과 작은 글씨의 차분하고 감성적인 느낌. 색은 적게, 문구는 짧고 부드럽게",
+}
 STYLE_WORDS = {"bold": ("큰 글자형", "큰글자형", "볼드"), "editorial": ("매거진",), "menu": ("메뉴판",),
                "pop": ("팝형", "팝 스타일", "스티커형"), "minimal": ("미니멀", "여백형")}
 # 카드뉴스 장 역할. 표지는 첫 장, 마지막 장은 저장·팔로우 유도입니다.
@@ -1493,12 +1508,12 @@ def apply_design_ai(doc, data, page=None):
     return new_doc, changes or ["AI 수정"]
 
 
-def _ai_redesign(doc, proposal):
-    """스타일·색·글꼴·문구를 새로 받아 스타일 틀로 다시 그립니다. 3안 생성과 같은 형식 검사를 씁니다."""
-    schema = design_proposal_schema(len(doc["pages"]))["properties"]["proposals"]["items"]
+def _clean_proposal(proposal, count):
+    """AI 제안 하나를 3안 생성과 같은 형식으로 검사합니다. AI가 덧붙인 모르는 칸은 버리고(빠진 칸은 검사에서 걸림),
+    맞으면 정리한 제안, 틀리면 None."""
+    schema = design_proposal_schema(count)["properties"]["proposals"]["items"]
     if not isinstance(proposal, dict) or not isinstance(proposal.get("pages"), list):
         return None
-    # AI가 덧붙인 모르는 칸은 버리고 검사합니다. (빠진 칸은 검사에서 걸립니다)
     page_keys = schema["properties"]["pages"]["items"]["properties"]
     proposal = {key: proposal.get(key) for key in schema["properties"]}
     proposal["pages"] = [{key: item.get(key) for key in page_keys} if isinstance(item, dict) else item
@@ -1508,6 +1523,14 @@ def _ai_redesign(doc, proposal):
     try:
         validate_proposals(proposal, schema)
     except ValueError:
+        return None
+    return proposal
+
+
+def _ai_redesign(doc, proposal):
+    """스타일·색·글꼴·문구를 새로 받아 스타일 틀로 다시 그립니다. 3안 생성과 같은 형식 검사를 씁니다."""
+    proposal = _clean_proposal(proposal, len(doc["pages"]))
+    if proposal is None:
         return None
     rebuilt = proposal_design(doc, proposal, {})
     rebuilt["assistant"]["notice"] = f"AI 수정 · {STYLES[proposal['style']]} · 제품 정보와 번역은 검토해 주세요."
@@ -1649,3 +1672,51 @@ def background_prompt(doc, page_index, product, wish, roles):
                      "because text will be placed there later. Put the product where it does not cover that area.")
     parts.append("Absolutely no text, no letters, no numbers, no logos, no watermarks and no labels anywhere in the image.")
     return " ".join(part for part in parts if part)
+
+
+# ---------- 비율 바꾸기 (편집기 오른쪽 칸, routes_media.py design-ratio) ----------
+DESIGN_RATIOS = {"poster": tuple(SIZES), "cardnews": CARDNEWS_RATIOS}
+
+
+def change_ratio(doc, ratio):
+    """비율을 바꾼 새 문서. 스타일 틀·카드뉴스 템플릿 초안은 새 비율에 맞춰 다시 배치하고(글·사진·색·배경 그림 유지),
+    틀이 없는 초안은 요소 자리를 비율에 맞춰 옮깁니다(_fit_ratio). 바꾸기 전 문서는 되돌리기로 돌아갈 수 있습니다."""
+    kind = doc.get("kind")
+    allowed = DESIGN_RATIOS.get(kind, ())
+    if ratio not in allowed:
+        raise ValueError(f"{'포스터' if kind == 'poster' else '카드뉴스'} 비율은 {' · '.join(allowed)}만 쓸 수 있습니다.")
+    new_doc = copy.deepcopy(doc)
+    if ratio == doc.get("ratio"):
+        return new_doc
+    style, template = new_doc.get("style"), new_doc.get("template")
+    if style in STYLES:
+        fonts = new_doc.get("fonts") or dict(zip(("title", "body"), STYLE_FONTS[style]))
+        new_doc["ratio"] = ratio
+        _rebuild(new_doc, lambda contents, palette: _build_styled_pages(style, ratio, contents, palette, fonts))
+    elif kind == "cardnews" and template in TEMPLATES:
+        new_doc["ratio"] = ratio
+        _rebuild(new_doc, lambda contents, palette: _build_pages(template, ratio, contents, palette))
+    else:
+        _fit_ratio(new_doc, ratio)
+    return new_doc
+
+
+def _fit_ratio(doc, ratio):
+    """요소마다 가운데 자리(%)는 그대로 두고, 크기는 찌그러지지 않게 같은 배율로 맞춥니다.
+    한쪽을 꽉 채운 띠·덮개(99% 이상)와 배경 그림은 새 페이지도 꽉 채웁니다."""
+    old_w, old_h = SIZES.get(doc.get("ratio"), SIZES[DEFAULT_RATIO])
+    new_w, new_h = SIZES[ratio]
+    scale = min(new_w / old_w, new_h / old_h)
+    for page in doc["pages"]:
+        for item in page["elements"]:
+            if item.get("role") == BG_ROLE:
+                continue
+            for pos, size, old, new in (("x", "w", old_w, new_w), ("y", "h", old_h, new_h)):
+                if item[size] >= 99:
+                    continue
+                center = item[pos] + item[size] / 2
+                item[size] = round(item[size] * old * scale / new, 2)
+                item[pos] = round(center - item[size] / 2, 2)
+            if item.get("type") == "text":
+                item["size"] = max(8, round(item["size"] * scale))
+    doc["ratio"] = ratio
