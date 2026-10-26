@@ -169,7 +169,22 @@ def design_image_args(prompt, ratio, photos=(), exact_product=False):
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 
-# ---------- 포스터 디자인 베이스 템플릿 (2026-10-27 유진 결정) ----------
+# ---------- 포스터 장면 프롬프트 뒤에 붙이는 것 (2026-10-27 유진 결정) ----------
+# 장면(구도·바탕·색·조명·분위기)은 희주 도우미가 자유롭게 쓰고(B 시험 그림 방식), 여기서는 로고 자리와 금지 규칙만 붙입니다.
+# 참고 사진은 design_image_args(exact_product=False)로 "생김새만 참고, 장면에 맞게 새로 그리기".
+POSTER_SUFFIX = (
+    " [BRAND LOGO AREA] Keep a clean empty area at the bottom center (the lowest tenth of the image) for a brand logo "
+    "added later. Do not draw any logo, emblem, seal or brand name anywhere."
+    " [RULES] No people, no faces, no hands or fingers. No artificial CGI look and no oversaturated plastic-like "
+    "colors. No messy or cluttered background. No watermarks.")
+
+
+def poster_scene_prompt(prompt):
+    """희주 도우미가 쓴 포스터 장면 프롬프트 + 로고 자리·금지 규칙."""
+    return prompt.strip() + POSTER_SUFFIX
+
+
+# ---------- 포스터 디자인 베이스 템플릿 (희주 님이 장면 프롬프트 방식으로 되돌리면 삭제 예정) ----------
 # 유진이 받은 지시서(프롬프트 빌더)를 우리 제품(products.py)·Higgsfield 흐름에 맞춘 것. 포스터만 쓰고 카드뉴스는 예전 방식.
 # 희주 design-assistant는 짧은 베트남어 문구만 만들고, 레이아웃·톤·규칙은 여기서 조립합니다.
 # 로고는 그림 모델이 그리지 않고 아래 가운데 자리만 비워 둡니다(희주 편집기가 brand_logo.png를 얹음).

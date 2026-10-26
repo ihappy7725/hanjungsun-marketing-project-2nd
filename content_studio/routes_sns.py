@@ -1091,7 +1091,9 @@ def design_images():
         return _hf_error(error)
 
     # 선물세트·포장 이야기가 있는 장만 선물세트 사진을 함께 보냅니다(참고 사진 수와 관계없이 장당 비용은 같음).
-    args = [higgsfield.design_image_args(prompt, ratio,
+    # 포스터 장면 프롬프트(희주 도우미가 자유롭게 쓴 것)에는 로고 자리·금지 규칙만 붙이고, 참고 사진은 "생김새만 참고"
+    scene = kind == "poster" and not exact
+    args = [higgsfield.design_image_args(higgsfield.poster_scene_prompt(prompt) if scene else prompt, ratio,
                                          _design_photos(products, refs, with_gift=bool(GIFT_WORDS.search(prompt))),
                                          exact_product=exact)
             for proposal in prompts for prompt in proposal]
@@ -1252,18 +1254,22 @@ def _reratio_photos(prompt, path, products):
             *_design_photos(products, with_gift=bool(GIFT_WORDS.search(prompt)))]
 
 
-def _reratio_args(ratio, pages, products):
+def _reratio_args(ratio, pages, products, kind="poster"):
     """장마다 그림 요청 인자. 프롬프트 끝에 새 비율로 다시 배치하라는 문장을 붙입니다.
-    포스터 베이스 템플릿으로 만든 장(POSTER_BASE로 시작)은 만들 때처럼 "제품은 사진과 똑같이" 문장을 씁니다."""
+    포스터 베이스 템플릿으로 만든 장(POSTER_BASE로 시작)은 만들 때처럼 "제품은 사진과 똑같이" 문장을 쓰고,
+    포스터 장면 프롬프트로 만든 장은 만들 때처럼 로고 자리·금지 규칙을 붙입니다."""
     head = higgsfield.POSTER_BASE.split("\n", 1)[0]
     orientation, frame = higgsfield.poster_frame(ratio)
 
     def retarget(prompt):  # 템플릿 [TYPE] 줄의 예전 비율을 새 비율로
         return re.sub(r"^\w+ premium dessert advertising poster, \d+:\d+ [\w ]+?, high-end",
                       f"{orientation} premium dessert advertising poster, {ratio} {frame}, high-end", prompt, flags=re.M)
+    def full(prompt):
+        if prompt.startswith(head):
+            return retarget(prompt)
+        return higgsfield.poster_scene_prompt(prompt) if kind == "poster" else prompt
     return [higgsfield.design_image_args(
-        f"{(retarget(prompt) if prompt.startswith(head) else prompt).strip()} "
-        f"Re-compose this same design for a {ratio} frame, keeping the same text.",
+        f"{full(prompt).strip()} Re-compose this same design for a {ratio} frame, keeping the same text.",
         ratio, _reratio_photos(prompt, path, products), exact_product=prompt.startswith(head)) for prompt, path in pages]
 
 
@@ -1298,7 +1304,7 @@ def reratio(chat_id):
     body = request.get_json(silent=True) or {}
     try:
         ratio, pages, products = _reratio_target(chat, body)
-        args = _reratio_args(ratio, pages, products)
+        args = _reratio_args(ratio, pages, products, chat.kind)
         quote = _reratio_quote(ratio, pages, products)
         confirmed = body.get("credits")
         if confirmed is None or float(confirmed) != quote["credits"]:
