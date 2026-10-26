@@ -418,7 +418,7 @@
 .home-page .home-tl-hour { background: var(--page-bg); font-size: var(--fs-table); }
 .home-page .home-tl-allday-cell { background: var(--page-bg); max-height: 96px; }
 .home-page .home-tl-cell .home-event { border-radius: var(--radius); font-size: var(--fs-table); }
-.home-page .home-campaign-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); flex: 0 0 auto; width: 100%; padding: var(--space-3) 0; }
+.home-page .home-campaign-heading { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); flex: 0 0 auto; width: 100%; padding: var(--space-3) 0; }
 .home-page .home-event-title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .home-page #planner-title { margin: 0; overflow-wrap: anywhere; }
 .home-page .home-event-switch { position: relative; display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 0; background: transparent; color: var(--teal); }
@@ -429,7 +429,7 @@
 .home-page .home-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .home-page .home-mainpanel > #campaign-actions { flex-direction: column; align-items: stretch; gap: var(--space-3); }
 .home-page .home-campaign-tools { justify-content: flex-end; flex-wrap: wrap; }
-.home-page #campaign-summary { flex: 0 0 auto; justify-content: flex-end; margin: 0; padding: 0; gap: var(--space-4); font-size: var(--fs-table); }
+.home-page #campaign-summary { flex: 0 0 auto; justify-content: flex-start; margin: 0; padding: 0; gap: var(--space-4); font-size: var(--fs-table); }
 .home-page #campaign-summary .home-campaign-detail { display: none; }
 .home-page #campaign-summary .home-dday { font-size: var(--fs-table); padding: var(--space-1) var(--space-3); background: transparent; border: 0; }
 .home-page #gantt { flex: 1 1 auto; min-height: 0; overflow: auto; }
@@ -510,7 +510,5 @@
 .home-page .home-search-heading .home-news-heading { margin: 0; }
 .home-page .home-search-heading .home-news-help { margin: 0; font-size: calc(var(--fs-table) * .9); color: var(--muted); text-align: right; }
 @media (max-width: 760px) {
-  .home-page .home-campaign-heading { flex-wrap: wrap; }
-  .home-page #campaign-summary { margin-left: auto; }
   .home-page .home-search-heading .home-news-help { text-align: left; }
 }
