@@ -97,6 +97,7 @@ async function makeText(item, box, ctx) {
   text.textAlignHorizontal = { center: "CENTER", right: "RIGHT" }[item.align] || "LEFT";
   text.textAlignVertical = "CENTER";
   text.textAutoResize = "NONE";
+  if (item.spacing) text.letterSpacing = { value: item.spacing, unit: "PIXELS" };
   place(text, { x: box.x + pad, y: box.y, w: box.w - pad * 2, h: box.h });
   nodes.push(text);
   return nodes;
@@ -120,8 +121,26 @@ function makeShape(item, box) {
   shape.name = item.role || item.id;
   place(shape, box);
   if (item.shape !== "circle") shape.cornerRadius = item.radius || 0;
-  shape.fills = solid(item.fill);
+  shape.fills = item.fill ? solid(item.fill) : [];  // fill이 없으면 테두리만 있는 도형
+  if (item.stroke) {
+    shape.strokes = solid(item.stroke);
+    shape.strokeWeight = item.stroke_w || 2;
+    shape.strokeAlign = "INSIDE";  // 편집기의 border(상자 안쪽)와 같게
+  }
   return [shape];
+}
+
+// 편집기의 CSS rotate처럼 상자 가운데를 기준으로 시계 방향으로 돌립니다.
+function rotate(node, degrees) {
+  const r = degrees * Math.PI / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  const cx = node.x + node.width / 2;
+  const cy = node.y + node.height / 2;
+  node.relativeTransform = [
+    [c, -s, cx - (c * node.width / 2 - s * node.height / 2)],
+    [s, c, cy - (s * node.width / 2 + c * node.height / 2)],
+  ];
 }
 
 function makeImage(item, box, ctx) {
@@ -163,7 +182,11 @@ async function makePage(page, index, data, ctx) {
     else if (item.type === "sticker") nodes = await makeSticker(item, box, ctx);
     else if (item.type === "shape") nodes = makeShape(item, box);
     else if (item.type === "image") nodes = makeImage(item, box, ctx);
-    for (const node of nodes) frame.appendChild(node);
+    for (const node of nodes) {
+      frame.appendChild(node);
+      if (item.rotate) rotate(node, item.rotate);
+      if (item.opacity !== undefined) node.opacity = Math.min(1, Math.max(0, Number(item.opacity)));
+    }
     if (nodes.length > 1) figma.group(nodes, frame).name = item.role || item.id;
   }
   return frame;
