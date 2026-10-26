@@ -17,6 +17,9 @@ const BRIEF_API = "/content_studio/media/api/design-brief";
 const ASSISTANT_API = "/content_studio/media/api/design-assistant";
 const FIGMA_API = "/content_studio/media/api/figma-preview";
 const FIGMA_DESIGN_API = "/content_studio/media/api/figma/designs";  // 플러그인 창구 (주소 확인에도 씀)
+const BG_QUOTE_API = "/content_studio/media/api/design-bg/quote";  // AI 배경 그림 견적 (무료)
+const BG_API = "/content_studio/media/api/design-bg";              // AI 배경 그림 만들기 (유료, OpenAI 이미지 모델)
+const BG_ROLE = "background";  // designs.py BG_ROLE: 장 전체를 덮는 배경 그림. 고르거나 옮기지 않고 바탕처럼 둡니다.
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIDE = 4096;
 // [추가] 메뉴의 이모지 16종 (designs.py EMOJIS와 같은 목록)
@@ -39,6 +42,10 @@ let selectedId = null;  // 저장 후 다시 그려도 선택을 유지합니다
 let pageIndex = 0;      // 카드뉴스에서 보고 있는 장. 저장 후 다시 그려도 같은 장에 남습니다.
 let focusAfterRender = false;  // 키보드로 고치다 저장하면, 다시 그린 뒤 선택한 요소로 초점을 돌려줍니다.
 let promptCache = null;  // 오른쪽 프롬프트 칸. 저장 후 다시 그려도 같은 작업이면 입력·AI 제안을 유지합니다.
+// AI 배경 그림: 만드는 동안 저장으로 편집기가 다시 그려져도, 결과는 가장 최근 편집기(applyBackground)에 깝니다.
+let applyBackground = null;
+let bgBusy = false;    // 만드는 중 (한 번에 한 장)
+let bgLocked = false;  // 응답을 못 받음 → 비용이 나갔을 수 있어 이 화면에서는 다시 누를 수 없게 막습니다.
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -415,7 +422,8 @@ export function renderDesign(root, doc, { onSave } = {}) {
   syncFigma();
 
   const find = (id) => page.elements.find((item) => item.id === id);
-  if (selectedId && !find(selectedId)) selectedId = null;
+  const pickable = (id) => { const item = id && find(id); return item && item.role !== BG_ROLE ? item : null; };
+  if (selectedId && !pickable(selectedId)) selectedId = null;
 
   async function save() {
     if (!onSave) return;
@@ -499,7 +507,14 @@ export function renderDesign(root, doc, { onSave } = {}) {
       return null;  // 아직 그리지 못하는 종류
     }
 
-    if (item.id === selectedId) {
+    if (item.role === BG_ROLE) {  // 바탕처럼: Tab·화면 읽기에서 빼고, 눌러도 고르지 않습니다.
+      node.classList.add("is-background");
+      node.tabIndex = -1;
+      node.removeAttribute("role");
+      node.removeAttribute("aria-pressed");
+      node.setAttribute("aria-hidden", "true");
+      node.style.cursor = "default";
+    } else if (item.id === selectedId) {
       node.classList.add("is-selected");
       node.append(el("span", "studio-editor-handle"));
     }
@@ -864,6 +879,17 @@ export function renderDesign(root, doc, { onSave } = {}) {
 
     if (!item) {
       tools.push(field("배경색", colorInput(page.bg, (value) => { page.bg = value; draw(); save(); })));
+      const make = button("🖼 AI 배경 그림 (유료)", makeBackground);
+      make.disabled = bgBusy || bgLocked;
+      tools.push(make);
+      if (page.elements.some((one) => one.role === BG_ROLE)) {
+        tools.push(button("배경 그림 빼기", () => {
+          page.elements = page.elements.filter((one) => one.role !== BG_ROLE);
+          draw();
+          updateBar();
+          save();
+        }));
+      }
     } else if (item.type === "text") {
       const size = el("input");
       size.type = "number";
@@ -935,6 +961,61 @@ export function renderDesign(root, doc, { onSave } = {}) {
     if (multi) tools.push(button("모든 장 PNG", downloadAll));
     bar.replaceChildren(...tools);
   }
+
+  // ---------- AI 배경 그림 (OpenAI 이미지 모델 · 유료) ----------
+  // 무료 견적 → 확인 창 → 1장 만들기. 그림에는 글자를 넣지 않고, 지금 글 요소는 그대로 위에 남습니다.
+  // 만든 그림은 장 맨 아래 요소로 깔고 기존 저장 경로(onSave)로 저장합니다.
+  async function makeBackground() {
+    if (bgBusy || bgLocked) return;
+    const chatId = Number(new URL(location.href).searchParams.get("chat"));
+    if (!chatId) { status.textContent = "작업을 저장한 뒤 배경 그림을 만들 수 있어요."; return; }
+    const wish = window.prompt("원하는 장면·분위기를 적어 주세요. (비워 두면 기본 연출)\n예: 크리스마스 테이블, 따뜻한 조명", "");
+    if (wish === null) return;
+    const target = { chat_id: chatId, page: pageIndex, request: wish.trim() };
+    bgBusy = true;
+    updateBar();
+    status.textContent = "비용을 확인하는 중…";
+    try {
+      const { quote } = await postJson(BG_QUOTE_API, target);
+      if (!quote.allowed) { status.textContent = quote.reason; return; }
+      const ok = window.confirm([
+        `배경 그림 ${quote.count}장을 만들까요? (유료)`,
+        `· ${quote.model} · 품질 ${quote.quality} · ${quote.size}`,
+        `· 제품 참고 사진 ${quote.photos}장`,
+        `· 예상 비용 약 $${quote.usd.toFixed(3)} (추정. 실제 청구액은 OpenAI 사용 내역 기준)`,
+        `· 오늘 ${quote.today_count}/${quote.daily_limit}장 사용`,
+        "그림에는 글자를 넣지 않고, 지금 글은 그대로 위에 남아요.",
+      ].join("\n"));
+      if (!ok) { status.textContent = ""; return; }
+      status.textContent = "배경 그림을 만드는 중… (1분 넘게 걸릴 수 있어요. 자동 재시도하지 않아요)";
+      const res = await fetch(BG_API, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...target, confirm_paid: true, usd: quote.usd }),
+      });
+      const data = await res.json().catch(() => ({ ok: false, submitted: res.ok || res.status === 202 }));
+      if (data.submitted) bgLocked = true;
+      if (!data.ok) throw new Error(data.error || "배경 그림을 만들지 못했어요. 배경은 그대로 두었어요.");
+      const usd = `${data.cost.estimated ? "약 " : ""}$${Number(data.cost.usd).toFixed(3)}`;
+      (applyBackground || placeBackground)({ chat: chatId, ...data }, `이번 ${usd} · 오늘 ${data.today_count}/${data.daily_limit}장`);
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      bgBusy = false;
+      if (wrap.isConnected) updateBar();
+    }
+  }
+
+  // 결과를 이 편집기의 장에 깝니다. (만드는 동안 다시 그려졌으면 makeBackground가 최신 편집기의 이 함수를 부릅니다)
+  function placeBackground(result, note) {
+    const into = draft.pages[result.page];
+    if (!wrap.isConnected || !into || Number(new URL(location.href).searchParams.get("chat")) !== result.chat) return;
+    into.elements = [result.element, ...into.elements.filter((one) => one.role !== BG_ROLE)];
+    if (into === page) draw();
+    updateBar();
+    status.textContent = `${result.page + 1}장에 배경 그림을 깔았어요. ${note}`;
+    save();
+  }
+  applyBackground = placeBackground;
 
   async function download(type) {
     status.textContent = "이미지를 만드는 중…";
@@ -1045,7 +1126,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
   stage.addEventListener("pointerdown", (event) => {
     if (editing || event.button !== 0) return;
     const node = event.target.closest(".studio-editor-item");
-    const item = node && find(node.dataset.id);
+    const item = node && pickable(node.dataset.id);
     const resize = event.target.classList.contains("studio-editor-handle");
     if (selectedId !== (item?.id ?? null)) {
       selectedId = item?.id ?? null;
@@ -1089,7 +1170,7 @@ export function renderDesign(root, doc, { onSave } = {}) {
   stage.addEventListener("focusin", (event) => {
     if (editing || refocusing) return;
     const node = event.target.closest(".studio-editor-item");
-    if (!node || node.dataset.id === selectedId) return;
+    if (!node || node.dataset.id === selectedId || !pickable(node.dataset.id)) return;
     selectedId = node.dataset.id;
     draw();
     updateBar();
