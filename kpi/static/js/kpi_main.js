@@ -3,7 +3,7 @@
 // 차트는 Chart.js(CDN). 라이브러리를 바꾸게 되면 아래 "차트" 묶음만 고칩니다.
 // 엑셀(.xlsx)은 같은 폴더의 kpi_xlsx.js가 만듭니다(새 라이브러리 없음).
 
-import { downloadXlsx } from "./kpi_xlsx.js";
+import { Sheet, downloadXlsx } from "./kpi_xlsx.js";
 
 const root = document.querySelector(".kpi-page");
 const API = {
@@ -533,6 +533,9 @@ function setGa4Visible(show) {
     setText("ga4-meta", "출처: 시연 값(인플루언서 탭 공개 함수에 클릭·전환 항목 추가 필요) · 범위: 베트남 · 표본: 크리에이터 5명");
   }
   resizeCharts();
+  // 큰 창(확대)에서 바꾸면 새로 보이는 차트도 확대할 때와 같이 막대가 하나씩 올라오게 합니다.
+  const panel = $("ga4-panel").closest(".kpi-panel");
+  if (panel.classList.contains("is-expanded")) animatePanel(panel);
 }
 
 // ---------- VOC ----------
@@ -1326,15 +1329,24 @@ function chartImage(chart, width, height) {
   return src;
 }
 
-// 블록 하나를 보고서 한 쪽(시트)으로: 번호 붙은 제목 + 확대 상태의 내용(차트는 그림, 화면 조작 요소는 제거)
-function reportSheet(panel, index) {
+// ---------- PDF 보고서: 덩어리로 나눈 뒤 A4 쪽을 직접 채웁니다 ----------
+// 블록마다 새 쪽을 쓰지 않고 차곡차곡 채우되, 차트+범례 · 카드 묶음 · 표 같은 덩어리는 중간에서 자르지 않습니다.
+// 한 쪽보다 긴 표는 줄 단위로 나누고 다음 쪽에 머리줄을 다시 붙입니다. 미리보기의 종이 한 장 = PDF 한 쪽.
+const PAGE_MM = { width: 210, height: 297, margin: 13, head: 7, foot: 7 };
+const MM = 96 / 25.4;  // 1mm = px
+// 펼쳐서(안쪽 내용을 덩어리로) 볼 묶음 요소
+const REPORT_CONTAINERS = ".kpi-panel-body, .kpi-detail, .kpi-sim, [data-kpi='ga4-panel'], [data-kpi='creator-panel'], [data-kpi='ga4-channel-section'], [data-kpi='ga4-events-section']";
+
+// 블록(패널) 하나를 덩어리 목록으로: [{ nodes: [요소...], table: 표 덩어리면 true }]
+function reportBlocks(panel, index) {
   const images = {};
   panel.querySelectorAll("canvas[data-kpi-chart]").forEach((canvas) => {
     const chart = charts[canvas.dataset.kpiChart];
     const box = canvas.closest(".kpi-chart") || canvas.parentElement;
     if (!chart || !box.offsetParent) return;  // 지금 보이지 않는 차트(꺼 둔 GA4 등)는 넣지 않음
-    const doughnut = chart.config.type === "doughnut";
-    images[canvas.dataset.kpiChart] = chartImage(chart, doughnut ? 360 : 960, doughnut ? 220 : 270);
+    const type = chart.config.type;
+    const horizontal = chart.config.options?.indexAxis === "y";
+    images[canvas.dataset.kpiChart] = type === "doughnut" ? chartImage(chart, 360, 220) : chartImage(chart, 960, horizontal ? 180 : 215);
   });
   const clone = panel.cloneNode(true);
   clone.querySelectorAll(".kpi-tools, .kpi-info, [hidden], [data-report-skip]").forEach((n) => n.remove());
@@ -1359,53 +1371,157 @@ function reportSheet(panel, index) {
     img.className = `kpi-report-chart${charts[canvas.dataset.kpiChart]?.config.type === "doughnut" ? " is-doughnut" : ""}`;
     box.replaceWith(img);
   });
-  const sheet = document.createElement("section");
-  sheet.className = "kpi-sheet";
-  const head = document.createElement("header");
-  head.className = "kpi-sheet-head";
-  const no = document.createElement("span");
-  no.className = "kpi-sheet-no";
-  no.textContent = pad2(index + 1);
-  const h2 = document.createElement("h2");
-  h2.textContent = title;
-  head.append(no, h2);
-  const body = document.createElement("div");
-  body.className = "kpi-sheet-body";
-  body.append(...clone.childNodes);
-  sheet.append(head, body);
-  return sheet;
+
+  const heading = document.createElement("h2");
+  heading.className = "kpi-rpt-h2";
+  heading.innerHTML = "<span></span>";
+  heading.firstChild.textContent = pad2(index + 1);
+  heading.append(document.createTextNode(title));
+
+  const flat = [];
+  const walk = (node) => [...node.children].forEach((child) => {
+    if (child.matches(REPORT_CONTAINERS)) return walk(child);
+    if (!child.textContent.trim() && !child.querySelector("img") && child.tagName !== "IMG") return;
+    flat.push(child);
+  });
+  walk(clone);
+  // 소제목은 다음 덩어리와 붙이고(쪽 끝에 소제목만 남지 않게), 블록 제목은 첫 덩어리와 붙입니다.
+  const blocks = [];
+  let carry = [heading];
+  flat.forEach((el) => {
+    if (el.matches(".kpi-detail-title")) {
+      carry.push(el);
+      return;
+    }
+    blocks.push({ nodes: [...carry, el], table: Boolean(el.querySelector("table") || el.tagName === "TABLE") });
+    carry = [];
+  });
+  if (carry.length > 1) blocks.push({ nodes: carry, table: false });
+  return blocks;
 }
 
-function reportCover(highlights) {
-  const cover = document.createElement("section");
-  cover.className = "kpi-sheet kpi-sheet-cover";
+function reportCoverBlocks(highlights) {
   const add = (tag, className, text) => {
     const n = document.createElement(tag);
     if (className) n.className = className;
     if (text != null) n.textContent = text;
     return n;
   };
+  const head = add("div", "kpi-rpt-cover");
   const meta = add("dl", "kpi-cover-meta");
   [["기준월", view.summary?.campaign_month || "—"], ["작성", stamp()], ["범위", "베트남 · 전체 채널"], ["작성 부서", "마케팅 · KPI"]].forEach(([k, v]) => {
     const row = add("div");
     row.append(add("dt", "", k), add("dd", "", v));
     meta.append(row);
   });
+  head.append(add("p", "kpi-cover-brand", "HANJEONGSEON · VIETNAM MARKETING"), add("h1", "", REPORT_TITLE), meta);
   const list = add("ol", "kpi-highlights");
   highlights.forEach((line) => list.append(add("li", "", line)));
+  const summary = add("div");
+  summary.append(add("h2", "kpi-report-h", "핵심 요약"), list);
   const cards = root.querySelector(".kpi-scorecards").cloneNode(true);
   cards.querySelectorAll(".kpi-info, [hidden]").forEach((n) => n.remove());
-  cover.append(
-    add("p", "kpi-cover-brand", "HANJEONGSEON · VIETNAM MARKETING"),
-    add("h1", "", REPORT_TITLE),
-    meta,
-    add("h2", "kpi-report-h", "핵심 요약"),
-    list,
-    add("h2", "kpi-report-h", "주요 지표"),
-    cards,
-    add("p", "kpi-report-note", DATA_NOTE),
-  );
-  return cover;
+  const kpi = add("div");
+  kpi.append(add("h2", "kpi-report-h", "주요 지표"), cards, add("p", "kpi-report-note", DATA_NOTE));
+  return [{ nodes: [head] }, { nodes: [summary] }, { nodes: [kpi] }];
+}
+
+// 보고서 창에서: 덩어리 높이를 재며 A4 쪽에 채웁니다.
+function paginateReport(doc, blocks) {
+  // 쪽 안쪽 높이 = 297 - 여백 - 머리줄 - 바닥줄 - 위 간격 3mm - 인쇄 오차 0.5mm
+  const contentH = (PAGE_MM.height - PAGE_MM.margin * 2 - PAGE_MM.head - PAGE_MM.foot - 3.5) * MM - 2;
+  const measure = doc.createElement("div");
+  measure.className = "kpi-page kpi-report kpi-rpt-measure";
+  const measureBody = doc.createElement("div");
+  measureBody.className = "kpi-rpt-content";
+  measure.append(measureBody);
+  doc.body.append(measure);
+  const pages = [];
+  let content = null;
+  let left = 0;
+  const newPage = () => {
+    const page = doc.createElement("section");
+    page.className = "kpi-rpt-page";
+    const head = doc.createElement("header");
+    head.className = "kpi-rpt-pagehead";
+    head.innerHTML = "<span></span><span></span>";
+    head.children[0].textContent = "한정선 베트남 · KPI 보고서";
+    head.children[1].textContent = `기준월 ${view.summary?.campaign_month || "—"}`;
+    content = doc.createElement("div");
+    content.className = "kpi-rpt-content";
+    const foot = doc.createElement("footer");
+    foot.className = "kpi-rpt-pagefoot";
+    foot.innerHTML = "<span></span><span class=\"kpi-rpt-no\"></span>";
+    foot.children[0].textContent = `작성 ${stamp()} · 시연·데모 데이터 포함`;
+    page.append(head, content, foot);
+    pages.push(page);
+    left = contentH;
+  };
+  const wrap = (nodes) => {
+    const w = doc.createElement("div");
+    w.className = "kpi-rpt-blk";
+    w.append(...nodes.map((n) => (n.ownerDocument === doc ? n : doc.importNode(n, true))));
+    return w;
+  };
+  const height = (w) => {
+    measureBody.append(w);
+    const h = w.getBoundingClientRect().height;
+    w.remove();
+    return h;
+  };
+  const place = (w, h) => {
+    content.append(w);
+    left -= h;
+  };
+
+  newPage();
+  blocks.forEach((block) => {
+    const w = wrap(block.nodes);
+    const h = height(w);
+    if (h <= left) return place(w, h);
+    if (block.table) {
+      // 표 나누기: 머리줄은 매 조각에 다시 붙이고, 줄은 들어가는 만큼 담습니다.
+      const tableOf = (el) => el.querySelector("tbody")?.closest("table");
+      const rows = [...tableOf(w).querySelector("tbody").rows];
+      let first = true;
+      while (rows.length) {
+        // 이어지는 조각: 블록 제목은 빼고, 소제목에 '(계속)'을 붙여 어떤 표인지 보이게
+        const piece = first ? w.cloneNode(true) : wrap(block.nodes.filter((n) => !n.matches?.(".kpi-rpt-h2")));
+        if (!first) piece.querySelectorAll(".kpi-detail-title").forEach((n) => n.append(doc.createTextNode(" (계속)")));
+        const body = tableOf(piece).querySelector("tbody");
+        body.replaceChildren();
+        const shell = height(piece);
+        if (shell + 30 > left) newPage();  // 머리줄 + 한 줄도 안 들어가면 다음 쪽에서
+        let used = shell;
+        while (rows.length) {
+          body.append(rows[0]);
+          const hh = height(piece);
+          if (hh > left && body.rows.length > 1) {
+            body.lastElementChild.remove();
+            break;
+          }
+          rows.shift();
+          used = hh;
+          if (hh > left) break;
+        }
+        place(piece, used);
+        if (rows.length) newPage();
+        first = false;
+      }
+      return undefined;
+    }
+    if (h > contentH) {
+      // 한 쪽보다 큰 덩어리(드묾): 새 쪽에 줄여서 넣습니다.
+      if (left < contentH) newPage();
+      w.style.zoom = String(Math.max(contentH / h, 0.6));
+      return place(w, contentH);
+    }
+    newPage();
+    return place(w, h);
+  });
+  measure.remove();
+  pages.forEach((p, i) => { p.querySelector(".kpi-rpt-no").textContent = `${i + 1} / ${pages.length}`; });
+  return pages;
 }
 
 function exportPdf() {
@@ -1416,12 +1532,13 @@ function exportPdf() {
   win.document.title = REPORT_TITLE;
   win.document.body.textContent = "보고서를 만드는 중입니다…";
 
+  // 블록을 하나씩 확대 상태로 펼쳐 덩어리로 복제합니다(새 창이 열리면 이 탭은 멈출 수 있어 기다리지 않고 한 번에).
   const opened = root.querySelector(".kpi-panel.is-expanded");
-  const sheets = [];
+  const blocks = reportCoverBlocks(reportHighlights());
   try {
     boardPanels().forEach((panel, i) => {
       setExpanded(panel, { animate: false });
-      sheets.push(reportSheet(panel, i));
+      blocks.push(...reportBlocks(panel, i));
     });
   } finally {
     setExpanded(opened, { animate: false });
@@ -1436,15 +1553,16 @@ function exportPdf() {
   meta.setAttribute("charset", "utf-8");
   doc.head.append(meta);
   // 화면과 같은 디자인 변수·글꼴(base.css · fonts.css) + KPI 스타일 + 보고서 전용 스타일
-  const sheetsCss = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.href);
-  const kpiCss = sheetsCss.find((h) => h.includes("kpi_main.css"));
-  if (kpiCss) sheetsCss.push(kpiCss.replace("kpi_main.css", "kpi_report.css"));
-  sheetsCss.forEach((href) => {
+  const hrefs = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.href);
+  const kpiCss = hrefs.find((h) => h.includes("kpi_main.css"));
+  if (kpiCss) hrefs.push(kpiCss.replace("kpi_main.css", "kpi_report.css"));
+  const loaded = hrefs.map((href) => new Promise((resolve) => {
     const link = doc.createElement("link");
     link.rel = "stylesheet";
     link.href = href;
+    link.onload = link.onerror = resolve;
     doc.head.append(link);
-  });
+  }));
 
   // 미리보기 도구 줄(인쇄에는 나오지 않음): [PDF로 저장] · [닫기]
   const bar = doc.createElement("div");
@@ -1452,7 +1570,7 @@ function exportPdf() {
   const label = doc.createElement("strong");
   label.textContent = "보고서 미리보기";
   const hint = doc.createElement("span");
-  hint.textContent = "[PDF로 저장] → 대상 'PDF로 저장' · 옵션 '배경 그래픽' 켜기";
+  hint.textContent = "보이는 종이 한 장이 PDF 한 쪽입니다 · [PDF로 저장] → 대상 'PDF로 저장' · 옵션 '배경 그래픽' 켜기";
   const save = doc.createElement("button");
   save.type = "button";
   save.className = "is-primary";
@@ -1463,134 +1581,398 @@ function exportPdf() {
   close.textContent = "닫기";
   close.addEventListener("click", () => win.close());
   bar.append(label, hint, save, close);
+  const main = doc.createElement("main");
+  main.className = "kpi-page kpi-report";
+  doc.body.append(bar, main);
 
-  const page = doc.createElement("main");
-  page.className = "kpi-page kpi-report";
-  page.append(reportCover(reportHighlights()), ...sheets);
-  page.querySelectorAll(".kpi-info").forEach((n) => n.remove());
-  doc.body.append(bar, doc.importNode(page, true));
-  win.focus();
+  // 스타일 · 글꼴 · 차트 그림이 준비된 뒤에 높이를 재서 쪽을 나눕니다.
+  Promise.all(loaded)
+    .then(() => doc.fonts?.ready)
+    .then(() => Promise.all(blocks.flatMap((b) => b.nodes).flatMap((n) => [...(n.tagName === "IMG" ? [n] : n.querySelectorAll("img"))])
+      .map((img) => (img.decode ? img.decode().catch(() => null) : null))))
+    .then(() => {
+      main.append(...paginateReport(doc, blocks));
+      win.focus();
+    });
 }
 
-// 엑셀: 화면 데이터를 시트별 표로(숫자는 숫자 칸). 문의·후기는 PDF와 달리 전체를 넣습니다.
+// 엑셀: 시트 4개(요약 보고 · 예산·ROAS 상세 · VOC 상세 · GA4 상세), 구역 제목 · 서식 · 엑셀 기본 차트(데이터 연결형)
+// 숫자는 숫자 칸으로 넣고, 차트는 시트의 표 칸을 가리켜 숫자를 고치면 차트도 바뀝니다.
+function xlsxKit() {
+  const c = (name, fallback) => cssVar(name) || fallback;
+  const C = {
+    ink: c("--ink", "#2b2a28"), muted: c("--muted", "#8a857c"), paper: c("--paper", "#f1ece3"), teal: c("--teal", "#4e6e6a"),
+    pink: c("--kpi-pink", "#e89bb1"), navy: c("--kpi-navy", "#3b5b8c"), beige: c("--beige", "#eadfc8"), orange: c("--orange", "#dfb193"),
+    brown: c("--brown", "#8b7355"), celadon: c("--celadon", "#c9d8cf"),
+  };
+  const FMT = { int: "#,##0", krw: '#,##0"원"', vnd: "#,##0", pct: '0.0"%"', usd: '"$"#,##0.00', dec2: "#,##0.00", sec: '0"초"', rate: '0.00"원"' };
+  const cellStyle = (kind, total = false) => ({
+    border: total ? "top" : "hair",
+    ...(total ? { bold: true } : {}),
+    ...(FMT[kind] ? { fmt: FMT[kind] } : {}),
+    ...(kind === "wrap" ? { wrap: true, valign: "top" } : {}),
+    ...(kind === "center" ? { align: "center" } : {}),
+  });
+  const S = {
+    title: { bold: true, size: 18, color: C.ink },
+    sub: { size: 9, color: C.muted },
+    note: { size: 9, color: C.muted, wrap: true, valign: "top" },
+    section: { bold: true, size: 11, color: "#ffffff", fill: C.teal },
+    th: { bold: true, size: 9, color: C.ink, fill: C.paper, border: "bottom", align: "center", wrap: true },
+    kpiLabel: { size: 9, color: C.muted, fill: C.paper, border: "box" },
+    kpiValue: { bold: true, size: 16, color: C.ink, border: "box", align: "left" },
+    kpiSub: { size: 8, color: C.muted, border: "box", wrap: true, valign: "top" },
+    hl: { size: 10, wrap: true, valign: "center", border: "hair" },
+    hlNo: { bold: true, size: 10, color: C.muted, border: "hair", align: "center" },
+  };
+  // 구역 제목: c1~c2를 색 띠로 칠하고 병합
+  const section = (sh, r, c1, c2, text) => {
+    for (let x = c1; x <= c2; x++) sh.put(r, x, x === c1 ? text : "", S.section);
+    sh.merge(r, c1, r, c2).height(r, 22);
+  };
+  // 표: 머리줄 + 줄 + (합계 줄). kinds는 열마다 text · wrap · int · krw · vnd · pct · usd · dec2 · sec · center
+  const table = (sh, r, c, headers, rows, kinds, { total = null, height = null } = {}) => {
+    headers.forEach((h, i) => sh.put(r, c + i, h, S.th));
+    sh.height(r, 30);
+    rows.forEach((row, k) => {
+      row.forEach((v, i) => sh.put(r + 1 + k, c + i, v ?? null, cellStyle(kinds[i] || "text")));
+      if (height) sh.height(r + 1 + k, height);
+    });
+    let last = r + rows.length;
+    if (total) {
+      last += 1;
+      total.forEach((v, i) => sh.put(last, c + i, v ?? null, cellStyle(kinds[i] || "text", true)));
+    }
+    return { head: r, first: r + 1, rows: rows.length, last };
+  };
+  return { C, S, FMT, section, table };
+}
+
 function exportXlsx() {
   const d = view.summary;
   if (!d) return showNotice("KPI 데이터를 아직 불러오지 못해 엑셀을 만들 수 없습니다. [새로고침] 후 다시 눌러 주세요.");
   showNotice("");
+  const { C, S, FMT, section, table } = xlsxKit();
   const { budget: b, totals: t, fx } = d;
   const rate = fx.base_rate;
   const krwBase = (v) => Math.round((v * rate) / 100);
+  const share = (v) => round1((v / b.total_krw) * 100);
+  const bep = d.roas_bep_percent;
+  const g = d.ga4;
+  const hasGa4 = Boolean(g?.channels?.length);
+  const made = stamp();
   const sheets = [];
 
-  sheets.push({ name: "KPI 요약", widths: [22, 18, 8, 50], rows: [
-    ["지표", "값", "단위", "설명"],
-    ["총 집행 광고비", t.ad_spend_krw_base, "원", `기준 환율 ${rate}원/100 VND 환산`],
-    ["총 집행 광고비(VND)", t.ad_spend_vnd, "VND", ""],
-    ["종합 ROAS", t.roas_percent, "%", `손익분기 ${d.roas_bep_percent}%`],
-    ["전환", t.conversions, "건", ""],
-    ["누적 매출액", fx.ok ? fx.revenue_krw_live : t.revenue_krw_base, "원", fx.ok ? `현재 환율 환산(${fx.source} ${fx.as_of || ""})` : "기준 환율 환산"],
-    ["누적 매출액(VND)", t.revenue_vnd, "VND", ""],
-    ["환율(100 VND당)", fx.ok ? fx.live_rate : null, "원", `기준 환율 ${rate}원`],
-    ["환차손익", fx.ok ? fx.gain_loss_krw : null, "원", fx.ok ? `매출 ${fx.revenue_gain_krw} / 지출 ${fx.spend_loss_krw}` : ""],
-  ] });
+  // ---------- ① 요약 보고 (한 장 대시보드) ----------
+  const sum = new Sheet("요약 보고");
+  sum.gridLines = false;
+  sum.widths = [2, 18, 14, 14, 14, 14, 14, 14, 18];
+  let r = 0;
+  sum.put(r, 1, "한정선 베트남 KPI 보고서", S.title).merge(r, 1, r, 8).height(r, 30);
+  r += 1;
+  sum.put(r, 1, `기준월 ${d.campaign_month} · 작성 ${made} · 범위 베트남 전체 채널`, S.sub).merge(r, 1, r, 8);
+  r += 1;
+  sum.put(r, 1, DATA_NOTE, S.note).merge(r, 1, r, 8).height(r, 28);
+  r += 2;
+  section(sum, r, 1, 8, "주요 지표");
+  r += 1;
+  const kpis = [
+    ["총 집행 광고비", t.ad_spend_krw_base, '#,##0"원"', `${num(t.ad_spend_vnd)} VND · 기준 환율 ${rate}원/100 VND`],
+    ["종합 ROAS", t.roas_percent, '0.0"%"', `손익분기 ${bep}% ${t.roas_percent >= bep ? "초과" : "미달"} · 전환 ${num(t.conversions)}건`],
+    ["누적 매출액", fx.ok ? fx.revenue_krw_live : t.revenue_krw_base, '#,##0"원"', `${num(t.revenue_vnd)} VND · ${fx.ok ? "현재 환율" : "기준 환율"} 환산`],
+    ["환율 · 100 VND당", fx.ok ? fx.live_rate : null, '0.00"원"', fx.ok ? `환차${fx.gain_loss_krw >= 0 ? "익" : "손"} ${signedKrw(fx.gain_loss_krw)} · ${fx.source} ${fx.as_of || ""}` : "불러오지 못함"],
+  ];
+  kpis.forEach(([label, value, fmt, subText], i) => {
+    const col = 1 + i * 2;
+    sum.put(r, col, label, S.kpiLabel).put(r, col + 1, "", S.kpiLabel).merge(r, col, r, col + 1);
+    sum.put(r + 1, col, value, { ...S.kpiValue, fmt }).put(r + 1, col + 1, "", S.kpiValue).merge(r + 1, col, r + 1, col + 1);
+    sum.put(r + 2, col, subText, S.kpiSub).put(r + 2, col + 1, "", S.kpiSub).merge(r + 2, col, r + 2, col + 1);
+  });
+  sum.height(r, 18).height(r + 1, 30).height(r + 2, 30);
+  r += 4;
+  section(sum, r, 1, 8, "핵심 요약");
+  r += 1;
+  reportHighlights().forEach((line, i) => {
+    sum.put(r, 1, pad2(i + 1), S.hlNo);
+    for (let x = 2; x <= 8; x++) sum.put(r, x, x === 2 ? line : "", S.hl);
+    sum.merge(r, 2, r, 8).height(r, line.length > 70 ? 32 : 20);
+    r += 1;
+  });
 
-  const share = (v) => round1((v / b.total_krw) * 100);
-  sheets.push({ name: "예산", widths: [22, 16, 16, 30], rows: [
-    ["구분", "금액(원)", "총 예산 대비(%)", "비고"],
-    ["플랫폼 광고비", b.platform_krw, share(b.platform_krw), ""],
+  // 예산 구성: 표(왼쪽) + 도넛(오른쪽)
+  r += 1;
+  section(sum, r, 1, 8, `예산 구성 · 소진율 ${pct(b.burn_rate_percent)}`);
+  r += 1;
+  const budgetRows = [
+    ["플랫폼 광고비", b.platform_krw, share(b.platform_krw)],
+    ["인플루언서 집행", b.influencer_paid_krw, share(b.influencer_paid_krw)],
+    ["인플루언서 예상 (추정)", b.influencer_expected_krw, share(b.influencer_expected_krw)],
+    ["잔여 가용 예산 (추정)", b.remaining_krw, b.remaining_percent],
+  ];
+  const bt = table(sum, r, 1, ["구분", "금액", "비중"], budgetRows, ["text", "krw", "pct"], { total: ["총 배정 예산", b.total_krw, 100] });
+  sum.chart({
+    type: "doughnut", title: "예산 구성", anchor: [r, 5, r + 11, 9], legendPos: "r",
+    cats: [bt.first, 1, bt.first + 3], series: [{ name: "금액", vals: [bt.first, 2, bt.first + 3], colors: [C.teal, C.pink, C.navy, C.beige] }],
+  });
+  r = Math.max(bt.last, r + 11) + 1;
+
+  // 채널별 ROAS: 표 + 막대(손익분기 미달은 주황) + 손익분기 기준선
+  section(sum, r, 1, 8, `채널별 ROAS · 손익분기 ${bep}%`);
+  r += 1;
+  const roasT = table(sum, r, 1, ["채널", "광고비", "매출", "ROAS", "손익분기", "상태"],
+    d.channels.map((ch) => [ch.label, krwBase(ch.ad_spend_vnd), krwBase(ch.sales_revenue_vnd), ch.roas_percent, bep, ch.roas_percent >= bep ? "기준 초과" : "기준 미달"]),
+    ["text", "krw", "krw", "pct", "pct", "center"]);
+  r = roasT.last + 1;
+  sum.chart({
+    type: "bar", title: "채널별 ROAS(%)", anchor: [r, 1, r + 13, 9], axisFmt: '0"%"',
+    cats: [roasT.first, 1, roasT.last],
+    series: [
+      { name: "ROAS(%)", vals: [roasT.first, 4, roasT.last], color: C.teal, fmt: '0.0"%"', pointColors: d.channels.map((ch) => (ch.roas_percent >= bep ? null : C.orange)) },
+      { name: `손익분기 ${bep}%`, vals: [roasT.first, 5, roasT.last], color: C.ink, line: true },
+    ],
+  });
+  r += 14;
+
+  // 고객 의견(VOC): 창구별 만족도 표 + 누적 막대
+  if (view.reviews.length) {
+    section(sum, r, 1, 8, `고객 의견(VOC) · 창구별 만족도 · ${view.vocAiChannels?.length ? "AI 요약(검수 전)" : "자동 집계"}`);
+    r += 1;
+    const vocRows = view.channels.map((ch) => {
+      const list = channelList(ch);
+      const cnt = countBy(list, "sentiment");
+      const s = channelSummary(ch);
+      return [PLATFORM_LABEL[ch] || ch, list.length, cnt.Positive || 0, cnt.Neutral || 0, cnt.Negative || 0,
+        round1(((cnt.Positive || 0) / (list.length || 1)) * 100), s.caution || (s.improve || [])[0] || ""];
+    });
+    const vt = table(sum, r, 1, ["창구", "건수", "만족", "보통", "불만", "만족 비율", "유의할 점"], vocRows,
+      ["text", "int", "int", "int", "int", "pct", "wrap"], { height: 30 });
+    vocRows.forEach((_, k) => sum.put(vt.first + k, 8, "", { border: "hair" }).merge(vt.first + k, 7, vt.first + k, 8));
+    sum.put(vt.head, 8, "", S.th).merge(vt.head, 7, vt.head, 8);
+    r = vt.last + 1;
+    sum.chart({
+      type: "barH", grouping: "stacked", title: "창구별 만족 · 보통 · 불만(건)", anchor: [r, 1, r + 9, 9], hideValueAxis: true, gap: 50,
+      cats: [vt.first, 1, vt.last],
+      series: [
+        { name: "만족", vals: [vt.first, 3, vt.last], color: C.teal, labelColor: "#ffffff" },
+        { name: "보통", vals: [vt.first, 4, vt.last], color: C.beige },
+        { name: "불만", vals: [vt.first, 5, vt.last], color: C.navy, labelColor: "#ffffff" },
+      ],
+    });
+    r += 10;
+  }
+
+  // GA4: 유입 채널 참여율 표 + 막대 + 전체 평균선
+  if (hasGa4) {
+    section(sum, r, 1, 8, `GA4 유입 채널 참여율 · ${g.status === "public_demo" ? "공식 데모 데이터(한정선 아님)" : "시연 값"}`);
+    r += 1;
+    const gt = table(sum, r, 1, ["채널", "세션", "참여율", "전체 평균", "주요 이벤트 비율", "수익(USD)"],
+      g.channels.map((ch) => [ch.channel, ch.sessions, ch.engagement_rate_percent, g.engagement_rate_percent, ch.session_key_event_rate_percent, ch.revenue_usd]),
+      ["text", "int", "pct", "pct", "pct", "usd"]);
+    r = gt.last + 1;
+    sum.chart({
+      type: "bar", title: "유입 채널별 참여율(%)", anchor: [r, 1, r + 13, 9], axisFmt: '0"%"', max: 100,
+      cats: [gt.first, 1, gt.last],
+      series: [
+        { name: "참여율(%)", vals: [gt.first, 3, gt.last], color: C.teal, fmt: '0.0"%"', pointColors: g.channels.map((ch) => (ch.engagement_rate_percent >= g.engagement_rate_percent ? null : C.orange)) },
+        { name: `전체 ${pct(g.engagement_rate_percent)}`, vals: [gt.first, 4, gt.last], color: C.ink, line: true },
+      ],
+    });
+    r += 14;
+  }
+  sheets.push(sum);
+
+  // ---------- ② 예산·ROAS 상세 ----------
+  const br = new Sheet("예산·ROAS 상세");
+  br.widths = [2, 18, 16, 16, 16, 14, 14, 12, 14, 14, 12];
+  r = 0;
+  br.put(r, 1, "예산 · 채널별 성과 상세", S.title).merge(r, 1, r, 10).height(r, 28);
+  br.put(r + 1, 1, `기준월 ${d.campaign_month} · 원화 = VND × 편성 기준 환율 ${rate}원/100 VND ÷ 100`, S.sub).merge(r + 1, 1, r + 1, 10);
+  r += 3;
+  section(br, r, 1, 10, `예산 구성 · 소진율 ${pct(b.burn_rate_percent)}`);
+  r += 1;
+  const bd = table(br, r, 1, ["구분", "금액", "총 예산 대비", "비고"], [
+    ["플랫폼 광고비", b.platform_krw, share(b.platform_krw), "Meta · TikTok · Shopee Ads"],
     ["인플루언서 집행", b.influencer_paid_krw, share(b.influencer_paid_krw), ""],
     ["인플루언서 예상", b.influencer_expected_krw, share(b.influencer_expected_krw), "추정(견적 기준)"],
     ["잔여 가용 예산", b.remaining_krw, b.remaining_percent, "추정(예상 지출 포함)"],
-    ["총 배정 예산", b.total_krw, 100, ""],
-    ["예산 소진율(%)", b.burn_rate_percent, null, ""],
-  ] });
-
-  sheets.push({ name: "채널별 ROAS", widths: [14, 16, 14, 16, 14, 10, 12, 10, 16, 14], rows: [
-    ["채널", "광고비(VND)", "광고비(원)", "매출(VND)", "매출(원)", "ROAS(%)", "CPA(VND)", "전환(건)", "총 예산 대비 지출(%)", "손익분기"],
-    ...d.channels.map((c) => [c.label, c.ad_spend_vnd, krwBase(c.ad_spend_vnd), c.sales_revenue_vnd, krwBase(c.sales_revenue_vnd), c.roas_percent,
-      c.cpa_vnd, c.conversions, share(krwBase(c.ad_spend_vnd)), c.roas_percent >= d.roas_bep_percent ? "기준 초과" : "기준 미달"]),
-    ["합계", t.ad_spend_vnd, t.ad_spend_krw_base, t.revenue_vnd, t.revenue_krw_base, t.roas_percent, null, t.conversions, null, ""],
-  ] });
-
-  if (sim.items.length) {
+  ], ["text", "krw", "pct", "text"], { total: ["총 배정 예산", b.total_krw, 100, `소진율 ${pct(b.burn_rate_percent)}`] });
+  br.chart({
+    type: "doughnut", title: "예산 구성", anchor: [r, 6, r + 11, 11], legendPos: "r",
+    cats: [bd.first, 1, bd.first + 3], series: [{ name: "금액", vals: [bd.first, 2, bd.first + 3], colors: [C.teal, C.pink, C.navy, C.beige] }],
+  });
+  r = Math.max(bd.last, r + 11) + 2;
+  section(br, r, 1, 10, "채널별 광고 성과");
+  r += 1;
+  const ct = table(br, r, 1, ["채널", "광고비(VND)", "광고비", "매출(VND)", "매출", "ROAS", "CPA(VND)", "전환", "예산 대비 지출", "손익분기"],
+    d.channels.map((ch) => [ch.label, ch.ad_spend_vnd, krwBase(ch.ad_spend_vnd), ch.sales_revenue_vnd, krwBase(ch.sales_revenue_vnd), ch.roas_percent,
+      ch.cpa_vnd, ch.conversions, share(krwBase(ch.ad_spend_vnd)), ch.roas_percent >= bep ? "기준 초과" : "기준 미달"]),
+    ["text", "vnd", "krw", "vnd", "krw", "pct", "vnd", "int", "pct", "center"],
+    { total: ["합계", t.ad_spend_vnd, t.ad_spend_krw_base, t.revenue_vnd, t.revenue_krw_base, t.roas_percent, null, t.conversions, share(t.ad_spend_krw_base), ""] });
+  r = ct.last + 1;
+  br.chart({
+    type: "bar", title: "채널별 광고비 · 매출(원)", anchor: [r, 1, r + 14, 11], axisFmt: '#,##0,,"백만"',
+    cats: [ct.first, 1, ct.last - 1],
+    series: [
+      { name: "광고비", vals: [ct.first, 3, ct.last - 1], color: C.beige, fmt: '#,##0,,"백만"' },
+      { name: "매출", vals: [ct.first, 5, ct.last - 1], color: C.teal, fmt: '#,##0,,"백만"' },
+    ],
+  });
+  r += 16;
+  if (sim.items.length && sim.data) {
     const cost = sim.items.reduce((s, it) => s + it.cost_krw, 0);
-    sheets.push({ name: "집행 시뮬레이션(추정)", widths: [12, 14, 20, 20, 16, 16, 14, 16], rows: [
-      ["구분", "매체", "대상", "세부 내용", "집행 비용(원)", "집행 비용(VND)", "예상 ROAS(%)", "예상 매출(원)"],
-      ...sim.items.map((it) => [SIM_TYPE_LABEL[it.type], it.media, it.target, it.detail, it.cost_krw, it.cost_vnd, it.roas, it.revenue_krw]),
-      ["합계", "", "", "", cost, sim.items.reduce((s, it) => s + it.cost_vnd, 0), null, sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0)],
-      ["현재 잔여 가용 예산", "", "", "", sim.data.budget.remaining_krw, null, null, null],
-      ["집행 후 남는 예산", "", "", "", sim.data.budget.remaining_krw - cost, null, null, null],
-    ] });
+    section(br, r, 1, 10, "집행 시뮬레이션 (추정 · 저장되지 않는 계산)");
+    r += 1;
+    const st = table(br, r, 1, ["구분", "매체", "대상", "세부 내용", "집행 비용", "집행 비용(VND)", "예상 ROAS", "예상 매출"],
+      sim.items.map((it) => [SIM_TYPE_LABEL[it.type], it.media, it.target, it.detail, it.cost_krw, it.cost_vnd, it.roas, it.revenue_krw]),
+      ["text", "text", "text", "text", "krw", "vnd", "pct", "krw"],
+      { total: ["합계", "", "", "", cost, sim.items.reduce((s, it) => s + it.cost_vnd, 0), null, sim.items.reduce((s, it) => s + (it.revenue_krw || 0), 0)] });
+    r = st.last + 1;
+    br.put(r, 1, "현재 잔여 가용 예산", { bold: true }).put(r, 5, sim.data.budget.remaining_krw, { fmt: FMT.krw, bold: true });
+    br.put(r + 1, 1, "집행 후 남는 예산 (추정)", { bold: true }).put(r + 1, 5, sim.data.budget.remaining_krw - cost, { fmt: FMT.krw, bold: true, color: C.teal });
+    r += 3;
   }
+  sheets.push(br);
 
+  // ---------- ③ VOC 상세 ----------
   if (view.reviews.length) {
-    sheets.push({ name: "VOC 창구 요약", widths: [10, 8, 8, 8, 8, 10, 10, 40, 40, 26, 26, 14], rows: [
-      ["창구", "건수", "만족", "보통", "불만", "만족(%)", "불만(%)", "요약", "유의할 점", "유지", "개선", "출처"],
-      ...view.channels.map((ch) => {
+    const vs = new Sheet("VOC 상세");
+    vs.widths = [2, 20, 9, 10, 10, 42, 42, 18, 18, 12];
+    r = 0;
+    vs.put(r, 1, "고객 의견(VOC) 상세", S.title).merge(r, 1, r, 9).height(r, 28);
+    vs.put(r + 1, 1, `팜플렛 QR 창구(Zalo · 카카오톡 · WhatsApp) 1:1 문의 ${num(view.reviews.length - view.surveyComments.length)}건 + 설문 의견 ${num(view.surveyComments.length)}건 · 시연 데이터`, S.sub).merge(r + 1, 1, r + 1, 9);
+    r += 3;
+    section(vs, r, 1, 9, `창구별 요약 · ${view.vocAiChannels?.length ? "AI 요약(사람 검수 전)" : "자동 집계(AI 분석 전)"}`);
+    r += 1;
+    const sr = table(vs, r, 1, ["창구", "건수", "만족 비율", "불만 비율", "요약", "유의할 점", "유지", "개선", "출처"],
+      view.channels.map((ch) => {
         const list = channelList(ch);
-        const c = countBy(list, "sentiment");
+        const cnt = countBy(list, "sentiment");
         const s = channelSummary(ch);
         const n = list.length || 1;
-        return [PLATFORM_LABEL[ch] || ch, list.length, c.Positive || 0, c.Neutral || 0, c.Negative || 0,
-          round1(((c.Positive || 0) / n) * 100), round1(((c.Negative || 0) / n) * 100), s.summary, s.caution || "",
-          (s.keep || []).join(" · "), (s.improve || []).join(" · "), view.vocAiChannels?.length ? "AI(검수 전)" : "자동 집계"];
-      }),
-    ] });
-    sheets.push({ name: "VOC 문의·후기", widths: [6, 10, 8, 8, 12, 60, 60, 8], rows: [
-      ["번호", "창구", "구분", "만족도", "주제", "한국어", "원문", "원문 언어"],
-      ...view.reviews.map((r, i) => [i + 1, PLATFORM_LABEL[r.platform] || r.platform, r.source === "survey" ? "설문" : "문의",
-        SENTIMENT_LABEL[r.sentiment] || "미분류", r.keyword_tag || "", r.translated_kr || "", r.raw_text_vn || "", r.lang === "ko" ? "한국어" : "베트남어"]),
-    ] });
+        return [PLATFORM_LABEL[ch] || ch, list.length, round1(((cnt.Positive || 0) / n) * 100), round1(((cnt.Negative || 0) / n) * 100),
+          s.summary, s.caution || "", (s.keep || []).join(" · "), (s.improve || []).join(" · "), view.vocAiChannels?.length ? "AI(검수 전)" : "자동 집계"];
+      }), ["text", "int", "pct", "pct", "wrap", "wrap", "wrap", "wrap", "center"], { height: 36 });
+    r = sr.last + 2;
+
+    const qr = view.qr;
+    if (qr) {
+      section(vs, r, 1, 9, "팜플렛 QR 흐름");
+      r += 1;
+      const follows = Object.entries(qr.follows).sort((x, y) => y[1] - x[1]);
+      const qt = table(vs, r, 1, ["단계", "수", "QR 스캔 대비"], [
+        ["배포 팜플렛", qr.pamphlets, null],
+        ["QR 스캔", qr.qr_scans, 100],
+        ["채널 추가 합계", qr.follows_total, qr.follow_rate_percent],
+        ...follows.map(([ch, n]) => [`채널 추가 · ${PLATFORM_LABEL[ch] || ch}`, n, round1((n / qr.qr_scans) * 100)]),
+        ["설문 응답", qr.survey_responses, qr.response_rate_percent],
+      ], ["text", "int", "pct"]);
+      vs.chart({
+        type: "barH", title: "팜플렛 QR 흐름(명)", anchor: [r, 5, r + 10, 9], legend: false, hideValueAxis: true,
+        cats: [qt.first, 1, qt.last], series: [{ name: "수", vals: [qt.first, 2, qt.last], color: C.teal }],
+      });
+      r = Math.max(qt.last, r + 10) + 2;
+
+      section(vs, r, 1, 9, `설문 문항별 점수 분포 · 응답 ${num(qr.survey_responses)}명 · 평균 ${qr.survey.overall_avg ?? "—"} / 5`);
+      r += 1;
+      const svt = table(vs, r, 1, ["문항", "1점", "2점", "3점", "4점", "5점", "응답", "평균", "만족(4~5점)"],
+        qr.survey.items.map((s) => [s.item, ...s.dist, s.responses, s.avg, s.top2_percent]),
+        ["text", "int", "int", "int", "int", "int", "int", "dec2", "pct"]);
+      r = svt.last + 1;
+      const scoreColors = [C.navy, C.pink, C.beige, C.celadon, C.teal];
+      vs.chart({
+        type: "barH", grouping: "percentStacked", title: "문항별 1~5점 응답 비율", anchor: [r, 1, r + 11, 10], hideValueAxis: true, labels: false, gap: 40,
+        cats: [svt.first, 1, svt.last],
+        series: [1, 2, 3, 4, 5].map((p, i) => ({ name: `${p}점`, vals: [svt.first, 1 + p, svt.last], color: scoreColors[i] })),
+      });
+      r += 13;
+    }
+
+    section(vs, r, 1, 9, "핵심 키워드 Top 5 (문의 + 설문)");
+    r += 1;
+    const top = Object.entries(countBy(view.reviews, "keyword_tag")).sort((x, y) => y[1] - x[1]).slice(0, 5);
+    const kt = table(vs, r, 1, ["주제", "언급 수"], top, ["text", "int"]);
+    vs.chart({
+      type: "barH", title: "핵심 키워드(건)", anchor: [r, 4, r + 8, 9], legend: false, hideValueAxis: true,
+      cats: [kt.first, 1, kt.last], series: [{ name: "언급 수", vals: [kt.first, 2, kt.last], color: C.beige, pointColors: [C.navy] }],
+    });
+    r = Math.max(kt.last, r + 8) + 2;
+
+    section(vs, r, 1, 9, `문의·후기 전체 ${num(view.reviews.length)}건 (머리줄 ▼로 창구 · 만족도 · 주제를 거를 수 있어요)`);
+    r += 1;
+    const lt = table(vs, r, 1, ["창구", "구분", "만족도", "주제", "한국어", "원문", "원문 언어", "번호"],
+      view.reviews.map((rv, i) => [PLATFORM_LABEL[rv.platform] || rv.platform, rv.source === "survey" ? "설문" : "문의", SENTIMENT_LABEL[rv.sentiment] || "미분류",
+        rv.keyword_tag || "", rv.translated_kr || "", rv.raw_text_vn || "", rv.lang === "ko" ? "한국어" : "베트남어", i + 1]),
+      ["text", "center", "center", "text", "wrap", "wrap", "center", "int"]);
+    vs.autoFilter(lt.head, 1, lt.last, 8);
+    sheets.push(vs);
   }
 
-  const qr = view.qr;
-  if (qr) {
-    sheets.push({ name: "QR 흐름·설문", widths: [22, 10, 10, 10, 10, 10, 10, 10, 14], rows: [
-      ["팜플렛 QR 단계", "수", "비율(%)"],
-      ["배포 팜플렛", qr.pamphlets, null],
-      ["QR 스캔", qr.qr_scans, qr.scan_rate_percent],
-      ["채널 추가 합계", qr.follows_total, qr.follow_rate_percent],
-      ...Object.entries(qr.follows).sort((x, y) => y[1] - x[1]).map(([ch, n]) => [`  ${PLATFORM_LABEL[ch] || ch}`, n, round1((n / qr.qr_scans) * 100)]),
-      ["설문 응답", qr.survey_responses, qr.response_rate_percent],
-      [],
-      ["설문 문항", "1점", "2점", "3점", "4점", "5점", "응답", "평균", "만족 4~5점(%)"],
-      ...qr.survey.items.map((s) => [s.item, ...s.dist, s.responses, s.avg, s.top2_percent]),
-    ] });
+  // ---------- ④ GA4 상세 ----------
+  if (hasGa4 || d.creators?.length) {
+    const gs = new Sheet("GA4 상세");
+    gs.widths = [2, 20, 12, 12, 12, 12, 14, 12, 14, 14];
+    r = 0;
+    gs.put(r, 1, "GA4 트래픽 · 전환 상세", S.title).merge(r, 1, r, 9).height(r, 28);
+    const period = g?.period?.start ? `${g.period.start} ~ ${g.period.end}` : "—";
+    gs.put(r + 1, 1, `${g?.source || "—"} · 기간 ${period} · ${g?.scope || ""}`, S.sub).merge(r + 1, 1, r + 1, 9);
+    r += 3;
+    if (hasGa4) {
+      section(gs, r, 1, 9, "주요 지표");
+      r += 1;
+      const mt = table(gs, r, 1, ["지표", "값", "", "설명"], [
+        ["유효 참여율", g.engagement_rate_percent, null, `참여 세션 ${num(g.engaged_sessions)} ÷ 세션 ${num(g.sessions)}`],
+        ["세션 주요 이벤트 비율", g.session_key_event_rate_percent, null, "주요 이벤트가 1회 이상 발생한 세션 ÷ 전체 세션"],
+        ["주요 이벤트", g.key_events, null, ""],
+        ["평균 참여 시간(초)", g.avg_engagement_sec, null, ""],
+        ["수익(USD)", g.revenue_usd, null, "데모 매장 매출"],
+        ["쇼피 이동 클릭률 (시연)", g.shopee_ctr_percent, null, `${num(g.shopee_clicks)}회 이동 · 한정선 사이트 전용 이벤트라 시연 비율`],
+        ["팜플렛 QR 유입 (시연)", g.pamphlet_sessions, null, "utm_source=pamphlet 세션 · 시연 비율"],
+      ], ["text", "dec2", "text", "text"]);
+      [[0, "pct"], [1, "pct"], [2, "int"], [3, "sec"], [4, "usd"], [5, "pct"], [6, "int"]].forEach(([k, kind]) => {
+        const cell = gs.cells.get(`${mt.first + k},2`);
+        cell.s = { border: "hair", fmt: FMT[kind] };
+      });
+      for (let k = mt.head; k <= mt.last; k++) gs.merge(k, 4, k, 9);
+      r = mt.last + 2;
+      section(gs, r, 1, 9, "유입 채널별 세션 · 참여 · 전환");
+      r += 1;
+      const gt = table(gs, r, 1, ["채널", "세션", "세션 비중", "참여 세션", "참여율", "평균 참여 시간", "주요 이벤트", "주요 이벤트 비율", "수익(USD)"],
+        g.channels.map((ch) => [ch.channel, ch.sessions, round1((ch.sessions / g.sessions) * 100), ch.engaged_sessions, ch.engagement_rate_percent,
+          ch.avg_engagement_sec, ch.key_events, ch.session_key_event_rate_percent, ch.revenue_usd]),
+        ["text", "int", "pct", "int", "pct", "sec", "int", "pct", "usd"],
+        { total: ["합계", g.sessions, 100, g.engaged_sessions, g.engagement_rate_percent, g.avg_engagement_sec, g.key_events, g.session_key_event_rate_percent, g.revenue_usd] });
+      r = gt.last + 1;
+      gs.chart({
+        type: "bar", title: "유입 채널별 세션 수", anchor: [r, 1, r + 13, 10], legend: false,
+        cats: [gt.first, 1, gt.last - 1], series: [{ name: "세션", vals: [gt.first, 2, gt.last - 1], color: C.teal }],
+      });
+      r += 15;
+      if (g.top_events?.length) {
+        section(gs, r, 1, 9, `이벤트 Top ${g.top_events.length} · 전체 이벤트 ${num(g.event_count)}건 중`);
+        r += 1;
+        const et = table(gs, r, 1, ["이벤트", "이벤트 수", "이벤트 비중", "총 사용자", "총 사용자당"],
+          g.top_events.map((e) => [e.event, e.count, g.event_count ? round1((e.count / g.event_count) * 100) : null, e.users, e.users ? Math.round((e.count / e.users) * 100) / 100 : null]),
+          ["text", "int", "pct", "int", "dec2"]);
+        gs.chart({
+          type: "barH", title: "이벤트 수", anchor: [r, 6, r + 12, 10], legend: false, hideValueAxis: true,
+          cats: [et.first, 1, et.last], series: [{ name: "이벤트 수", vals: [et.first, 2, et.last], color: C.navy }],
+        });
+        r = Math.max(et.last, r + 12) + 2;
+      }
+    }
+    if (d.creators?.length) {
+      section(gs, r, 1, 9, "크리에이터별 클릭 · 전환 Top 5 (시연 · 인플루언서 탭 연동 전)");
+      r += 1;
+      const crt = table(gs, r, 1, ["크리에이터", "플랫폼", "링크 클릭", "전환", "전환율"],
+        d.creators.map((cr) => [cr.creator, cr.platform, cr.clicks, cr.conversions, cr.cvr_percent]), ["text", "text", "int", "int", "pct"]);
+      gs.chart({
+        type: "bar", title: "링크 클릭(회)", anchor: [r, 6, r + 10, 10], legend: false,
+        cats: [crt.first, 1, crt.last], series: [{ name: "링크 클릭", vals: [crt.first, 3, crt.last], color: C.brown }],
+      });
+      r = Math.max(crt.last, r + 10) + 2;
+    }
+    sheets.push(gs);
   }
-
-  const g = d.ga4;
-  if (g?.channels?.length) {
-    sheets.push({ name: "GA4 채널", widths: [18, 10, 12, 12, 10, 14, 12, 16, 14], rows: [
-      ["채널", "세션", "세션 비중(%)", "참여 세션", "참여율(%)", "평균 참여 시간(초)", "주요 이벤트", "주요 이벤트 비율(%)", "수익(USD)"],
-      ...g.channels.map((c) => [c.channel, c.sessions, round1((c.sessions / g.sessions) * 100), c.engaged_sessions, c.engagement_rate_percent,
-        c.avg_engagement_sec, c.key_events, c.session_key_event_rate_percent, c.revenue_usd]),
-      ["합계", g.sessions, 100, g.engaged_sessions, g.engagement_rate_percent, g.avg_engagement_sec, g.key_events, g.session_key_event_rate_percent, g.revenue_usd],
-    ] });
-  }
-  if (g?.top_events?.length) {
-    sheets.push({ name: "GA4 이벤트", widths: [24, 12, 14, 12, 12], rows: [
-      ["이벤트", "이벤트 수", "이벤트 비중(%)", "총 사용자", "총 사용자당"],
-      ...g.top_events.map((e) => [e.event, e.count, g.event_count ? round1((e.count / g.event_count) * 100) : null, e.users, e.users ? Math.round((e.count / e.users) * 100) / 100 : null]),
-    ] });
-  }
-  if (d.creators?.length) {
-    sheets.push({ name: "크리에이터(시연)", widths: [20, 12, 12, 10, 12], rows: [
-      ["크리에이터", "플랫폼", "링크 클릭", "전환", "전환율(%)"],
-      ...d.creators.map((c) => [c.creator, c.platform, c.clicks, c.conversions, c.cvr_percent]),
-    ] });
-  }
-
-  const period = g?.period?.start ? `${g.period.start} ~ ${g.period.end}` : "—";
-  sheets.unshift({ name: "안내", widths: [18, 100], rows: [
-    ["항목", "내용"],
-    ["보고서", "한정선 베트남 KPI"],
-    ["기준월", d.campaign_month],
-    ["만든 시각", stamp()],
-    ["데이터 상태", DATA_NOTE.replace("데이터 상태: ", "")],
-    ["GA4", `${g?.source || "—"} · 기간 ${period} · ${g?.scope || ""}`],
-    ["환율", `기준 ${rate}원/100 VND · 현재 ${fx.ok ? `${fx.live_rate}원/100 VND (${fx.source} ${fx.as_of || ""})` : "불러오지 못함"}`],
-    ["시트", sheets.map((s) => s.name).join(" · ")],
-  ] });
 
   const today = new Date();
   downloadXlsx(`KPI_${d.campaign_month}_${today.getFullYear()}${pad2(today.getMonth() + 1)}${pad2(today.getDate())}.xlsx`, sheets);
