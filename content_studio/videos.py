@@ -114,6 +114,10 @@ COMMON_AVOID = ("no text, no letters, no subtitles, no logos, no watermarks, no 
 # 싸 보이는 결과를 막는 금지 (예시 프롬프트 분석)
 REALISM_AVOID = ("no artificial CGI look, no fake physics, no over-saturated plastic colors",
                  "인공적인 CGI 느낌·가짜 물리 효과·과하게 쨍한 플라스틱 같은 색 없음")
+# 먹음직스럽게: 떡이 이질적으로 길게 늘어나거나 식욕이 떨어지는 모습 금지 (길 때는 AVOID_SHORT 안의 짧은 구절)
+FOOD_AVOID = ("no rubbery over-long stretching, nothing unappetizing (slimy, melting, sagging or dull-colored)",
+              "고무처럼 길게 늘어나는 떡·미끈거림·녹아내림·처짐·칙칙한 색 등 식욕 떨어지는 모습 없음")
+
 # 제품이 갑자기 나타나거나 바뀌지 않게 (예시 프롬프트 분석)
 CONTINUITY = ("Continuity: everything changes gradually and naturally, nothing appears suddenly, "
               "and the rice cakes keep the same shape, color, size and filling in every shot",
@@ -138,14 +142,15 @@ def scene_kind(text):
     return "inside" if INSIDE_WORDS.search(text or "") else "outside"
 MUSIC_AVOID = ("no vocals, no lyrics, no familiar melodies", "보컬·가사·익숙한 멜로디 없음")
 # 프롬프트가 길면(PROMPT_LIMIT 초과) 금지 줄을 이 짧은 문장으로 씁니다.
-AVOID_SHORT = ("no text, logos or watermarks, no distorted hands, no product morphing, no CGI look or fake physics",
-               "글자·로고·워터마크·손 왜곡·제품 변형·CGI 느낌·가짜 물리 없음")
+AVOID_SHORT = ("no text, logos, watermarks, distorted hands, morphing, CGI look, fake physics, "
+               "over-stretched or unappetizing rice cake",
+               "글자·로고·워터마크·손 왜곡·제품 변형·CGI 느낌·가짜 물리·과하게 늘어나거나 식욕 떨어지는 떡 없음")
 # Kling 쪽 문서에 흔한 프롬프트 한도. Higgsfield에서 실제 한도는 확인 전입니다(2026-10-24).
 PROMPT_LIMIT = 2500
 
 # 찹쌀떡 질감 단어 모음. 디테일 컷(가운데 컷)에 차례로 붙입니다.
 TEXTURES = (
-    ("the soft rice cake stretching into long chewy strands", "쫀득하게 길게 늘어나는 떡"),
+    ("the soft rice cake stretching just slightly, soft and chewy", "살짝 쫀득하게 늘어나는 떡"),
     ("fine rice flour drifting slowly through the light", "빛 사이로 천천히 흩날리는 고운 쌀가루"),
     ("the pillowy surface gently pressed and springing back", "말랑하게 눌렸다가 다시 돌아오는 표면"),
     ("the cut cross-section revealing the filling inside", "갈라진 단면 속으로 드러나는 소"),
@@ -179,8 +184,8 @@ STYLES = {
         "beats": (("Introduction", "소개"), ("Texture detail", "질감 디테일"), ("Climax", "클라이맥스"), ("Hero shot", "히어로 샷")),
         "actions": (("the rice cake lands softly in slow motion, fine flour puffing up into the golden light",
                      "찹쌀떡이 슬로모션으로 살며시 내려앉고, 고운 가루가 금빛 빛 속으로 피어오름"),
-                    ("the rice cake is pulled apart in slow motion, chewy strands stretching as flour swirls around it",
-                     "찹쌀떡이 슬로모션으로 갈라지며 쫀득하게 늘어나고, 주위로 쌀가루가 소용돌이침"),
+                    ("the rice cake is pulled apart in slow motion with a short chewy stretch as flour swirls around it",
+                     "찹쌀떡이 슬로모션으로 갈라지며 짧고 쫀득하게 늘어나고, 주위로 쌀가루가 소용돌이침"),
                     ("the flour settles and the rice cakes rest perfectly still on the glossy surface",
                      "가루가 가라앉고 찹쌀떡이 광택 있는 바닥 위에 완벽하게 멈춰 있음")),
         "shots": (("extreme macro close-up, slow dolly-in", "초접사 클로즈업, 천천히 다가가기"),
@@ -241,7 +246,7 @@ STYLES = {
         "avoid": ("no studio lighting, no cinematic color grading", "스튜디오 조명·영화 같은 색보정 없음"),
         "beats": (("Hook", "첫 마디"), ("Unboxing", "열어 보기"), ("First bite", "첫입"), ("Reaction", "리액션")),
         "actions": (("holding the box up to the camera in natural daylight", "자연광 아래 상자를 카메라에 들어 보임"),
-                    ("taking a big first bite, the rice cake stretching naturally", "크게 한입 베어 물고 떡이 자연스럽게 늘어남"),
+                    ("taking a big first bite, the rice cake stretching slightly", "크게 한입 베어 물고 떡이 살짝 늘어남"),
                     ("a genuine happy reaction while holding the rice cake up", "찹쌀떡을 들어 보이며 진심으로 기뻐하는 리액션")),
         "shots": (("handheld selfie-style shot, natural micro shake", "셀카처럼 든 핸드헬드, 자연스러운 흔들림"),
                   (("quick handheld pan", "빠른 핸드헬드 패닝"),
@@ -298,7 +303,7 @@ STYLES = {
         "beats": (("Recording starts", "녹화 시작"), ("Around the table", "식탁 풍경"), ("Shared bite", "함께 한입"),
                   ("Last frame", "마지막 장면")),
         "actions": (("the camcorder powers on and the frame wobbles as it finds focus", "캠코더가 켜지고 초점을 찾으며 화면이 살짝 흔들림"),
-                    ("someone takes a bite and laughs, the rice cake stretching", "누군가 한입 먹고 웃으며 떡이 늘어남"),
+                    ("someone takes a bite and laughs, the rice cake stretching slightly", "누군가 한입 먹고 웃으며 떡이 살짝 늘어남"),
                     ("the rice cakes on a plate as the exposure settles", "노출이 맞춰지며 접시 위 찹쌀떡이 보임")),
         "shots": (("handheld camcorder shot, autofocus hunting", "캠코더 핸드헬드, 초점이 살짝 헤맴"),
                   (("casual zoom with the camcorder zoom rocker", "캠코더 줌 버튼으로 당기는 줌"),),
@@ -386,8 +391,8 @@ STYLES = {
         "avoid": ("no background music, no fast cuts", "배경음악·빠른 컷 없음"),
         "beats": (("First touch", "첫 닿음"), ("Texture", "질감"), ("The pull", "늘어나는 순간"), ("Final bite", "마지막 한입")),
         "actions": (("a fingertip gently presses the soft surface, which slowly springs back", "손끝이 말랑한 표면을 살짝 누르고 천천히 돌아옴"),
-                    ("the rice cake is slowly pulled apart, chewy strands stretching and the filling revealed",
-                     "찹쌀떡을 천천히 갈라 쫀득하게 늘어나며 속이 드러남"),
+                    ("the rice cake is slowly pulled apart with a short chewy stretch and the filling revealed",
+                     "찹쌀떡을 천천히 갈라 짧고 쫀득하게 늘어나며 속이 드러남"),
                     ("a clean bite mark shows the soft cross-section as the flour settles", "깔끔한 한입 자국에 부드러운 단면이 보이고 가루가 가라앉음")),
         "shots": (("locked-off extreme macro", "고정된 초접사"),
                   (("ultra-slow macro slide", "아주 느린 매크로 슬라이드"),),
@@ -677,7 +682,7 @@ def _lines(doc, lang, compact):
         *([f"{(REFERENCE_SHORT if compact else REFERENCE_NOTE)[lang]}."] if doc.get("user_refs") or doc.get("ref_video") else []),
         *[f"{_extra(doc, i, lang)}." for i in range(len(doc["extras"]))],
         sound,
-        f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}'}, {style['avoid'][lang]}.",
+        f"{avoid_l}: {AVOID_SHORT[lang] if compact else f'{COMMON_AVOID[lang]}, {REALISM_AVOID[lang]}, {FOOD_AVOID[lang]}'}, {style['avoid'][lang]}.",
     ]
 
 
@@ -741,7 +746,7 @@ KO_FIXED = (
     ("첨부한 제품 사진과 똑같이", "exactly matching the attached product photo"),
     ("컷마다 적은 효과음", "plus the sound effects noted per shot"),
     ("무음, 음악·효과음 없음", "silent, no music, no sound effects"),
-    CONTINUITY[::-1], PHOTO_MATCH[::-1], PHOTO_GIFT[::-1], START_WHOLE[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], *[t[::-1] for t in TEXTURES],
+    CONTINUITY[::-1], PHOTO_MATCH[::-1], PHOTO_GIFT[::-1], START_WHOLE[::-1], MUSIC_AVOID[::-1], REALISM_AVOID[::-1], AVOID_SHORT[::-1], FOOD_AVOID[::-1], *[t[::-1] for t in TEXTURES],
     ("한정선", "Hanjungsun"),
     LINEUP_SHELL[::-1], REFERENCE_NOTE[::-1], REFERENCE_SHORT[::-1],
 )

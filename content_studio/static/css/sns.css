@@ -69,8 +69,7 @@
 .studio-page .studio-rec.is-dday .studio-rec-mark { background: var(--badge-red-bg); color: var(--badge-red-ink); }
 .studio-page .studio-rec.is-season .studio-rec-mark { background: var(--badge-green-bg); color: var(--badge-green-ink); }
 .studio-page .studio-rec-points { margin: 0; padding-left: var(--space-6); color: var(--ink); font-size: var(--fs-min); line-height: var(--line-height); word-break: keep-all; }  /* 한국어는 단어 단위 줄바꿈 */
-.studio-page .studio-rec-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; }  /* 만들기 [포스터] [카드뉴스] [영상] */
-.studio-page .studio-rec-go > span { flex-basis: 100%; color: var(--brown); font-size: var(--fs-min); font-weight: 600; }  /* "만들기"는 버튼 줄 위 한 줄 */
+.studio-page .studio-rec-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; }  /* [포스터] [카드뉴스] [영상] */
 .studio-page .studio-rec-go .btn { min-height: 36px; padding: 0 var(--space-3); }  /* 좁은 카드에서도 한 줄 */
 @media (max-width: 1100px) { .studio-page .studio-recs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .studio-page .studio-recs { grid-template-columns: minmax(0, 1fr); } }
@@ -219,10 +218,14 @@
 }
 .studio-page .studio-video-frame:has(video) .studio-video-caption { pointer-events: none; margin-bottom: 14%; }
 .studio-page .studio-video-caption:empty { visibility: hidden; }
-.studio-page .studio-video-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
-.studio-page .studio-video-dot { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--white); font-size: var(--fs-min); }
+.studio-page .studio-video-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+/* 컷 번호: 카드뉴스 장 번호와 같은 모양 — 테두리 없는 글자 버튼, 고른 컷은 진한 버튼 */
+.studio-page .studio-video-dot { min-width: 36px; height: 36px; padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius); background: transparent; color: var(--ink); font-size: var(--fs-body); }
+.studio-page .studio-video-dot:hover { background: var(--paper); }
+.studio-page .studio-video-dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .studio-page .studio-video-dot.dark { background: var(--brown); border-color: var(--brown); color: var(--on-dark); }
-.studio-page .studio-video-dot.has-image { box-shadow: inset 0 -3px 0 var(--gold); }  /* 미리보기 이미지가 있는 컷 */
+/* 미리보기 이미지가 있는 컷: 숫자 아래 얇은 금색 밑줄 (탭 줄 밑줄과 같은 표현) */
+.studio-page .studio-video-dot.has-image { text-decoration: underline 2px var(--gold); text-underline-offset: 5px; }
 
 .studio-page .studio-video h3 { margin: 0 0 var(--space-3); font-size: var(--fs-panel-title); font-weight: 600; }
 .studio-page .studio-video .studio-hint { display: block; margin: 0 0 var(--space-4); }
@@ -290,16 +293,12 @@
 .studio-page .studio-home { padding: var(--panel-padding); }
 .studio-page .studio-tabs { overflow-x: auto; }
 
-/* 포스터·카드뉴스 편집기 도구 줄(희주 sns_editor.js .studio-editor-bar): 일반 버튼은 테두리 없이, 마우스를 올리면 옅은 배경.
-   진한 버튼(.dark)과 선택 상자는 그대로 둡니다. (유진 화면 정리, 희주에게 알림) */
-/* 장 번호(.studio-editor-pages)·위쪽 비율 버튼·↶ ↷도 같은 모양 (지금 장·지금 비율은 진한 버튼 그대로) */
-.studio-page .studio-editor-bar .btn:not(.dark), .studio-page .studio-editor-pages .btn:not(.dark),
+/* 위쪽 비율 버튼·↶ ↷·목록 도구: 일반 버튼은 테두리 없이, 마우스를 올리면 옅은 배경 (지금 비율 등 진한 버튼은 그대로).
+   희주 편집기 안쪽(.studio-editor-*) 버튼 모양은 희주 sns_image.css가 정합니다. */
 .studio-page [data-role="set-ratio"] .btn:not(.dark), .studio-page .studio-options .actions .btn,
 .studio-page .studio-list-tools .btn:not(.dark) { border-color: transparent; background: transparent; }
-.studio-page .studio-editor-bar .btn:not(.dark):hover, .studio-page .studio-editor-pages .btn:not(.dark):hover,
 .studio-page [data-role="set-ratio"] .btn:not(.dark):not(:disabled):hover, .studio-page .studio-options .actions .btn:not(:disabled):hover,
 .studio-page .studio-list-tools .btn:not(.dark):hover { background: var(--paper); }
-.studio-page .studio-editor-bar .btn:not(.dark):focus-visible, .studio-page .studio-editor-pages .btn:not(.dark):focus-visible,
 .studio-page [data-role="set-ratio"] .btn:focus-visible, .studio-page .studio-options .actions .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 /* 포스터·카드뉴스 초안 뒤 고정된 비율 표시("비율 4:5"): 버튼이 아니라 글자처럼 */
 .studio-page [data-role="set-ratio"] .btn.is-fixed { border-color: transparent; background: transparent; color: var(--muted); opacity: 1; cursor: default; }
@@ -308,3 +307,35 @@
 .studio-page .studio-list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); margin-left: auto; }
 .studio-page .studio-list-search { width: 220px; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); font-size: var(--fs-body); }
 .studio-page .studio-list-search:focus { border-color: var(--brown); outline: none; }
+/* 초안 뒤 아래 입력 영역: 위 경계선에 붙은 작은 탭 [접기] / 입력창(최소 2줄) | [보내기](아래 맞춤). 첫 생성 화면(is-start)은 그대로 */
+.studio-page .studio-work:not(.is-start) .studio-command-form { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-6); align-items: start; }
+.studio-page .studio-work:not(.is-start) .studio-command-form > textarea { grid-column: 1; grid-row: 1; }
+.studio-page .studio-work:not(.is-start) .studio-command-form > [type="submit"] { grid-column: 2; grid-row: 1; align-self: end; min-width: 96px; padding-inline: var(--space-6); }
+.studio-page[data-tab="video"] .studio-work:not(.is-start) .studio-command-form textarea { min-height: calc(2 * var(--line-height) * 1em + 2 * var(--space-4) + 2px); }
+.studio-page .studio-command-toggle {
+  position: absolute;
+  bottom: 100%;  /* 입력 영역 위 경계선 바깥으로 튀어나온 탭 (자리를 차지하지 않음) */
+  right: var(--space-6);
+  min-height: 26px;
+  margin: 0;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: inherit;
+  color: var(--muted);
+  font-size: var(--fs-min);
+}
+.studio-page .studio-command-toggle:hover { color: var(--ink); }
+/* 접힘: 오른쪽 위 [펼치기] + 결과 안내만 */
+.studio-page .studio-command.is-collapsed .studio-command-form { display: none; }
+.studio-page .studio-command.is-collapsed { padding-block: var(--space-3); }
+.studio-page .studio-command.is-collapsed .studio-feedback { margin-top: 0; }
+/* 결과 안내가 비어 있으면 그 줄 자리도 숨겨 입력창 아래 공백을 없앱니다 */
+.studio-page .studio-feedback:not(:has(span:not(:empty))) { display: none; }
+/* 포스터·카드뉴스: 입력창이 없고 안내도 비어 있으면 아래 띠 자체를 숨김 */
+.studio-page .studio-command:has(> .studio-command-form[hidden]):not(:has(.studio-feedback span:not(:empty))) { display: none; }
+/* 포스터·카드뉴스 편집 화면(희주 요청): 바깥 흰 패널을 없애 안쪽 구역 카드(시안 / AI 초안 / 문구·검수 / Figma)가 따로 보이게 */
+.studio-page[data-tab="poster"] .studio-main, .studio-page[data-tab="cardnews"] .studio-main { padding: 0; border: 0; background: transparent; box-shadow: none; }
+/* 미리보기 팝업: [수정하기]로 할 수 있는 것 안내 */
+.studio-page .studio-preview-dialog .studio-preview-guide { margin: 0 0 var(--space-4); color: var(--ink); font-size: var(--fs-min); }
