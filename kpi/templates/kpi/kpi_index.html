@@ -285,7 +285,7 @@
             <canvas data-kpi-chart="keywords" aria-label="핵심 키워드 Top 5 막대 차트" role="img"></canvas>
           </div>
           <p class="kpi-detail-title">
-            팜플렛 QR 설문 만족도 <span class="kpi-review-count" data-kpi="survey-count"></span>
+            팜플렛 QR 설문 만족도 {{ info("평균 = Σ(점수 × 응답 인원) ÷ 응답 수\n만족 = 4~5점 응답 ÷ 응답 수\n막대 = 1~5점 응답 인원 비중") }} <span class="kpi-review-count" data-kpi="survey-count"></span>
           </p>
           <div class="kpi-survey-legend" aria-hidden="true">
             <span><i class="kpi-s1"></i>1점</span><span><i class="kpi-s2"></i>2점</span><span><i class="kpi-s3"></i>3점</span><span><i class="kpi-s4"></i>4점</span><span><i class="kpi-s5"></i>5점</span>
@@ -296,7 +296,6 @@
               <tbody data-kpi="survey-rows"></tbody>
             </table>
           </div>
-          <p class="kpi-note">평균 = Σ(점수 × 응답 인원) ÷ 응답 수 · 만족 = 4~5점 응답 ÷ 응답 수 · 막대 = 1~5점 응답 인원 비중</p>
 
           <!-- 리뷰 보기: 언어·만족도 드롭다운 (기본: AI가 다듬은 한국어, 전체) -->
           <p class="kpi-detail-title" data-report-skip>창구별 문의·후기</p>

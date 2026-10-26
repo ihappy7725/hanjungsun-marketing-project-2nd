@@ -710,8 +710,8 @@ function renderVocChannels() {
       return seg;
     }));
     const btn = el("button", { className: `kpi-voc-ch${view.reviewChannel === key ? " is-on" : ""}` }, [
-      el("span", { className: "kpi-voc-ch-name", text: label }),
-      el("strong", { text: `${num(n)}건` }),
+      // 이름 · 건수를 한 줄에(이름 왼쪽, 건수 오른쪽)
+      el("span", { className: "kpi-voc-ch-top" }, [el("span", { className: "kpi-voc-ch-name", text: label }), el("strong", { text: `${num(n)}건` })]),
       bar,
       el("small", { text: n ? `만족 ${Math.round((count("Positive") / n) * 100)}% · 불만 ${Math.round((count("Negative") / n) * 100)}%` : "—" }),
     ]);
