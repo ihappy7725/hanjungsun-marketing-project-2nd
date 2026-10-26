@@ -3,7 +3,7 @@
 # 각 줄은 응답자 1명. scores는 그 사람의 문항별 점수(1~5)이고, 의견·감성·키워드는 점수와 맞게 작성했습니다.
 # 감성: 6문항 평균 4점 이상 Positive / 3점 이상 Neutral / 3점 미만 Negative. 배송 관련 내용 없음.
 review_id,platform,raw_text_vn,translated_kr,sentiment,keyword_tag,scores
-survey_001,WhatsApp,"Bánh ngon, vị ngọt vừa phải, nhưng trời nóng, cầm về chưa tới nhà kem đã chảy.",단맛이 딱 적당해서 맛있어요. 다만 날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:5|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
+survey_001,WhatsApp,"Bánh ngon, vị ngọt vừa phải, nhưng trời nóng, đang cầm về thì kem đã chảy.",단맛이 딱 적당해서 맛있어요. 다만 날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:5|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
 survey_002,WhatsApp,"Ăn lạnh ngon hơn hẳn, vị rất tươi. 10 điểm.",차갑게 먹으니까 훨씬 맛있고 신선한 맛이 나요. 10점 만점에 10점이에요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:5
 survey_003,Zalo_OA,"Hộp chắc chắn, bánh không bị móp, nhưng mong có hộp nhỏ giá mềm hơn.",상자가 튼튼해서 떡이 하나도 안 눌렸어요. 다만 작은 박스로 좀 더 저렴하게 나오면 좋겠어요.,Neutral,가격,맛:4|식감:3|포장/보냉:4|가격:3|매장 응대:3|재구매 의향:4
 survey_004,KakaoTalk,Bánh để tủ lạnh vẫn mềm. Cảm ơn shop!,냉장고에 넣어 둬도 딱딱해지지 않고 말랑해요. 감사합니다!,Positive,당도/맛,맛:5|식감:5|포장/보냉:5|가격:4|매장 응대:5|재구매 의향:4
@@ -19,7 +19,7 @@ survey_013,WhatsApp,Giá hơi cao nhưng xứng đáng.,가격이 조금 있긴 
 survey_014,KakaoTalk,Nhân viên dặn cách bảo quản rất kỹ. Sẽ mua lại.,직원분이 보관 방법을 꼼꼼히 알려 주셨어요. 재구매 의사 있어요!,Positive,문의/기타,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:5
 survey_015,WhatsApp,Bánh mềm mà không dính răng. Lần sau mua thêm hộp lớn.,말랑한데 이에 안 달라붙어서 좋아요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:3|가격:4|매장 응대:3|재구매 의향:5
 survey_016,Zalo_OA,Vị sầu riêng hơi nồng. Mong lần sau tốt hơn.,두리안 맛은 향이 좀 강하더라고요.. 다음엔 더 나아지길 바라요.,Negative,당도/맛,맛:2|식감:4|포장/보냉:3|가격:3|매장 응대:3|재구매 의향:1
-survey_017,Zalo_OA,"Được cho nếm thử trước khi mua, rất thích, nhưng hộp bị móp một góc.",사기 전에 시식할 수 있어서 좋았어요. 다만 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
+survey_017,Zalo_OA,"Được cho nếm thử trước khi mua, rất thích, nhưng hộp chọn ở cửa hàng bị móp một góc.",사기 전에 시식할 수 있어서 좋았어요. 다만 매장에서 고른 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
 survey_018,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon.",한국식 맛이라 색다르고 맛있네요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
 survey_019,KakaoTalk,"Nhân dâu tươi, ăn rất thích.",딸기가 신선해서 정말 맛있게 먹었어요!,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:4
 survey_020,KakaoTalk,Đông khách nên phải chờ khá lâu.,손님이 많아서 꽤 오래 기다렸어요.,Negative,문의/기타,맛:3|식감:3|포장/보냉:3|가격:3|매장 응대:1|재구매 의향:1
@@ -30,7 +30,7 @@ survey_024,Zalo_OA,Bánh mềm mà không dính răng. Rất đáng thử.,말�
 survey_025,Zalo_OA,"Ăn không bị khô, rất vừa miệng, nhưng so với bánh mochi khác thì đắt hơn nhiều.",퍽퍽하지 않고 입에 딱 맞아요. 다만 다른 찹쌀떡이랑 비교하면 꽤 비싼 편이에요.,Neutral,가격,맛:4|식감:4|포장/보냉:3|가격:2|매장 응대:3|재구매 의향:4
 survey_026,Zalo_OA,Bánh hơi dính tay khi ăn. Mong lần sau tốt hơn.,먹을 때 손에 좀 달라붙어요. 다음엔 더 나아지길 바라요.,Negative,당도/맛,맛:3|식감:1|포장/보냉:2|가격:2|매장 응대:3|재구매 의향:1
 survey_027,Zalo_OA,"Mua hộp lớn thấy rẻ hơn, đáng tiền, nhưng đá khô ít quá, giữ lạnh không lâu.",큰 박스로 사니까 더 저렴하고 돈값 해요. 다만 드라이아이스가 적어서 오래 안 가더라고요.,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:4|매장 응대:3|재구매 의향:4
-survey_028,Zalo_OA,"Trời nóng, cầm về chưa tới nhà kem đã chảy. Hơi thất vọng.",날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ 조금 실망했어요.,Negative,포장/보냉,맛:3|식감:4|포장/보냉:2|가격:2|매장 응대:4|재구매 의향:2
+survey_028,Zalo_OA,"Trời nóng, đang cầm về thì kem đã chảy. Hơi thất vọng.",날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ 조금 실망했어요.,Negative,포장/보냉,맛:3|식감:4|포장/보냉:2|가격:2|매장 응대:4|재구매 의향:2
 survey_029,Zalo_OA,Nhân viên dặn cách bảo quản rất kỹ. 10 điểm.,직원분이 보관 방법을 꼼꼼히 알려 주셨어요. 10점 만점에 10점이에요.,Positive,문의/기타,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
 survey_030,KakaoTalk,"Vỏ bánh dai dai, nhân mềm, rất hợp nhau. Lần sau mua thêm hộp lớn.",쫄깃한 떡이랑 부드러운 소가 잘 어울려요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:4|식감:5|포장/보냉:4|가격:3|매장 응대:4|재구매 의향:5
 survey_031,Zalo_OA,"Nhân xoài thơm, ăn một cái là ghiền. Lần sau mua thêm hộp lớn.",망고 소가 향긋해서 하나 먹으면 계속 손이 가요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:5|매장 응대:5|재구매 의향:5
@@ -44,12 +44,12 @@ survey_038,Zalo_OA,"Ăn không bị khô, rất vừa miệng. Cả nhà đều 
 survey_039,KakaoTalk,"Vỏ mỏng, nhân nhiều, nhưng mong có hộp nhỏ giá mềm hơn.",떡피가 얇고 소가 넉넉해요! 다만 작은 박스로 좀 더 저렴하게 나오면 좋겠어요.,Neutral,가격,맛:4|식감:4|포장/보냉:4|가격:2|매장 응대:4|재구매 의향:3
 survey_040,Zalo_OA,"Nhân hơi nhạt, chưa đậm vị. Mong shop cải thiện.",소 맛이 좀 밍밍해서 아쉬웠어요. 개선되면 좋겠어요.,Negative,당도/맛,맛:1|식감:3|포장/보냉:1|가격:2|매장 응대:3|재구매 의향:4
 survey_041,WhatsApp,"Vị kem sữa béo nhẹ, rất ngon. 10 điểm.",우유 크림이 은은하게 고소해서 맛있어요. 10점 만점에 10점이에요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
-survey_042,WhatsApp,Hộp bị móp một góc. Hơi thất vọng.,상자 한쪽이 찌그러져 있었어요.. 조금 실망했어요.,Negative,포장/보냉,맛:3|식감:3|포장/보냉:1|가격:2|매장 응대:3|재구매 의향:1
+survey_042,WhatsApp,Hộp chọn ở cửa hàng bị móp một góc. Hơi thất vọng.,매장에서 고른 상자 한쪽이 찌그러져 있었어요.. 조금 실망했어요.,Negative,포장/보냉,맛:3|식감:3|포장/보냉:1|가격:2|매장 응대:3|재구매 의향:1
 survey_043,Zalo_OA,Nhân viên gói quà rất nhanh và khéo. Rất đáng thử.,직원분이 선물 포장을 빠르고 꼼꼼하게 해 주셨어요. 한 번쯤 꼭 드셔 보세요.,Positive,문의/기타,맛:4|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:4
 survey_044,Zalo_OA,"Ăn không bị khô, rất vừa miệng.",퍽퍽하지 않고 입에 딱 맞아요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:5|매장 응대:5|재구매 의향:5
 survey_045,Zalo_OA,"Ăn lạnh ngon hơn hẳn, vị rất tươi, nhưng giá hơi cao để ăn hằng ngày.",차갑게 먹으니까 훨씬 맛있고 신선한 맛이 나요. 다만 평소에 먹기에는 가격이 좀 부담돼요.,Neutral,가격,맛:4|식감:4|포장/보냉:4|가격:1|매장 응대:3|재구매 의향:3
 survey_046,WhatsApp,"Kết cấu mịn, cắn vào thấy rất êm, nhưng cửa hàng hết vị mình muốn mua.",식감이 매끈하고 한입 베어 물면 촉촉해요. 다만 사고 싶던 맛이 매장에 품절이었어요ㅠ,Neutral,문의/기타,맛:3|식감:4|포장/보냉:3|가격:3|매장 응대:3|재구매 의향:4
-survey_047,Zalo_OA,"Bánh không quá ngọt, người lớn tuổi cũng ăn được, nhưng trời nóng, cầm về chưa tới nhà kem đã chảy.",너무 달지 않아서 부모님도 잘 드시더라고요. 다만 날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
+survey_047,Zalo_OA,"Bánh không quá ngọt, người lớn tuổi cũng ăn được, nhưng trời nóng, đang cầm về thì kem đã chảy.",너무 달지 않아서 부모님도 잘 드시더라고요. 다만 날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
 survey_048,Zalo_OA,"Cửa hàng sạch sẽ, phục vụ chu đáo, nhưng bao bì nhiều lớp quá, hơi lãng phí.",매장이 깔끔하고 응대도 세심해요. 다만 포장이 너무 여러 겹이라 좀 과한 것 같아요.,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
 survey_049,Zalo_OA,"Mua hộp lớn thấy rẻ hơn, đáng tiền. 10 điểm.",큰 박스로 사니까 더 저렴하고 돈값 해요. 10점 만점에 10점이에요.,Positive,가격,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
 survey_050,Zalo_OA,"Vị kem sữa béo nhẹ, rất ngon. Sẽ mua lại.",우유 크림이 은은하게 고소해서 맛있어요. 재구매 의사 있어요!,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:3|매장 응대:4|재구매 의향:5
@@ -95,17 +95,17 @@ survey_089,WhatsApp,"Bánh để tủ lạnh vẫn mềm, nhưng giá một cái
 survey_090,Zalo_OA,"Bánh mềm mà không dính răng, nhưng mong có hộp nhỏ giá mềm hơn.",말랑한데 이에 안 달라붙어서 좋아요. 다만 작은 박스로 좀 더 저렴하게 나오면 좋겠어요.,Neutral,가격,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
 survey_091,KakaoTalk,"Nhân dâu tươi, ăn rất thích, nhưng hỏi nhân viên mà trả lời hơi chậm.",딸기가 신선해서 정말 맛있게 먹었어요! 다만 직원분께 물어봤는데 답이 좀 느렸어요.,Neutral,문의/기타,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:2|재구매 의향:3
 survey_092,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon. 10 điểm.",한국식 맛이라 색다르고 맛있네요. 10점 만점에 10점이에요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:4
-survey_093,Zalo_OA,"Bánh ngon, vị ngọt vừa phải, nhưng hộp bị móp một góc.",단맛이 딱 적당해서 맛있어요. 다만 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
+survey_093,Zalo_OA,"Bánh ngon, vị ngọt vừa phải, nhưng hộp chọn ở cửa hàng bị móp một góc.",단맛이 딱 적당해서 맛있어요. 다만 매장에서 고른 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:4|재구매 의향:3
 survey_094,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon. Sẽ mua lại.",한국식 맛이라 색다르고 맛있네요. 재구매 의사 있어요!,Positive,당도/맛,맛:5|식감:4|포장/보냉:3|가격:4|매장 응대:4|재구매 의향:4
 survey_095,WhatsApp,"Độ dẻo vừa phải, ăn rất đã, nhưng vị trà xanh hơi đắng.",쫀득함이 딱 적당해서 먹는 재미가 있어요. 다만 녹차 맛은 살짝 쓴 편이었어요.,Neutral,당도/맛,맛:3|식감:4|포장/보냉:4|가격:3|매장 응대:4|재구매 의향:2
 survey_096,Zalo_OA,"Vị đậu đỏ đậm đà, không bị ngấy. Cả nhà đều thích.",팥 맛이 진한데도 느끼하지 않아요. 가족들도 다 좋아했어요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:3
 survey_097,KakaoTalk,"Nhân xoài thơm, ăn một cái là ghiền. 10 điểm.",망고 소가 향긋해서 하나 먹으면 계속 손이 가요. 10점 만점에 10점이에요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:4
 survey_098,Zalo_OA,"Nhân dâu tươi, ăn rất thích. Lần sau mua thêm hộp lớn.",딸기가 신선해서 정말 맛있게 먹었어요! 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
 survey_099,Zalo_OA,"Bánh không quá ngọt, người lớn tuổi cũng ăn được. Lần sau mua thêm hộp lớn.",너무 달지 않아서 부모님도 잘 드시더라고요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
-survey_100,Zalo_OA,"Ăn lạnh ngon hơn hẳn, vị rất tươi, nhưng hộp bị móp một góc.",차갑게 먹으니까 훨씬 맛있고 신선한 맛이 나요. 다만 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:3|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
+survey_100,Zalo_OA,"Ăn lạnh ngon hơn hẳn, vị rất tươi, nhưng hộp chọn ở cửa hàng bị móp một góc.",차갑게 먹으니까 훨씬 맛있고 신선한 맛이 나요. 다만 매장에서 고른 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:3|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
 survey_101,Zalo_OA,Vải bojagi gói quà nhìn sang trọng. Sẽ mua lại.,보자기 포장이 고급스러워 보여요! 재구매 의사 있어요!,Positive,포장/보냉,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:4|재구매 의향:5
 survey_102,Zalo_OA,Vải bojagi gói quà nhìn sang trọng. Cả nhà đều thích.,보자기 포장이 고급스러워 보여요! 가족들도 다 좋아했어요.,Positive,포장/보냉,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
-survey_103,WhatsApp,"Vỏ bánh dẻo, mềm mịn, nhưng trời nóng, cầm về chưa tới nhà kem đã chảy.",떡이 쫀득하고 부드러워요. 다만 날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:2
+survey_103,WhatsApp,"Vỏ bánh dẻo, mềm mịn, nhưng trời nóng, đang cầm về thì kem đã chảy.",떡이 쫀득하고 부드러워요. 다만 날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:2
 survey_104,Zalo_OA,"Vị đậu đỏ đậm đà, không bị ngấy. Cảm ơn shop!",팥 맛이 진한데도 느끼하지 않아요. 감사합니다!,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:5
 survey_105,Zalo_OA,"Vỏ bánh dai dai, nhân mềm, rất hợp nhau. Sẽ mua lại.",쫄깃한 떡이랑 부드러운 소가 잘 어울려요. 재구매 의사 있어요!,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:4
 survey_106,Zalo_OA,Hỏi nhân viên mà trả lời hơi chậm.,직원분께 물어봤는데 답이 좀 느렸어요.,Negative,문의/기타,맛:2|식감:2|포장/보냉:1|가격:1|매장 응대:1|재구매 의향:3
@@ -129,7 +129,7 @@ survey_123,WhatsApp,"Vị đậu đỏ đậm đà, không bị ngấy. 10 đi�
 survey_124,WhatsApp,"Kết cấu mịn, cắn vào thấy rất êm, nhưng mong có hộp nhỏ giá mềm hơn.",식감이 매끈하고 한입 베어 물면 촉촉해요. 다만 작은 박스로 좀 더 저렴하게 나오면 좋겠어요.,Neutral,가격,맛:4|식감:4|포장/보냉:4|가격:3|매장 응대:4|재구매 의향:4
 survey_125,WhatsApp,"Ăn không bị khô, rất vừa miệng. Cảm ơn shop!",퍽퍽하지 않고 입에 딱 맞아요. 감사합니다!,Positive,당도/맛,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
 survey_126,WhatsApp,"Nhân dâu tươi, ăn rất thích. Sẽ mua lại.",딸기가 신선해서 정말 맛있게 먹었어요! 재구매 의사 있어요!,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:4
-survey_127,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon, nhưng trời nóng, cầm về chưa tới nhà kem đã chảy.",한국식 맛이라 색다르고 맛있네요. 다만 날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:5|식감:4|포장/보냉:3|가격:4|매장 응대:3|재구매 의향:4
+survey_127,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon, nhưng trời nóng, đang cầm về thì kem đã chảy.",한국식 맛이라 색다르고 맛있네요. 다만 날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:5|식감:4|포장/보냉:3|가격:4|매장 응대:3|재구매 의향:4
 survey_128,WhatsApp,"Có túi giữ lạnh và đá khô, rất chu đáo. Cảm ơn shop!",보냉백에 드라이아이스까지 챙겨 주셔서 세심하다고 느꼈어요. 감사합니다!,Positive,포장/보냉,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:5|재구매 의향:5
 survey_129,Zalo_OA,"Ăn lạnh ngon hơn hẳn, vị rất tươi. Lần sau mua thêm hộp lớn.",차갑게 먹으니까 훨씬 맛있고 신선한 맛이 나요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:4
 survey_130,Zalo_OA,"Vỏ bánh dẻo, mềm mịn. Cảm ơn shop!",떡이 쫀득하고 부드러워요. 감사합니다!,Positive,당도/맛,맛:5|식감:5|포장/보냉:5|가격:4|매장 응대:5|재구매 의향:5
@@ -139,7 +139,7 @@ survey_133,WhatsApp,"Vị đậu đỏ đậm đà, không bị ngấy.",팥 맛
 survey_134,WhatsApp,"Bánh không quá ngọt, người lớn tuổi cũng ăn được, nhưng nhân viên chưa giải thích rõ cách bảo quản.",너무 달지 않아서 부모님도 잘 드시더라고요. 다만 직원분이 보관 방법을 잘 안 알려 주셨어요.,Neutral,문의/기타,맛:5|식감:3|포장/보냉:3|가격:3|매장 응대:2|재구매 의향:4
 survey_135,Zalo_OA,Giá hơi cao nhưng xứng đáng. Rất đáng thử.,가격이 조금 있긴 한데 그만한 값어치는 해요. 한 번쯤 꼭 드셔 보세요.,Positive,가격,맛:5|식감:5|포장/보냉:4|가격:5|매장 응대:5|재구매 의향:5
 survey_136,Zalo_OA,"Độ dẻo vừa phải, ăn rất đã. Cả nhà đều thích.",쫀득함이 딱 적당해서 먹는 재미가 있어요. 가족들도 다 좋아했어요.,Positive,당도/맛,맛:4|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
-survey_137,Zalo_OA,"Nhân xoài thơm, ăn một cái là ghiền, nhưng trời nóng, cầm về chưa tới nhà kem đã chảy.",망고 소가 향긋해서 하나 먹으면 계속 손이 가요. 다만 날이 더워서 집에 도착하기도 전에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:3|재구매 의향:4
+survey_137,Zalo_OA,"Nhân xoài thơm, ăn một cái là ghiền, nhưng trời nóng, đang cầm về thì kem đã chảy.",망고 소가 향긋해서 하나 먹으면 계속 손이 가요. 다만 날이 더워서 들고 가는 길에 크림이 녹았어요ㅠ,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:3|재구매 의향:4
 survey_138,WhatsApp,"Vỏ mỏng, nhân nhiều. 10 điểm.",떡피가 얇고 소가 넉넉해요! 10점 만점에 10점이에요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
 survey_139,WhatsApp,"Kết cấu mịn, cắn vào thấy rất êm. Cả nhà đều thích.",식감이 매끈하고 한입 베어 물면 촉촉해요. 가족들도 다 좋아했어요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:5|재구매 의향:5
 survey_140,Zalo_OA,"Vỏ bánh dẻo, mềm mịn. Lần sau mua thêm hộp lớn.",떡이 쫀득하고 부드러워요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:5|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
@@ -159,7 +159,7 @@ survey_153,WhatsApp,Giá hơi cao nhưng xứng đáng. Lần sau mua thêm hộ
 survey_154,KakaoTalk,"Ăn không bị khô, rất vừa miệng. 10 điểm.",퍽퍽하지 않고 입에 딱 맞아요. 10점 만점에 10점이에요.,Positive,당도/맛,맛:4|식감:5|포장/보냉:4|가격:3|매장 응대:5|재구매 의향:4
 survey_155,Zalo_OA,"Hộp chắc chắn, bánh không bị móp. Cảm ơn shop!",상자가 튼튼해서 떡이 하나도 안 눌렸어요. 감사합니다!,Positive,포장/보냉,맛:4|식감:4|포장/보냉:4|가격:4|매장 응대:4|재구매 의향:5
 survey_156,Zalo_OA,"Cửa hàng sạch sẽ, phục vụ chu đáo. Cảm ơn shop!",매장이 깔끔하고 응대도 세심해요. 감사합니다!,Positive,문의/기타,맛:5|식감:4|포장/보냉:3|가격:4|매장 응대:5|재구매 의향:5
-survey_157,Zalo_OA,"Ăn không bị khô, rất vừa miệng, nhưng hộp bị móp một góc.",퍽퍽하지 않고 입에 딱 맞아요. 다만 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:5|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
+survey_157,Zalo_OA,"Ăn không bị khô, rất vừa miệng, nhưng hộp chọn ở cửa hàng bị móp một góc.",퍽퍽하지 않고 입에 딱 맞아요. 다만 매장에서 고른 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:5|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4
 survey_158,Zalo_OA,"Nhân xoài thơm, ăn một cái là ghiền. Sẽ mua lại.",망고 소가 향긋해서 하나 먹으면 계속 손이 가요. 재구매 의사 있어요!,Positive,당도/맛,맛:5|식감:4|포장/보냉:5|가격:4|매장 응대:4|재구매 의향:4
 survey_159,KakaoTalk,"Nhân dâu tươi, ăn rất thích, nhưng đông khách nên phải chờ khá lâu.",딸기가 신선해서 정말 맛있게 먹었어요! 다만 손님이 많아서 꽤 오래 기다렸어요.,Neutral,문의/기타,맛:4|식감:4|포장/보냉:4|가격:3|매장 응대:3|재구매 의향:4
 survey_160,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon, nhưng nhân viên chưa giải thích rõ cách bảo quản.",한국식 맛이라 색다르고 맛있네요. 다만 직원분이 보관 방법을 잘 안 알려 주셨어요.,Neutral,문의/기타,맛:5|식감:5|포장/보냉:3|가격:3|매장 응대:3|재구매 의향:4
@@ -169,7 +169,7 @@ survey_163,KakaoTalk,"Hương vị kiểu Hàn rất lạ miệng, ngon. Rất �
 survey_164,Zalo_OA,"Vỏ mỏng, nhân nhiều, nhưng đông khách nên phải chờ khá lâu.",떡피가 얇고 소가 넉넉해요! 다만 손님이 많아서 꽤 오래 기다렸어요.,Neutral,문의/기타,맛:2|식감:4|포장/보냉:3|가격:3|매장 응대:2|재구매 의향:4
 survey_165,Zalo_OA,"Hương vị kiểu Hàn rất lạ miệng, ngon. Lần sau mua thêm hộp lớn.",한국식 맛이라 색다르고 맛있네요. 다음엔 큰 박스로 살게요.,Positive,당도/맛,맛:5|식감:4|포장/보냉:3|가격:4|매장 응대:4|재구매 의향:4
 survey_166,Zalo_OA,"Độ dẻo vừa phải, ăn rất đã, nhưng đông khách nên phải chờ khá lâu.",쫀득함이 딱 적당해서 먹는 재미가 있어요. 다만 손님이 많아서 꽤 오래 기다렸어요.,Neutral,문의/기타,맛:4|식감:4|포장/보냉:2|가격:3|매장 응대:2|재구매 의향:3
-survey_167,KakaoTalk,"Độ dẻo vừa phải, ăn rất đã, nhưng hộp bị móp một góc.",쫀득함이 딱 적당해서 먹는 재미가 있어요. 다만 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:2|매장 응대:4|재구매 의향:3
+survey_167,KakaoTalk,"Độ dẻo vừa phải, ăn rất đã, nhưng hộp chọn ở cửa hàng bị móp một góc.",쫀득함이 딱 적당해서 먹는 재미가 있어요. 다만 매장에서 고른 상자 한쪽이 찌그러져 있었어요..,Neutral,포장/보냉,맛:4|식감:4|포장/보냉:2|가격:2|매장 응대:4|재구매 의향:3
 survey_168,WhatsApp,"Mua hộp lớn thấy rẻ hơn, đáng tiền. Cả nhà đều thích.",큰 박스로 사니까 더 저렴하고 돈값 해요. 가족들도 다 좋아했어요.,Positive,가격,맛:5|식감:5|포장/보냉:5|가격:5|매장 응대:4|재구매 의향:5
 survey_169,Zalo_OA,Mong có hộp nhỏ giá mềm hơn. Mong shop cải thiện.,작은 박스로 좀 더 저렴하게 나오면 좋겠어요. 개선되면 좋겠어요.,Negative,가격,맛:3|식감:3|포장/보냉:2|가격:1|매장 응대:2|재구매 의향:1
 survey_170,WhatsApp,"Vị kem sữa béo nhẹ, rất ngon, nhưng so với bánh mochi khác thì đắt hơn nhiều.",우유 크림이 은은하게 고소해서 맛있어요. 다만 다른 찹쌀떡이랑 비교하면 꽤 비싼 편이에요.,Neutral,가격,맛:4|식감:4|포장/보냉:3|가격:3|매장 응대:4|재구매 의향:4

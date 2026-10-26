@@ -1,0 +1,68 @@
+/* KPI PDF 보고서 [민지]
+   [PDF 내보내기]가 여는 새 창 전용 A4 인쇄 스타일입니다. KPI 화면(kpi_main.css)에는 영향이 없습니다.
+   색·글꼴은 platform_core/static/css/base.css 변수만 씁니다. */
+
+@page { size: A4; margin: 12mm 12mm 14mm; }
+
+body { margin: 0; background: var(--page-bg); color: var(--ink); }
+
+.kpi-page.kpi-report { max-width: 190mm; margin: 0 auto; padding: var(--space-5) 0; }
+/* A4 폭에 표가 잘리지 않게 보고서 안에서만 글자 크기 변수를 줄입니다(화면에는 영향 없음). */
+.kpi-page.kpi-report {
+  --fs-display: 30px;
+  --fs-subheading: 17px;
+  --fs-body: 13px;
+  --fs-table: 12px;
+  --fs-min: 12px;
+  font-size: 13px;
+}
+
+/* 표지 줄 */
+.kpi-report .kpi-report-head { margin-bottom: var(--space-5); padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
+.kpi-report .kpi-report-head h1 { margin: 0; font-family: var(--font-title); font-size: var(--fs-display); font-weight: var(--title-weight); }
+.kpi-report .kpi-report-sub { margin: var(--space-2) 0 0; color: var(--muted); }
+.kpi-report .kpi-report-note { margin: var(--space-2) 0 0; color: var(--muted); font-size: 0.85em; }
+
+/* 블록: 화면의 확대 상태처럼 상세까지 펼치고, 블록마다 새 쪽에서 시작 */
+.kpi-report .kpi-scorecards { margin-bottom: var(--space-5); }
+.kpi-report .kpi-report-section {
+  position: static;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-5) 0 0;
+  overflow: visible;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+  break-before: page;
+  break-inside: auto;  /* 블록이 쪽보다 길면 이어지는 쪽으로 넘김(표 줄·카드는 아래 규칙으로 안 잘림) */
+}
+.kpi-report .kpi-scorecards + .kpi-report-section { break-before: auto; }  /* 첫 블록은 KPI 4칸 아래에 이어서 */
+.kpi-report .kpi-report-section .kpi-panel-body { overflow: visible; }
+.kpi-report .kpi-detail { display: block; }
+.kpi-report .kpi-compact-only { display: none; }
+.kpi-report .kpi-drag { display: none; }
+
+/* 차트는 그림으로 들어옵니다. */
+.kpi-report .kpi-report-chart { display: block; max-width: 100%; height: auto; margin: var(--space-3) auto; }
+.kpi-report .kpi-voc { align-items: center; }
+.kpi-report .kpi-report-chart.is-doughnut { flex: none; width: 200px; margin: 0; }  /* 도넛은 범례 옆에 작게 */
+
+/* 표 · 카드는 쪽 중간에서 잘리지 않게 */
+.kpi-report table { width: 100%; }
+.kpi-report .kpi-table th,
+.kpi-report .kpi-table td { overflow: visible; text-overflow: clip; white-space: normal; }  /* 숫자가 '…'로 잘리지 않게 줄바꿈 */
+.kpi-report .kpi-t-sim th:nth-child(7),
+.kpi-report .kpi-t-sim td:nth-child(7) { display: none; }  /* 시뮬레이션 '관리'(삭제) 열은 보고서에서 뺌 */
+.kpi-report .kpi-voc-chrow { cursor: default; }
+.kpi-report tr,
+.kpi-report .kpi-voc-sum,
+.kpi-report .kpi-sim-result > div,
+.kpi-report .kpi-ga4-conv div { break-inside: avoid; }
+.kpi-report .kpi-detail-title { break-after: avoid; }
+.kpi-report .kpi-ai-row span { white-space: normal; }
+.kpi-report .kpi-ai-meta { display: block; }
+
+/* 인쇄 시 배경색이 빠지지 않게 */
+.kpi-report * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

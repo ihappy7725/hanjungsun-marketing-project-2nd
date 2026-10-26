@@ -3,9 +3,9 @@
 review_id,platform,raw_text_vn,translated_kr,sentiment,keyword_tag,lang
 demo_voc_11,Zalo_OA,"Hộp giữ lạnh tốt, bánh vẫn mềm khi về đến nhà ở Đà Nẵng.",보냉 박스가 좋아서 다낭 집까지 들고 왔는데도 떡이 말랑말랑했어요!,Positive,포장/보냉,vi
 demo_voc_12,Zalo_OA,Cho mình hỏi bánh để tủ lạnh được mấy ngày?,혹시 냉장고에 넣어 두면 며칠까지 괜찮을까요?,Neutral,문의/기타,vi
-demo_voc_13,Zalo_OA,"Lúc nhận ở cửa hàng thì hộp đã bị móp một góc, mong shop đóng gói kỹ hơn.",매장에서 받았을 때 상자 한쪽이 찌그러져 있었어요.. 포장 조금만 더 꼼꼼히 해 주시면 좋겠어요.,Negative,포장/보냉,vi
+demo_voc_13,Zalo_OA,"Hộp mình chọn ở cửa hàng đã bị móp một góc, mong shop kiểm tra kỹ hơn trước khi đưa khách.",매장에서 고른 상자 한쪽이 찌그러져 있었어요.. 건네주기 전에 조금만 더 확인해 주시면 좋겠어요.,Negative,포장/보냉,vi
 demo_voc_50,Zalo_OA,Shop ơi cửa hàng ở Đà Nẵng mở cửa đến mấy giờ ạ?,다낭 매장은 몇 시까지 문 여나요?,Neutral,문의/기타,vi
-demo_voc_51,Zalo_OA,"Mình muốn đặt 50 hộp làm quà Tết cho công ty, có giá sỉ không ạ?",회사 설 선물로 50박스 맞추고 싶은데 단체 가격이 있을까요?,Neutral,선물용,vi
+demo_voc_51,Zalo_OA,"Mình muốn đặt trước 50 hộp quà Tết cho công ty rồi ra cửa hàng lấy, có giá sỉ không ạ?",회사 설 선물로 50박스를 미리 맞춰 두고 매장에서 찾아가고 싶은데 단체 가격이 있을까요?,Neutral,선물용,vi
 demo_voc_52,Zalo_OA,"Nhân viên tư vấn qua Zalo nhiệt tình, trả lời nhanh.",Zalo로 문의했는데 직원분이 친절하고 답도 빨랐어요.,Positive,문의/기타,vi
 demo_voc_53,Zalo_OA,Bánh có dùng chất bảo quản không ạ? Con mình bị dị ứng.,혹시 방부제가 들어가나요? 아이가 알레르기가 있어서요.,Neutral,문의/기타,vi
 demo_voc_54,Zalo_OA,"Túi đá khô đi kèm giữ lạnh được khoảng 2 tiếng, vừa đủ về nhà.",같이 주는 드라이아이스가 2시간 정도 버텨서 집까지 딱 괜찮았어요.,Positive,포장/보냉,vi
@@ -27,7 +27,7 @@ demo_voc_099,Zalo_OA,"Túi giữ lạnh nhỏ quá, để 6 cái thì không v�
 demo_voc_100,Zalo_OA,"Giá ở cửa hàng và trên Zalo khác nhau, mong shop thống nhất.",매장 가격이랑 Zalo 안내 가격이 달라요. 맞춰 주시면 좋겠어요.,Negative,가격,vi
 demo_voc_101,Zalo_OA,"Nhân bánh mè đen lạ mà thơm, sẽ mua lại.",흑임자 소가 색다르고 고소해요. 또 살게요.,Positive,당도/맛,vi
 demo_voc_62,KakaoTalk,다낭에서 한국 찹쌀떡 먹을 수 있어서 너무 반가워요. 맛도 한국이랑 똑같아요!,다낭에서 한국 찹쌀떡 먹을 수 있어서 너무 반가워요. 맛도 한국이랑 똑같아요!,Positive,당도/맛,ko
-demo_voc_63,KakaoTalk,회사 베트남 직원들 선물용으로 20박스 주문 가능한가요? 영수증 발행도 궁금합니다.,회사 베트남 직원들 선물용으로 20박스 주문 가능한가요? 영수증 발행도 궁금합니다.,Neutral,선물용,ko
+demo_voc_63,KakaoTalk,회사 베트남 직원들 선물용으로 20박스를 미리 준비해 주시면 매장에서 찾아가도 될까요? 영수증 발행도 궁금합니다.,회사 베트남 직원들 선물용으로 20박스를 미리 준비해 주시면 매장에서 찾아가도 될까요? 영수증 발행도 궁금합니다.,Neutral,선물용,ko
 demo_voc_64,KakaoTalk,한국보다 가격이 꽤 비싸네요. 현지 사정은 이해하지만 조금 부담돼요.,한국보다 가격이 꽤 비싸네요. 현지 사정은 이해하지만 조금 부담돼요.,Negative,가격,ko
 demo_voc_65,KakaoTalk,보냉팩 넣어 주셔서 미케 해변 숙소까지 멀쩡하게 왔어요. 감사합니다.,보냉팩 넣어 주셔서 미케 해변 숙소까지 멀쩡하게 왔어요. 감사합니다.,Positive,포장/보냉,ko
 demo_voc_66,KakaoTalk,카톡으로 문의하니 한국어로 답해 주셔서 편했어요.,카톡으로 문의하니 한국어로 답해 주셔서 편했어요.,Positive,문의/기타,ko
@@ -42,7 +42,7 @@ demo_voc_74,KakaoTalk,Có bán ở sân bay Đà Nẵng không ạ? Mình muốn
 demo_voc_75,KakaoTalk,"Mua 2 lần đều thấy chất lượng ổn định, sẽ ủng hộ tiếp.",두 번 샀는데 두 번 다 품질이 똑같이 좋았어요. 계속 살게요.,Positive,당도/맛,vi
 demo_voc_76,KakaoTalk,"Đá khô trong túi tan nhanh, chưa về tới nhà đã hết lạnh.",봉투 안 드라이아이스가 빨리 녹아서 집에 오기도 전에 안 차가웠어요.,Negative,포장/보냉,vi
 demo_voc_102,KakaoTalk,팜플렛 카톡 QR로 바로 상담돼서 편했어요. 한국어로 답이 와서 더 좋아요.,팜플렛 카톡 QR로 바로 상담돼서 편했어요. 한국어로 답이 와서 더 좋아요.,Positive,문의/기타,ko
-demo_voc_103,KakaoTalk,한인회 모임 간식으로 30개 주문하고 싶은데 미리 예약 가능할까요?,한인회 모임 간식으로 30개 주문하고 싶은데 미리 예약 가능할까요?,Neutral,선물용,ko
+demo_voc_103,KakaoTalk,"한인회 모임 간식으로 30개가 필요한데, 미리 예약하고 매장에서 찾아가도 될까요?","한인회 모임 간식으로 30개가 필요한데, 미리 예약하고 매장에서 찾아가도 될까요?",Neutral,선물용,ko
 demo_voc_104,KakaoTalk,아이가 딸기 찹쌀떡을 제일 좋아해요. 한국에서 먹던 맛이랑 거의 같아요.,아이가 딸기 찹쌀떡을 제일 좋아해요. 한국에서 먹던 맛이랑 거의 같아요.,Positive,당도/맛,ko
 demo_voc_105,KakaoTalk,가격이 한국의 두 배 가까이라 자주 사기는 어렵네요.,가격이 한국의 두 배 가까이라 자주 사기는 어렵네요.,Negative,가격,ko
 demo_voc_106,KakaoTalk,드라이아이스를 넉넉히 넣어 주셔서 호이안까지 가져갔는데도 괜찮았어요.,드라이아이스를 넉넉히 넣어 주셔서 호이안까지 가져갔는데도 괜찮았어요.,Positive,포장/보냉,ko
@@ -68,7 +68,7 @@ demo_voc_90,WhatsApp,"Mùa mưa ẩm, hộp giấy bị mềm khi cầm về.",�
 demo_voc_91,WhatsApp,"Ăn lạnh ngon hơn hẳn, nên ghi rõ cách ăn trên hộp.",차갑게 먹으니까 훨씬 맛있어요. 먹는 방법을 상자에 적어 두면 좋겠어요.,Neutral,당도/맛,vi
 demo_voc_112,WhatsApp,"Quét QR WhatsApp trên tờ rơi, nhân viên trả lời trong 5 phút.",전단지 왓츠앱 QR로 문의했더니 5분 만에 답이 왔어요.,Positive,문의/기타,vi
 demo_voc_113,WhatsApp,"Bánh xoài thơm, nhưng hơi nhỏ so với hình quảng cáo.",망고 떡이 향긋한데 광고 사진보다 좀 작았어요.,Neutral,당도/맛,vi
-demo_voc_114,WhatsApp,"Đặt 20 hộp quà cho khách sạn, shop gói rất cẩn thận.",호텔 고객 선물로 20박스 주문했는데 포장을 아주 꼼꼼하게 해 주셨어요.,Positive,선물용,vi
+demo_voc_114,WhatsApp,"Đặt trước 20 hộp quà cho khách của khách sạn rồi ra cửa hàng lấy, shop gói rất cẩn thận.",호텔 고객 선물로 20박스를 미리 예약하고 매장에서 찾아왔는데 포장을 아주 꼼꼼하게 해 주셨어요.,Positive,선물용,vi
 demo_voc_115,WhatsApp,Đá khô có hướng dẫn an toàn không? Mình sợ trẻ con chạm vào.,드라이아이스 안전 안내가 있나요? 아이들이 만질까 봐 걱정돼요.,Neutral,포장/보냉,vi
 demo_voc_116,WhatsApp,"Giá hộp 6 cái hợp lý hơn hộp 8 cái, nên mua hộp 6.",6개 박스가 8개 박스보다 가격이 합리적이라 6개짜리를 사요.,Neutral,가격,vi
 demo_voc_117,WhatsApp,"Bánh để lâu ngoài trời bị chảy nước, mình phải bỏ 2 cái.",밖에 오래 뒀더니 물이 생겨서 2개는 버렸어요.,Negative,포장/보냉,vi

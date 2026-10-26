@@ -551,7 +551,7 @@ function renderVoc(reviews, source) {
     SENTIMENT_KEYS.map((k) => `${SENTIMENT_LABEL[k]} ${num(counts[k] || 0)}`),
     SENTIMENT_KEYS.map((k) => counts[k] || 0),
     vocColors(),
-    { cutout: "58%", legend: true, title: sampleTitle },
+    { cutout: "58%", legend: true },
   );
   if (charts.sentiment) {
     // 도넛 조각을 누르면 그 만족도 글만 봅니다(같은 조각을 다시 누르면 전체).
@@ -570,6 +570,7 @@ function renderVoc(reviews, source) {
     charts.sentiment.options.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
   }
 
+  setText("voc-sample", sampleTitle);
   renderVocSummaryBox();
   renderVocChannelBars();
   renderVocKeywords();
@@ -661,10 +662,9 @@ function renderVocSummaryBox() {
   const ai = view.vocAiChannels || [];
   const meta = view.vocAiMeta;
   const isAi = ai.length > 0;
-  const head = el("div", { className: "kpi-ai-head" }, [
-    el("strong", { text: isAi ? "AI 요약" : "자동 집계" }),
-    el("small", { text: isAi ? "" : "[AI로 분석]을 누르면 AI 요약으로 바뀝니다" }),
-  ]);
+  // 제목은 왼쪽 세로 라벨로 두어 기본 화면에서 한 줄을 아낍니다. 안내 문구는 라벨에 마우스를 올리면 보입니다.
+  const head = el("strong", { className: "kpi-ai-head", text: isAi ? "AI 요약" : "자동 집계" });
+  head.title = isAi ? "AI가 창구별 문의·설문을 요약한 결과(사람 검수 전)" : "데이터로 센 값입니다. [AI로 분석]을 누르면 AI 요약으로 바뀝니다.";
   const rows = view.channels.map((ch) => {
     const s = (isAi && ai.find((x) => x.channel === ch)) || autoChannelSummary(ch);
     const caution = s.caution || (s.improve || [])[0] || "";
@@ -675,7 +675,7 @@ function renderVocSummaryBox() {
     ]);
   });
   const foot = isAi && meta ? [el("div", { className: "kpi-ai-meta", text: `${meta.model} · ${meta.analyzed_at} 분석 · 사람 검수 전` })] : [];
-  $("voc-summary").replaceChildren(head, ...rows, ...foot);
+  $("voc-summary").replaceChildren(head, el("div", { className: "kpi-ai-rows" }, [...rows, ...foot]));
 }
 
 function renderVocSummaries() {
@@ -1241,6 +1241,132 @@ root.addEventListener("focusout", (event) => {
 });
 window.addEventListener("scroll", hideTip, { capture: true, passive: true });
 
+// ---------- PDF 내보내기 ----------
+// 새 창에 A4 보고서를 만들고 브라우저 인쇄 창을 엽니다('PDF로 저장' 선택). 새 라이브러리 없이 화면 그대로를 모읍니다.
+// 블록을 하나씩 확대해 상세 표까지 그린 뒤 복제하고, 차트는 그림으로 바꿉니다. 문의·후기 목록과 입력 폼은 넣지 않습니다.
+const REPORT_TITLE = "KPI 보고서";
+// 화면의 차트와 같은 설정으로, 보고서용 크기의 새 캔버스에 애니메이션 없이 한 번 그려 그림으로 만듭니다.
+// (숨겨진 상태에서 만든 차트는 다시 그려도 비어 있을 수 있어 화면 차트를 직접 찍지 않습니다.
+//  새 창이 열리면 이 탭의 화면 갱신 콜백이 멈추므로 기다리지 않고 한 번에 처리합니다.)
+function chartImage(chart, width, height) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;height:${height}px`;
+  document.body.append(canvas);
+  const copy = new window.Chart(canvas, {
+    type: chart.config.type,
+    data: chart.config.data,
+    options: { ...chart.config.options, responsive: false, animation: false, devicePixelRatio: 2, onClick: undefined, onHover: undefined },
+    plugins: chart.config.plugins,
+  });
+  const src = copy.toBase64Image();
+  copy.destroy();
+  canvas.remove();
+  return src;
+}
+
+function reportSection(panel) {
+  const images = {};
+  panel.querySelectorAll("canvas[data-kpi-chart]").forEach((canvas) => {
+    const chart = charts[canvas.dataset.kpiChart];
+    const box = canvas.closest(".kpi-chart") || canvas.parentElement;
+    if (!chart || !box.offsetParent) return;  // 지금 보이지 않는 차트(꺼 둔 GA4 등)는 넣지 않음
+    const doughnut = chart.config.type === "doughnut";
+    images[canvas.dataset.kpiChart] = chartImage(chart, doughnut ? 360 : 960, doughnut ? 220 : 270);
+  });
+  const clone = panel.cloneNode(true);
+  clone.classList.remove("is-expanded", "is-dragging", "is-drop-target");
+  clone.classList.add("kpi-report-section");
+  clone.removeAttribute("style");
+  // 화면 조작용 요소 · 숨긴 요소 · 보고서에서 뺄 요소(문의 목록, 입력 폼)를 지웁니다.
+  clone.querySelectorAll(".kpi-tools, .kpi-info, [hidden], [data-report-skip]").forEach((n) => n.remove());
+  // 인쇄 시 단추는 빠지므로, 내용이 있는 단추(창구별 만족도 막대 등)는 일반 상자로 바꿉니다.
+  clone.querySelectorAll("button").forEach((btn) => {
+    if (!btn.textContent.trim() || btn.closest("td")) return btn.remove();
+    const box = document.createElement("div");
+    box.className = btn.className;
+    box.append(...btn.childNodes);
+    btn.replaceWith(box);
+  });
+  if (!sim.items.length) clone.querySelector('[data-kpi="sim"]')?.remove();
+  clone.querySelectorAll("canvas[data-kpi-chart]").forEach((canvas) => {
+    const src = images[canvas.dataset.kpiChart];
+    const box = canvas.closest(".kpi-chart") || canvas;
+    if (!src) return box.remove();
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = canvas.getAttribute("aria-label") || "";
+    img.className = `kpi-report-chart${charts[canvas.dataset.kpiChart]?.config.type === "doughnut" ? " is-doughnut" : ""}`;
+    box.replaceWith(img);
+  });
+  return clone;
+}
+
+async function exportPdf(button) {
+  // 팝업 차단을 피하려고 클릭 직후 창부터 엽니다.
+  const win = window.open("", "_blank");
+  if (!win) {
+    root.querySelector(".kpi-legend-note").hidden = false;
+    root.querySelector(".kpi-legend-note").textContent = "새 창이 막혀 PDF 보고서를 열지 못했습니다. 브라우저의 팝업 차단을 풀고 다시 눌러 주세요.";
+    return;
+  }
+  win.document.title = REPORT_TITLE;
+  win.document.body.textContent = "PDF 보고서를 만드는 중입니다…";
+  button.disabled = true;
+  const opened = root.querySelector(".kpi-panel.is-expanded");
+  const sections = [];
+  try {
+    for (const panel of boardPanels()) {
+      setExpanded(panel);
+      sections.push(reportSection(panel));
+    }
+  } finally {
+    setExpanded(opened);
+    button.disabled = false;
+  }
+
+  const doc = win.document;
+  doc.open();
+  doc.close();
+  doc.documentElement.lang = "ko";
+  doc.title = REPORT_TITLE;
+  const meta = doc.createElement("meta");
+  meta.setAttribute("charset", "utf-8");
+  doc.head.append(meta);
+  // 화면과 같은 디자인 변수·글꼴(base.css · fonts.css) + KPI 스타일 + 보고서 전용 인쇄 스타일
+  const sheets = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.href);
+  const kpiCss = sheets.find((h) => h.includes("kpi_main.css"));
+  if (kpiCss) sheets.push(kpiCss.replace("kpi_main.css", "kpi_report.css"));
+  const loaded = sheets.map((href) => new Promise((resolve) => {
+    const link = doc.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.onload = link.onerror = resolve;
+    doc.head.append(link);
+  }));
+
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const page = doc.createElement("div");
+  page.className = "kpi-page kpi-report";
+  const head = doc.createElement("header");
+  head.className = "kpi-report-head";
+  head.innerHTML = "<h1></h1><p class=\"kpi-report-sub\"></p><p class=\"kpi-report-note\"></p>";
+  head.querySelector("h1").textContent = REPORT_TITLE;
+  head.querySelector(".kpi-report-sub").textContent = `한정선 베트남 · ${$("month").textContent} · ${stamp} 생성`;
+  head.querySelector(".kpi-report-note").textContent =
+    "데이터 상태: 예산·ROAS·VOC는 시연 데이터, GA4는 공식 데모 계정(한정선 데이터 아님), AI 요약은 사람 검수 전 결과입니다. '추정'은 계산·가정으로 나온 값입니다.";
+  page.append(head, root.querySelector(".kpi-scorecards").cloneNode(true), ...sections.map((s) => doc.importNode(s, true)));
+  page.querySelectorAll(".kpi-info").forEach((n) => n.remove());
+  doc.body.append(page);
+
+  await Promise.all(loaded);
+  await Promise.all([...doc.images].map((img) => (img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; }))));
+  win.focus();
+  win.print();
+}
+
 // ---------- 블록 확대 ----------
 function resizeCharts() {
   requestAnimationFrame(() => Object.values(charts).forEach((c) => c.resize()));
@@ -1392,7 +1518,7 @@ root.addEventListener("dragend", () => {
 async function analyzeVoc(button) {
   button.disabled = true;
   button.textContent = "분석 중…";
-  $("voc-summary").append(el("div", { className: "kpi-ai-meta is-loading", text: "AI가 창구별 문의·설문을 분석하는 중… (최대 2분)" }));
+  $("voc-summary").querySelector(".kpi-ai-rows")?.append(el("div", { className: "kpi-ai-meta is-loading", text: "AI가 창구별 문의·설문을 분석하는 중… (최대 2분)" }));
   showError("voc-error", "");
   try {
     const data = await getJson(API.analyze, { method: "POST" });
@@ -1436,6 +1562,8 @@ root.addEventListener("click", (event) => {
     setReviewChannel(target.dataset.channel, { toggle: false });
   } else if (action === "review-page") {
     setReviewPage(Number(target.dataset.page));
+  } else if (action === "export-pdf") {
+    exportPdf(target);
   } else if (action === "reset-order") {
     applyOrder(DEFAULT_ORDER);
     saveOrder();

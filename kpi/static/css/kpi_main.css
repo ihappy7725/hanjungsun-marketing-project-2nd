@@ -151,7 +151,7 @@
 /* 남는 높이는 그래프가 채웁니다(ROAS 막대 · VOC 도넛/키워드). */
 .kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-chart-fill { flex: 1 1 0; height: auto; min-height: 110px; }
 /* VOC 그래프 줄은 키워드 5개가 겹치지 않는 높이(150px) 아래로 줄이지 않습니다. */
-.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-voc { flex: 1 1 0; min-height: 150px; }
+.kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-voc { flex: 1 1 0; min-height: 110px; }
 .kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-voc .kpi-chart { height: 100%; }
 /* GA4 기본 화면: 지표 3칸과 Top 5 막대를 촘촘하게 해서 같은 높이 안에 5개가 모두 보이게 합니다. */
 .kpi-page .kpi-board.is-synced > .kpi-panel:not(.is-expanded) .kpi-ga4-metrics > div { gap: 0; padding: var(--space-3) var(--space-4); }
@@ -432,8 +432,8 @@
   line-height: var(--line-height);
 }
 /* AI 요약 창: 제목 줄 + 창구마다 한 줄(창구 | 요약 | ⚠ 유의할 점). 기본 화면은 한 줄로 자르고 확대 화면은 줄바꿈 */
-.kpi-page .kpi-ai-head { display: flex; align-items: baseline; gap: var(--space-3); }
-.kpi-page .kpi-ai-head small { color: var(--muted); font-size: 0.8em; }
+.kpi-page .kpi-ai-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); }
+.kpi-page .kpi-ai-head { align-self: start; white-space: nowrap; cursor: help; }
 .kpi-page .kpi-ai-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
 .kpi-page .kpi-ai-row b { font-weight: 700; }
 .kpi-page .kpi-ai-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -441,6 +441,11 @@
 .kpi-page .kpi-panel.is-expanded .kpi-ai-row span { white-space: normal; }
 .kpi-page .kpi-ai-meta { margin-top: var(--space-1); color: var(--muted); font-size: 0.8em; }
 .kpi-page .kpi-panel:not(.is-expanded) .kpi-ai-meta:not(.is-loading) { display: none; }  /* 기본 화면은 줄 수를 줄임(분석 시각은 확대 화면) */
+/* 기본 화면 VOC: 스크롤 없이 AI 요약 · 도넛/창구 막대 · QR 줄이 한 블록에 들어가게 촘촘하게 */
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-qr-split { display: none; }  /* 채널별 추가 수는 QR 줄에 마우스를 올리거나 확대 화면에서 */
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-qr { margin-top: var(--space-3); padding: var(--space-2) var(--space-4); }
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-voc-chbars { gap: var(--space-1); }
+.kpi-page .kpi-panel:not(.is-expanded) .kpi-voc-side-title { margin-bottom: var(--space-2); }
 .kpi-page .kpi-ai-summary:empty { display: none; }  /* 요약이 없으면 빈 회색 줄을 남기지 않음 */
 .kpi-page .kpi-detail-title { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-5) 0 var(--space-3); font-size: var(--fs-min); font-weight: 600; }
 
