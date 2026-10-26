@@ -170,6 +170,9 @@
 .studio-page .studio-work.is-centered .studio-options { column-gap: var(--space-9); }  /* 제품 / 비율 / 길이 / 되돌리기 묶음 사이 */
 .studio-page .studio-work.is-centered .studio-options { justify-content: center; }
 /* 초안 뒤 고정된 제목: 글자처럼 보이고, 누르면(읽기 전용 해제) 다시 입력칸 모양 */
+/* 포스터·카드뉴스 스타일 줄(초안 전): 제품·비율 줄 아래 가운데에 "포스터 스타일" 글자 + 버튼 */
+.studio-page .studio-style-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-5); }
+.studio-page .studio-style-label { color: var(--muted); font-size: var(--fs-min); }
 .studio-page .studio-title.is-fixed[readonly] { border-color: transparent; background: none; font-size: var(--fs-subheading); font-weight: 700; cursor: pointer; }
 .studio-page .studio-work.is-start .studio-canvas { display: none; }
 .studio-page .studio-work.is-start .studio-command { position: static; margin: 0; padding: 0 0 var(--space-6); border-top: 0; background: none; }
@@ -312,6 +315,21 @@
 .studio-page .studio-work:not(.is-start) .studio-command-form > textarea { grid-column: 1; grid-row: 1; }
 .studio-page .studio-work:not(.is-start) .studio-command-form > [type="submit"] { grid-column: 2; grid-row: 1; align-self: end; min-width: 96px; padding-inline: var(--space-6); }
 .studio-page[data-tab="video"] .studio-work:not(.is-start) .studio-command-form textarea { min-height: calc(2 * var(--line-height) * 1em + 2 * var(--space-4) + 2px); }
+/* 포스터·카드뉴스 초안 전(첫 화면·시안 고르기, is-design-new): 입력창은 영상 첫 화면처럼 4~8줄(sns.js fitInput), [보내기]는 아래 오른쪽.
+   위 :not(.is-start) 규칙보다 뒤에 두어 덮습니다. */
+.studio-page .studio-work.is-design-new .studio-command-form { grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--space-4); }
+.studio-page .studio-work.is-design-new .studio-command-form > textarea {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  box-sizing: border-box;
+  min-height: calc(4 * var(--line-height) * 1em + 2 * var(--space-4) + 2px);  /* 예시 2줄 + 여유 */
+  max-height: calc(8 * var(--line-height) * 1em + 2 * var(--space-4) + 2px);
+  background: var(--control-bg);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.studio-page .studio-work.is-design-new .studio-command-form > textarea::-webkit-scrollbar { display: none; }
+.studio-page .studio-work.is-design-new .studio-command-form > [type="submit"] { grid-column: 2; grid-row: 2; align-self: auto; }
 .studio-page .studio-command-toggle {
   position: absolute;
   bottom: 100%;  /* 입력 영역 위 경계선 바깥으로 튀어나온 탭 (자리를 차지하지 않음) */

@@ -81,12 +81,13 @@
           <button type="button" class="btn" data-role="history-toggle">☰ 이전 작업</button>
         </div>
         <div class="studio-settings">
-          {# 영상 제목 (직접 입력, 30자). 비우면 "기념일 - 제품" 규칙 제목. 초안 뒤에는 바꾸면 이름 바꾸기. sns.js가 영상 탭에서만 보여 줍니다. #}
+          {# 작업 제목 (직접 입력, 30자). 영상: 비우면 "기념일 - 제품" 규칙 제목, 초안 뒤에는 바꾸면 이름 바꾸기.
+             포스터·카드뉴스: 초안 전에만, 비우면 1장 제목 글자. 문구는 sns.js가 탭에 맞게 바꿉니다. #}
           <input type="text" class="studio-title" data-role="set-title" maxlength="30" autocomplete="off"
                  placeholder="영상 제목" aria-label="영상 제목">
-          {# 제품·비율·길이 한 줄 묶음. 영상 첫 생성 화면(is-start)에서는 제목 아래 가운데에 놓입니다(sns.css). #}
+          {# 제품·비율·길이 한 줄 묶음. 첫 생성 화면(is-start)에서는 제목 아래 가운데에 놓입니다(sns.css). #}
           <div class="studio-options">
-          {# 영상 제품 고르기 (products.py): [전체] 또는 여러 개. 아무것도 안 고르면 입력 문장에서 찾습니다. sns.js가 영상 탭에서만 보여 줍니다. #}
+          {# 제품 고르기 (products.py). 영상: [전체] 또는 여러 개, 안 고르면 입력 문장에서 찾음. 포스터·카드뉴스: 한 개(초안 전에만), [전체] 숨김 #}
           <div class="studio-seg studio-product" data-role="set-product" role="group" aria-label="제품">
             <button type="button" class="btn" data-value="all">전체</button>
             {% for product in products %}<button type="button" class="btn" data-value="{{ product.id }}">{{ product.name_ko|replace(" 찹쌀떡", "") }}</button>{% endfor %}
@@ -97,10 +98,26 @@
             <button type="button" class="btn" data-value="16:9">16:9</button>
             <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
           </div>
+          {# 카드뉴스 장수 (초안 전에만, 기본 5) #}
+          <div class="studio-seg" data-role="set-pages" role="group" aria-label="장수" hidden>
+            {% for count in [3, 4, 5, 6] %}<button type="button" class="btn" data-value="{{ count }}" aria-label="{{ count }}장">{{ count }}</button>{% endfor %}
+          </div>
           <label class="studio-duration" title="영상 길이 5~30초">
             <input type="number" min="5" max="30" step="1" value="5" data-role="set-duration" aria-label="영상 길이(초, 5~30)">초
           </label>
           <button type="button" class="btn" data-role="set-sound">소리 끔</button>
+          </div>
+          {# 포스터·카드뉴스 스타일 줄 (한 개, 초안 전에만). 값은 designs.py STYLE_HINTS key — 고른 느낌을 AI 3안 지시문에 참고로만 넣습니다. ""은 AI 추천 #}
+          <div class="studio-style-row" data-role="style-row" hidden>
+            <span class="studio-style-label" data-role="style-label">스타일</span>
+            <div class="studio-seg" data-role="set-style" role="group" aria-label="스타일">
+              <button type="button" class="btn" data-value="">AI 추천</button>
+              <button type="button" class="btn" data-value="bold">큰 글자</button>
+              <button type="button" class="btn" data-value="editorial">매거진</button>
+              <button type="button" class="btn" data-value="menu">메뉴판</button>
+              <button type="button" class="btn" data-value="pop">팝</button>
+              <button type="button" class="btn" data-value="minimal">미니멀</button>
+            </div>
           </div>
         </div>
         <div class="actions">

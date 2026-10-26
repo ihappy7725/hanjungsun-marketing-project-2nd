@@ -365,15 +365,16 @@ function startRequest(params) {
 }
 
 // ---------- 작업 화면 ----------
-const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false };
-// product_ids: 영상 설정 줄의 [제품] 고르기(전체·여러 개). 비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다.
+// choosing: 포스터·카드뉴스 초안 전에 [보내기]로 시안 3개(희주 renderChoices)를 보고 있는 중
+const work = { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, busy: false, choosing: false };
+// product_ids: 설정 줄의 [제품] 고르기. 영상은 전체·여러 개(비우면 입력 문장에서 제품 이름을 찾고, 없으면 되묻습니다),
+//   포스터·카드뉴스는 한 개.
 // title: 영상 제목(직접 입력). 비우면 서버가 "기념일 - 제품" 규칙 제목을 씁니다.
 // user_refs·ref_video: 처음 만들 때 올린 레퍼런스 이미지(최대 4장)·참고 영상(1개). 초안 뒤에는 작업 문서에 저장합니다.
+// style·pages: 포스터·카드뉴스 새로 만들기의 스타일(designs.py STYLE_HINTS key, ""은 AI 추천)·카드뉴스 장수
 const settings = { ratio: DESIGN_KINDS.includes(kind) ? "4:5" : "9:16", duration: 5, sound: false, product_ids: [], title: "",
-  user_refs: [], ref_video: null };
+  user_refs: [], ref_video: null, style: "", pages: 5 };
 const USER_REFS_MAX = 4;
-// 포스터·카드뉴스 첫 화면에서 입력 중인 조건(희주 renderStart). 규격을 바꿔 다시 그려도 남고, 새로 만들기에서 비웁니다.
-let startForm = null;
 
 // 영상 입력창 문구: 처음 만들 때와 초안 뒤
 const VIDEO_FIRST_PLACEHOLDER = [
@@ -383,6 +384,11 @@ const VIDEO_FIRST_PLACEHOLDER = [
   "분위기: 고급스럽고 차분한 톤, 따뜻한 조명, 느린 카메라 움직임.",
 ].join("\n");
 const REVISE_PLACEHOLDER = "추가 수정 요청 사항을 입력해 주세요";
+// 포스터·카드뉴스 입력창 문구: 처음 만들 때
+const designFirstPlaceholder = (label) => [
+  `만들 ${label}의 목적·분위기·넣을 내용을 입력해 주세요.`,
+  "예) 꿀 레드용과 신메뉴 출시. 따뜻하고 고급스러운 분위기, 20~30대 다낭 디저트 손님 대상.",
+].join("\n");
 const DESIGN_REVISE_PLACEHOLDER = 'AI에게 고칠 점을 말해 주세요. 예: "제목 더 크게", "크리스마스 느낌으로 바꿔줘"';  // 첫 초안을 만들 때 쓰는 규격 (길이·소리는 영상만)
 
 function setUrl(chatId) {
@@ -408,7 +414,7 @@ function goHome() {
 }
 
 function resetWork() {
-  Object.assign(work, { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null });
+  Object.assign(work, { chatId: null, doc: null, canUndo: false, canRedo: false, pending: null, choosing: false });
   feedback("", "");
 }
 
@@ -421,11 +427,10 @@ function startNew() {
   // 새 작업이라 이전 작업 칸은 닫습니다(☰ 이전 작업으로 다시 열 수 있음). 첫 안내는 입력창 문구(VIDEO_FIRST_PLACEHOLDER)로 합니다.
   $("history").hidden = true;
   $("work-screen").classList.remove("has-history");
-  Object.assign(settings, { title: "", user_refs: [], ref_video: null });  // 제목·레퍼런스는 작업마다 새로
-    startForm = null;
+  Object.assign(settings, { title: "", user_refs: [], ref_video: null, style: "", pages: 5 });  // 제목·레퍼런스·스타일·장수는 작업마다 새로
   feedback("", "");
   renderWork();
-  if (kind === "video") $("chat-input").focus();
+  $("chat-input").focus();
 }
 
 async function openChat(chatId) {
@@ -473,21 +478,39 @@ function renderWork() {
   $("go-home").hidden = $("history-toggle").hidden = true;
   $("history").hidden = true;
   $("work-screen").classList.remove("has-history");
-  // 위쪽 가운데 정렬(is-centered): (영상 제목) → (제품)·비율·(길이)·되돌리기 한 줄. 영상 첫 생성 화면(is-start)은 그 아래 바로 입력창.
+  // 위쪽 가운데 정렬(is-centered): (영상 제목) → (스타일)·(제품)·비율·(장수·길이)·되돌리기 한 줄.
+  // 첫 생성 화면(is-start)은 그 아래 바로 입력창. 포스터·카드뉴스는 시안 3개를 보는 동안 가운데 칸을 엽니다.
   // 되돌리기·다시하기는 초안 뒤에만.
   $("work-screen").classList.add("is-centered");
-  $("work-screen").classList.toggle("is-start", kind === "video" && !doc);
+  $("work-screen").classList.toggle("is-start", !doc && !work.choosing);
   // 묶음 칸째 숨겨야 빈 칸 간격 없이 가운데에 맞습니다(.actions는 display가 정해져 있어 style로).
   $("undo").parentElement.style.display = doc ? "" : "none";
-  // 제품 고르기: 영상만. 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다.
+  // 스타일 줄("포스터 스타일" + 버튼)·장수: 포스터·카드뉴스 초안 전에만 (장수는 카드뉴스만)
+  // is-design-new: 포스터·카드뉴스 초안 전(첫 화면·시안 고르기) 입력창을 영상 첫 화면처럼 크게(sns.css)
+  const designStart = DESIGN_KINDS.includes(kind) && !doc;
+  $("work-screen").classList.toggle("is-design-new", designStart);
+  $("style-row").hidden = !designStart;
+  $("style-label").textContent = `${KIND_LABELS[kind]} 스타일`;
+  $("set-pages").hidden = !(designStart && kind === "cardnews");
+  for (const [role, value] of [["set-style", settings.style], ["set-pages", String(settings.pages)]]) {
+    for (const button of $(role).children) {
+      button.classList.toggle("dark", button.dataset.value === value);
+      button.setAttribute("aria-pressed", String(button.dataset.value === value));
+    }
+  }
+  // 제품 고르기: 초안 전에만. 영상 초안 뒤에는 그 작업의 제품을 보여 주고 잠급니다. 포스터·카드뉴스는 한 개라 [전체]를 숨깁니다.
   const chosen = doc ? PRODUCTS.filter((item) => (doc.products || [doc.product]).includes(item.name_ko)).map((item) => item.id)
     : settings.product_ids;
   // 영상 초안 뒤에는 제품을 바꿀 수 없어 버튼을 숨기고, 제목 왼쪽 · 비율·초·↶ ↷ 오른쪽 한 줄로(is-video-edit, sns.css)
-  $("set-product").hidden = kind !== "video" || Boolean(doc);
+  $("set-product").hidden = Boolean(doc);
+  $("set-product").querySelector('[data-value="all"]').hidden = kind !== "video";
   $("work-screen").classList.toggle("is-video-edit", kind === "video" && Boolean(doc));
   // 영상 제목: 초안 전에는 입력값, 초안 뒤에는 그 작업 제목으로 고정해 보여 주고, 누르면 고칠 수 있습니다(이름 바꾸기).
+  // 포스터·카드뉴스 제목: 초안 전에만 입력하고, 확정할 때 작업 이름으로 저장합니다(비우면 1장 제목 글자).
   const title = $("set-title");
-  title.hidden = kind !== "video";
+  title.hidden = kind !== "video" && !designStart;
+  title.placeholder = `${KIND_LABELS[kind]} 제목`;
+  title.setAttribute("aria-label", title.placeholder);
   const titleFixed = kind === "video" && Boolean(doc);
   title.classList.toggle("is-fixed", titleFixed);
   title.title = titleFixed ? "눌러서 제목 고치기" : "";
@@ -510,33 +533,17 @@ function renderWork() {
   $("undo").disabled = !work.canUndo || work.busy;
   $("redo").disabled = !work.canRedo || work.busy;
 
-  // 포스터·카드뉴스는 초안이 생기기 전에는 아래 입력줄을 숨기고, 가운데 첫 화면에서 AI 초안을 만듭니다.
-  // 초안 뒤에는 영상처럼 아래 입력창으로 AI에게 말로 고칩니다(결과 안내 줄은 비어 있으면 숨김).
-  $("chat-form").hidden = DESIGN_KINDS.includes(kind) && !doc;
-  if (DESIGN_KINDS.includes(kind)) $("chat-input").placeholder = DESIGN_REVISE_PLACEHOLDER;
+  // 포스터·카드뉴스도 영상처럼 입력창으로 시작합니다. 초안 전 [보내기]는 시안 3개(startChoices),
+  // 초안 뒤에는 아래 입력창으로 AI에게 말로 고칩니다(결과 안내 줄은 비어 있으면 숨김).
+  $("chat-form").hidden = false;
+  if (DESIGN_KINDS.includes(kind)) $("chat-input").placeholder = doc ? DESIGN_REVISE_PLACEHOLDER : designFirstPlaceholder(KIND_LABELS[kind]);
   // 초안 뒤에만 접을 수 있습니다(첫 생성 화면은 늘 펼침).
   $("command-toggle").hidden = !doc;
   showCommand(Boolean(doc) && commandCollapsed);
   // 포스터·카드뉴스 초안 화면: 비율·↶ ↷는 희주 편집기 오른쪽 고정 칸으로 옮겨 가므로 위 툴바 줄을 통째로 숨깁니다.
   page.querySelector(".studio-toolbar").hidden = DESIGN_KINDS.includes(kind) && Boolean(doc);
-  if (!doc && DESIGN_KINDS.includes(kind)) {
-    editor.renderStart($("canvas"), {
-      kind,
-      ratio: settings.ratio,
-      products: PRODUCTS,
-            form: startForm,
-      onFormChange: (value) => { startForm = value; },
-
-      onCreate: async (design, { product_id }) => {
-        // 실패하면 throw → 희주 화면이 "저장하지 못했습니다" 안내
-        const data = await api("/chats", { method: "POST", body: { kind, design, product_id } });
-        applyState(data.chat_id, data);
-        loadHistory();
-        renderWork();
-      },
-    });
-    return;
-  }
+  // 시안 3개를 보는 중에는 버튼을 눌러도 가운데 칸을 다시 그리지 않습니다(다시 [보내기]를 누르면 새 조건으로 다시 만듦).
+  if (!doc && work.choosing) return;
   if (!doc) {
     $("canvas").replaceChildren();
     return;
@@ -584,6 +591,32 @@ function showProductChoices(reply) {
     button.addEventListener("click", () => send(`${name} ${work.pending.text}`, work.pending.extra));
     return button;
   }));
+}
+
+// 포스터·카드뉴스 초안 전 [보내기]: /api/messages 대신 가운데 칸에 시안 3개(희주 renderChoices).
+// 다시 누르면 지금 버튼 조건·입력 글로 3개를 다시 만듭니다. 확정하면 기존 POST /api/chats로 새 작업을 저장합니다.
+function startChoices(text) {
+  const productId = settings.product_ids[0];
+  if (!productId) return feedback("ask", "제품을 먼저 골라 주세요");
+  feedback("", "");
+  work.choosing = true;
+  renderWork();
+  editor.renderChoices($("canvas"), {
+    kind,
+    ratio: settings.ratio,
+    productId,
+    style: settings.style || "",
+    pages: settings.pages || 5,  // 카드뉴스만 씀
+    request: text.trim(),
+    onCreate: async (design, { product_id }) => {
+      // 실패하면 throw → 희주 화면이 안내
+      const data = await api("/chats", { method: "POST", body: { kind, design, product_id, title: settings.title } });
+      work.choosing = false;
+      applyState(data.chat_id, data);
+      loadHistory();
+      renderWork();
+    },
+  });
 }
 
 async function send(text, extra = {}) {
@@ -743,7 +776,11 @@ async function uploadRef(file) {
 // 영상 입력창은 글 길이에 맞춰 높이가 늘어납니다(최소 3줄·최대 8줄은 sns.css). 스크롤 막대 없이 보이게 합니다.
 function fitInput() {
   const input = $("chat-input");
-  if (kind !== "video") return;
+  // 영상, 포스터·카드뉴스 초안 전에만 글 길이에 맞춰 늘립니다(초안 뒤 포스터·카드뉴스 입력창은 그대로).
+  if (kind !== "video" && !(DESIGN_KINDS.includes(kind) && !work.doc)) {
+    input.style.height = "";
+    return;
+  }
   input.style.height = "auto";
   input.style.height = `${input.scrollHeight + 2}px`;  // 위아래 테두리 1px씩
 }
@@ -805,15 +842,23 @@ function bindWork() {
     event.target.select();
   });
   $("set-title").addEventListener("blur", (event) => { if (work.doc && kind === "video") event.target.readOnly = true; });
-  // [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다.
+  // 영상: [전체]는 4종 모두 켜기/끄기, 나머지는 여러 개를 함께 고릅니다. 포스터·카드뉴스: 한 개만.
   for (const button of $("set-product").children) {
     button.addEventListener("click", () => {
       const ids = PRODUCTS.map((item) => item.id), value = button.dataset.value;
-      if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
+      if (DESIGN_KINDS.includes(kind)) settings.product_ids = [value];
+      else if (value === "all") settings.product_ids = settings.product_ids.length === ids.length ? [] : ids;
       else if (settings.product_ids.includes(value)) settings.product_ids = settings.product_ids.filter((id) => id !== value);
       else settings.product_ids = ids.filter((id) => id === value || settings.product_ids.includes(id));
       renderWork();
     });
+  }
+  // 포스터·카드뉴스 스타일(한 개)·카드뉴스 장수: 초안 전에만 보이고, 다음 [보내기]에 씁니다.
+  for (const button of $("set-style").children) {
+    button.addEventListener("click", () => { settings.style = button.dataset.value; renderWork(); });
+  }
+  for (const button of $("set-pages").children) {
+    button.addEventListener("click", () => { settings.pages = Number(button.dataset.value); renderWork(); });
   }
   $("set-duration").addEventListener("change", (event) => {
     const value = Math.min(30, Math.max(5, Math.round(Number(event.target.value)) || 5));
@@ -828,6 +873,8 @@ function bindWork() {
   $("chat-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const input = $("chat-input");
+    // 포스터·카드뉴스 초안 전: 시안 3개. 다시 보낼 수 있게 입력 글은 남겨 둡니다.
+    if (DESIGN_KINDS.includes(kind) && !work.doc) return startChoices(input.value);
     send(input.value);
     input.value = "";
     fitInput();
@@ -871,7 +918,13 @@ if (page) {
   const chatId = Number(params.get("chat"));
   const start = startRequest(params);
   if (chatId && WORK_KINDS.includes(kind)) openChat(chatId);
-  else if (start && WORK_KINDS.includes(kind)) {
+  else if (start && DESIGN_KINDS.includes(kind)) {
+    // 포스터·카드뉴스 추천: 제품·입력 글만 채운 첫 화면. 시안(유료 AI 호출)은 [보내기]를 눌러야 만듭니다.
+    startNew();
+    if (PRODUCTS.some((item) => item.id === start.product_id)) settings.product_ids = [start.product_id];
+    $("chat-input").value = start.text;
+    renderWork();
+  } else if (start && WORK_KINDS.includes(kind)) {
     startNew();
     send(start.text, { event: start.event, ...(start.product_id && { product_ids: [start.product_id] }) });
   } else loadGallery();

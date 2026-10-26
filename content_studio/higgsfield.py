@@ -21,7 +21,8 @@ DAILY_LIMIT = 200                   # 대시보드에서 쓰는 크레딧, 하�
 DONE, FAILED = "completed", ("failed", "nsfw", "canceled", "cancelled")
 KLING_IMAGES = 10                   # Kling 4.0: 첫·끝 장면 포함 이미지 10장까지
 IMAGE_REFS = 10                     # 미리보기 이미지 참고 사진 (Nano Banana 2, 넉넉히 같은 수로)
-IMAGE_RATIOS = {"9:16": "9:16", "16:9": "16:9", "1:1": "1:1"}
+# 영상 미리보기는 9:16·16:9·1:1, 포스터·카드뉴스 시안 그림은 4:5·3:4·4:3까지 (generate cost로 확인, 2026-10-26)
+IMAGE_RATIOS = {"9:16": "9:16", "16:9": "16:9", "1:1": "1:1", "4:5": "4:5", "3:4": "3:4", "4:3": "4:3"}
 
 
 class HiggsfieldError(Exception):
@@ -134,6 +135,18 @@ def image_args(doc, photos=(), index=0):
     photos = list(photos)[:IMAGE_REFS]
     args = [IMAGE_MODEL, "--prompt", image_prompt(doc, [role for _, role in photos], index),
             "--aspect_ratio", IMAGE_RATIOS.get(doc["ratio"], "9:16")]
+    return args + [part for path, _ in photos for part in ("--image-references", path)]
+
+
+def design_image_args(prompt, ratio, photos=()):
+    """포스터·카드뉴스 시안 한 장 그림 요청. prompt: 희주 design-assistant가 쓴 장 프롬프트(영어, 넣을 베트남어 문구 포함).
+    photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고, 제품이 사진과 같아야 한다는 문장을 프롬프트 끝에 붙입니다."""
+    photos = list(photos)[:IMAGE_REFS]
+    text = prompt.strip()
+    if photos:
+        text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
+                 + ". The product must match these photos exactly.")
+    args = [IMAGE_MODEL, "--prompt", text, "--aspect_ratio", IMAGE_RATIOS[ratio]]
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 
