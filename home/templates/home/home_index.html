@@ -28,18 +28,20 @@
         <div id="calendar-actions" class="home-panel-actions">
           <div class="home-inline home-calendar-navigation"><button class="home-icon-btn" id="calendar-prev" type="button" aria-label="이전 기간"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6" /></svg></button><h2 id="calendar-period" aria-live="polite" aria-atomic="true"></h2><button class="home-icon-btn" id="calendar-next" type="button" aria-label="다음 기간"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 6 6 6-6 6" /></svg></button></div>
         </div>
-        <div id="campaign-actions" class="home-panel-actions" hidden>
+        <div id="campaign-actions" class="home-panel-actions home-dday-header" hidden>
           <div class="home-campaign-heading">
             <div class="home-event-title"><h2 id="planner-title">이벤트를 선택하세요</h2><label class="home-event-switch"><span class="home-sr-only">이벤트 선택</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg><select id="campaign-select" aria-label="관리할 이벤트 선택"></select></label></div>
             <div id="campaign-summary" class="home-campaign-meta"></div>
           </div>
-          <div class="home-inline home-campaign-tools"><button class="btn dark" id="new-campaign" type="button">+ 새 이벤트</button><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><button class="btn" id="replan-campaign" type="button">수정</button><button class="btn" id="clone-campaign" type="button">복제</button><button class="btn" id="delete-campaign" type="button">삭제</button><button class="btn" id="open-review" type="button">회고 관리</button></div>
+          <div id="campaign-progress" class="home-dday-progress"></div>
+          <div class="home-inline home-campaign-tools"><button class="btn dark" id="new-campaign" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>새 이벤트</button><div class="home-dday-secondary"><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><button class="btn" id="replan-campaign" type="button" title="이벤트와 준비 업무 수정">수정</button><button class="btn" id="open-review" type="button">회고 관리</button><details id="campaign-more" class="home-dday-more"><summary>더보기 <span aria-hidden="true">···</span></summary><div class="home-dday-menu"><button id="clone-campaign" type="button">이벤트 복제</button><button id="delete-campaign" class="is-danger" type="button">이벤트 삭제</button></div></details></div></div>
         </div>
         <div id="calendar-panel" role="tabpanel" aria-labelledby="tab-calendar">
           <div id="calendar-body" class="home-calendar-body"></div>
         </div>
-        <div id="campaign-panel" role="tabpanel" aria-labelledby="tab-campaign" hidden>
+        <div id="campaign-panel" class="home-dday-shell" role="tabpanel" aria-labelledby="tab-campaign" hidden>
           <div id="gantt" class="home-gantt-scroll" aria-label="디데이 업무 일정"></div>
+          <p id="gantt-note" class="home-dday-note" hidden></p>
         </div>
       </section>
       <section class="home-card home-news home-resizable" aria-labelledby="news-title">

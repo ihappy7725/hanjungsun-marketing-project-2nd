@@ -646,3 +646,87 @@
 @media (prefers-reduced-motion: reduce) {
   .home-page .home-week-view .home-week-date, .home-page .home-week-view .home-week-chip, .home-page .home-week-view .home-week-slot { transition: none; }
 }
+
+/* STEP 4: 디데이 내부의 요약·진척·작업·업무 표를 같은 위계로 정리합니다. */
+.home-page #campaign-actions.home-dday-header { gap: var(--space-2); padding-block: var(--space-4); }
+.home-page .home-dday-header .home-campaign-heading { gap: var(--space-2); padding: 0; }
+.home-page .home-dday-header .home-event-title { width: 100%; }
+.home-page .home-dday-header #planner-title { min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.home-page .home-dday-header #campaign-summary { gap: var(--space-5); font-size: calc(var(--fs-table) * .9); }
+.home-page .home-dday-header .home-campaign-chip .home-badge { font-size: calc(var(--fs-table) * .85); background: var(--paper); }
+.home-page .home-dday-header .home-campaign-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+.home-page .home-dday-header #campaign-summary .home-dday { color: var(--teal); font-weight: var(--title-weight); }
+.home-page .home-dday-header .home-dday-progress { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); min-height: 24px; color: var(--muted); font-size: calc(var(--fs-table) * .9); }
+.home-page .home-dday-header .home-dday-progress > strong { color: var(--teal); font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
+.home-page .home-dday-header .home-dday-progress > small { color: var(--muted); font-size: calc(var(--fs-table) * .8); }
+.home-page .home-dday-header .home-dday-progress-track { flex: 1 1 80px; height: var(--space-2); overflow: hidden; background: var(--paper); }
+.home-page .home-dday-header .home-dday-progress-track > span { display: block; height: 100%; background: var(--teal); }
+.home-page .home-dday-header .home-campaign-tools { justify-content: space-between; align-items: center; gap: var(--space-4); }
+.home-page .home-dday-header .home-dday-secondary { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.home-page .home-dday-header .btn, .home-page .home-dday-header .home-dday-more > summary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 34px; margin: 0; padding: var(--space-2) var(--space-4); border: 0; background: transparent; color: var(--ink); font-size: var(--fs-table); white-space: nowrap; }
+.home-page .home-dday-header #new-campaign { padding-inline: var(--space-5); background: var(--teal); color: var(--on-dark); }
+.home-page .home-dday-header #new-campaign svg { width: var(--space-6); height: var(--space-6); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.home-page .home-dday-header .home-dday-more { position: relative; }
+.home-page .home-dday-header .home-dday-more > summary { cursor: pointer; list-style: none; }
+.home-page .home-dday-header .home-dday-more > summary::-webkit-details-marker { display: none; }
+.home-page .home-dday-header .home-dday-more > summary:hover, .home-page .home-dday-header .btn:not(.dark):hover { background: var(--paper); }
+.home-page .home-dday-header .home-dday-menu { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 20; display: grid; min-width: 140px; padding: var(--space-2); background: var(--control-bg); box-shadow: var(--shadow-overlay); }
+.home-page .home-dday-header .home-dday-menu button { min-height: 36px; padding: var(--space-3) var(--space-5); border: 0; background: transparent; color: var(--ink); text-align: left; font-size: var(--fs-table); }
+.home-page .home-dday-header .home-dday-menu button:hover { background: var(--paper); }
+.home-page .home-dday-header .home-dday-menu .is-danger { color: color-mix(in srgb, var(--navy) 65%, var(--orange)); }
+.home-page .home-dday-header :is(button, a, summary):focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.home-page #campaign-panel.home-dday-shell { container: home-dday / inline-size; overflow: hidden; }
+.home-page .home-dday-shell #gantt { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.home-page .home-dday-shell .home-dday-note { flex: 0 0 auto; margin: var(--space-3) 0 0; color: var(--muted); font-size: calc(var(--fs-table) * .8); }
+.home-page .home-dday-shell .home-dday-grid { --home-dday-name-width: 220px; --home-dday-date-width: 80px; --home-dday-state-width: 100px; --home-dday-columns: var(--home-dday-name-width) var(--home-dday-date-width) var(--home-dday-date-width) var(--home-dday-state-width) minmax(var(--home-dday-axis-width), 1fr); width: max(100%, calc(var(--home-dday-name-width) + var(--home-dday-date-width) * 2 + var(--home-dday-state-width) + var(--home-dday-axis-width))); }
+.home-page .home-dday-shell .home-dday-row { display: grid; grid-template-columns: var(--home-dday-columns); height: 48px; background: var(--page-bg); }
+.home-page .home-dday-shell .home-dday-row:nth-child(odd) { background: color-mix(in srgb, var(--paper) 28%, var(--page-bg)); }
+.home-page .home-dday-shell .home-dday-row > [role="cell"] { min-width: 0; min-height: 0; box-shadow: inset 0 -1px var(--line-soft); }
+.home-page .home-dday-shell .home-dday-name { position: sticky; left: 0; z-index: 3; min-width: 0; background: var(--page-bg); box-shadow: inset -1px 0 var(--line), inset 0 -1px var(--line-soft); }
+.home-page .home-dday-shell .home-dday-row > .home-dday-name { grid-column: 1; }
+.home-page .home-dday-shell .home-dday-row > .home-dday-date:nth-child(2) { grid-column: 2; }
+.home-page .home-dday-shell .home-dday-row > .home-dday-date:nth-child(3) { grid-column: 3; }
+.home-page .home-dday-shell .home-dday-row > .home-dday-state-cell { grid-column: 4; }
+.home-page .home-dday-shell .home-dday-row > .home-dday-track, .home-page .home-dday-shell .home-dday-row > .home-dday-axis { grid-column: 5; }
+.home-page .home-dday-shell .home-dday-row:nth-child(odd) > .home-dday-name { background: color-mix(in srgb, var(--paper) 28%, var(--page-bg)); }
+.home-page .home-dday-shell .home-dday-name > button { display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); width: 100%; height: 100%; min-height: 0; padding: var(--space-3) var(--space-5); border: 0; background: transparent; color: var(--ink); font-size: var(--fs-table); text-align: left; }
+.home-page .home-dday-shell .home-dday-name > button > span { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.home-page .home-dday-shell .home-dday-name small { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: calc(var(--fs-table) * .8); }
+.home-page .home-dday-shell .home-dday-date, .home-page .home-dday-shell .home-dday-state-cell { display: flex; align-items: center; justify-content: center; gap: var(--space-1); min-width: 0; color: var(--muted); font-size: calc(var(--fs-table) * .9); font-variant-numeric: tabular-nums; }
+.home-page .home-dday-shell .home-dday-date sup { color: var(--teal); }
+.home-page .home-dday-shell .home-dday-state { max-width: calc(100% - var(--space-4)); padding: var(--space-1) var(--space-3); background: var(--paper); color: var(--ink); border-radius: var(--space-2); font-size: calc(var(--fs-table) * .8); line-height: var(--line-height-heading); text-align: center; }
+.home-page .home-dday-shell .home-dday-state.is-doing { background: var(--teal); color: var(--on-dark); }
+.home-page .home-dday-shell .home-dday-state.is-done { background: var(--celadon); color: var(--ink); }
+.home-page .home-dday-shell .home-dday-state.is-overdue { background: color-mix(in srgb, var(--orange) 38%, var(--page-bg)); color: var(--ink); }
+.home-page .home-dday-shell .home-dday-state.is-cancelled { background: var(--white); color: var(--muted); }
+.home-page .home-dday-shell .home-dday-row.home-dday-table-head { position: sticky; top: 0; z-index: 5; height: 64px; background: var(--white); color: var(--teal); }
+.home-page .home-dday-shell .home-dday-table-head > .home-dday-name { z-index: 6; display: flex; align-items: center; padding-inline: var(--space-5); background: var(--white); font-size: var(--fs-table); font-weight: var(--title-weight); }
+.home-page .home-dday-shell .home-dday-table-head > .home-dday-date, .home-page .home-dday-shell .home-dday-table-head > .home-dday-state-cell { color: var(--teal); font-weight: var(--title-weight); }
+.home-page .home-dday-shell .home-dday-axis { display: grid; grid-template-rows: 22px 24px 18px; min-width: 0; background: var(--white); overflow: hidden; }
+.home-page .home-dday-shell .home-dday-months, .home-page .home-dday-shell .home-dday-dates { display: flex; min-width: 0; color: var(--muted); font-size: calc(var(--fs-table) * .85); }
+.home-page .home-dday-shell .home-dday-months > span, .home-page .home-dday-shell .home-dday-dates > time { flex: 0 0 auto; box-sizing: border-box; min-width: 0; padding-inline: var(--space-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; box-shadow: inset 1px 0 var(--line-soft); }
+.home-page .home-dday-shell .home-dday-months { color: var(--teal); font-weight: var(--title-weight); }
+.home-page .home-dday-shell .home-dday-today-band { position: relative; }
+.home-page .home-dday-shell .home-dday-today-band > span { position: absolute; transform: translateX(-50%); padding-inline: var(--space-2); background: var(--teal); color: var(--on-dark); font-size: calc(var(--fs-table) * .75); line-height: var(--line-height-heading); }
+.home-page .home-dday-shell .home-dday-track { position: relative; overflow: hidden; background: repeating-linear-gradient(to right, transparent 0, transparent calc(var(--home-dday-grid-step) - 1px), var(--line-soft) calc(var(--home-dday-grid-step) - 1px), var(--line-soft) var(--home-dday-grid-step)); }
+.home-page .home-dday-shell .home-dday-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 16px; border-radius: var(--space-2); background: var(--beige); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--button) 42%, var(--beige)); pointer-events: none; }
+.home-page .home-dday-shell .home-dday-bar.is-doing { background: var(--teal); box-shadow: none; }
+.home-page .home-dday-shell .home-dday-bar.is-done { background: color-mix(in srgb, var(--teal) 42%, var(--celadon)); box-shadow: none; }
+.home-page .home-dday-shell .home-dday-bar.is-overdue { background: color-mix(in srgb, var(--navy) 55%, var(--orange)); box-shadow: none; }
+.home-page .home-dday-shell .home-dday-bar.is-blocked { background: repeating-linear-gradient(135deg, var(--beige) 0, var(--beige) 4px, var(--paper) 4px, var(--paper) 8px); }
+.home-page .home-dday-shell .home-dday-bar.is-cancelled { background: transparent; border: 1px dashed var(--muted); box-shadow: none; }
+.home-page .home-dday-shell .home-dday-bar.is-point { height: 6px; border-radius: 50%; transform: translate(-50%, -50%); }
+.home-page .home-dday-shell .home-dday-bar-hit { position: absolute; top: 50%; transform: translate(-50%, -50%); min-height: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--space-2); background: transparent; }
+.home-page .home-dday-shell .home-dday-track:has(.home-dday-bar-hit:hover) > .home-dday-bar { box-shadow: 0 0 0 1px var(--teal); }
+.home-page .home-dday-shell button:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+.home-page .home-dday-shell .home-dday-today { position: absolute; top: 0; bottom: 0; z-index: 1; border-left: 1px solid var(--teal); opacity: .55; pointer-events: none; }
+.home-page .home-dday-shell .home-dday-track-message { display: flex; height: 100%; align-items: center; padding-inline: var(--space-5); color: var(--muted); font-size: calc(var(--fs-table) * .85); }
+.home-page .home-dday-shell .home-dday-axis-empty { align-self: center; grid-row: 1 / -1; color: var(--muted); font-size: var(--fs-table); padding-inline: var(--space-5); }
+.home-page .home-dday-shell .home-dday-empty { display: grid; align-content: center; justify-items: start; height: 100%; padding: var(--space-7); background: var(--page-bg); }
+.home-page .home-dday-shell .home-dday-empty strong { font-size: var(--fs-subheading); font-weight: 500; }
+.home-page .home-dday-shell .home-dday-empty p, .home-page .home-dday-shell .home-dday-muted { color: var(--muted); font-size: calc(var(--fs-table) * .9); }
+@container home-dday (max-width: 560px) {
+  .home-page .home-dday-shell .home-dday-grid { --home-dday-name-width: 144px; --home-dday-date-width: 0px; --home-dday-state-width: 0px; }
+  .home-page .home-dday-shell .home-dday-date, .home-page .home-dday-shell .home-dday-state-cell { display: none; }
+  .home-page .home-dday-shell .home-dday-name small { display: block; }
+}

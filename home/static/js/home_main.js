@@ -89,6 +89,18 @@ export function ganttTone(task, start, today) {
   if (dayDiff(start, today) <= 3) return 'soon';
   return 'upcoming';
 }
+export function ganttTaskRows(tasks) {
+  // 기존 비취소 업무의 자동 시작 기준을 유지합니다. 이 값은 저장하지 않습니다.
+  const dated = tasks.filter(t => t.status !== 'cancelled' && validDate(t.due_date)).sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const starts = new Map(dated.map((t, i) => [t.id, t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3))]));
+  return [...tasks].sort((a, b) => (validDate(a.due_date) ? a.due_date : '9999').localeCompare(validDate(b.due_date) ? b.due_date : '9999')).map(task => {
+    const due = validDate(task.due_date) ? task.due_date : '';
+    const candidate = task.start_date || starts.get(task.id) || '';
+    const start = validDate(candidate) ? candidate : '';
+    const invalid = Boolean((task.start_date && !validDate(task.start_date)) || (task.due_date && !due) || (start && due && start > due));
+    return { task, start, due, invalid, estimated: Boolean(start && !task.start_date), point: Boolean(due && !start && !invalid) };
+  });
+}
 export function replanTasks(tasks, target, edits) {
   return tasks.map(t => {
     const edit = edits.find(e => e.id === t.id);
@@ -518,6 +530,7 @@ async function initialize() {
     const choices = items => items.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)} · ${esc(CAMPAIGN_STATES[item.status] || item.status)}</option>`).join('');
     $('#campaign-select').innerHTML = store.campaigns.length ? `${ongoing.length ? `<optgroup label="진행 중인 이벤트">${choices(ongoing)}</optgroup>` : ''}${previous.length ? `<optgroup label="지난 이벤트">${choices(previous)}</optgroup>` : ''}` : '<option value="">이벤트 없음</option>';
     $('#planner-title').textContent = c?.name || '이벤트를 선택하세요';
+    $('#planner-title').title = c?.name || '';
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
@@ -529,32 +542,69 @@ async function initialize() {
     };
     report.hidden = !c;
     $('#open-review').disabled = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }
-    $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><span class="home-campaign-date">${esc(c.target_date)}</span><span class="home-dday">${esc(dday(c.target_date, today))}</span>${[c.product, c.audience, c.channel].filter(Boolean).length ? `<span class="home-muted home-campaign-detail">${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</span>` : ''}`;
-    const tasks = store.tasks.filter(t => t.campaign_id === c.id);
-    const dated = [...tasks].filter(t => t.due_date && t.status !== 'cancelled').sort((a, b) => a.due_date.localeCompare(b.due_date));
-    if (dated.length) {
-      const starts = dated.map((t, i) => t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3)));
-      const left = [addDays(dated[0].due_date, -3), ...starts].sort()[0], right = addDays(dated[dated.length - 1].due_date, 3), span = Math.max(1, dayDiff(right, left));
-      const position = date => Math.max(0, Math.min(100, dayDiff(date, left) / span * 100));
-      const tickDays = span <= 14 ? 1 : span <= 84 ? 7 : span <= 168 ? 14 : span <= 336 ? 28 : Math.ceil(span / 12);
+    $('#campaign-progress').hidden = !c;
+    $('#gantt-note').hidden = true;
+    if (!c) {
+      $('#campaign-summary').innerHTML = ''; $('#campaign-progress').innerHTML = '';
+      $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>이벤트 준비를 시작하세요</strong><p>새 이벤트에서 이름과 기준일을 정하면 준비 업무를 만듭니다.</p></div>'; return;
+    }
+    $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><time class="home-campaign-date" datetime="${esc(c.target_date)}">행사일 ${esc(c.target_date.replaceAll('-', '.'))}</time><span class="home-dday" title="한국 날짜 기준">${esc(dday(c.target_date, today))}</span>`;
+    const tasks = store.tasks.filter(t => t.campaign_id === c.id), p = progress(tasks), cancelled = tasks.filter(t => t.status === 'cancelled').length;
+    $('#campaign-progress').innerHTML = `<strong>${p.percent}%</strong><span>${p.done} / ${p.total}개 완료</span><div class="home-dday-progress-track" role="progressbar" aria-label="이벤트 준비 업무 완료율" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.percent}"><span style="width:${p.percent}%"></span></div>${cancelled ? `<small>취소 ${cancelled}개 제외</small>` : ''}`;
+    if (!tasks.length) { $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>등록된 준비 업무가 없습니다</strong><p>수정에서 준비 업무와 날짜를 확인해주세요.</p></div>'; return; }
+    const rows = ganttTaskRows(tasks);
+    const dates = rows.filter(r => !r.invalid).flatMap(r => [r.start, r.due].filter(Boolean)).sort();
+    let left = '', right = '', span = 0, axisWidth = 440, tickDays = 1, axis = '<span class="home-dday-axis-empty">날짜를 지정하면 기간이 표시됩니다</span>', todayPosition = null;
+    if (dates.length) {
+      const before = addDays(dates[0], -3), after = addDays(dates.at(-1), 3);
+      left = validDate(before) ? before : dates[0]; right = validDate(after) ? after : dates.at(-1); span = dayDiff(right, left) + 1;
+      axisWidth = Math.max(440, Math.min(2400, span * (span <= 120 ? 18 : 8)));
+      const maxTicks = Math.max(8, Math.floor(axisWidth / 38));
+      tickDays = span <= maxTicks ? 1 : span <= maxTicks * 7 ? 7 : span <= maxTicks * 14 ? 14 : Math.ceil(span / maxTicks);
       const ticks = [];
       for (let offset = 0; offset < span; offset += tickDays) {
-        const date = addDays(left, offset), width = Math.min(tickDays, span - offset) / span * 100;
-        ticks.push(`<time datetime="${date}" title="${date}" style="width:${width}%">${tickDays === 1 ? Number(date.slice(8)) : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`}</time>`);
+        const date = addDays(left, offset), count = Math.min(tickDays, span - offset);
+        ticks.push(`<time datetime="${date}" title="${date}" style="width:${count / span * 100}%">${tickDays === 1 ? Number(date.slice(8)) : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`}</time>`);
       }
-      const bands = [];
-      // 날짜 축의 월 구간도 실제 일수에 비례합니다. 긴 계획은 연도 단위로 묶습니다.
-      for (let date = left; date < right;) {
+      const months = [];
+      for (let offset = 0; offset < span;) {
+        const date = addDays(left, offset);
         const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7));
-        const boundary = span > 370 ? `${year + 1}-01-01` : month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`;
-        const end = boundary < right ? boundary : right;
-        bands.push(`<span style="width:${dayDiff(end, date) / span * 100}%">${span > 370 ? `${year}년` : `${year}. ${String(month).padStart(2, '0')}`}</span>`);
-        date = end;
+        const nextMonth = new Date(date); nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1, 1);
+        const count = Math.min(span - offset, dayDiff(nextMonth.toISOString(), date));
+        months.push(`<span title="${date} ~ ${addDays(date, count - 1)}" style="width:${count / span * 100}%">${year}. ${String(month).padStart(2, '0')}</span>`); offset += count;
       }
-      const todayLine = today >= left && today <= right ? `<span class="home-gantt-today" style="left:${position(today)}%" title="업무 기준일 ${today}"></span>` : '';
-      $('#gantt').innerHTML = `<div class="home-gantt" style="--home-gantt-step:${Math.min(100, tickDays / span * 100)}%"><div class="home-gantt-row home-gantt-head"><div class="home-gantt-task-head"><strong>준비 업무</strong><span>업무명 · 마감일 · 상태</span></div><div class="home-gantt-axis"><div class="home-gantt-months">${bands.join('')}</div><div class="home-gantt-dates">${ticks.join('')}</div></div></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open home-gantt-task" data-task="${esc(t.id)}" title="시작 기준 ${esc(starts[i])} · 마감 ${esc(t.due_date)}${t.start_date ? '' : ' · 시작일 미입력: 앞 업무 마감일 기준(첫 업무는 마감 3일 전)'}"><span class="home-gantt-task-title">${esc(t.title)}</span><span class="home-gantt-task-meta"><time datetime="${esc(t.due_date)}">${shortDate(t.due_date)} 마감</time><span>${TASK_STATES[t.status]}</span>${unfinished(t) && t.due_date < today ? '<span class="home-gantt-overdue">기한 초과</span>' : ''}</span></button><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${ganttTone(t, starts[i], today)}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div></div>`).join('')}</div>`;
-    } else $('#gantt').innerHTML = empty('날짜가 있는 업무를 등록하면 일정이 표시됩니다.');
+      if (today >= left && today <= right) todayPosition = (dayDiff(today, left) + .5) / span * 100;
+      axis = `<div class="home-dday-months">${months.join('')}</div><div class="home-dday-dates">${ticks.join('')}</div><div class="home-dday-today-band">${todayPosition === null ? '' : `<span style="left:${todayPosition}%" title="${today} · 한국 날짜 기준">오늘</span>`}</div>`;
+    }
+    const todayLine = todayPosition === null ? '' : `<span class="home-dday-today" style="left:${todayPosition}%" aria-hidden="true"></span>`;
+    const dateCell = (value, estimated = false) => value ? `<time datetime="${value}">${shortDate(value)}</time>${estimated ? '<sup title="실제 시작일 미입력 · 기존 자동 기준일">*</sup>' : ''}` : '<span class="home-dday-muted">미정</span>';
+    const content = rows.map(r => {
+      const t = r.task, late = unfinished(t) && r.due && r.due < today;
+      const tone = late ? 'overdue' : Object.hasOwn(TASK_STATES, t.status) ? t.status : 'unknown';
+      const status = `${late ? '지연 · ' : ''}${TASK_STATES[t.status] || '상태 확인'}`;
+      const description = `${t.title} · 시작 ${r.start || '미입력'}${r.estimated ? ' (기존 자동 기준일)' : ''} · 마감 ${r.due || '미정'} · ${status}${r.invalid ? ' · 날짜 확인 필요' : ''}${t.memo ? ` · 메모: ${t.memo}` : ''}`;
+      let bar = `<span class="home-dday-track-message">${r.invalid ? '날짜 확인 필요' : !r.due ? '마감일 미정' : '기간 미정'}</span>`;
+      if (span && r.due && !r.invalid) {
+        const barStart = r.start || r.due, position = dayDiff(barStart, left) / span * 100;
+        const width = r.point ? 0 : (dayDiff(r.due, barStart) + 1) / span * 100;
+        const center = r.point ? (dayDiff(r.due, left) + .5) / span * 100 : position + width / 2;
+        bar = `<span class="home-dday-bar is-${tone}${r.estimated ? ' is-estimated' : ''}${r.point ? ' is-point' : ''}" style="left:${r.point ? center : position}%;width:${r.point ? '6px' : `${width}%`}" aria-hidden="true"></span><button type="button" class="home-dday-bar-hit" data-task="${esc(t.id)}" title="${esc(description)}" aria-label="${esc(description)}" style="left:clamp(12px, ${center}%, calc(100% - 12px));width:max(24px, ${width}%)"></button>`;
+      }
+      return `<div class="home-dday-row" role="row" data-dday-task="${esc(t.id)}"><div class="home-dday-name" role="cell"><button type="button" data-task="${esc(t.id)}" title="${esc(description)}"><span>${esc(t.title)}</span><small>${r.due ? `${shortDate(r.due)} 마감` : '날짜 미정'} · ${esc(status)}</small></button></div><div class="home-dday-date" role="cell" title="${esc(r.start || '시작일 미입력')}${r.estimated ? ' · 기존 자동 기준일' : ''}">${dateCell(r.start, r.estimated)}</div><div class="home-dday-date" role="cell" title="${esc(r.due || '마감일 미정')}">${dateCell(r.due)}</div><div class="home-dday-state-cell" role="cell"><span class="home-dday-state is-${tone}">${esc(status)}</span></div><div class="home-dday-track" role="cell">${todayLine}${bar}</div></div>`;
+    }).join('');
+    const previousGrid = $('.home-dday-grid'), previousCampaign = previousGrid?.dataset.campaignId;
+    const scrollLeft = $('#gantt').scrollLeft, scrollTop = $('#gantt').scrollTop;
+    $('#gantt').innerHTML = `<div class="home-dday-grid" role="table" aria-label="이벤트 준비 업무와 일정" aria-rowcount="${rows.length + 1}" aria-colcount="5" data-campaign-id="${esc(c.id)}" data-range-start="${left}" data-range-end="${right}" style="--home-dday-axis-width:${axisWidth}px;--home-dday-grid-step:${span ? (span <= 120 ? 1 : tickDays) / span * 100 : 100}%"><div class="home-dday-row home-dday-table-head" role="row"><div class="home-dday-name" role="columnheader">마케팅 업무</div><div class="home-dday-date" role="columnheader">시작일</div><div class="home-dday-date" role="columnheader">마감일</div><div class="home-dday-state-cell" role="columnheader">상태</div><div class="home-dday-axis" role="columnheader">${axis}</div></div>${content}</div>`;
+    $('#gantt').querySelectorAll('.home-dday-row').forEach((row, index) => {
+      row.setAttribute('aria-rowindex', String(index + 1));
+      [...row.children].forEach((cell, column) => cell.setAttribute('aria-colindex', String(column + 1)));
+    });
+    $('#gantt').scrollLeft = previousCampaign === c.id ? scrollLeft : 0; $('#gantt').scrollTop = previousCampaign === c.id ? scrollTop : 0;
+    const notes = [];
+    if (rows.some(r => r.estimated)) notes.push('* 시작일 미입력 업무는 기존 자동 기준일을 표시합니다.');
+    if (rows.some(r => r.invalid)) notes.push('날짜가 맞지 않는 업무는 막대 대신 확인 안내를 표시합니다.');
+    $('#gantt-note').textContent = notes.join(' '); $('#gantt-note').hidden = !notes.length;
   }
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
   function renderSignals() {
@@ -650,7 +700,7 @@ async function initialize() {
     const initialTemplate = original?.template || (opportunity ? 'anniversary' : 'launch');
     const templateRows = type => TEMPLATE.filter((_, i) => type === 'launch' || i > 0)
       .map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
-    let rows = original ? structuredClone(store.tasks.filter(t => t.campaign_id === original.id)) : templateRows(initialTemplate);
+    let rows = original ? structuredClone(store.tasks.filter(t => t.campaign_id === original.id && (kind !== 'clone' || t.status !== 'cancelled'))) : templateRows(initialTemplate);
     const target = original?.target_date || opportunity?.start || '';
     const initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
     openDialog(kind === 'create' ? '이벤트 기획' : kind === 'clone' ? '이벤트 복제' : '이벤트 수정', `<form id="plan-form">
@@ -722,7 +772,10 @@ async function initialize() {
       event.preventDefault();
       const f = new FormData(form), newTarget = f.get('target_date'), name = f.get('name').trim();
       if (!name || !validDate(newTarget) || rows.some(t => !t.title.trim())) { error('이벤트 이름과 날짜, 업무명을 확인하세요.'); return; }
-      if ([...form.querySelectorAll('[data-row-date]:not(:disabled)')].some(input => !validDate(input.value))) { error('업무 날짜를 확인하세요.'); return; }
+      if ([...form.querySelectorAll('[data-row-date]:not(:disabled)')].some(input => {
+        const row = rows[Number(input.dataset.rowDate)];
+        return !validDate(input.value) && !(input.value === '' && row.fixed && !row.due_date);
+      })) { error('업무 날짜를 확인하세요.'); return; }
       const projected = project();
       if (!projected) { error('업무 날짜를 계산할 수 없습니다. 이벤트 날짜를 확인하세요.'); return; }
       const button = $('#confirm-plan'); button.disabled = true;
@@ -746,6 +799,7 @@ async function initialize() {
     };
   }
   root.addEventListener('click', async event => {
+    const more = $('#campaign-more'); if (more.open && !more.contains(event.target)) more.open = false;
     const button = event.target.closest('button'); if (!button) return;
     if (button.dataset.weekMode) {
       if (!['timeline', 'list'].includes(button.dataset.weekMode)) return;
@@ -852,7 +906,10 @@ async function initialize() {
   }
   $('#open-review').onclick = openReview;
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
-  $('#delete-campaign').onclick = removeCampaign;
+  $('#delete-campaign').onclick = () => { $('#campaign-more').open = false; removeCampaign(); };
+  $('#campaign-more').addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); $('#campaign-more').open = false; $('#campaign-more summary').focus(); }
+  });
   panelTabs.forEach(([tab, name]) => { tab.onclick = () => showPanel(name); });
   $('.home-paneltabs').addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -868,7 +925,7 @@ async function initialize() {
   } catch { /* Default monthly view remains available. */ }
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
   $('#new-campaign').onclick = () => planner('create');
-  $('#clone-campaign').onclick = () => planner('clone');
+  $('#clone-campaign').onclick = () => { $('#campaign-more').open = false; planner('clone'); };
   $('#replan-campaign').onclick = () => planner('replan');
   function tickClocks() {
     // 두 도시의 현재 시각을 함께 보여 줍니다. 업무 기준일은 한국 시간 기준입니다.
