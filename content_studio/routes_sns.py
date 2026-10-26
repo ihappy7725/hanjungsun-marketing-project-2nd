@@ -424,6 +424,9 @@ def gallery():
                 "scenes": doc["scenes"],
                 "video_url": job.get("video_url"),
                 "job_status": job.get("status"),
+                # 썸네일 보기용: 처음 완성된 컷 미리보기 이미지(없으면 None)
+                "thumb_url": next((cut["image_url"] for cut in _cuts(doc)
+                                   if cut and cut.get("status") == higgsfield.DONE and cut.get("image_url")), None),
                 "demo": doc.get("demo", False),
             })
         else:

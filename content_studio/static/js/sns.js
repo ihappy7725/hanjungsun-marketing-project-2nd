@@ -103,7 +103,10 @@ function workRow(item) {
 }
 
 // 목록 도구(메인만 종류 필터 · 정렬 · 제목 검색). 받아 온 목록을 화면에서만 거릅니다.
-const listView = { kind: "", newest: true, query: "", items: [] };
+const VIEW_KEY = "content_studio.list_view";
+const listView = { kind: "", newest: true, query: "", items: [], view: (() => {
+  try { return localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list"; } catch { return "list"; }
+})() };
 const EMPTY_NOTE = $("gallery-empty")?.textContent || "";
 
 function renderList() {
@@ -111,9 +114,19 @@ function renderList() {
   const items = listView.items
     .filter((item) => (!listView.kind || item.kind === listView.kind) && (!query || item.title.toLowerCase().includes(query)))
     .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1) * (listView.newest ? 1 : -1));
-  const head = el("div", "studio-row is-head");
-  head.append(...["종류", "제목", "제품", "상태", "수정일"].map((text) => el("span", "", text)));
-  $("gallery").replaceChildren(head, ...items.map(workRow));
+  const grid = listView.view === "grid";
+  $("gallery").classList.toggle("is-grid", grid);
+  if (grid) {
+    $("gallery").replaceChildren(...items.map(workTile));
+  } else {
+    const head = el("div", "studio-row is-head");
+    head.append(...["종류", "제목", "제품", "상태", "수정일"].map((text) => el("span", "", text)));
+    $("gallery").replaceChildren(head, ...items.map(workRow));
+  }
+  for (const button of $("list-view")?.children || []) {
+    button.classList.toggle("dark", button.dataset.value === listView.view);
+    button.setAttribute("aria-pressed", String(button.dataset.value === listView.view));
+  }
   const total = listView.items.length;
   $("gallery-count").textContent = !total ? "" : items.length === total ? `${total}개` : `${total}개 중 ${items.length}개`;
   $("gallery-empty").textContent = total ? "조건에 맞는 작업이 없습니다." : EMPTY_NOTE;
@@ -121,7 +134,52 @@ function renderList() {
   $("gallery").hidden = items.length === 0;
 }
 
+// 썸네일 카드: 위 미리보기(같은 높이 틀) + 종류 배지, 아래 제목 · 제품 · 상태 · 수정일. 누르면 미리보기 팝업.
+// 미리보기: 포스터·카드뉴스는 첫 장(희주 renderThumb), 영상은 컷 미리보기 이미지 → 완성 영상 첫 장면 → 장면 글 순서.
+function workTile(item) {
+  const tile = el("button", "studio-tile");
+  tile.type = "button";
+  const thumb = el("div", "studio-tile-thumb");
+  if (item.kind === "video") {
+    if (item.thumb_url) {
+      const img = el("img");
+      img.src = item.thumb_url;
+      img.alt = "";
+      img.loading = "lazy";
+      thumb.append(img);
+    } else if (item.video_url) {
+      const video = el("video");
+      video.src = `${item.video_url}#t=0.1`;
+      video.muted = true;
+      video.preload = "metadata";
+      thumb.append(video);
+    } else {
+      const list = el("ol", "studio-scenes");
+      for (const scene of (item.scenes || []).slice(0, 4)) list.append(el("li", "", scene.ko));
+      thumb.append(list);
+      thumb.classList.add("is-text");
+    }
+  } else if (item.design) {
+    thumb.append(editor.renderThumb(item.design));
+    if (item.kind === "cardnews") thumb.append(el("span", "studio-tile-pages", `${item.design.pages.length}장`));
+  }
+  thumb.append(el("span", `studio-kind is-${item.kind}`, KIND_LABELS[item.kind]));
+  const title = el("p", "studio-tile-title", item.title);
+  title.title = item.title;
+  tile.append(thumb, title,
+    el("p", "studio-tile-meta", `${productNames(item.product_id)} · ${statusOf(item)} · ${shortDate(item.updated_at)}`));
+  tile.addEventListener("click", () => openPreview(item));
+  return tile;
+}
+
 function bindListTools() {
+  for (const button of $("list-view")?.children || []) {
+    button.addEventListener("click", () => {
+      listView.view = button.dataset.value;
+      try { localStorage.setItem(VIEW_KEY, listView.view); } catch { /* 기억만 안 함 */ }
+      renderList();
+    });
+  }
   for (const button of $("list-kind")?.children || []) {
     button.addEventListener("click", () => {
       listView.kind = button.dataset.value;
@@ -155,6 +213,37 @@ async function loadGallery() {
 }
 
 // 미리보기 팝업: 포스터·카드뉴스는 모든 장(희주 renderThumb), 영상은 완성 영상(없으면 장면 구성) + [수정하기]
+// 작업 삭제 확인 창. 지우면 모든 버전·대화가 함께 지워지고, 크레딧 사용 기록은 남습니다(하루 한도 계산용).
+function confirmDelete(item, preview) {
+  const ask = el("dialog", "studio-confirm-dialog");
+  const yes = el("button", "btn dark", "삭제");
+  yes.type = "button";
+  const no = el("button", "btn", "취소");
+  no.type = "button";
+  const buttons = el("div", "actions");
+  buttons.append(yes, no);
+  ask.append(el("p", "studio-confirm-title", `「${item.title}」 작업을 삭제할까요?`),
+    el("p", "studio-hint", "모든 버전이 함께 지워지고 되돌릴 수 없어요. (크레딧 사용 기록은 남아요)"), buttons);
+  const done = () => { ask.close(); ask.remove(); };  // 닫으면 바로 지움
+  no.addEventListener("click", done);
+  yes.addEventListener("click", async () => {
+    yes.disabled = no.disabled = true;
+    try {
+      await api(`/chats/${item.id}`, { method: "DELETE" });
+      done();
+      preview.close();
+      notify("작업을 삭제했습니다.");
+      loadGallery();
+    } catch (error) {
+      notify(`삭제하지 못했습니다. (${error.message})`);
+      yes.disabled = no.disabled = false;
+    }
+  });
+  ask.addEventListener("close", () => ask.remove());  // Esc로 닫을 때
+  page.append(ask);
+  ask.showModal();
+}
+
 function openPreview(item) {
   const dialog = el("dialog", "studio-preview-dialog");
   const body = el("div", "studio-preview-body");
@@ -192,11 +281,15 @@ function openPreview(item) {
   close.addEventListener("click", () => dialog.close());
   const actions = el("div", "actions");
   actions.append(edit, close);
+  // 오른쪽 위 [삭제]: 확인 창을 한 번 거친 뒤 기존 삭제 API로 지웁니다.
+  const remove = el("button", "btn studio-preview-delete", "삭제");
+  remove.type = "button";
+  remove.addEventListener("click", () => confirmDelete(item, dialog));
   // [수정하기]로 들어가야 할 수 있는 일(포스터·카드뉴스는 Figma 보내기 포함)을 버튼 바로 위에 알려 줍니다.
   const guide = el("p", "studio-preview-guide", item.kind === "video"
     ? "수정하기를 누르면 장면·프롬프트를 고치고 미리보기 이미지·영상을 만들 수 있어요."
     : "수정하기를 누르면 편집 화면에서 시안 고치기 · AI 초안 · 문구 검수 · Figma로 보내기를 할 수 있어요.");
-  dialog.append(el("h2", "", item.title),
+  dialog.append(remove, el("h2", "", item.title),
     el("p", "studio-hint", `${KIND_LABELS[item.kind]} · ${productNames(item.product_id)} · ${statusOf(item)} · ${shortDate(item.updated_at)}`),
     body, guide, actions);
   dialog.addEventListener("close", () => dialog.remove());
