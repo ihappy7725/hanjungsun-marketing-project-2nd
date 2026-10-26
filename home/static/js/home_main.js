@@ -444,8 +444,12 @@ async function initialize() {
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
-    report.href = c ? `/home/report/${encodeURIComponent(c.id)}` : '#';
-    report.setAttribute('aria-disabled', String(!c));
+    const canReport = Boolean(c) && mode === 'work';
+    report.href = canReport ? `/home/report/${encodeURIComponent(c.id)}` : '#';
+    report.setAttribute('aria-disabled', String(!canReport));
+    report.onclick = event => {
+      if (!canReport) { event.preventDefault(); toast('보고서는 서버에 저장된 ‘내 업무’ 이벤트에서 열 수 있습니다.'); }
+    };
     report.hidden = !c;
     $('#retrospective').hidden = !c;
     if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }

@@ -337,6 +337,8 @@
 .home-page .home-day.is-today { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); }
 .home-page .home-resize-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 .home-page .home-resize-tools .home-text-btn { min-height: 28px; }
+.home-page .home-range.home-resizable { min-height: 96px; }
+.home-page dialog.home-resizable { width: min(720px, calc(100% - 28px)); min-height: 180px; max-height: 88vh; }
 .home-page .home-collaborations-card { background: color-mix(in srgb, var(--celadon) 24%, var(--paper)); }
 .home-page .home-collab-summary { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); margin-bottom: var(--space-5); color: var(--muted); }
 .home-page .home-collab-summary strong { color: var(--teal); }

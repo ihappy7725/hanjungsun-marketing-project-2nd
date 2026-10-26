@@ -98,7 +98,7 @@
       </section>
       <section class="home-card home-opportunities-card home-resizable" aria-label="현지 기회">
         <div class="home-opportunities"><div class="home-panel-head"><div><h2>현지 기회</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">전체 보기 ↗</a></div>
-        <form id="range-form" class="home-range">
+        <form id="range-form" class="home-range home-resizable">
           <div class="home-range-preset"><label class="home-field">조회 기간<select id="range-preset"><option value="30">앞으로 30일</option><option value="45" selected>앞으로 45일</option><option value="90">앞으로 90일</option><option value="custom">직접 입력</option></select></label><button class="btn" type="submit">조회</button></div>
           <details id="range-custom" class="home-range-custom"><summary>날짜 직접 지정</summary><div class="home-range-dates"><label class="home-field">시작일<input type="date" id="range-start" required></label><label class="home-field">종료일<input type="date" id="range-end" required></label></div></details>
           <p id="range-error" class="home-error" role="alert" hidden></p>
@@ -113,7 +113,7 @@
     </div>
   </div>
   <footer class="home-footer"><span id="storage-notice">내 업무는 서버에, 예시 데이터 (DEMO)는 이 브라우저에 저장됩니다.</span><div class="home-resize-tools"><span>상자 오른쪽 아래를 끌어 가로·세로 크기 조절</span><button class="home-text-btn" id="reset-panel-sizes" type="button">상자 크기 초기화</button></div></footer>
-  <dialog id="home-dialog" aria-labelledby="dialog-title"><div class="home-dialog-head"><h2 id="dialog-title"></h2><button class="home-icon-btn" id="close-dialog" aria-label="창 닫기">×</button></div><div id="dialog-content"></div></dialog>
+  <dialog id="home-dialog" class="home-resizable" aria-labelledby="dialog-title"><div class="home-dialog-head"><h2 id="dialog-title"></h2><button class="home-icon-btn" id="close-dialog" aria-label="창 닫기">×</button></div><div id="dialog-content"></div></dialog>
   <div id="home-toast" class="home-toast" role="status" aria-live="polite" hidden></div>
   <noscript><p class="home-error">HOME의 달력과 업무 관리를 사용하려면 JavaScript를 켜주세요.</p></noscript>
 </div>
