@@ -134,7 +134,7 @@ async function initialize() {
   if (!root) return;
   setupPanelResize(root);
   const $ = selector => root.querySelector(selector);
-  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
+  let today = kstToday(), selectedDate = today, cursor = today, panel = 'month';
   const TIMELINE_FROM = 7, TIMELINE_TO = 21, TIMEZONE_LABEL = 'KST';
   let view = 'month';
   let store = blankStore(), locked = false, signals = null, requestNumber = 0, toastTimer;
@@ -212,7 +212,7 @@ async function initialize() {
     } finally { storageControls(false); }
   }
   const selected = () => store.campaigns.find(c => c.id === store.preferences.selected) || store.campaigns[0];
-  const inScope = () => store.tasks.filter(t => scope === 'all' || t.campaign_id === selected()?.id);
+  const inScope = () => store.tasks;
   const campaignName = campaignId => store.campaigns.find(c => c.id === campaignId)?.name || '이벤트 없음';
   function range() { return { start: $('#range-start').value, end: $('#range-end').value }; }
   function updateRange() {
@@ -226,20 +226,20 @@ async function initialize() {
   }
   function overlaps(t) { return t.due_date ? localEvents().filter(e => e.start <= t.due_date && e.end >= t.due_date) : []; }
   function creators() {
-    return (signals?.collaborations.items || []).filter(c => c.is_demo !== true && c.status !== 'declined' && (scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id) || !c.event_id));
+    return (signals?.collaborations.items || []).filter(c => c.is_demo !== true && c.status !== 'declined');
   }
   function calendarEvents() {
     const events = inScope().filter(t => t.due_date && t.status !== 'cancelled').map(t => ({ date: t.due_date, end: t.due_date, title: t.title, kind: 'task', id: t.id, done: t.status === 'done', time: validTime(t.due_time) ? t.due_time : '' }));
     const locals = localEvents();
     locals.forEach(e => events.push({ date: e.start, end: e.end, title: e.name, kind: 'local', id: e.event_id, provisional: e.provisional === true }));
     // 현지 일정에서 만든 이벤트는 같은 날 같은 이름으로 두 줄이 됩니다. 현지 일정 쪽만 남기고 디데이 표시만 붙입니다.
-    store.campaigns.filter(c => scope === 'all' || c.id === selected()?.id).forEach(c => {
+    store.campaigns.forEach(c => {
       const anchor = locals.find(e => e.event_id && e.event_id === c.event_id && e.start <= c.target_date && e.end >= c.target_date);
       if (anchor) { const row = events.find(e => e.kind === 'local' && e.id === anchor.event_id); if (row) row.campaignId = c.id; return; }
       events.push({ date: c.target_date, end: c.target_date, title: c.name, kind: 'campaign', id: c.id });
     });
-    store.schedules.filter(s => validDate(s.date) && (scope === 'all' || s.campaign_id === selected()?.id)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
-    creators().filter(c => scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id)).forEach(c => ['shoot_date', 'post_date'].forEach(field => {
+    store.schedules.filter(s => validDate(s.date)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
+    creators().forEach(c => ['shoot_date', 'post_date'].forEach(field => {
       if (validDate(c[field])) events.push({ date: c[field], end: c[field], title: `${c.influencer} · ${field === 'post_date' ? '게시' : '촬영'}`, kind: 'creator', id: c.collaboration_id, link: c.link });
     }));
     return events;
@@ -276,7 +276,6 @@ async function initialize() {
   }
   function renderCalendar() {
     const events = calendarEvents(), at = date => events.filter(e => e.date <= date && e.end >= date);
-    root.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
     let start, end, weekCount = 5;
     if (view === 'month') {
       const first = `${cursor.slice(0, 7)}-01`, weekday = (new Date(first).getUTCDay() + 6) % 7;
@@ -334,7 +333,7 @@ async function initialize() {
     }
   }
   function renderTasks() {
-    // 진척도는 현재 선택한 이벤트의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
+    // 진척도는 선택 이벤트 기준이며, 오늘의 업무 목록은 전체 이벤트의 업무를 보여 줍니다.
     const campaign = selected(), campaignTasks = campaign ? store.tasks.filter(t => t.campaign_id === campaign.id) : [];
     const p = progress(campaignTasks);
     // 지연된 업무가 있을 때만 빨간 배지를 띄웁니다. 평소에는 조용하고 문제가 있을 때만 눈에 띄게 합니다.
@@ -391,11 +390,11 @@ async function initialize() {
   }
   function renderCampaign() {
     const c = selected();
-    const active = store.campaigns.filter(item => !['done', 'cancelled', 'archived'].includes(item.status) || item.id === c?.id);
-    $('#campaign-select').innerHTML = active.length ? active.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)} · ${esc(CAMPAIGN_STATES[item.status] || item.status)}</option>`).join('') : '<option value="">이벤트 없음</option>';
+    const ongoing = store.campaigns.filter(item => !['done', 'cancelled', 'archived'].includes(item.status));
+    const previous = store.campaigns.filter(item => ['done', 'cancelled', 'archived'].includes(item.status));
+    const choices = items => items.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)} · ${esc(CAMPAIGN_STATES[item.status] || item.status)}</option>`).join('');
+    $('#campaign-select').innerHTML = store.campaigns.length ? `${ongoing.length ? `<optgroup label="진행 중인 이벤트">${choices(ongoing)}</optgroup>` : ''}${previous.length ? `<optgroup label="지난 이벤트">${choices(previous)}</optgroup>` : ''}` : '<option value="">이벤트 없음</option>';
     $('#planner-title').textContent = c?.name || '이벤트를 선택하세요';
-    $('#calendar-filter').innerHTML = '<option value="all">전체 이벤트</option>' + store.campaigns.map(item => '<option value="' + esc(item.id) + '">' + esc(item.name) + '</option>').join('');
-    $('#calendar-filter').value = scope === 'current' && c ? c.id : 'all';
     ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
@@ -625,7 +624,6 @@ async function initialize() {
       if (task) { task.due_date = today; task.fixed = true; if (await save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
     }
     if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
-    if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
     if (button.dataset.move) moveTask(button.dataset.move);
     if (button.dataset.slot) { const [day] = button.dataset.slot.split(' '); selectedDate = day; renderCalendar(); renderTasks(); }
     if (button.dataset.task) editTask(button.dataset.task);
@@ -658,19 +656,23 @@ async function initialize() {
     render();
   });
   const PANEL_KEY = 'hjs-home-panel';
+  const panelTabs = [[$('#tab-calendar'), 'month'], [$('#tab-week'), 'week'], [$('#tab-campaign'), 'campaign']];
   function showPanel(name) {
+    if (!panelTabs.some(([, key]) => key === name)) return;
     panel = name;
-    $('#calendar-panel').hidden = name !== 'calendar';
-    $('#campaign-panel').hidden = name !== 'campaign';
-    $('#calendar-actions').hidden = name !== 'calendar';
-    $('#campaign-actions').hidden = name !== 'campaign';
-    if (name === 'calendar') renderCalendar();
-    // 탭은 지금 보고 있는 화면을 표시합니다. 다음에 들어올 때 같은 화면으로 엽니다.
-    $('#tab-calendar').setAttribute('aria-selected', String(name === 'calendar'));
-    $('#tab-campaign').setAttribute('aria-selected', String(name === 'campaign'));
-    $('#tab-calendar').tabIndex = name === 'calendar' ? 0 : -1;
-    $('#tab-campaign').tabIndex = name === 'campaign' ? 0 : -1;
-    try { localStorage.setItem(PANEL_KEY, name); } catch { /* 저장 못 해도 동작합니다 */ }
+    const calendar = name !== 'campaign';
+    if (calendar) view = name;
+    $('#calendar-panel').hidden = !calendar;
+    $('#campaign-panel').hidden = calendar;
+    $('#calendar-actions').hidden = !calendar;
+    $('#campaign-actions').hidden = calendar;
+    panelTabs.forEach(([tab, key]) => {
+      tab.setAttribute('aria-selected', String(key === name));
+      tab.tabIndex = key === name ? 0 : -1;
+    });
+    $('#calendar-panel').setAttribute('aria-labelledby', name === 'week' ? 'tab-week' : 'tab-calendar');
+    if (calendar) renderCalendar();
+    try { localStorage.setItem(PANEL_KEY, name); } catch { /* Screen preference only. */ }
   }
   function removeCampaign() {
     const c = selected();
@@ -694,28 +696,20 @@ async function initialize() {
   $('#open-review').onclick = openReview;
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
   $('#delete-campaign').onclick = removeCampaign;
-  $('#tab-campaign').onclick = () => showPanel('campaign');
-  $('#tab-calendar').onclick = () => showPanel('calendar');
+  panelTabs.forEach(([tab, name]) => { tab.onclick = () => showPanel(name); });
   $('.home-paneltabs').addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    const tabs = [$('#tab-calendar'), $('#tab-campaign')];
-    const current = tabs.indexOf(event.target);
+    const current = panelTabs.findIndex(([tab]) => tab === event.target);
     if (current < 0) return;
     event.preventDefault();
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-    showPanel(next === 0 ? 'calendar' : 'campaign');
-    tabs[next].focus();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? panelTabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + panelTabs.length) % panelTabs.length;
+    showPanel(panelTabs[next][1]); panelTabs[next][0].focus();
   });
   try {
     const saved = localStorage.getItem(PANEL_KEY);
-    if (saved === 'campaign' || saved === 'calendar') showPanel(saved);
-  } catch { /* 기본 화면을 그대로 씁니다 */ }
+    if (saved) showPanel(saved === 'calendar' ? 'month' : saved);
+  } catch { /* Default monthly view remains available. */ }
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
-  $('#calendar-filter').onchange = async event => {
-    const value = event.target.value;
-    if (value === 'all') { scope = 'all'; render(); }
-    else { scope = 'current'; await changeCampaign(value); }
-  };
   $('#new-campaign').onclick = () => planner('create');
   $('#clone-campaign').onclick = () => planner('clone');
   $('#replan-campaign').onclick = () => planner('replan');

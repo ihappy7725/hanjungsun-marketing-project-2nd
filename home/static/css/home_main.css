@@ -329,7 +329,7 @@
 .home-page .home-resizable { box-sizing: border-box; resize: both; overflow: auto; width: 100%; max-width: 100%; min-width: min(260px, 100%); min-height: 240px; }
 .home-page .home-resizable::-webkit-resizer { background: linear-gradient(135deg, transparent 45%, var(--line-strong) 45%, var(--line-strong) 55%, transparent 55%, transparent 70%, var(--line-strong) 70%, var(--line-strong) 80%, transparent 80%); }
 .home-page .home-main-column > .home-card { flex: 0 0 auto; }
-.home-page .home-mainpanel { height: clamp(560px, 68vh, 780px); max-height: none; min-height: 420px; background: var(--white); }
+.home-page .home-mainpanel { height: clamp(640px, 74vh, 900px); max-height: none; min-height: 420px; background: var(--white); }
 .home-page .home-mainpanel:has(#tab-calendar[aria-selected="true"]) > .home-paneltabs { margin-bottom: 0; }
 .home-page #calendar-panel { box-sizing: border-box; padding-top: var(--space-6); background: var(--page-bg); }
 .home-page #tab-calendar[aria-selected="true"] { background: var(--page-bg); border-bottom-color: var(--page-bg); }
@@ -385,12 +385,11 @@
 }
 .home-page .home-heading { align-items: center; margin-bottom: var(--space-6); }
 .home-page .home-clocks { display: flex; align-items: center; gap: var(--space-6); }
-.home-page .home-clock { display: grid; gap: var(--space-1); min-width: 126px; }
+.home-page .home-clock { display: grid; grid-template-columns: auto auto; align-items: baseline; gap: var(--space-1) var(--space-4); min-width: 118px; }
 .home-page .home-clock-zone { display: flex; align-items: baseline; gap: var(--space-3); margin: 0; color: var(--ink); }
 .home-page .home-clock-zone small { font-size: var(--fs-table); color: var(--muted); }
-.home-page .home-clock b { font-family: var(--font-mono); font-size: var(--fs-kpi); line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--teal); }
-.home-page .home-clock time, .home-page .home-clock-gap { font-size: var(--fs-table); color: var(--muted); }
-.home-page .home-clock-gap { padding-inline: var(--space-4); }
+.home-page .home-clock b { font-family: var(--font-mono); font-size: var(--fs-subheading); line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--teal); text-align: right; }
+.home-page .home-clock time { grid-column: 1 / -1; text-align: right; font-size: calc(var(--fs-table) * .85); color: var(--muted); }
 .home-page .home-grid { grid-template-columns: minmax(0, 1.98fr) minmax(0, 1fr); }
 .home-page .home-mainpanel { border: 0; padding: var(--space-6); }
 .home-page .home-mainpanel > .home-paneltabs { border: 0; margin-bottom: 0; gap: var(--space-2); }
@@ -402,9 +401,6 @@
 .home-page .home-panel-actions .btn.dark { background: var(--teal); color: var(--on-dark); }
 .home-page .home-panel-actions .home-inline { gap: var(--space-2); }
 .home-page .home-panel-actions h2 { margin: 0; font-family: var(--font-title); font-size: var(--fs-subheading); }
-.home-page .home-calendar-options { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
-.home-page .home-calendar-filter { display: flex; align-items: center; gap: var(--space-3); font-size: var(--fs-table); color: var(--muted); }
-.home-page #calendar-filter { min-height: 28px; max-width: 220px; border: 0; background: var(--paper); padding: var(--space-1) var(--space-3); font-size: var(--fs-table); }
 .home-page .home-segment { background: var(--paper); padding: var(--space-1); }
 .home-page .home-segment button { min-height: 28px; padding: var(--space-1) var(--space-5); font-size: var(--fs-table); }
 .home-page #calendar-panel, .home-page #campaign-panel { box-sizing: border-box; padding: var(--space-4); background: var(--page-bg); border: 0; }
@@ -484,8 +480,12 @@
   .home-page .home-clock b { font-size: var(--fs-subheading); }
   .home-page .home-clock-zone { display: block; }
   .home-page .home-clock-zone small { display: block; }
-  .home-page .home-clock-gap { padding: 0; }
   .home-page .home-panel-actions .home-inline { flex-wrap: wrap; }
-  .home-page .home-calendar-filter { flex-direction: column; align-items: flex-end; }
-  .home-page #calendar-filter { max-width: 160px; }
 }
+
+/* 외곽선 대신 여백과 배경으로 정보 상자를 구분합니다. */
+.home-page .home-card, .home-page .home-range, .home-page dialog, .home-page .btn, .home-page .home-icon-btn, .home-page input, .home-page textarea, .home-page select { border: 0; box-shadow: none; }
+.home-page .home-mainpanel .home-paneltab { border: 0; }
+.home-page .home-news .home-suggestion { border: 0; }
+.home-page input:focus-visible, .home-page textarea:focus-visible, .home-page select:focus-visible, .home-page button:focus-visible, .home-page a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.home-page #calendar-period { font-size: var(--fs-h1); font-weight: var(--title-weight); font-family: var(--font-title); line-height: var(--line-height-heading); }

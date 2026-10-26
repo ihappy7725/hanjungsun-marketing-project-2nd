@@ -11,9 +11,8 @@
   <header class="home-heading">
     <h1>HOME</h1>
     <div class="home-clocks" aria-label="한국과 베트남 현재 시각 비교">
-      <div class="home-clock"><span class="home-clock-zone">한국 <small>업무 기준</small></span><b id="clock-kst">--:--</b><time id="clock-date-kst"></time></div>
-      <span class="home-clock-gap">2시간 차이</span>
-      <div class="home-clock"><span class="home-clock-zone">베트남 <small>현지 시각</small></span><b id="clock-ict">--:--</b><time id="clock-date-ict"></time></div>
+      <div class="home-clock"><span class="home-clock-zone">한국</span><b id="clock-kst">--:--</b><time id="clock-date-kst"></time></div>
+      <div class="home-clock"><span class="home-clock-zone">베트남</span><b id="clock-ict">--:--</b><time id="clock-date-ict"></time></div>
     </div>
     <input id="reference-date" type="hidden">
   </header>
@@ -22,12 +21,12 @@
     <div class="home-main-column">
       <section class="home-card home-mainpanel home-resizable" aria-label="캘린더와 디데이 업무 관리">
         <div class="home-paneltabs" role="tablist" aria-label="화면 전환">
-          <button class="home-paneltab" id="tab-calendar" type="button" role="tab" aria-selected="true" aria-controls="calendar-panel" tabindex="0">캘린더</button>
+          <button class="home-paneltab" id="tab-calendar" type="button" role="tab" aria-selected="true" aria-controls="calendar-panel" tabindex="0">월간 일정</button>
+          <button class="home-paneltab" id="tab-week" type="button" role="tab" aria-selected="false" aria-controls="calendar-panel" tabindex="-1">주간 일정</button>
           <button class="home-paneltab" id="tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="campaign-panel" tabindex="-1">이벤트 업무 관리</button>
         </div>
         <div id="calendar-actions" class="home-panel-actions">
           <div class="home-inline"><button class="home-icon-btn" id="calendar-prev" aria-label="이전 기간">‹</button><h2 id="calendar-period"></h2><button class="home-icon-btn" id="calendar-next" aria-label="다음 기간">›</button></div>
-          <div class="home-calendar-options"><label class="home-calendar-filter">표시할 이벤트<select id="calendar-filter" aria-label="캘린더에 표시할 이벤트"><option value="all">전체 이벤트</option></select></label><div class="home-segment" aria-label="캘린더 보기"><button data-view="month">월</button><button data-view="week">주</button></div></div>
         </div>
         <div id="campaign-actions" class="home-panel-actions" hidden>
           <div class="home-inline"><button class="btn dark" id="new-campaign" type="button">+ 새 이벤트</button><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><button class="btn" id="replan-campaign" type="button">수정</button><button class="btn" id="clone-campaign" type="button">복제</button><button class="btn" id="delete-campaign" type="button">삭제</button><button class="btn" id="open-review" type="button">회고 관리</button></div>
@@ -69,7 +68,7 @@
       <div class="home-side-panels">
       <section class="home-card home-work-card home-resizable" aria-label="이벤트 진척과 오늘의 업무">
       <section class="home-progress-card" aria-labelledby="progress-title">
-      <div class="home-panel-head"><h2 id="progress-title">이벤트 업무 진척</h2><span id="progress-campaign" class="home-muted"></span></div>
+      <div class="home-panel-head"><h2 id="progress-title">이벤트 업무 진척도</h2><span id="progress-campaign" class="home-muted"></span></div>
       <div id="task-progress"></div>
       </section>
       <section class="home-today-card" aria-labelledby="tasks-title">
