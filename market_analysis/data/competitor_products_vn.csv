@@ -1,0 +1,87 @@
+﻿product_id,canonical_key,brand,product_name,competitor_level,segment,product_form,flavors,net_weight_g,piece_count,origin,storage,image_path,image_source_url,image_asset_url,image_checked_at,image_status
+VN-P001,an-gia-redbean-120,An Gia,Bánh Mochi Đậu Đỏ An Gia 120g,indirect,전통·차·팥 모찌,filled_mochi,red_bean,120,,,dry,images/competitors/vn-p001.jpg,,,2026-10-26,확인 완료
+VN-P002,an-phat-durian-210,An Phát,Bánh Mochi Sầu Riêng 210g,direct,과일맛 모찌,filled_mochi,durian,210,,Vietnam,dry,,,,,사진 확인 필요
+VN-P003,an-phat-milk-tea-210,An Phát,Bánh Mochi Trà Sữa Trân Châu 210g,indirect,전통·차·팥 모찌,filled_mochi,milk_tea_boba,210,,Vietnam,dry,,,,,사진 확인 필요
+VN-P004,anh-hoa-mochi-single,Anh Hòa Bakery,Bánh Mochi,direct,전통·차·팥 모찌,fresh_bakery_mochi,,,1,Vietnam,,images/competitors/vn-p004.jpg,,,2026-10-26,확인 완료
+VN-P005,baoz-snowman-durian,Baoz Dimsum,Bánh Mochi Người Tuyết,direct,크림·코팅 모찌,fresh_cream_mochi,durian,,1,Vietnam,,,,,,사진 확인 필요
+VN-P006,befood-mochi-chocolate,,Mochi Socola,indirect,모찌 아이스크림,ice_cream_mochi,chocolate,,1,,frozen,,,,,사진 확인 필요
+VN-P007,befood-mochi-strawberry,,Mochi Dâu,direct,모찌 아이스크림,ice_cream_mochi,strawberry,,1,,frozen,,,,,사진 확인 필요
+VN-P008,bvsg-milk-tea-boba-120,BVSG,Bánh Mochi Trà Sữa Trân Châu 4 Chiếc,direct,모찌 아이스크림,frozen_cream_mochi,milk_tea_boba,120,4,Vietnam,frozen,images/competitors/vn-p008.jpg,,,2026-10-26,확인 완료
+VN-P009,bvsg-peach-cheese-140,BVSG,Bánh Mochi Hồng Phúc Vị Phô Mai Đào,direct,모찌 아이스크림,frozen_cream_mochi,peach_cream_cheese,140,4,Vietnam,frozen,images/competitors/vn-p009.jpg,,,2026-10-26,확인 완료
+VN-P010,cela-food-banh-mochi-kem-lanh-bo-dua-it-ngot,Cela Food,Bánh Mochi Kem Lạnh Bơ Dừa Ít Ngọt,direct,크림·코팅 모찌,cold_filled_mochi,avocado; coconut,,,,,,,,,사진 확인 필요
+VN-P011,daifuku-chocolate-200,Daifuku,Bánh Mochi Vị Socola 200g,indirect,크림·코팅 모찌,cream_filled_mochi,chocolate,200,,,dry,,,,,사진 확인 필요
+VN-P012,daifuku-fruit-mixed-115,Daifuku,Bánh Mochi Vị Trái Cây Thập Cẩm 115g,direct,과일맛 모찌,filled_mochi,strawberry;mango;grape;orange,115,,,dry,,,,,사진 확인 필요
+VN-P013,daifuku-matcha-200,Daifuku,Bánh Mochi Vị Trà Xanh 200g,indirect,전통·차·팥 모찌,filled_mochi,matcha,200,,,dry,,,,,사진 확인 필요
+VN-P014,daifuku-strawberry-200,Daifuku,Bánh Mochi Vị Dâu 200g,direct,과일맛 모찌,filled_mochi,strawberry,200,,,dry,,,,,사진 확인 필요
+VN-P015,fukufukumaru-six-flavor-24,Fukufukumaru,Bánh Mochi Ba Vị 24 Chiếc,direct,혼합·선물세트,assorted_cream_mochi,melon;banana;white peach;matcha;strawberry;chocolate,,24,Japan,dry,,,,,사진 확인 필요
+VN-P016,hershey-s-banh-quy-mochi-chocolate-chip-hersheys-90-240,HERSHEY'S,Bánh Quy Mochi Chocolate Chip Hershey’s,adjacent,전통·차·팥 모찌,mochi_cookie,chocolate chip,90-240,6-12,,,,,,,사진 확인 필요
+VN-P017,ichigo-white-choc-18,,Bánh Mochi Dâu Nhân Socola Trắng 18 Chiếc,direct,혼합·선물세트,filled_mochi,strawberry_white_chocolate,,18,Japan,dry,,,,,사진 확인 필요
+VN-P018,ichigo-white-choc-30,,Bánh Mochi Dâu Nhân Socola Trắng 30 Chiếc,direct,혼합·선물세트,filled_mochi,strawberry_white_chocolate,,30,Japan,dry,,,,,사진 확인 필요
+VN-P019,ichioka-warabi-coconut-80,Ichioka,Warabi Mochi Kem Dừa 80g,direct,크림·코팅 모찌,cream_filled_mochi,coconut,80,,,,,,,,사진 확인 필요
+VN-P020,ichioka-warabi-strawberry-70,Ichioka,Warabi Mochi Kem Dâu 70g,direct,크림·코팅 모찌,cream_filled_mochi,strawberry,70,,,,,,,,사진 확인 필요
+VN-P021,irodori-five-flavor-21,Irodori,Bánh Mochi 5 Vị 21 Cái 413g,indirect,혼합·선물세트,assorted_filled_mochi,kinako;walnut;chestnut;apricot;mugwort,413,21,Japan,dry,,,,,사진 확인 필요
+VN-P022,kimochi-cheese-cream-120,Kimochi,Bánh Mochi Kem Phô Mai 120g,indirect,크림·코팅 모찌,cream_filled_mochi,cream_cheese,120,,Taiwan,dry,,,,,사진 확인 필요
+VN-P023,marketplace-cold-mochi-12,,Bánh Mochi Kem Lạnh Gói 12 Chiếc,direct,혼합·선물세트,frozen_cream_mochi,mixed,,12,,frozen,,,,,사진 확인 필요
+VN-P024,marketplace-cold-mochi-13flavor,,Bánh Mochi Kem Sữa 13 Vị,direct,혼합·선물세트,frozen_cream_mochi,mixed,,,,frozen,,,,,사진 확인 필요
+VN-P025,marketplace-cold-mochi-25kg,Mclune,Bánh Mochi Kem Sữa Phủ Dừa Hộp 2.5kg,direct,대용량·도매형,frozen_cream_mochi,coconut_cream,2500,,,frozen,,,,,사진 확인 필요
+VN-P026,marketplace-cold-mochi-mix-13,,Bánh Mochi Kem Lạnh Mix 13 Vị,direct,혼합·선물세트,frozen_cream_mochi,mixed,,,,frozen,,,,,사진 확인 필요
+VN-P027,marketplace-mp001,,BÁNH MOCHI KEM LẠNH SIÊU NGON,direct,혼합·선물세트,cold_filled_mochi,mix; coconut; other variants,,,,,,,,,사진 확인 필요
+VN-P028,marketplace-mp003,,Bánh Mochi Kem Lạnh Hộp 2.5kg,direct,대용량·도매형,cold_filled_mochi,mixed,2500,,,,,,,,사진 확인 필요
+VN-P029,marketplace-mp004,,Bánh MOCHI KEM LẠNH mỗi gói 12 chiếc,direct,혼합·선물세트,cold_filled_mochi,mixed,,12,,,,,,,사진 확인 필요
+VN-P030,marketplace-mp005,,500gr Bánh Mochi Kem Lạnh (19-20c),direct,대용량·도매형,cold_filled_mochi,mixed,500,19-20,,,,,,,사진 확인 필요
+VN-P031,marketplace-mp006,,Bánh Mochi Kem Lạnh Mix Đủ Vị Trái Cây 1Kg,direct,대용량·도매형,cold_filled_mochi,fruit mix,1000,,,,,,,,사진 확인 필요
+VN-P032,marketplace-mp007,,Bánh Mochi Trái Cây Nhân Kem 500g~2.5KG 7 Vị,direct,크림·코팅 모찌,cold_filled_mochi,chocolate; durian; avocado; peach; mango; other,500-2500,,,,,,,,사진 확인 필요
+VN-P033,marketplace-mp008,,Bánh mochi kem lạnh 5 hương vị,direct,크림·코팅 모찌,cold_filled_mochi,peanut; sesame; red bean; camel milk; white peach,,,,,,,,,사진 확인 필요
+VN-P034,marketplace-mp009,,BÁNH MOCHI TRÁI CÂY ĐÀI LOAN,direct,과일맛 모찌,filled_mochi,fruit mix,1000-2000,,,,,,,,사진 확인 필요
+VN-P035,marketplace-mp011,,Bánh Mochi Kem Lạnh 3 Vị Đặc Biệt,direct,혼합·선물세트,cold_filled_mochi,3 flavors,,,,,,,,,사진 확인 필요
+VN-P036,marketplace-mp016,,Bánh mochi kem lạnh phủ dừa đủ vị siêu ngon,direct,혼합·선물세트,cold_filled_mochi,mixed,,,,,,,,,사진 확인 필요
+VN-P037,marketplace-mp017,,Combo 500g Bánh mochi kem lạnh nhiều vị,direct,대용량·도매형,cold_filled_mochi,chocolate; avocado; durian; taro,500,,,,,,,,사진 확인 필요
+VN-P038,marketplace-mp019,,Bánh mochi kem lạnh phủ dừa đủ vị,direct,혼합·선물세트,cold_filled_mochi,mixed,,,,,,,,,사진 확인 필요
+VN-P039,marketplace-mp020,,Bánh mochi lạnh hoa quả nhân kem tươi khay 180g,direct,크림·코팅 모찌,cold_filled_mochi,fruit mix,180,,,,,,,,사진 확인 필요
+VN-P040,marketplace-mp022,,Thùng 2.5kg Bánh mochi kem lạnh phủ dừa,direct,대용량·도매형,cold_filled_mochi,taro; soy; mixed,2500,85-90,,,,,,,사진 확인 필요
+VN-P041,marketplace-mp025,,500G Bánh Mochi Sữa Nhân Kem Lạnh Vị Sầu Riêng,direct,대용량·도매형,cold_filled_mochi,durian,500,,,,,,,,사진 확인 필요
+VN-P042,marketplace-mp026,,Bánh Mochi Kem Lạnh Hoa Quả Túi 180g,direct,크림·코팅 모찌,cold_filled_mochi,strawberry; mango; milk; matcha; salted egg,180,12,,,,,,,사진 확인 필요
+VN-P043,marketplace-mp027,,BÁNH MOCHI KEM LẠNH 4 VỊ PHỦ DỪA PHỦ SOCOLA,direct,혼합·선물세트,cold_filled_mochi,4 flavors; coconut coating; chocolate coating,,,,,,,,,사진 확인 필요
+VN-P044,marketplace-mp029,,Bánh mochi 2 cô gái mix vị đậu mè truyền thống,adjacent,전통·차·팥 모찌,filled_mochi,bean; sesame; traditional,500-2000,,,,,,,,사진 확인 필요
+VN-P045,marketplace-mp031,,Bánh Mochi Đài Loan thùng 2.2kg mix 4 vị,direct,대용량·도매형,filled_mochi,black sesame; white sesame; peanut,2200,,,,,,,,사진 확인 필요
+VN-P046,marketplace-mp032,,Bánh mochi dẻo Daifuku Nhật Bản phiên bản đặc biệt,adjacent,과일맛 모찌,daifuku,matcha; banana; strawberry; mint chocolate,,,,,,,,,사진 확인 필요
+VN-P047,marketplace-mp034,,Mochi kem mix vị bơ môn xoài sầu riêng đào,direct,크림·코팅 모찌,cold_filled_mochi,avocado; taro; mango; durian; peach,500-1000,,,,,,,,사진 확인 필요
+VN-P048,matcha-choco-daifuku-30,,Bánh Mochi Trà Xanh Chocolate Daifuku 30 Viên,indirect,혼합·선물세트,cream_filled_daifuku,matcha_chocolate,,30,Japan,dry,,,,,사진 확인 필요
+VN-P049,mclune-flowing-cream,MCLUNE,Bánh Mochi Kem Lạnh Nhân Chảy Mclune,direct,크림·코팅 모찌,cold_filled_mochi,taro; durian; avocado milk,,,,,,,,,사진 확인 필요
+VN-P050,mclune-mix-1kg-6,MCLUNE,COMBO 1KG Bánh mochi nhân kem lạnh mix 6 vị,direct,대용량·도매형,cold_filled_mochi,6 flavors,1000,,,,,,,,사진 확인 필요
+VN-P051,mclune-mix-1kg-7,MCLUNE,Bánh Mochi Kem Lạnh 1kg 7 Vị,direct,대용량·도매형,cold_filled_mochi,7 flavors,1000,,,,,,,,사진 확인 필요
+VN-P052,mclune-random-single-6,MCLUNE,1 Bánh Mochi kem lạnh MCLUNE ngẫu nhiên 6 vị,direct,크림·코팅 모찌,cold_filled_mochi,durian; taro; soy; avocado; mango; other,,1,,,,,,,사진 확인 필요
+VN-P053,royal-family-assorted-210,Royal Family,Royal Family Mochi Assorted 210g 6 chiếc,direct,혼합·선물세트,filled_mochi,assorted,210,6,,,,,,,사진 확인 필요
+VN-P054,royal-family-blueberry-132,Royal Family,Bánh Mochi Việt Quất 132g,direct,과일맛 모찌,filled_mochi,blueberry,132,,Taiwan,dry,,,,,사진 확인 필요
+VN-P055,royal-family-custard-230,Royal Family,Bánh Mochi Custard Tổng Hợp 230g,indirect,혼합·선물세트,custard_filled_mochi,mixed,230,,Taiwan,dry,,,,,사진 확인 필요
+VN-P056,royal-family-fruit-250,Royal Family,Bánh Mochi Trái Cây 250g,direct,과일맛 모찌,filled_mochi,strawberry;orange;melon,250,,Taiwan,dry,,,,,사진 확인 필요
+VN-P057,royal-family-matcha-cream-180,Royal Family,Bánh Mochi Kem Trà Xanh 180g,indirect,크림·코팅 모찌,cream_filled_mochi,matcha,180,,Taiwan,dry,,,,,사진 확인 필요
+VN-P058,royal-family-milk-tea-120,Royal Family,Royal Family Bubble Milk Tea Mochi 120g 9 chiếc,direct,전통·차·팥 모찌,filled_mochi,milk tea,120,9,,,,,,,사진 확인 필요
+VN-P059,royal-family-mixed-120,Royal Family,Bánh Mochi Đài Loan Royal Family 120g,direct,과일맛 모찌,filled_mochi,milk; matcha; red bean; strawberry; milk tea; kiwi; raspberry,120,9,,,,,,,사진 확인 필요
+VN-P060,royal-family-mixed-250,Royal Family,Bánh Mochi Vị Tổng Hợp 250g,indirect,전통·차·팥 모찌,filled_mochi,red bean;milk;matcha,250,,Taiwan,dry,images/competitors/vn-p060.jpg,https://farmersmarket.vn/collections/vendors?q=dai-loan,https://product.hstatic.net/1000141988/product/banh_mochi_hon_hop_royal_family_250gr_02c733b9058041ee84c20398869d33e9_ed8d9db8445d4ded860cab76cfbadeb0_small.jpg,2026-10-26,확인 완료
+VN-P061,royal-family-redbean-120,Royal Family,Bánh mochi Đài Loan vị đậu đỏ 120g 9 cái,direct,전통·차·팥 모찌,filled_mochi,red bean,120,9,,,,,,,사진 확인 필요
+VN-P062,royal-family-redbean-cream-180,Royal Family,Bánh Mochi Đậu Đỏ Kem 180g,indirect,크림·코팅 모찌,cream_filled_mochi,red_bean,180,,Taiwan,dry,,,,,사진 확인 필요
+VN-P063,royal-family-strawberry-120,Royal Family,Bánh mochi nhân dâu tây Royal Family 120g,direct,과일맛 모찌,filled_mochi,strawberry,120,9,Taiwan,dry,images/competitors/vn-p063.jpg,https://farmersmarket.vn/collections/vendors?q=dai-loan,https://product.hstatic.net/1000141988/product/hi_nhan_dau_tay_dai_loan_royal_family_4a27c51f46084901a3436215892ecaaf_9d959f529a0c4b89ab05b26d4b107df2_small.jpg,2026-10-26,확인 완료
+VN-P064,royal-family-strawberry-132,Royal Family,Bánh Mochi Dâu Tây 132g,direct,과일맛 모찌,filled_mochi,strawberry,132,,Taiwan,dry,images/competitors/vn-p064.webp,https://concung.com/banh-an-dam-va-keo-cho-be/banh-mochi-dau-tay-132g-70232.html,https://cdn1.concung.com/2025/03/70232-119143-large_mobile/banh-mochi-dau-tay-132g.webp,2026-10-26,확인 완료
+VN-P065,royal-family-strawberry-132-combo,Royal Family,Combo 2 Bánh Mochi Dâu Tây 132g,direct,과일맛 모찌,filled_mochi,strawberry,264,2,Taiwan,dry,,,,,사진 확인 필요
+VN-P066,sachi-chocolate-200,Sachi Mochi,Bánh Mochi Socola 200g,indirect,전통·차·팥 모찌,filled_mochi,chocolate,200,,Japan,dry,images/competitors/vn-p066.jpg,,,2026-10-26,확인 완료
+VN-P067,sachi-lemon-soda-115,SACHI MOCHI,Bánh Mochi nhân soda chanh Nhật Bản,adjacent,과일맛 모찌,filled_mochi,lemon soda,115,,,,,,,,사진 확인 필요
+VN-P068,sachi-matcha-200,Sachi Mochi,Bánh Mochi Daifuku Vị Trà Xanh 200g,indirect,전통·차·팥 모찌,filled_mochi,matcha_red_bean,200,,Japan,dry,images/competitors/vn-p068.png,,,2026-10-26,확인 완료
+VN-P069,sachi-peach-200,Sachi Mochi,Bánh Mochi Vị Đào 200g,direct,과일맛 모찌,filled_mochi,peach,200,,Japan,dry,images/competitors/vn-p069.png,,,2026-10-26,확인 완료
+VN-P070,sachi-red-white-200,Sachi Mochi,Bánh Mochi Hồng Bạch 200g,indirect,전통·차·팥 모찌,filled_mochi,red_bean,200,,Japan,dry,images/competitors/vn-p070.jpg,,,2026-10-26,확인 완료
+VN-P071,sachi-strawberry-200,Sachi Mochi,Bánh Mochi Vị Dâu Tây 200g,direct,과일맛 모찌,filled_mochi,strawberry,200,,Japan,dry,images/competitors/vn-p071.png,,,2026-10-26,확인 완료
+VN-P072,sachi-yuzu-200,Sachi Mochi,Bánh Mochi Thanh Yên 200g,direct,과일맛 모찌,filled_mochi,yuzu,200,,Japan,dry,images/competitors/vn-p072.jpg,,,2026-10-26,확인 완료
+VN-P073,seiki-melon-30,Seiki,Bánh Mochi Daifuku Vị Dưa Lưới 30 Cái,direct,혼합·선물세트,cream_filled_daifuku,melon,,30,Japan,dry,images/competitors/vn-p073.jpg,,,2026-10-26,확인 완료
+VN-P074,snow-baby-durian-35,Snow Baby,Kem Mochi Sầu Riêng 35g,direct,모찌 아이스크림,ice_cream_mochi,durian,35,1,Vietnam,frozen,,,,,사진 확인 필요
+VN-P075,snow-baby-vanilla-35,Snow Baby,Kem Mochi Vani 35g,direct,모찌 아이스크림,ice_cream_mochi,vanilla,35,1,Vietnam,frozen,,,,,사진 확인 필요
+VN-P076,tsujisei-strawberry-matcha-30,Tsujisei,Bánh Mochi Dâu Tây Và Trà Xanh 30 Chiếc,direct,혼합·선물세트,assorted_filled_mochi,strawberry;matcha,,30,Japan,dry,images/competitors/vn-p076.png,,,2026-10-26,확인 완료
+VN-P077,tsujisei-traditional-26,Tsujisei,Bánh Mochi 5 Vị Truyền Thống 26 Chiếc,indirect,혼합·선물세트,assorted_filled_mochi,mixed,,26,Japan,dry,images/competitors/vn-p077.png,,,2026-10-26,확인 완료
+VN-P078,yuki-love-matcha-180,Yuki & Love,Bánh Mochi Nhân Trà Xanh 180g,indirect,전통·차·팥 모찌,filled_mochi,matcha,180,,Taiwan,dry,,,,,사진 확인 필요
+VN-P079,yuki-love-matcha-cream-120,Yuki & Love,Bánh Mochi Trà Xanh Nhân Kem 120g,indirect,크림·코팅 모찌,cream_filled_mochi,matcha,120,,Taiwan,dry,,,,,사진 확인 필요
+VN-P080,yuki-love-melon-240,Yuki & Love,Mochi Vị Dưa Lưới 240g,direct,과일맛 모찌,filled_mochi,melon,240,,Taiwan,dry,,,,,사진 확인 필요
+VN-P081,yuki-love-mixed-300,Yuki & Love,Bánh Mochi Japanese Style Mixed 300g,indirect,혼합·선물세트,filled_mochi,mixed,300,,Taiwan,dry,,,,,사진 확인 필요
+VN-P082,yuki-love-mixed-900,Yuki & Love,Bánh Mochi Tổng Hợp 900g,indirect,대용량·도매형,filled_mochi,mixed,900,,Taiwan,dry,,,,,사진 확인 필요
+VN-P083,yuki-love-passionfruit-240,Yuki & Love,Mochi Vị Chanh Dây 240g,direct,과일맛 모찌,filled_mochi,passion_fruit,240,,Taiwan,dry,,,,,사진 확인 필요
+VN-P084,yuki-love-redbean-210,Yuki & Love,Bánh Mochi Nhân Đậu Đỏ 210g,indirect,전통·차·팥 모찌,filled_mochi,red_bean,210,,Taiwan,dry,,,,,사진 확인 필요
+VN-P085,yuki-love-taro-180,Yuki & Love,Bánh Mochi Vị Khoai Môn 180g,indirect,전통·차·팥 모찌,filled_mochi,taro,180,,Taiwan,dry,,,,,사진 확인 필요
+VN-P086,yuki-love-taro-cream-120,Yuki & Love,Bánh Mochi Khoai Môn Nhân Kem 120g,indirect,크림·코팅 모찌,cream_filled_mochi,taro,120,,Taiwan,dry,,,,,사진 확인 필요

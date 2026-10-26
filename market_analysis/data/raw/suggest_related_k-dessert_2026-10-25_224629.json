@@ -1,0 +1,231 @@
+{
+  "search_metadata": {
+    "id": "6ade245eaa2554a1371d8342",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/lX3OQJm90YpEURXzBaZnC04Y_VM5J5IJJPy8K3iG9JI/6ade245eaa2554a1371d8342.md",
+    "created_at": "2026-10-25 15:46:38 UTC",
+    "processed_at": "2026-10-25 15:46:38 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22kem+h%C3%A0n+qu%E1%BB%91c%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/lX3OQJm90YpEURXzBaZnC04Y_VM5J5IJJPy8K3iG9JI/6ade245eaa2554a1371d8342.html",
+    "prettify_html_file": "https://serpapi.com/searches/lX3OQJm90YpEURXzBaZnC04Y_VM5J5IJJPy8K3iG9JI/6ade245eaa2554a1371d8342.prettify",
+    "total_time_taken": 3.3
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "kem hàn quốc",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "rising": [
+      {
+        "query": "kem đánh răng hàn quốc 93",
+        "value": "+250%",
+        "extracted_value": 250,
+        "link": "https://trends.google.com/trends/explore?q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c+93&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c+93&tz=-420"
+      },
+      {
+        "query": "kem dưỡng thể hàn quốc",
+        "value": "+120%",
+        "extracted_value": 120,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+th%E1%BB%83+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+th%E1%BB%83+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng ẩm",
+        "value": "+110%",
+        "extracted_value": 110,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m&tz=-420"
+      },
+      {
+        "query": "kem dưỡng ẩm hàn quốc",
+        "value": "+80%",
+        "extracted_value": 80,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      }
+    ],
+    "top": [
+      {
+        "query": "kem chống nắng",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=kem+ch%E1%BB%91ng+n%E1%BA%AFng&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+ch%E1%BB%91ng+n%E1%BA%AFng&tz=-420"
+      },
+      {
+        "query": "kem chống nắng hàn quốc",
+        "value": "96",
+        "extracted_value": 96,
+        "link": "https://trends.google.com/trends/explore?q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng hàn quốc",
+        "value": "83",
+        "extracted_value": 83,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng da hàn quốc",
+        "value": "44",
+        "extracted_value": 44,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+da+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+da+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "bánh kem hàn quốc",
+        "value": "25",
+        "extracted_value": 25,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+kem+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+kem+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem đánh răng hàn quốc",
+        "value": "24",
+        "extracted_value": 24,
+        "link": "https://trends.google.com/trends/explore?q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem sâm hàn quốc",
+        "value": "20",
+        "extracted_value": 20,
+        "link": "https://trends.google.com/trends/explore?q=kem+s%C3%A2m+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+s%C3%A2m+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng ẩm",
+        "value": "20",
+        "extracted_value": 20,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m&tz=-420"
+      },
+      {
+        "query": "kem dưỡng ẩm hàn quốc",
+        "value": "17",
+        "extracted_value": 17,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem nền hàn quốc",
+        "value": "17",
+        "extracted_value": 17,
+        "link": "https://trends.google.com/trends/explore?q=kem+n%E1%BB%81n+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+n%E1%BB%81n+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem trị nám hàn quốc",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%E1%BB%8B+n%C3%A1m+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%E1%BB%8B+n%C3%A1m+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem chống nắng của hàn quốc",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+c%E1%BB%A7a+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+c%E1%BB%A7a+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem trị nám",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%E1%BB%8B+n%C3%A1m&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%E1%BB%8B+n%C3%A1m&tz=-420"
+      },
+      {
+        "query": "kem chống nắng hàn quốc tốt",
+        "value": "12",
+        "extracted_value": 12,
+        "link": "https://trends.google.com/trends/explore?q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+h%C3%A0n+qu%E1%BB%91c+t%E1%BB%91t&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+ch%E1%BB%91ng+n%E1%BA%AFng+h%C3%A0n+qu%E1%BB%91c+t%E1%BB%91t&tz=-420"
+      },
+      {
+        "query": "mỹ phẩm hàn quốc",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=m%E1%BB%B9+ph%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=m%E1%BB%B9+ph%E1%BA%A9m+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem cá hàn quốc",
+        "value": "10",
+        "extracted_value": 10,
+        "link": "https://trends.google.com/trends/explore?q=kem+c%C3%A1+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+c%C3%A1+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng trắng da hàn quốc",
+        "value": "9",
+        "extracted_value": 9,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+tr%E1%BA%AFng+da+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+tr%E1%BA%AFng+da+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem ốc sên hàn quốc",
+        "value": "8",
+        "extracted_value": 8,
+        "link": "https://trends.google.com/trends/explore?q=kem+%E1%BB%91c+s%C3%AAn+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+%E1%BB%91c+s%C3%AAn+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem ốc sên",
+        "value": "7",
+        "extracted_value": 7,
+        "link": "https://trends.google.com/trends/explore?q=kem+%E1%BB%91c+s%C3%AAn&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+%E1%BB%91c+s%C3%AAn&tz=-420"
+      },
+      {
+        "query": "kem body hàn quốc",
+        "value": "7",
+        "extracted_value": 7,
+        "link": "https://trends.google.com/trends/explore?q=kem+body+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+body+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "phim hàn quốc",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=phim+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=phim+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "son hàn quốc",
+        "value": "6",
+        "extracted_value": 6,
+        "link": "https://trends.google.com/trends/explore?q=son+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=son+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem trị mụn hàn quốc",
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=kem+tr%E1%BB%8B+m%E1%BB%A5n+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+tr%E1%BB%8B+m%E1%BB%A5n+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem dưỡng da tay hàn quốc",
+        "value": "5",
+        "extracted_value": 5,
+        "link": "https://trends.google.com/trends/explore?q=kem+d%C6%B0%E1%BB%A1ng+da+tay+h%C3%A0n+qu%E1%BB%91c&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+d%C6%B0%E1%BB%A1ng+da+tay+h%C3%A0n+qu%E1%BB%91c&tz=-420"
+      },
+      {
+        "query": "kem đánh răng hàn quốc 93",
+        "value": "4",
+        "extracted_value": 4,
+        "link": "https://trends.google.com/trends/explore?q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c+93&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=kem+%C4%91%C3%A1nh+r%C4%83ng+h%C3%A0n+qu%E1%BB%91c+93&tz=-420"
+      }
+    ]
+  }
+}

@@ -19,5 +19,922 @@
   },
   "required_notices": [],
   "prompt_rules": [],
-  "sources": []
+  "sources": [],
+  "culture_dashboard": {
+    "checked_at": "2026-10-26",
+    "sources": [
+      {
+        "id": "law",
+        "title": "통합 광고법 88/VBHN-VPQH",
+        "publisher": "베트남 국회 사무처",
+        "date": "2025-08-22",
+        "url": "https://vanban.chinhphu.vn/?classid=0&docid=215066&pageid=27160"
+      },
+      {
+        "id": "amend",
+        "title": "광고법 개정 75/2025/QH15",
+        "publisher": "베트남 국회",
+        "date": "2025-06-16 · 시행 2026-01-01",
+        "url": "https://vanban.chinhphu.vn/?classid=1&docid=214561&pageid=27160"
+      },
+      {
+        "id": "dessert",
+        "title": "TOP tasty Vietnamese treats to satisfy your sweet tooth",
+        "publisher": "Vietnam Tourism",
+        "date": "발행일 미확인",
+        "url": "https://vietnam.travel/things-to-do/top-tasty-vietnamese-treats-satisfy-your-sweet-tooth/"
+      },
+      {
+        "id": "snack",
+        "title": "15 dreamy desserts to try in Vietnam",
+        "publisher": "Vietnam Tourism",
+        "date": "발행일 미확인",
+        "url": "https://vietnam.travel/things-to-do/15-dreamy-desserts-try-vietnam/"
+      },
+      {
+        "id": "tet_design",
+        "title": "A traveller's guide to Tet holiday",
+        "publisher": "Vietnam Tourism",
+        "date": "발행일 미확인 · 본문에 2021년 일정 포함, 문화 설명만 사용",
+        "url": "https://vietnam.travel/things-to-do/tet-vietnam-lunar-new-year/"
+      },
+      {
+        "id": "lotus_design",
+        "title": "Vietnam wallpapers for your 2020 travels",
+        "publisher": "Vietnam Tourism",
+        "date": "2020년 여행 소개 자료 · 정확한 발행일 미확인",
+        "url": "https://vietnam.travel/node/994"
+      },
+      {
+        "id": "lotus_brand",
+        "title": "Corporate Identity — Golden Lotus",
+        "publisher": "Vietnam Airlines",
+        "date": "발행일 미확인 · 2015년 브랜드 개편 설명",
+        "url": "https://www.vietnamairlines.com/hk/en/vietnam-airlines/about-us/corporate-identity"
+      },
+      {
+        "id": "green_pack",
+        "title": "Packaging and social signals associated with Vietnamese consumers’ stated willingness to pay a premium for green last-mile delivery packaging",
+        "publisher": "The VMOST Journal of Social Sciences and Humanities",
+        "date": "2026-04-20 · 조사 시점은 초록에서 미확인",
+        "url": "https://vmostscience.vjst.vn/index.php/vmost_jossh/article/view/431"
+      },
+      {
+        "id": "marou_box",
+        "title": "Golden Medley — Mooncake 4 Pc Box",
+        "publisher": "Maison Marou 공식 상품 페이지",
+        "date": "발행일 미확인 · 상품 페이지 확인일 2026-10-26",
+        "url": "https://maisonmarou.com/products/golden-medley-mooncake-4-pc-box"
+      },
+      {
+        "id": "vt_superstition",
+        "title": "The lunar calendar and Vietnamese superstitions: what travelers should know",
+        "publisher": "Vietnam Tourism",
+        "date": "2026-07-31",
+        "url": "https://www.vietnamtourism.com/en/the-lunar-calendar-and-vietnamese-superstitions-what-travelers-should-know",
+        "checked_date": "2026-07-31"
+      },
+      {
+        "id": "vt_gift",
+        "title": "Gift giving in Vietnam: what to bring, what to avoid, and how to hand it over",
+        "publisher": "Vietnam Tourism",
+        "date": "2026-10-11",
+        "url": "https://www.vietnamtourism.com/en/gift-giving-in-vietnam-what-to-bring-what-to-avoid-and-how-to-hand-it-over",
+        "checked_date": "2026-10-11"
+      },
+      {
+        "id": "datareportal_2026",
+        "title": "Digital 2026: Vietnam",
+        "publisher": "DataReportal (We Are Social · Meltwater)",
+        "date": "2025-11-08",
+        "checked_date": "2025-11-08",
+        "url": "https://datareportal.com/reports/digital-2026-vietnam"
+      },
+      {
+        "id": "vt_che",
+        "title": "Chè: a guide to Vietnam's sweet dessert soups",
+        "publisher": "Vietnam Tourism",
+        "date": "2026-08-09",
+        "checked_date": "2026-08-09",
+        "url": "https://www.vietnamtourism.com/en/che-a-guide-to-vietnam-s-sweet-dessert-soups"
+      },
+      {
+        "id": "tuoitre_mooncake_2026",
+        "title": "Mooncake market in Vietnam heats up over 2 months before Mid-Autumn Festival",
+        "publisher": "Tuổi Trẻ News",
+        "date": "2026-07-22",
+        "checked_date": "2026-07-22",
+        "url": "https://news.tuoitre.vn/mooncake-market-in-vietnam-heats-up-over-2-months-before-mid-autumn-festival-103260722142136067.htm"
+      },
+      {
+        "id": "vna_tet_flowers_2025",
+        "title": "Flower decoration during Tet festival",
+        "publisher": "Vietnam News Agency (VNA)",
+        "date": "2025-01-29",
+        "checked_date": "2025-01-29",
+        "url": "https://vnanet.vn/en/anh/vna-photos-1027/flower-decoration-during-tet-festival-7832020.html"
+      },
+      {
+        "id": "vna_peach_2025",
+        "title": "Peach blossoms – the symbol of Tet",
+        "publisher": "Vietnam News Agency (VNA)",
+        "date": "2025-01-02",
+        "checked_date": "2025-01-02",
+        "url": "https://vnanet.vn/en/anh/vna-photos-1027/peach-blossoms--the-symbol-of-tet-7834219.html"
+      },
+      {
+        "id": "vov_kumquat_2026",
+        "title": "Unique bonsai kumquat trees mark Lunar New Year of Horse",
+        "publisher": "VOV",
+        "date": "2026-01-20",
+        "checked_date": "2026-01-20",
+        "url": "https://baoxuan.vov.vn/en/multimedia/photos/unique-bonsai-kumquat-trees-mark-lunar-new-year-of-horse-post1262814.vov"
+      },
+      {
+        "id": "vneconomy_ec_2025",
+        "title": "Vietnam's e-commerce market enters a major shake-out phase",
+        "publisher": "VnEconomy (Metric 데이터)",
+        "date": "2026-01-21",
+        "checked_date": "2026-01-21",
+        "url": "https://en.vneconomy.vn/vietnams-e-commerce-market-enters-a-major-shake-out-phase.htm"
+      },
+      {
+        "id": "vietnamnet_ec_h1_2026",
+        "title": "Vietnam e-commerce sales hit $11 billion as beauty leads",
+        "publisher": "VietnamNet (Metric 데이터)",
+        "date": "2026-07-27",
+        "checked_date": "2026-07-27",
+        "url": "https://vietnamnet.vn/en/vietnam-e-commerce-sales-hit-11-billion-as-beauty-leads-2539335.html"
+      },
+      {
+        "id": "baonghean_tet_cakes_2026",
+        "title": "Tips for choosing cakes for the New Year's Eve offering, Tet 2026",
+        "publisher": "Báo Nghệ An",
+        "date": "2025-12-27",
+        "checked_date": "2025-12-27",
+        "url": "https://baonghean.vn/en/meo-chon-banh-cung-giao-thua-chuan-phong-thuy-tet-2026-10317272.html"
+      },
+      {
+        "id": "bcompany_coffee_2025",
+        "title": "Vietnam Coffee Shop market 2025: Chain expansion, local brands and changing consumer habits",
+        "publisher": "B&Company (Vietnam News·Q&Me 인용)",
+        "date": "2025-12-23",
+        "checked_date": "2025-12-23",
+        "url": "https://b-company.jp/?p=23252"
+      },
+      {
+        "id": "bcompany_healthy_drink_2025",
+        "title": "Vietnam healthy drink market: Some key updates in 2025",
+        "publisher": "B&Company (Insight Asia 500명+ 조사 인용)",
+        "date": "2026-01-28",
+        "checked_date": "2026-01-28",
+        "url": "https://b-company.jp/vietnam-healthy-drink-market-some-key-updates-in-2025/"
+      },
+      {
+        "id": "investor_sugar_tax_2025",
+        "title": "Sugary drinks subject to excise tax in Vietnam from 2027",
+        "publisher": "The Investor",
+        "date": "2025-06-14",
+        "checked_date": "2025-06-14",
+        "url": "https://theinvestor.vn/sugary-drinks-subject-to-excise-tax-in-vietnam-from-2027-d16002.html"
+      },
+      {
+        "id": "danang_korea_2025",
+        "title": "Da Nang welcomes the 1 millionth Korean visitor in 2025",
+        "publisher": "Danang Fantasticity (다낭시 관광 홍보)",
+        "date": "2025-08-01",
+        "checked_date": "2025-08-01",
+        "url": "https://danangfantasticity.com/en/news/da-nang-welcomes-the-1-millionth-korean-visitor-in-2025"
+      },
+      {
+        "id": "tuoitre_mooncake_2025",
+        "title": "Modern mooncake trends send Vietnamese youth into frenzy",
+        "publisher": "Tuổi Trẻ News",
+        "date": "2025-09-22",
+        "checked_date": "2025-09-22",
+        "url": "https://news.tuoitre.vn/modern-mooncake-trends-send-vietnamese-youth-into-frenzy-103250922155354103.htm"
+      },
+      {
+        "id": "tuoitre_chagee_2025",
+        "title": "Chinese milk tea brand Chagee faces boycott wave in Vietnam over illicit nine-dash line map",
+        "publisher": "Tuổi Trẻ News",
+        "date": "2025-03-16",
+        "checked_date": "2025-03-16",
+        "url": "https://news.tuoitre.vn/chinese-milk-tea-brand-chagee-faces-boycott-wave-in-vietnam-over-illicit-nine-dash-line-map-10385273.htm"
+      },
+      {
+        "id": "vietanlaw_label_2026",
+        "title": "Vietnam food labeling 2026: comply with new regulations under Decree 37/2026/ND-CP",
+        "publisher": "Viet An Law (법률사무소 요약 · 원문 확인 권장)",
+        "date": "2026-01-23 시행",
+        "checked_date": "2026",
+        "url": "https://vietanlaw.com/vietnam-food-labeling-2026-comply-with-new-regulations-under-decree-37-2026-nd-cp/"
+      }
+    ],
+    "rules": [
+      [
+        "최고·유일·1위",
+        "증빙 필요",
+        "베트남 1위 / số một / tốt nhất / duy nhất",
+        "적법한 증명 자료 없이 최상급·독점적 지위를 주장하지 않습니다. 표현 자체의 일괄 금지는 아닙니다.",
+        "검증 가능한 원재료·구성·맛을 설명하세요.",
+        "제8조 제11항",
+        "law"
+      ],
+      [
+        "경쟁제품 비교",
+        "증빙 필요",
+        "A사보다 건강하다 / 경쟁제품보다 우수하다",
+        "2026년 적용 개정법은 적법한 자료 없는 동종 제품 비교를 금지합니다.",
+        "비교 기준과 증빙을 확인하거나 우리 제품의 특징을 설명하세요.",
+        "개정법 제1조 제4항",
+        "amend"
+      ],
+      [
+        "원산지 오인",
+        "허위·오인 금지",
+        "베트남 OEM 제품에 한국에서 제조 / Made in Korea",
+        "브랜드의 국적과 생산지를 혼동시키면 안 됩니다.",
+        "한국 브랜드라는 사실과 실제 생산지를 구별하세요. 최종 원산지 표시는 별도 확인합니다.",
+        "제8조 제9항",
+        "law"
+      ],
+      [
+        "질병·건강 효과",
+        "고위험 · 검토",
+        "당뇨 예방 / 질병 치료 / 먹으면 살이 빠진다",
+        "일반 디저트의 효과를 과장하거나 오인시키지 않도록 검수합니다. 법령의 단어별 금지 목록은 아닙니다.",
+        "건강 효과 대신 실제 원재료·맛·식감을 설명하세요.",
+        "개정 제19조의 정확성·오인 방지 원칙 적용",
+        "amend"
+      ],
+      [
+        "성분·영양 주장",
+        "증빙 필요",
+        "무설탕 / 저당 / 100% 천연 / 유기농",
+        "제품 성분·시험 결과·인증 및 표시 기준과 대조해야 합니다. 해당 표현을 일괄 금지하지 않습니다.",
+        "상품별 증빙으로 확인한 사실만 사용하세요.",
+        "제8조 제9항",
+        "law"
+      ],
+      [
+        "가격·구성",
+        "허위·오인 금지",
+        "조건을 숨긴 무료배송 / 실제와 다른 입수·할인가",
+        "수량·가격·제공 조건을 실제와 다르게 안내하지 않습니다.",
+        "중량·입수·할인 기간·배송비와 조건을 함께 표시하세요.",
+        "제8조 제9항",
+        "law"
+      ]
+    ],
+    "notices": [
+      [
+        "협찬·광고 표시",
+        "온라인 광고는 일반 콘텐츠와 구별 필요. 인플루언서는 광고 전·광고 중 광고임을 알리고 제품 자료와 이해도 확인 필요",
+        "개정 제15a조 · 제23조",
+        "amend"
+      ],
+      [
+        "인물 사진·리뷰 사용",
+        "개인의 사진·발언·글을 광고에 쓸 때 동의 확인 필요. 법률상 예외는 별도 검토",
+        "제8조 제8항",
+        "law"
+      ],
+      [
+        "국가 상징·차별 표현",
+        "국가 상징 훼손, 민족·종교·성별·장애 차별 표현 금지. 국가 상징 사용 자체가 일괄 금지는 아님",
+        "제8조 제5~7항",
+        "law"
+      ],
+      [
+        "베트남어 검수",
+        "광고는 원칙적으로 베트남어 필요(상표·고유명 등 예외). 현지 검수자의 의미·정확성 확인 필요",
+        "제18조 · 개정법 제1조 제11항",
+        "amend"
+      ]
+    ],
+    "culture": [
+      [
+        "쌀·찹쌀을 사용하는 디저트",
+        "Chè trôi nước는 녹두 소를 넣은 쌀가루 경단입니다. Chuối nếp nướng는 바나나를 찹쌀로 감싸 구운 간식으로 소개됩니다.",
+        "쫀득한 외피와 속 재료의 단면을 보여주는 콘텐츠를 시험하세요.",
+        "dessert",
+        "snack"
+      ],
+      [
+        "코코넛·콩·과일의 조합",
+        "Chè는 물 또는 코코넛 크림을 바탕으로 과일·콩·곡물·젤리 등을 더하고 따뜻하거나 차갑게 제공합니다.",
+        "코코넛·녹두·과일 맛을 테스트 후보로 삼되 인기 순위로 표시하지 않습니다.",
+        "dessert"
+      ],
+      [
+        "카페·길거리 간식",
+        "관광 자료는 chè chuối를 카페·노점의 디저트로, 바나나 튀김을 길거리 간식으로 소개합니다.",
+        "식후 디저트와 카페 간식 장면을 각각 테스트하세요.",
+        "snack"
+      ],
+      [
+        "과일·얼음·토핑",
+        "Hoa quả dầm은 혼합 과일·코코넛 크림·얼음에 젤리나 타피오카를 더하는 사례입니다.",
+        "과일 속 재료와 식감을 보여주는 촬영안을 비교하세요.",
+        "snack"
+      ],
+      [
+        "차와 곁들이거나 선물",
+        "녹두 과자는 따뜻한 녹차와 곁들이는 예로, 땅콩 과자는 가족·친구를 위한 선물로 소개됩니다.",
+        "차 페어링과 선물 구성을 별도 사용 장면으로 시험하세요.",
+        "dessert"
+      ]
+    ],
+    "packaging": [
+      "소포장·개별 포장: 카페 간식용 소량 구성을 시험하고 먹기 편한지 확인합니다.",
+      "선물 구성: 차와 함께 즐기는 구성을 테스트합니다. 특정 색·숫자를 전국 공통 선호로 단정하지 않습니다.",
+      "정보 전달: 베트남 OEM 생산지·원재료·알레르기·보관 방법의 표시사항을 검토합니다."
+    ],
+    "colors": [
+      {
+        "title": "빨강·금색 | 뗏의 길상 장식",
+        "kind": "문화적 의미",
+        "fact": "관광청 자료는 뗏 장식에 빨강·금색을 쓰고 붉은 세뱃돈 봉투를 주고받는 모습을 소개합니다.",
+        "scope": "뗏 시즌 · 색 선호도 조사 아님",
+        "application": "뗏 선물용 띠지·카드의 색 후보로 테스트합니다. 연중 판매 효과로 일반화하지 않습니다.",
+        "source_ids": [
+          "tet_design"
+        ]
+      },
+      {
+        "title": "노랑 | 남부의 새해 꽃",
+        "kind": "지역·시즌 사례",
+        "fact": "남부에서는 노란 오크나 꽃(hoa mai)이 음력 새해를 상징한다고 설명합니다.",
+        "scope": "베트남 남부 · 뗏",
+        "application": "남부 타깃 뗏 포장에 꽃 모티프와 노란 포인트를 검토합니다. 금색과 같은 의미로 단정하지 않습니다.",
+        "source_ids": [
+          "tet_design"
+        ]
+      },
+      {
+        "title": "분홍 | 북부의 복숭아꽃",
+        "kind": "지역·시즌 사례",
+        "fact": "하노이 뗏 준비 풍경에는 새해 행운을 기원하며 분홍 복숭아꽃 가지를 구매하는 사례가 나옵니다.",
+        "scope": "하노이·북부 뗏 맥락",
+        "application": "봄·새해 포장 후보로 테스트합니다. 분홍색 전체를 여성 선호색으로 단정하지 않습니다.",
+        "source_ids": [
+          "tet_design"
+        ]
+      }
+    ],
+    "symbols": [
+      {
+        "title": "연꽃 | 순수·평온·낙관",
+        "kind": "문화적 의미 + 브랜드 사례",
+        "fact": "Vietnam Tourism은 연꽃을 순수·평온·낙관의 상징으로 설명합니다. Vietnam Airlines는 연꽃을 문화유산과 연결한 브랜드 상징으로 사용합니다.",
+        "scope": "문화 설명과 항공사 사례 · 디저트 선호 조사 아님",
+        "application": "독자적으로 그린 연꽃 문양을 검토합니다. 기존 브랜드 로고를 복제하거나 식품 효능의 근거로 쓰지 않습니다.",
+        "source_ids": [
+          "lotus_design",
+          "lotus_brand"
+        ]
+      },
+      {
+        "title": "복숭아꽃·오크나 꽃 | 새해",
+        "kind": "지역·시즌 사례",
+        "fact": "관광청은 하노이의 복숭아꽃과 남부의 노란 꽃을 각각 뗏 풍경으로 소개합니다.",
+        "scope": "북부·남부 구분 필요",
+        "application": "판매 지역과 시즌에 맞는 꽃 문양을 사용하고 현지 검수를 거칩니다.",
+        "source_ids": [
+          "tet_design"
+        ]
+      },
+      {
+        "title": "금귤나무 | 새해 번영·건강 기원",
+        "kind": "문화적 의미",
+        "fact": "뗏에는 집·사무실에 금귤나무를 놓고 번영과 건강을 기원하는 관습이 소개됩니다.",
+        "scope": "뗏 문화 · 건강 효과 근거 아님",
+        "application": "새해 축하 카드의 모티프로 검토합니다. 제품이 건강을 개선한다는 광고로 연결하지 않습니다.",
+        "source_ids": [
+          "tet_design"
+        ]
+      }
+    ],
+    "packaging_evidence": [
+      {
+        "title": "친환경 포장 | 명확한 설명과 위생",
+        "kind": "소비자 연구",
+        "fact": "416명 설문 연구의 초록은 명확하고 신뢰할 만한 친환경 정보가 추가 지불 의향과 관련되며, 소재만 바꾸는 접근에는 위생 우려가 작용한다고 보고합니다.",
+        "scope": "배송 포장 연구 · 초록 확인 · 실제 구매·디저트 포장 선호와 구별",
+        "application": "재활용 안내를 구체화하고 위생·밀봉을 함께 설명합니다. 일반 포장과 구매 반응을 비교합니다.",
+        "source_ids": [
+          "green_pack"
+        ]
+      },
+      {
+        "title": "다양한 맛을 담은 선물 상자",
+        "kind": "공식 판매 사례",
+        "fact": "Maison Marou는 4가지 맛을 담은 월병 4개입 상자를 판매 페이지에 제시합니다. 상자 크기는 19.5 × 19.5 × 5cm입니다.",
+        "scope": "브랜드 1곳 · 페이지 호찌민 기준 · 인기·판매량 미확인",
+        "application": "찹쌀떡 맛 조합 선물세트의 구성 후보로 참고합니다. 개수·가격·보관성은 자체 검증합니다.",
+        "source_ids": [
+          "marou_box"
+        ]
+      },
+      {
+        "title": "원재료·알레르기·보관 정보",
+        "kind": "공식 정보 제공 사례",
+        "fact": "같은 상품 페이지에서 원재료, 알레르기, 중량과 보관 안내를 확인할 수 있습니다.",
+        "scope": "온라인 상품 정보 사례 · 물리적 라벨 검증 아님",
+        "application": "포장과 판매 페이지의 정보가 일치하도록 점검합니다. 실제 제품 표시 요건은 별도 확인합니다.",
+        "source_ids": [
+          "marou_box"
+        ]
+      }
+    ],
+    "numbers": {
+      "note": "지역·세대에 따라 차이 있음. 외국인에게 엄격히 적용하는 규칙은 아님",
+      "prefer": [
+        {
+          "number": "8",
+          "word": "phát",
+          "meaning": "번영(phát)과 발음이 비슷해 행운의 숫자",
+          "source_ids": [
+            "vt_superstition"
+          ]
+        },
+        {
+          "number": "9",
+          "word": "cửu",
+          "meaning": "장수(cửu)와 발음이 비슷해 행운의 숫자",
+          "source_ids": [
+            "vt_superstition"
+          ]
+        },
+        {
+          "number": "6",
+          "word": "lộc",
+          "meaning": "재물·복(lộc)과 연결",
+          "source_ids": [
+            "vt_superstition"
+          ]
+        }
+      ],
+      "avoid": [
+        {
+          "number": "4",
+          "word": "tử",
+          "meaning": "죽음(tử)과 발음이 비슷해 피함 · 선물을 4개 세트로 주지 않음",
+          "source_ids": [
+            "vt_superstition",
+            "vt_gift"
+          ]
+        }
+      ]
+    },
+    "color_preferences": {
+      "prefer": [
+        {
+          "color": "빨강",
+          "meaning": "선물 포장에 권하는 색",
+          "source_ids": [
+            "vt_gift"
+          ]
+        },
+        {
+          "color": "노랑·금색",
+          "meaning": "선물 포장에 권하는 색",
+          "source_ids": [
+            "vt_gift"
+          ]
+        },
+        {
+          "color": "분홍",
+          "meaning": "선물 포장에 권하는 색",
+          "source_ids": [
+            "vt_gift"
+          ]
+        }
+      ],
+      "avoid": [
+        {
+          "color": "검정",
+          "meaning": "검은 포장지는 장례용",
+          "source_ids": [
+            "vt_gift"
+          ]
+        },
+        {
+          "color": "흰색",
+          "meaning": "흰 포장은 죽음 연상",
+          "source_ids": [
+            "vt_gift"
+          ]
+        },
+        {
+          "color": "짙은 파랑",
+          "meaning": "선물 포장에서 피하는 색",
+          "source_ids": [
+            "vt_gift"
+          ]
+        }
+      ]
+    },
+    "gift_etiquette": [
+      {
+        "title": "부부·커플에게는 짝으로",
+        "fact": "부부에게 하나만 주면 짧은 결혼을 뜻한다는 인식. 짝으로 된 선물 권장",
+        "source_ids": [
+          "vt_gift"
+        ]
+      },
+      {
+        "title": "피하는 선물",
+        "fact": "칼·가위(관계 단절), 시계(남은 시간), 손수건(눈물·이별), 국화(장례 꽃)",
+        "source_ids": [
+          "vt_gift",
+          "vt_superstition"
+        ]
+      },
+      {
+        "title": "과자·말린 과일 선물은 환영",
+        "fact": "bánh kẹo(과자·사탕)와 mứt(말린 과일)는 선물로 환영. 더위에 녹는 초콜릿은 피함",
+        "source_ids": [
+          "vt_gift"
+        ]
+      },
+      {
+        "title": "선물 가격대",
+        "fact": "과자·사탕·말린 과일 30,000~150,000동, 뗏 선물 바구니(차·말린 과일·사탕 등) 200,000~2,000,000동, 일반 선물 100,000~300,000동",
+        "source_ids": [
+          "vt_gift"
+        ]
+      }
+    ],
+    "symbol_images": [
+      {
+        "symbol": "복숭아꽃",
+        "file": "peach.jpg",
+        "alt": "분홍 복숭아꽃 나무",
+        "credit": "Bohdan Phúc Đan · CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Morning_with_the_peach_blossom_tree_of_YHPV_26-02-2026_E1.jpg"
+      },
+      {
+        "symbol": "오크나 꽃",
+        "file": "ochna.jpg",
+        "alt": "노란 오크나 꽃(hoa mai) 가지와 뗏 장식",
+        "credit": "Nhanvo · 퍼블릭 도메인",
+        "url": "https://commons.wikimedia.org/wiki/File:Hoa_mai.jpg"
+      },
+      {
+        "symbol": "금귤나무",
+        "file": "kumquat.jpg",
+        "alt": "금귤 열매",
+        "credit": "Phuong Tran · CC BY 2.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Citrus_japonica.jpg"
+      }
+    ],
+    "consumer_facts": [
+      {
+        "value": "8,560만 명",
+        "label": "인터넷 이용자",
+        "note": "인구의 84.2%",
+        "as_of": "2025.10",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "🌐"
+      },
+      {
+        "value": "7,900만",
+        "label": "SNS 이용 계정",
+        "note": "인구의 77.6%",
+        "as_of": "2025.10",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "💬"
+      },
+      {
+        "value": "7,900만",
+        "label": "Facebook 광고 도달",
+        "note": "인구의 77.6%",
+        "as_of": "2025 말",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "facebook"
+      },
+      {
+        "value": "7,830만",
+        "label": "Zalo 월간 이용자",
+        "note": "인구의 77.0%",
+        "as_of": "2025",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "zalo"
+      },
+      {
+        "value": "7,610만",
+        "label": "TikTok 광고 도달",
+        "note": "18세 이상 기준",
+        "as_of": "2025 말",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "tiktok"
+      },
+      {
+        "value": "6,210만",
+        "label": "YouTube 광고 도달",
+        "note": "인구의 61.0%",
+        "as_of": "2025 말",
+        "source_ids": [
+          "datareportal_2026"
+        ],
+        "icon": "youtube"
+      }
+    ],
+    "dessert_facts": [
+      {
+        "title": "Chè = 베트남 디저트의 대표",
+        "fact": "콩·쌀·과일·젤리를 물이나 코코넛 밀크에 끓여 달게 만든 디저트 묶음. 찹쌀도 주요 재료",
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "언제·어디서",
+        "fact": "늦은 오후~저녁에 리어카·시장·디저트 가게에서 구매. 식사보다는 서서 또는 작은 의자에 앉아 먹는 간식",
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "계절",
+        "fact": "4~9월 더운 시기에는 얼음을 올린 차가운 chè(특히 남부), 11~2월에는 따뜻한 chè(특히 북부) 소비",
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "지역 입맛",
+        "fact": "북부는 가볍고 덜 단 맛, 중부는 진하고 정교한 맛, 남부가 가장 단 맛",
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "명절·행사 디저트",
+        "fact": "찹쌀 경단 chè trôi nước는 한식절(음력 3월 3일), 눌러 굳힌 chè khô는 뗏과 결혼식 때 섭취",
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "가격대",
+        "fact": "한 그릇 약 10,000~40,000동. 길거리가 가장 저렴, 두리안·연자 등 재료에 따라 가격 상승",
+        "source_ids": [
+          "vt_che"
+        ]
+      }
+    ],
+    "mooncake_2026": [
+      {
+        "title": "2026 추석 9월 25일",
+        "fact": "음력 8월 15일. 월병 매장 성수기가 작년보다 약 2주 앞당겨짐, 온라인 공식 스토어·4~5성 호텔은 7월 초부터 판매",
+        "source_ids": [
+          "tuoitre_mooncake_2026"
+        ]
+      },
+      {
+        "title": "유행 맛",
+        "fact": "솔티드 에그(소금에 절인 달걀노른자) 스노우스킨 월병이 큰 유행, SNS에서 화제",
+        "source_ids": [
+          "tuoitre_mooncake_2026"
+        ]
+      },
+      {
+        "title": "가격대",
+        "fact": "저가 개당 약 30,000동, 중가 개당 90,000~200,000동, 고급 상자 약 90만~200만 동. 일부 업체는 올해 5~20% 인상 예상",
+        "source_ids": [
+          "tuoitre_mooncake_2026"
+        ]
+      },
+      {
+        "title": "구매자",
+        "fact": "7월 기준 구매자는 대부분 개인(본인용·가족 선물), 기업 주문은 아직 적음",
+        "source_ids": [
+          "tuoitre_mooncake_2026"
+        ]
+      }
+    ],
+    "tet_symbols": [
+      {
+        "name": "복숭아꽃 (hoa đào)",
+        "region": "북부",
+        "fact": "북부 뗏에서 가장 선호하는 꽃. 새해의 평안과 행운 상징",
+        "image": "peach.jpg",
+        "source_ids": [
+          "vna_tet_flowers_2025",
+          "vna_peach_2025"
+        ]
+      },
+      {
+        "name": "노란 매화 (hoa mai, Ochna)",
+        "region": "남부",
+        "fact": "남부에서 뗏에 복숭아꽃 대신 선호하는 노란 꽃",
+        "image": "ochna.jpg",
+        "source_ids": [
+          "vna_tet_flowers_2025",
+          "vna_peach_2025"
+        ]
+      },
+      {
+        "name": "금귤나무 (cây quất)",
+        "region": "전국",
+        "fact": "희망과 행운의 상징. 열매가 많을수록 새해 행운이 크다는 믿음",
+        "image": "kumquat.jpg",
+        "source_ids": [
+          "vna_tet_flowers_2025",
+          "vov_kumquat_2026"
+        ]
+      }
+    ],
+    "ecommerce_facts": {
+      "cards": [
+        {
+          "value": "164억 달러",
+          "label": "4대 플랫폼 거래액",
+          "note": "전년 대비 +34.75%",
+          "as_of": "2025",
+          "icon": "🛒",
+          "source_ids": [
+            "vneconomy_ec_2025"
+          ]
+        },
+        {
+          "value": "+60.96%",
+          "label": "식료품·식품 성장률",
+          "note": "전체 카테고리 중 1위",
+          "as_of": "2026 상반기",
+          "icon": "🍡",
+          "source_ids": [
+            "vietnamnet_ec_h1_2026"
+          ]
+        },
+        {
+          "value": "110.8억 달러",
+          "label": "상반기 거래액",
+          "note": "전년 동기 대비 +44.11%",
+          "as_of": "2026 상반기",
+          "icon": "📈",
+          "source_ids": [
+            "vietnamnet_ec_h1_2026"
+          ]
+        }
+      ],
+      "shares": {
+        "as_of": "2025",
+        "source_ids": [
+          "vneconomy_ec_2025"
+        ],
+        "items": [
+          {
+            "name": "Shopee",
+            "icon": "shopee",
+            "share": 56.04,
+            "prev": "2024년 64%"
+          },
+          {
+            "name": "TikTok Shop",
+            "icon": "tiktok",
+            "share": 41.31,
+            "prev": "2024년 29%"
+          },
+          {
+            "name": "Lazada·Tiki",
+            "icon": "🛒",
+            "share": 3,
+            "prev": "약 3%"
+          }
+        ]
+      },
+      "notes": [
+        {
+          "title": "판매량",
+          "fact": "2025년 4대 플랫폼 판매 상품 39.4억 개, 전년 대비 +15.23%",
+          "source_ids": [
+            "vneconomy_ec_2025"
+          ]
+        },
+        {
+          "title": "공식몰 집중",
+          "fact": "공식몰(Mall) 매장은 전체 매장의 2.79%, 매출은 34.2% 차지 (2026 상반기)",
+          "source_ids": [
+            "vietnamnet_ec_h1_2026"
+          ]
+        }
+      ]
+    },
+    "dessert_culture": [
+      {
+        "title": "일상 디저트 chè",
+        "as_of": "2026",
+        "items": [
+          "콩·쌀·과일·젤리를 물이나 코코넛 밀크에 끓인 대표 디저트. 찹쌀도 주요 재료",
+          "늦은 오후~저녁에 리어카·시장·디저트 가게에서 구매하는 길거리 간식",
+          "더운 4~9월엔 얼음 올린 차가운 chè(남부), 11~2월엔 따뜻한 chè(북부)",
+          "지역 입맛: 북부 덜 단 맛, 중부 진한 맛, 남부 가장 단 맛 · 한 그릇 1만~4만 동"
+        ],
+        "source_ids": [
+          "vt_che"
+        ]
+      },
+      {
+        "title": "명절 떡·디저트",
+        "as_of": "2025~2026",
+        "items": [
+          "뗏 북부: 네모난 bánh chưng(땅)과 둥근 bánh dày(하늘)를 짝으로",
+          "뗏 중부: 원통형 찹쌀떡 bánh tét đòn, 흑설탕·생강 찹쌀떡 bánh tổ",
+          "뗏 남부: bánh tét(풍요), bánh ít(효도), bánh bò(번영)",
+          "추석: 월병 선물 문화, 2026년 솔티드 에그 스노우스킨 월병 유행"
+        ],
+        "source_ids": [
+          "baonghean_tet_cakes_2026",
+          "tuoitre_mooncake_2026"
+        ]
+      },
+      {
+        "title": "선물용 과자",
+        "as_of": "2026",
+        "items": [
+          "집 방문·뗏에 bánh kẹo(과자·사탕)와 mứt(말린 과일) 선물이 환영",
+          "더위에 녹는 초콜릿은 선물로 피함"
+        ],
+        "source_ids": [
+          "vt_gift"
+        ]
+      },
+      {
+        "title": "카페 문화",
+        "as_of": "2025",
+        "items": [
+          "전국 커피숍 약 50만 곳",
+          "연유 커피와 달콤한 차 음료 선호, 과일차·말차가 성장 동력",
+          "Z세대는 차가운 음료와 퓨전 음료(예: 말차+코코넛) 선호"
+        ],
+        "source_ids": [
+          "bcompany_coffee_2025"
+        ]
+      },
+      {
+        "title": "당 줄이기 흐름",
+        "as_of": "2025",
+        "items": [
+          "82%가 높은 당 함량을 탄산음료를 줄이는 가장 큰 이유로 꼽음",
+          "28%는 저당·무당 음료를 고르고, 건강 효과가 분명하면 웃돈 지불 의향",
+          "당 100ml당 5g 초과 음료에 설탕세: 2027년 8%, 2028년 10% (우유·100% 과일주스·코코넛워터 제외)"
+        ],
+        "source_ids": [
+          "bcompany_healthy_drink_2025",
+          "investor_sugar_tax_2025"
+        ]
+      }
+    ],
+    "insight_evidence": [
+      {
+        "tag": "K-다낭",
+        "text": "한국은 2016년부터 다낭 국제 관광객 1위 시장. 2025-08-01 그해 한국인 100만 번째 방문객 도달. 한국-다낭 직항 12개 항공사 주 150편",
+        "source_ids": [
+          "danang_korea_2025"
+        ]
+      },
+      {
+        "tag": "K-디저트",
+        "text": "2025 중추절 월병: 단맛을 줄인 건강한 월병이 가장 두드러진 트렌드, 라바·버블티 맛 등 이색 소 인기, 솔티드 에그 스노우스킨·캐릭터 모양 월병이 TikTok에서 화제",
+        "source_ids": [
+          "tuoitre_mooncake_2025"
+        ]
+      },
+      {
+        "tag": "K-언어",
+        "text": "광고에 베트남어와 외국어를 함께 쓰면 외국어 글자 크기는 베트남어의 3/4 이하, 베트남어 아래 배치. 상표·고유명 등은 예외",
+        "source_ids": [
+          "law"
+        ]
+      },
+      {
+        "tag": "K-지도",
+        "text": "Chagee(중국 밀크티 브랜드) 앱 지도에 구단선이 들어가 불매 운동이 일고 앱이 내려감 (2025-03)",
+        "source_ids": [
+          "tuoitre_chagee_2025"
+        ]
+      },
+      {
+        "tag": "K-라벨",
+        "text": "식품 라벨 시행령 37/2026(2026-01-23 시행): 제품명·책임 주체·원산지·경고 정보는 실물 라벨에 표시, 수입품 보조 라벨은 전자 방식 허용",
+        "source_ids": [
+          "vietanlaw_label_2026"
+        ]
+      }
+    ]
+  }
 }

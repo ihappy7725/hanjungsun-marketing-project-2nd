@@ -1,0 +1,33 @@
+{
+  "search_metadata": {
+    "id": "6ade630d25bc2ce176b2746b",
+    "status": "Success",
+    "markdown_endpoint": "https://serpapi.com/searches/5s88MaxqWkoQtHMDtBYJ-lUrzsa-5maOLNeeg0DvxLQ/6ade630d25bc2ce176b2746b.md",
+    "created_at": "2026-10-25 20:14:05 UTC",
+    "processed_at": "2026-10-25 20:14:05 UTC",
+    "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=vi&tz=-420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22b%C3%A1nh+n%E1%BA%BFp+%C4%91%E1%BA%ADu+xanh%22%2C%22geo%22%3A%22VN%22%2C%22time%22%3A%22today+3-m%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+    "raw_html_file": "https://serpapi.com/searches/5s88MaxqWkoQtHMDtBYJ-lUrzsa-5maOLNeeg0DvxLQ/6ade630d25bc2ce176b2746b.html",
+    "prettify_html_file": "https://serpapi.com/searches/5s88MaxqWkoQtHMDtBYJ-lUrzsa-5maOLNeeg0DvxLQ/6ade630d25bc2ce176b2746b.prettify",
+    "total_time_taken": 5.74
+  },
+  "search_parameters": {
+    "engine": "google_trends",
+    "q": "bánh nếp đậu xanh",
+    "hl": "vi",
+    "geo": "VN",
+    "date": "today 3-m",
+    "tz": "-420",
+    "data_type": "RELATED_QUERIES"
+  },
+  "related_queries": {
+    "top": [
+      {
+        "query": "bánh nếp nhân đậu xanh",
+        "value": "100",
+        "extracted_value": 100,
+        "link": "https://trends.google.com/trends/explore?q=b%C3%A1nh+n%E1%BA%BFp+nh%C3%A2n+%C4%91%E1%BA%ADu+xanh&date=today+3-m&geo=VN",
+        "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=today+3-m&engine=google_trends&geo=VN&hl=vi&q=b%C3%A1nh+n%E1%BA%BFp+nh%C3%A2n+%C4%91%E1%BA%ADu+xanh&tz=-420"
+      }
+    ]
+  }
+}

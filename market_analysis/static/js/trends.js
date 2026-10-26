@@ -99,60 +99,51 @@ function rankBadges(row) {
     row.is_rising ? `<span class="rate-rising">급상승</span>` : ""].join("");
 }
 
+const RANKING_NOTE = {
+  interest: "상품 검색어 중 최근 12주 평균 관심도 상위 5개 · 판매량 순위가 아닙니다",
+  related: "출발 검색어의 Google 연관 검색어 중 식품 · 최근 3개월 인기 순 (1위 = 100) · 판매량 순위가 아닙니다",
+  fruit_flavors: "베트남 과일 맛 검색 관심도 상위 5개 (최근 12주) · 판매량 순위가 아닙니다",
+};
+const RANKING_TITLE = { interest: "카테고리별 상품 관심도 순위", related: "카테고리별 인기 메뉴 순위", fruit_flavors: "과일 맛 관심도 순위" };
+
 function renderRanking(category) {
+  // related = 출발 검색어의 연관 검색어 인기값 순위(주간 관심도·증감률 없음, 급상승 목록에 있으면 상승률 표시)
+  const related = category.ranking_metric === "related";
+  const metric = RANKING_NOTE[category.ranking_metric] ? category.ranking_metric : "interest";
+  $("ranking-note").textContent = RANKING_NOTE[metric];
+  $("ranking-title").textContent = RANKING_TITLE[metric];
   if (!category.ranking.length) {
     $("ranking").innerHTML = emptyState(`${category.label} 상품 검색어 데이터가 아직 없습니다.`);
     return;
   }
-  // 순위(관심도 5 이상)가 5개 미만이면 순위에서 뺀 상품을 관심도 높은 순으로 "참고" 줄에 채웁니다.
-  // 참고 줄은 순위 번호·전년 대비를 붙이지 않아 실제 순위처럼 보이지 않게 합니다.
-  const ranked = category.ranking.filter((row) => row.rank !== null).sort((a, b) => a.rank - b.rank).slice(0, RANK_LIMIT);
-  const unranked = category.ranking.filter((row) => row.rank === null)
-    .sort((a, b) => (b.recent_average ?? -1) - (a.recent_average ?? -1));
-  const reference = unranked.slice(0, RANK_LIMIT - ranked.length);
-  const excluded = unranked.length - reference.length;
-  const footnote = `<p class="source">확인일 ${day(category.ranking[0].checked_at)} · 같은 기준 검색어로 맞춘 상대 관심도 · 급상승 = 전년 동기 대비 +50% 이상${
-    reference.length ? " · 참고 = 관심도 5 미만이거나 데이터가 부족해 순위에서 뺀 상품" : ""}${excluded ? ` · 그 외 ${excluded}개 제외` : ""}</p>`;
-  if (!ranked.length && !reference.length) {
-    $("ranking").innerHTML = emptyState(`${category.label} 상품 중 순위를 매길 만큼 관심도가 있는 검색어가 없습니다.`) + footnote + risingRow(category);
+  // 최근 12주 평균 관심도가 높은 순으로 1~5위를 매깁니다. 관심도 5 미만(또는 데이터 부족)은 순위에는 넣되
+  // "검색 적음" 배지를 달고, 값이 작아 흔들리는 전년 대비는 표시하지 않습니다(서버 rank = 관심도 5 이상 순위).
+  const top = category.ranking.filter((row) => row.recent_average !== null)
+    .sort((a, b) => b.recent_average - a.recent_average).slice(0, RANK_LIMIT);
+  if (!top.length) {
+    $("ranking").innerHTML = emptyState(`${category.label} 상품 검색어 데이터가 아직 없습니다.`);
     return;
   }
-  const referenceLabel = (row) => (row.recent_average !== null && row.recent_average < 5 ? "참고 · 검색 적음" : "참고 · 데이터 부족");
+  const lowLabel = (row) => (row.recent_average < 5 ? "검색 적음" : "데이터 부족");
   $("ranking").innerHTML = `
     <div class="table-wrap"><table class="trend-table">
       <caption class="visually-hidden">${esc(category.label)} 상품 관심도 상위 ${RANK_LIMIT}개</caption>
-      <thead><tr><th scope="col" class="nowrap">순위</th><th scope="col">상품명 · 검색어</th><th scope="col" class="num">최근 12주<br>평균 관심도</th>
-        <th scope="col" class="num">전년 동기<br>대비</th></tr></thead>
-      <tbody>${ranked.map((row) => `
+      <thead><tr><th scope="col" class="nowrap">순위</th><th scope="col">상품명 · 검색어</th><th scope="col" class="num">${related ? "최근 3개월<br>연관 검색 인기" : "최근 12주<br>평균 관심도"}</th>
+        <th scope="col" class="num">${related ? "급상승" : "전년 동기<br>대비"}</th></tr></thead>
+      <tbody>${top.map((row, index) => `
         <tr>
-          <td class="rank">${row.rank}</td>
-          <td><strong>${esc(row.name)}</strong> ${rankBadges(row)}<small lang="vi">${esc(row.query)}</small></td>
+          <td class="rank">${index + 1}</td>
+          <td><strong>${esc(row.name)}</strong> ${row.rank !== null ? rankBadges(row) : `<span class="ref-badge">${lowLabel(row)}</span>`}<small lang="vi">${esc(row.query)}</small></td>
           <td class="num">${num(row.recent_average)}</td>
-          <td class="num">${yoy(row) + shortTerm(row)}</td>
-        </tr>`).join("")}${reference.map((row) => `
-        <tr class="is-reference">
-          <td class="rank">·</td>
-          <td><strong>${esc(row.name)}</strong> <span class="ref-badge">${referenceLabel(row)}</span><small lang="vi">${esc(row.query)}</small></td>
-          <td class="num">${num(row.recent_average)}</td>
-          <td class="num">-</td>
+          <td class="num">${related ? (row.rising_value ? risingText(row.rising_value) : "-")
+            : row.rank !== null ? yoy(row) + shortTerm(row) : "-"}</td>
         </tr>`).join("")}</tbody>
-    </table></div>
-    ${ranked.length + reference.length < RANK_LIMIT ? `<p class="inline-warn">비교한 상품 후보가 ${ranked.length + reference.length}개라 ${ranked.length + reference.length}개만 표시합니다.</p>` : ""}
-    ${risingRow(category)}
-    ${footnote}
-    ${category.ranking_source_url ? `<a class="source-link" href="${esc(category.ranking_source_url)}" target="_blank" rel="noopener">Google Trends에서 비교 조건 확인 ↗</a>` : ""}`;
+    </table></div>`;
+  // 새로 뜨는 검색어(rising_products)는 API 응답에 남아 있으며 화면에는 표시하지 않습니다.
 }
 
-// 연관 검색어(급상승) 중 상품 검색어. 순위 후보에 없는 새 트렌드를 발견하는 용도이며, 없으면 줄을 숨깁니다.
-function risingRow(category) {
-  const rows = category.rising_products || [];
-  if (!rows.length) return "";
-  // Google은 신규 급상승을 "Breakout" 또는 베트남어 "Đột phá"로 표시합니다.
-  const value = (v) => (["breakout", "đột phá"].includes(String(v).toLowerCase()) ? "급상승" : esc(v));
-  return `<div class="rising-row"><span class="rising-label">새로 뜨는 검색어</span>${rows.map((row) =>
-    `<span class="chip"><span lang="vi">${esc(row.query)}</span> <b>${value(row.value)}</b></span>`).join("")}
-    <small>연관 검색어 · 확인일 ${day(category.related_checked_at)}</small></div>`;
-}
+// 급상승 값: Google이 "급등"(Breakout, 베트남어 Đột phá)으로 주는 경우 한국어로 표시
+const risingText = (value) => (/^(breakout|đột phá)$/i.test(String(value ?? "").trim()) ? "급등" : esc(value ?? "-"));
 
 function sparkline(series) {
   const width = 200, height = 40, values = series.map((p) => p.interest).filter((v) => v !== null);
@@ -189,23 +180,20 @@ function renderCategoryTrend() {
           : yoy(category) + shortTerm(category)}</span>
       </button></li>`;
     }).join("")}
-    </ul>
-    <p class="source">숫자 = 최근 12주 평균 관심도 · 증감률 = 전년 동기(1년 전 같은 12주) 대비 · 4주 = 최근 4주 vs 직전 4주<br>
-      선 = 최근 52주 주간 관심도(줄마다 자체 눈금) · 
-출처: SerpApi Google Trends · 확인일 ${day(categories[0].checked_at)}
-      ${categories[0].source_url ? ` · <a href="${esc(categories[0].source_url)}" target="_blank" rel="noopener">원본 비교 ↗</a>` : ""}</p>`;
+    </ul>`;
   $("category-trend").querySelectorAll(".spark-row").forEach((button) => {
     button.addEventListener("click", () => selectCategory(button.dataset.id));
   });
 }
 
-function barRows(rows, { label, sub, value, extra = () => "", max = 100 }) {
+// value = 막대 길이, display = 오른쪽에 보일 문구(기본은 value 숫자)
+function barRows(rows, { label, sub, value, display = (row) => num(value(row)), extra = () => "", max = 100 }) {
   return `<ol class="bar-rows">${rows.map((row) => `
     <li class="${row.data_status === "insufficient" ? "is-insufficient" : ""}">
       <span class="bar-rank">${row.rank ?? "-"}</span>
       <span class="bar-label">${esc(label(row))}${sub ? `<small lang="vi">${esc(sub(row))}</small>` : ""}</span>
-      <span class="bar-value">${num(value(row))}</span>
-      <span class="bar-track" title="${esc(label(row))}: ${num(value(row))}"><span class="bar-fill" style="width:${Math.max(0, Math.min(100, ((value(row) ?? 0) / max) * 100))}%"></span></span>
+      <span class="bar-value">${display(row)}</span>
+      <span class="bar-track" title="${esc(label(row))}: ${display(row)}"><span class="bar-fill" style="width:${Math.max(0, Math.min(100, ((value(row) ?? 0) / max) * 100))}%"></span></span>
       <span class="bar-extra">${extra(row)}</span>
     </li>`).join("")}</ol>`;
 }
@@ -257,10 +245,7 @@ function renderSeasonality() {
       <button type="button" data-id="${esc(item.id)}" aria-pressed="${item.id === tab.id}">${esc(item.label)}</button>`).join("")}
     </div>
     ${tab.data_status === "insufficient" ? `<p class="inline-warn">${badge("insufficient")} 12개월 미만이거나 비어 있는 달이 있습니다.</p>` : ""}
-    ${tab.type === "fruits" ? fruitCalendar(tab) : monthBars(tab)}
-    <p class="source">출처: SerpApi Google Trends · 최근 5년 월평균 관심도(가장 높은 달 = 100) ·
-      ${esc(day(tab.span?.start))} ~ ${esc(day(tab.span?.end))} · 확인일 ${day(tab.checked_at)}
-      ${tab.source_url ? ` · <a href="${esc(tab.source_url)}" target="_blank" rel="noopener">원본 ↗</a>` : ""}</p>`;
+    ${tab.type === "fruits" ? fruitCalendar(tab) : monthBars(tab)}`;
   $("seasonality").querySelectorAll(".season-tabs button[data-id]").forEach((button) => {
     button.addEventListener("click", () => { seasonTabId = button.dataset.id; renderSeasonality(); });
   });
@@ -269,25 +254,31 @@ function renderSeasonality() {
   });
 }
 
-function monthBars(tab, peakText = PEAK_TEXT) {
+function monthBars(tab) {
   const peaks = tab.year_round ? [] : tab.peak_months;
+  // 연중 고른 수요(모든 달 지수 80 이상)는 12개월 모두 피크 색으로 칠합니다.
+  const isPeak = (month) => tab.year_round || peaks.includes(month);
   return `
-    <div class="month-chart" role="img" aria-label="${esc(tab.label)} 월별 관심도 지수, 피크 ${peaks.map((m) => `${m}월`).join(", ")}">
+    <div class="month-chart" role="img" aria-label="${esc(tab.label)} 월별 관심도 지수, ${tab.year_round ? "연중 고른 수요" : `피크 ${peaks.map((m) => `${m}월`).join(", ")}`}">
       ${tab.months.map((m) => `
-        <div class="month-bar ${peaks.includes(m.month) ? "peak" : ""}" title="${m.month}월: 지수 ${m.index ?? "-"} (평균 관심도 ${num(m.interest)})">
+        <div class="month-bar ${isPeak(m.month) ? "peak" : ""}" title="${m.month}월: 지수 ${m.index ?? "-"} (평균 관심도 ${num(m.interest)})">
           <span class="month-value">${m.index ?? "-"}</span>
           <span class="month-fill" style="height:${m.index ?? 0}%"></span>
           <small>${m.month}월</small>
         </div>`).join("")}
     </div>
     ${tab.year_round
-      ? `<div class="season-callout">"${esc(tab.label)}": <strong>연중 고른 수요</strong>
-      <small>검색어 <span lang="vi">${esc(tab.query)}</span> · 모든 달 지수 80 이상이라 특정 시기를 타지 않습니다</small></div>`
+      ? `<div class="season-callout">"${esc(tab.label)}": <strong>연중 고른 수요</strong></div>`
       : `<div class="season-callout">"${esc(tab.label)}" 검색 피크: <strong>${peaks.map((m) => `${m}월`).join(", ")}</strong>
-      <small>검색어 <span lang="vi">${esc(tab.query)}</span> · 지수 ${peakText}</small></div>`}`;
+      ${weeklyLine(tab.weekly)}</div>`}`;
 }
 
-const PEAK_TEXT = "90 이상인 달(최대 3개)";
+// 주 단위 '수요 높은 기간'(정점의 50% 이상이 이어지는 구간, 서버 weekly_window). 없으면 줄을 숨깁니다.
+function weeklyLine(weekly) {
+  if (!weekly || weekly.year_round) return "";
+  const slot = (s) => `${s.month}월 ${s.week}주`;
+  return `<span class="season-weekly">수요 높은 기간 <strong>${slot(weekly.start)} ~ ${slot(weekly.end)}</strong> · 최고 <strong>${slot(weekly.peak)}</strong></span>`;
+}
 
 let fruitId = null;
 
@@ -303,7 +294,7 @@ function fruitCalendar(tab) {
       <button type="button" data-fruit="${esc(item.id)}" aria-pressed="${item.id === fruit.id}">${esc(item.name)}</button>`).join("")}
     </div>
     ${fruit.data_status !== "normal" ? `<p class="inline-warn">${badge("insufficient")} ${esc(fruit.name)}은(는) 12개월 미만이거나 비어 있는 달이 있습니다.</p>` : ""}
-    ${monthBars({ ...fruit, label: fruit.name }, "90 이상인 달(최대 2개) · 과일마다 가장 높은 달 = 100이라 과일끼리 인기 비교는 아님")}`;
+    ${monthBars({ ...fruit, label: fruit.name })}`;
 }
 
 // 지역 카드는 카테고리 종합(디저트 전체)만 보여 줍니다. 카테고리별 지역 데이터(regions_by_category)는 응답에 남아 있습니다.
@@ -313,29 +304,16 @@ function renderRegions() {
     $("regions").innerHTML = emptyState("지역별 관심도 데이터가 아직 없습니다.", `${COLLECT_HINT} --sections regions`);
     return;
   }
-  const labels = Object.fromEntries(dashboard.categories.map((item) => [item.id, item.label]));
-  const breakdown = (row) => Object.entries(row.categories || {})
-    .map(([id, value]) => `${esc(labels[id] || id)} ${num(value)}`).join(" · ");
-  const checked = `상위 10개 지역 · 확인일 ${day(rows[0].checked_at)}`;
-  let note;
-  if (rows[0].combined) {
-    // 검색 규모 가중 평균(추정치). 카테고리 검색 규모가 없으면 서버가 같은 비중으로 계산하고 method="equal"로 알려 줍니다.
-    const meta = dashboard.regions_meta || {};
-    const weights = Object.entries(meta.weights || {}).map(([id, pct]) => `${esc(labels[id] || id)} ${num(pct)}%`).join(" · ");
-    note = meta.method === "weighted"
-      ? `<p class="source">추정 종합 = 카테고리별 지역 관심도를 검색 규모로 가중 평균 · 1위 지역 = 100 · 비중 ${weights}
-          (카테고리 관심도 확인일 ${day(meta.weights_checked_at)}) · ${checked}</p>`
-      : `<p class="source">종합 = 카테고리별 지역 관심도 단순 평균(카테고리 검색 규모 데이터 없음) · 1위 지역 = 100 · ${checked}</p>`;
-  } else {
-    note = `<p class="source">이전 수집본: 대표 검색어 <span lang="vi">${esc(rows[0].query)}</span> 하나 기준 · 카테고리 종합 전 · ${checked}</p>`;
-  }
+  // 계산 방식(검색 규모 가중 평균, 비중·기준일)은 API 응답의 regions_meta에 있으며 화면에는 표시하지 않습니다.
   const top = rows.slice(0, 10);
   renderExpandable("regions", top.length, barRows(visibleRows("regions", top), {
     label: (row) => row.name,
     sub: (row) => (row.name !== row.location ? row.location : ""),
     value: (row) => row.interest,
-    extra: (row) => (row.data_status === "insufficient" ? badge(row.data_status) : "") + breakdown(row),
-  }), note, renderRegions);
+    // 종합 = 카테고리 등수 평균. 이전 형식 수집본(avg_rank 없음)은 지수를 그대로 보여 줍니다.
+    display: (row) => (row.avg_rank != null ? `평균 ${num(row.avg_rank)}위` : num(row.interest)),
+    extra: (row) => (row.data_status === "insufficient" ? badge(row.data_status) : ""),
+  }), "", renderRegions);
 }
 
 
@@ -359,7 +337,6 @@ const meterRow = (label, count, total) => `
     <span class="bar-track"><span class="bar-fill" style="width:${(count / total) * 100}%"></span></span>
   </li>`;
 const chips = (items, cls = "") => `<div class="chip-list">${items.map((item) => `<span class="chip ${cls}">${item}</span>`).join("")}</div>`;
-const sourceLink = (url, label) => (url ? `<a class="source-link" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)} ↗</a>` : "");
 
 function adResearch(r) {
   return `
@@ -375,24 +352,19 @@ function adResearch(r) {
 // TikTok·Meta 공개 광고 자료를 주제별로 묶어 보여 줍니다. 관찰한 사실만 정리하고 해석·제안은 AI 인사이트 탭에 맡깁니다.
 function themeCards(r) {
   const t = r.tiktok, m = r.meta;
-  const card = (title, body, links) => `
-    <article class="exec-card theme-card"><h4>${title}</h4>${body}
-      <div class="theme-sources">${links.join("")}</div></article>`;
+  const card = (title, body) => `<article class="exec-card theme-card"><h4>${title}</h4>${body}</article>`;
   return `<div class="theme-grid">
     ${card("영상 구성·식감 표현", `
-      <p class="mini-label">TikTok 광고 영상에서 확인한 장면</p>
       <ol class="meter-list">${t.patterns.map((x) => meterRow(x.label, x.count, t.coded)).join("")}</ol>
       <p class="mini-label">영상 길이</p>
       ${chips([`TikTok 약 ${Math.round(t.duration.min)}~${Math.round(t.duration.max)}초 · 중앙값 약 ${Math.round(t.duration.median)}초`,
         ...(m.video_lengths.length ? [`Meta 약 ${Math.min(...m.video_lengths)}~${Math.max(...m.video_lengths)}초`] : [])])}
       <p class="mini-label">광고에 쓰인 식감 단어</p>
-      <div class="word-grid">${m.texture_words.map((w) => `<span><b lang="vi">${esc(w.vi)}</b>${esc(w.ko)}</span>`).join("")}</div>`,
-      [sourceLink(t.source_url, "TikTok"), sourceLink(m.source_url, "Meta")])}
+      <div class="word-grid">${m.texture_words.map((w) => `<span><b lang="vi">${esc(w.vi)}</b>${esc(w.ko)}</span>`).join("")}</div>`)}
     ${card("메시지·카피", `
       <ul class="pattern-cards">${m.patterns.map((x) => `<li><strong>${esc(x.title)}</strong><p>${esc(x.body)}</p></li>`).join("")}</ul>
       <p class="mini-label">반복된 메시지 순서</p>
-      <ol class="flow">${m.message_flow.map((step) => `<li>${esc(step)}</li>`).join("")}</ol>`,
-      [sourceLink(m.source_url, "Meta")])}
+      <ol class="flow">${m.message_flow.map((step) => `<li>${esc(step)}</li>`).join("")}</ol>`)}
   </div>`;
 }
 

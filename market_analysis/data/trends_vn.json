@@ -2,87 +2,966 @@
   "country": "VN",
   "sections": {
     "categories": {
-      "checked_at": "2026-10-25T00:48:38+07:00",
-      "source_url": "https://trends.google.com/trends/explore?date=2025-06-22+2026-10-25&geo=VN&q=%22b%C3%A1nh+mochi%22+%2B+%22b%C3%A1nh+d%C3%A0y%22+%2B+daifuku%2C%22b%C3%A1nh+n%E1%BA%BFp%22+%2B+%22ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc%22+%2B+%22b%C3%A1nh+%C3%ADt%22+%2B+%22ch%C3%A8+n%E1%BA%BFp%22+%2B+%22x%C3%B4i+ng%E1%BB%8Dt%22%2C%22hoa+qu%E1%BA%A3+d%E1%BA%A7m%22+%2B+%22tr%C3%A1i+c%C3%A2y+t%C3%B4%22+%2B+%22s%E1%BB%AFa+chua+tr%C3%A1i+c%C3%A2y%22+%2B+kem+d%E1%BB%ABa+%2B+kem+xo%C3%A0i%2Cbingsu+%2B+hotteok+%2B+yakgwa",
+      "checked_at": "2026-10-26T04:39:49+07:00",
+      "source_url": "https://trends.google.com/trends/explore?date=2025-06-23+2026-10-26&geo=VN&q=%22b%C3%A1nh+mochi%22+%2B+%22b%C3%A1nh+d%C3%A0y%22%2C%22b%C3%A1nh+n%E1%BA%BFp%22%2C%22s%E1%BB%AFa+tr%C3%A1i+c%C3%A2y%22+%2B+%22tr%C3%A0+tr%C3%A1i+c%C3%A2y%22+%2B+%22b%C3%A1nh+tr%C3%A1i+c%C3%A2y%22+%2B+%22k%E1%BA%B9o+tr%C3%A1i+c%C3%A2y%22+%2B+%22tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y%22+%2B+%22kem+tr%C3%A1i+c%C3%A2y%22%2Cbingsu",
       "items": [
         {
           "id": "mochi",
-          "query": "\"bánh mochi\" + \"bánh dày\" + daifuku",
-          "recent_average": 27.5,
-          "year_ago_average": 20.3,
-          "change_rate": 35.2,
-          "short_change_rate": -37.6,
+          "query": "\"bánh mochi\" + \"bánh dày\"",
+          "recent_average": 36.7,
+          "year_ago_average": 45.4,
+          "change_rate": -19.3,
+          "short_change_rate": 8.8,
           "is_new": false,
           "coverage": 1.0,
           "data_status": "normal",
           "series": [
             {
               "date": "2025-06-22",
-              "interest": 11.0
+              "interest": 23.0
             },
             {
               "date": "2025-06-29",
-              "interest": 12.0
+              "interest": 29.0
             },
             {
               "date": "2025-07-06",
-              "interest": 14.0
+              "interest": 29.0
             },
             {
               "date": "2025-07-13",
-              "interest": 14.0
+              "interest": 29.0
             },
             {
               "date": "2025-07-20",
-              "interest": 16.0
+              "interest": 36.0
             },
             {
               "date": "2025-07-27",
-              "interest": 18.0
+              "interest": 37.0
             },
             {
               "date": "2025-08-03",
-              "interest": 13.0
+              "interest": 29.0
             },
             {
               "date": "2025-08-10",
-              "interest": 16.0
+              "interest": 29.0
             },
             {
               "date": "2025-08-17",
-              "interest": 18.0
+              "interest": 39.0
             },
             {
               "date": "2025-08-24",
-              "interest": 16.0
+              "interest": 36.0
             },
             {
               "date": "2025-08-31",
-              "interest": 14.0
+              "interest": 33.0
             },
             {
               "date": "2025-09-07",
-              "interest": 18.0
+              "interest": 42.0
             },
             {
               "date": "2025-09-14",
-              "interest": 23.0
+              "interest": 52.0
             },
             {
               "date": "2025-09-21",
-              "interest": 32.0
+              "interest": 73.0
             },
             {
               "date": "2025-09-28",
-              "interest": 31.0
+              "interest": 71.0
             },
             {
               "date": "2025-10-05",
-              "interest": 22.0
+              "interest": 50.0
             },
             {
               "date": "2025-10-12",
+              "interest": 49.0
+            },
+            {
+              "date": "2025-10-19",
+              "interest": 42.0
+            },
+            {
+              "date": "2025-10-26",
+              "interest": 51.0
+            },
+            {
+              "date": "2025-11-02",
+              "interest": 51.0
+            },
+            {
+              "date": "2025-11-09",
+              "interest": 41.0
+            },
+            {
+              "date": "2025-11-16",
+              "interest": 39.0
+            },
+            {
+              "date": "2025-11-23",
+              "interest": 43.0
+            },
+            {
+              "date": "2025-11-30",
+              "interest": 48.0
+            },
+            {
+              "date": "2025-12-07",
+              "interest": 49.0
+            },
+            {
+              "date": "2025-12-14",
+              "interest": 45.0
+            },
+            {
+              "date": "2025-12-21",
+              "interest": 43.0
+            },
+            {
+              "date": "2025-12-28",
+              "interest": 52.0
+            },
+            {
+              "date": "2026-01-04",
+              "interest": 60.0
+            },
+            {
+              "date": "2026-01-11",
+              "interest": 47.0
+            },
+            {
+              "date": "2026-01-18",
+              "interest": 55.0
+            },
+            {
+              "date": "2026-01-25",
+              "interest": 68.0
+            },
+            {
+              "date": "2026-02-01",
+              "interest": 74.0
+            },
+            {
+              "date": "2026-02-08",
+              "interest": 61.0
+            },
+            {
+              "date": "2026-02-15",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-02-22",
+              "interest": 47.0
+            },
+            {
+              "date": "2026-03-01",
+              "interest": 37.0
+            },
+            {
+              "date": "2026-03-08",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-03-15",
+              "interest": 38.0
+            },
+            {
+              "date": "2026-03-22",
+              "interest": 43.0
+            },
+            {
+              "date": "2026-03-29",
+              "interest": 40.0
+            },
+            {
+              "date": "2026-04-05",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-04-12",
+              "interest": 43.0
+            },
+            {
+              "date": "2026-04-19",
+              "interest": 59.0
+            },
+            {
+              "date": "2026-04-26",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-05-03",
+              "interest": 28.0
+            },
+            {
+              "date": "2026-05-10",
+              "interest": 29.0
+            },
+            {
+              "date": "2026-05-17",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-05-24",
+              "interest": 24.0
+            },
+            {
+              "date": "2026-05-31",
+              "interest": 20.0
+            },
+            {
+              "date": "2026-06-07",
+              "interest": 29.0
+            },
+            {
+              "date": "2026-06-14",
+              "interest": 27.0
+            },
+            {
+              "date": "2026-06-21",
+              "interest": 22.0
+            },
+            {
+              "date": "2026-06-28",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-07-05",
+              "interest": 30.0
+            },
+            {
+              "date": "2026-07-12",
+              "interest": 27.0
+            },
+            {
+              "date": "2026-07-19",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-07-26",
+              "interest": 30.0
+            },
+            {
+              "date": "2026-08-02",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-08-09",
+              "interest": 29.0
+            },
+            {
+              "date": "2026-08-16",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-08-23",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-08-30",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-09-06",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-09-13",
+              "interest": 39.0
+            },
+            {
+              "date": "2026-09-20",
+              "interest": 40.0
+            },
+            {
+              "date": "2026-09-27",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-10-04",
+              "interest": 44.0
+            },
+            {
+              "date": "2026-10-11",
+              "interest": 44.0
+            },
+            {
+              "date": "2026-10-18",
+              "interest": 41.0
+            }
+          ]
+        },
+        {
+          "id": "sticky-rice",
+          "query": "\"bánh nếp\"",
+          "recent_average": 6.7,
+          "year_ago_average": 6.2,
+          "change_rate": 6.7,
+          "short_change_rate": 7.7,
+          "is_new": false,
+          "coverage": 1.0,
+          "data_status": "normal",
+          "series": [
+            {
+              "date": "2025-06-22",
+              "interest": 3.0
+            },
+            {
+              "date": "2025-06-29",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-07-06",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-07-13",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-07-20",
+              "interest": 6.0
+            },
+            {
+              "date": "2025-07-27",
+              "interest": 6.0
+            },
+            {
+              "date": "2025-08-03",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-08-10",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-08-17",
+              "interest": 8.0
+            },
+            {
+              "date": "2025-08-24",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-08-31",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-09-07",
+              "interest": 4.0
+            },
+            {
+              "date": "2025-09-14",
+              "interest": 6.0
+            },
+            {
+              "date": "2025-09-21",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-09-28",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-10-05",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-10-12",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-10-19",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-10-26",
+              "interest": 4.0
+            },
+            {
+              "date": "2025-11-02",
+              "interest": 6.0
+            },
+            {
+              "date": "2025-11-09",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-11-16",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-11-23",
+              "interest": 7.0
+            },
+            {
+              "date": "2025-11-30",
+              "interest": 4.0
+            },
+            {
+              "date": "2025-12-07",
+              "interest": 6.0
+            },
+            {
+              "date": "2025-12-14",
+              "interest": 5.0
+            },
+            {
+              "date": "2025-12-21",
+              "interest": 3.0
+            },
+            {
+              "date": "2025-12-28",
+              "interest": 8.0
+            },
+            {
+              "date": "2026-01-04",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-01-11",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-01-18",
+              "interest": 4.0
+            },
+            {
+              "date": "2026-01-25",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-02-01",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-02-08",
+              "interest": 7.0
+            },
+            {
+              "date": "2026-02-15",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-02-22",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-03-01",
+              "interest": 11.0
+            },
+            {
+              "date": "2026-03-08",
+              "interest": 4.0
+            },
+            {
+              "date": "2026-03-15",
+              "interest": 4.0
+            },
+            {
+              "date": "2026-03-22",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-03-29",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-04-05",
+              "interest": 3.0
+            },
+            {
+              "date": "2026-04-12",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-04-19",
+              "interest": 11.0
+            },
+            {
+              "date": "2026-04-26",
+              "interest": 12.0
+            },
+            {
+              "date": "2026-05-03",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-05-10",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-05-17",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-05-24",
+              "interest": 0.0
+            },
+            {
+              "date": "2026-05-31",
+              "interest": 8.0
+            },
+            {
+              "date": "2026-06-07",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-06-14",
+              "interest": 9.0
+            },
+            {
+              "date": "2026-06-21",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-06-28",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-07-05",
+              "interest": 4.0
+            },
+            {
+              "date": "2026-07-12",
+              "interest": 4.0
+            },
+            {
+              "date": "2026-07-19",
+              "interest": 7.0
+            },
+            {
+              "date": "2026-07-26",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-08-02",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-08-09",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-08-16",
+              "interest": 7.0
+            },
+            {
+              "date": "2026-08-23",
+              "interest": 8.0
+            },
+            {
+              "date": "2026-08-30",
+              "interest": 8.0
+            },
+            {
+              "date": "2026-09-06",
+              "interest": 5.0
+            },
+            {
+              "date": "2026-09-13",
+              "interest": 7.0
+            },
+            {
+              "date": "2026-09-20",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-09-27",
+              "interest": 7.0
+            },
+            {
+              "date": "2026-10-04",
+              "interest": 9.0
+            },
+            {
+              "date": "2026-10-11",
+              "interest": 6.0
+            },
+            {
+              "date": "2026-10-18",
+              "interest": 6.0
+            }
+          ]
+        },
+        {
+          "id": "fruit",
+          "query": "\"sữa trái cây\" + \"trà trái cây\" + \"bánh trái cây\" + \"kẹo trái cây\" + \"trái cây sấy\" + \"kem trái cây\"",
+          "recent_average": 34.2,
+          "year_ago_average": 31.7,
+          "change_rate": 8.2,
+          "short_change_rate": 1.4,
+          "is_new": false,
+          "coverage": 1.0,
+          "data_status": "normal",
+          "series": [
+            {
+              "date": "2025-06-22",
+              "interest": 27.0
+            },
+            {
+              "date": "2025-06-29",
+              "interest": 35.0
+            },
+            {
+              "date": "2025-07-06",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-07-13",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-07-20",
+              "interest": 34.0
+            },
+            {
+              "date": "2025-07-27",
+              "interest": 32.0
+            },
+            {
+              "date": "2025-08-03",
+              "interest": 37.0
+            },
+            {
+              "date": "2025-08-10",
+              "interest": 35.0
+            },
+            {
+              "date": "2025-08-17",
+              "interest": 33.0
+            },
+            {
+              "date": "2025-08-24",
+              "interest": 24.0
+            },
+            {
+              "date": "2025-08-31",
+              "interest": 29.0
+            },
+            {
+              "date": "2025-09-07",
+              "interest": 33.0
+            },
+            {
+              "date": "2025-09-14",
+              "interest": 33.0
+            },
+            {
+              "date": "2025-09-21",
+              "interest": 33.0
+            },
+            {
+              "date": "2025-09-28",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-10-05",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-10-12",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-10-19",
+              "interest": 33.0
+            },
+            {
+              "date": "2025-10-26",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-11-02",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-11-09",
+              "interest": 24.0
+            },
+            {
+              "date": "2025-11-16",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-11-23",
+              "interest": 30.0
+            },
+            {
+              "date": "2025-11-30",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-12-07",
+              "interest": 27.0
+            },
+            {
+              "date": "2025-12-14",
+              "interest": 29.0
+            },
+            {
+              "date": "2025-12-21",
+              "interest": 34.0
+            },
+            {
+              "date": "2025-12-28",
+              "interest": 28.0
+            },
+            {
+              "date": "2026-01-04",
+              "interest": 25.0
+            },
+            {
+              "date": "2026-01-11",
+              "interest": 28.0
+            },
+            {
+              "date": "2026-01-18",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-01-25",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-02-01",
+              "interest": 27.0
+            },
+            {
+              "date": "2026-02-08",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-02-15",
+              "interest": 22.0
+            },
+            {
+              "date": "2026-02-22",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-03-01",
+              "interest": 27.0
+            },
+            {
+              "date": "2026-03-08",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-03-15",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-03-22",
+              "interest": 29.0
+            },
+            {
+              "date": "2026-03-29",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-04-05",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-04-12",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-04-19",
+              "interest": 41.0
+            },
+            {
+              "date": "2026-04-26",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-05-03",
+              "interest": 38.0
+            },
+            {
+              "date": "2026-05-10",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-05-17",
+              "interest": 40.0
+            },
+            {
+              "date": "2026-05-24",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-05-31",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-06-07",
+              "interest": 37.0
+            },
+            {
+              "date": "2026-06-14",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-06-21",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-06-28",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-07-05",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-07-12",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-07-19",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-07-26",
+              "interest": 29.0
+            },
+            {
+              "date": "2026-08-02",
+              "interest": 28.0
+            },
+            {
+              "date": "2026-08-09",
+              "interest": 32.0
+            },
+            {
+              "date": "2026-08-16",
+              "interest": 30.0
+            },
+            {
+              "date": "2026-08-23",
+              "interest": 37.0
+            },
+            {
+              "date": "2026-08-30",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-09-06",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-09-13",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-09-20",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-09-27",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-10-04",
+              "interest": 38.0
+            },
+            {
+              "date": "2026-10-11",
+              "interest": 35.0
+            },
+            {
+              "date": "2026-10-18",
+              "interest": 37.0
+            }
+          ]
+        },
+        {
+          "id": "k-dessert",
+          "query": "bingsu",
+          "recent_average": 50.2,
+          "year_ago_average": 22.5,
+          "change_rate": 123.3,
+          "short_change_rate": -59.8,
+          "is_new": false,
+          "coverage": 1.0,
+          "data_status": "normal",
+          "series": [
+            {
+              "date": "2025-06-22",
+              "interest": 20.0
+            },
+            {
+              "date": "2025-06-29",
               "interest": 23.0
+            },
+            {
+              "date": "2025-07-06",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-07-13",
+              "interest": 28.0
+            },
+            {
+              "date": "2025-07-20",
+              "interest": 27.0
+            },
+            {
+              "date": "2025-07-27",
+              "interest": 31.0
+            },
+            {
+              "date": "2025-08-03",
+              "interest": 27.0
+            },
+            {
+              "date": "2025-08-10",
+              "interest": 29.0
+            },
+            {
+              "date": "2025-08-17",
+              "interest": 25.0
+            },
+            {
+              "date": "2025-08-24",
+              "interest": 18.0
+            },
+            {
+              "date": "2025-08-31",
+              "interest": 38.0
+            },
+            {
+              "date": "2025-09-07",
+              "interest": 19.0
+            },
+            {
+              "date": "2025-09-14",
+              "interest": 24.0
+            },
+            {
+              "date": "2025-09-21",
+              "interest": 15.0
+            },
+            {
+              "date": "2025-09-28",
+              "interest": 16.0
+            },
+            {
+              "date": "2025-10-05",
+              "interest": 20.0
+            },
+            {
+              "date": "2025-10-12",
+              "interest": 21.0
             },
             {
               "date": "2025-10-19",
@@ -90,19 +969,19 @@
             },
             {
               "date": "2025-10-26",
-              "interest": 24.0
+              "interest": 17.0
             },
             {
               "date": "2025-11-02",
-              "interest": 24.0
+              "interest": 15.0
             },
             {
               "date": "2025-11-09",
-              "interest": 19.0
+              "interest": 14.0
             },
             {
               "date": "2025-11-16",
-              "interest": 18.0
+              "interest": 17.0
             },
             {
               "date": "2025-11-23",
@@ -110,23 +989,23 @@
             },
             {
               "date": "2025-11-30",
-              "interest": 21.0
+              "interest": 13.0
             },
             {
               "date": "2025-12-07",
-              "interest": 24.0
+              "interest": 19.0
             },
             {
               "date": "2025-12-14",
-              "interest": 22.0
+              "interest": 23.0
             },
             {
               "date": "2025-12-21",
-              "interest": 20.0
+              "interest": 25.0
             },
             {
               "date": "2025-12-28",
-              "interest": 24.0
+              "interest": 36.0
             },
             {
               "date": "2026-01-04",
@@ -134,890 +1013,23 @@
             },
             {
               "date": "2026-01-11",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-01-18",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-01-25",
-              "interest": 33.0
-            },
-            {
-              "date": "2026-02-01",
-              "interest": 36.0
-            },
-            {
-              "date": "2026-02-08",
-              "interest": 41.0
-            },
-            {
-              "date": "2026-02-15",
-              "interest": 44.0
-            },
-            {
-              "date": "2026-02-22",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-03-01",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-03-08",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-03-15",
-              "interest": 21.0
-            },
-            {
-              "date": "2026-03-22",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-03-29",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-04-05",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-04-12",
-              "interest": 21.0
-            },
-            {
-              "date": "2026-04-19",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-04-26",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-05-03",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-05-10",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-05-17",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-05-24",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-05-31",
-              "interest": 9.0
-            },
-            {
-              "date": "2026-06-07",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-06-14",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-06-21",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-06-28",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-07-05",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-07-12",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-07-19",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-07-26",
-              "interest": 25.0
-            },
-            {
-              "date": "2026-08-02",
-              "interest": 36.0
-            },
-            {
-              "date": "2026-08-09",
-              "interest": 37.0
-            },
-            {
-              "date": "2026-08-16",
-              "interest": 29.0
-            },
-            {
-              "date": "2026-08-23",
               "interest": 24.0
             },
             {
-              "date": "2026-08-30",
-              "interest": 36.0
-            },
-            {
-              "date": "2026-09-06",
-              "interest": 33.0
-            },
-            {
-              "date": "2026-09-13",
-              "interest": 32.0
-            },
-            {
-              "date": "2026-09-20",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-09-27",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-10-04",
-              "interest": 20.0
-            },
-            {
-              "date": "2026-10-11",
-              "interest": 21.0
-            }
-          ]
-        },
-        {
-          "id": "sticky-rice",
-          "query": "\"bánh nếp\" + \"chè trôi nước\" + \"bánh ít\" + \"chè nếp\" + \"xôi ngọt\"",
-          "recent_average": 18.6,
-          "year_ago_average": 18.1,
-          "change_rate": 2.8,
-          "short_change_rate": -22.6,
-          "is_new": false,
-          "coverage": 1.0,
-          "data_status": "normal",
-          "series": [
-            {
-              "date": "2025-06-22",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-06-29",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-07-06",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-07-13",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-07-20",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-07-27",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-08-03",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-08-10",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-08-17",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-08-24",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-08-31",
+              "date": "2026-01-18",
               "interest": 25.0
             },
             {
-              "date": "2025-09-07",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-09-14",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-09-21",
-              "interest": 20.0
-            },
-            {
-              "date": "2025-09-28",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-10-05",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-10-12",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-10-19",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-10-26",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-11-02",
-              "interest": 20.0
-            },
-            {
-              "date": "2025-11-09",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-11-16",
-              "interest": 21.0
-            },
-            {
-              "date": "2025-11-23",
-              "interest": 17.0
-            },
-            {
-              "date": "2025-11-30",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-12-07",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-12-14",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-12-21",
-              "interest": 18.0
-            },
-            {
-              "date": "2025-12-28",
-              "interest": 20.0
-            },
-            {
-              "date": "2026-01-04",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-01-11",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-01-18",
-              "interest": 17.0
-            },
-            {
               "date": "2026-01-25",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-02-01",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-02-08",
               "interest": 27.0
             },
             {
-              "date": "2026-02-15",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-02-22",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-03-01",
-              "interest": 37.0
-            },
-            {
-              "date": "2026-03-08",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-03-15",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-03-22",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-03-29",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-04-05",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-04-12",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-04-19",
-              "interest": 21.0
-            },
-            {
-              "date": "2026-04-26",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-05-03",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-05-10",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-05-17",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-05-24",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-05-31",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-06-07",
-              "interest": 20.0
-            },
-            {
-              "date": "2026-06-14",
-              "interest": 35.0
-            },
-            {
-              "date": "2026-06-21",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-06-28",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-07-05",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-07-12",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-07-19",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-07-26",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-08-02",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-08-09",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-08-16",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-08-23",
-              "interest": 31.0
-            },
-            {
-              "date": "2026-08-30",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-09-06",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-09-13",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-09-20",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-09-27",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-10-04",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-10-11",
-              "interest": 17.0
-            }
-          ]
-        },
-        {
-          "id": "fruit",
-          "query": "\"hoa quả dầm\" + \"trái cây tô\" + \"sữa chua trái cây\" + kem dừa + kem xoài",
-          "recent_average": 17.0,
-          "year_ago_average": 15.6,
-          "change_rate": 9.1,
-          "short_change_rate": -14.7,
-          "is_new": false,
-          "coverage": 1.0,
-          "data_status": "normal",
-          "series": [
-            {
-              "date": "2025-06-22",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-06-29",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-07-06",
-              "interest": 23.0
-            },
-            {
-              "date": "2025-07-13",
-              "interest": 20.0
-            },
-            {
-              "date": "2025-07-20",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-07-27",
-              "interest": 22.0
-            },
-            {
-              "date": "2025-08-03",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-08-10",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-08-17",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-08-24",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-08-31",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-09-07",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-09-14",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-09-21",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-09-28",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-10-05",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-10-12",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-10-19",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-10-26",
-              "interest": 11.0
-            },
-            {
-              "date": "2025-11-02",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-11-09",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-11-16",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-11-23",
-              "interest": 16.0
-            },
-            {
-              "date": "2025-11-30",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-12-07",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-12-14",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-12-21",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-12-28",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-01-04",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-01-11",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-01-18",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-01-25",
-              "interest": 12.0
-            },
-            {
               "date": "2026-02-01",
-              "interest": 11.0
+              "interest": 26.0
             },
             {
               "date": "2026-02-08",
-              "interest": 11.0
-            },
-            {
-              "date": "2026-02-15",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-02-22",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-03-01",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-03-08",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-03-15",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-03-22",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-03-29",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-04-05",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-04-12",
-              "interest": 27.0
-            },
-            {
-              "date": "2026-04-19",
-              "interest": 24.0
-            },
-            {
-              "date": "2026-04-26",
-              "interest": 29.0
-            },
-            {
-              "date": "2026-05-03",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-05-10",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-05-17",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-05-24",
-              "interest": 31.0
-            },
-            {
-              "date": "2026-05-31",
-              "interest": 34.0
-            },
-            {
-              "date": "2026-06-07",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-06-14",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-06-21",
-              "interest": 26.0
-            },
-            {
-              "date": "2026-06-28",
-              "interest": 20.0
-            },
-            {
-              "date": "2026-07-05",
-              "interest": 20.0
-            },
-            {
-              "date": "2026-07-12",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-07-19",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-07-26",
-              "interest": 21.0
-            },
-            {
-              "date": "2026-08-02",
-              "interest": 21.0
-            },
-            {
-              "date": "2026-08-09",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-08-16",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-08-23",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-08-30",
-              "interest": 23.0
-            },
-            {
-              "date": "2026-09-06",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-09-13",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-09-20",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-09-27",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-10-04",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-10-11",
-              "interest": 16.0
-            }
-          ]
-        },
-        {
-          "id": "k-dessert",
-          "query": "bingsu + hotteok + yakgwa",
-          "recent_average": 45.0,
-          "year_ago_average": 11.7,
-          "change_rate": 285.7,
-          "short_change_rate": -78.1,
-          "is_new": false,
-          "coverage": 1.0,
-          "data_status": "normal",
-          "series": [
-            {
-              "date": "2025-06-22",
-              "interest": 11.0
-            },
-            {
-              "date": "2025-06-29",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-07-06",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-07-13",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-07-20",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-07-27",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-08-03",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-08-10",
-              "interest": 14.0
-            },
-            {
-              "date": "2025-08-17",
-              "interest": 13.0
-            },
-            {
-              "date": "2025-08-24",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-08-31",
-              "interest": 19.0
-            },
-            {
-              "date": "2025-09-07",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-09-14",
-              "interest": 11.0
-            },
-            {
-              "date": "2025-09-21",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-09-28",
-              "interest": 7.0
-            },
-            {
-              "date": "2025-10-05",
-              "interest": 10.0
-            },
-            {
-              "date": "2025-10-12",
-              "interest": 10.0
-            },
-            {
-              "date": "2025-10-19",
-              "interest": 10.0
-            },
-            {
-              "date": "2025-10-26",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-11-02",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-11-09",
-              "interest": 8.0
-            },
-            {
-              "date": "2025-11-16",
-              "interest": 9.0
-            },
-            {
-              "date": "2025-11-23",
-              "interest": 11.0
-            },
-            {
-              "date": "2025-11-30",
-              "interest": 8.0
-            },
-            {
-              "date": "2025-12-07",
-              "interest": 10.0
-            },
-            {
-              "date": "2025-12-14",
-              "interest": 12.0
-            },
-            {
-              "date": "2025-12-21",
-              "interest": 15.0
-            },
-            {
-              "date": "2025-12-28",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-01-04",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-01-11",
-              "interest": 13.0
-            },
-            {
-              "date": "2026-01-18",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-01-25",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-02-01",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-02-08",
-              "interest": 52.0
+              "interest": 54.0
             },
             {
               "date": "2026-02-15",
@@ -1025,357 +1037,518 @@
             },
             {
               "date": "2026-02-22",
-              "interest": 28.0
-            },
-            {
-              "date": "2026-03-01",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-03-08",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-03-15",
-              "interest": 16.0
-            },
-            {
-              "date": "2026-03-22",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-03-29",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-04-05",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-04-12",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-04-19",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-04-26",
-              "interest": 23.0
-            },
-            {
-              "date": "2026-05-03",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-05-10",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-05-17",
-              "interest": 15.0
-            },
-            {
-              "date": "2026-05-24",
-              "interest": 19.0
-            },
-            {
-              "date": "2026-05-31",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-06-07",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-06-14",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-06-21",
-              "interest": 22.0
-            },
-            {
-              "date": "2026-06-28",
-              "interest": 18.0
-            },
-            {
-              "date": "2026-07-05",
-              "interest": 17.0
-            },
-            {
-              "date": "2026-07-12",
-              "interest": 14.0
-            },
-            {
-              "date": "2026-07-19",
-              "interest": 12.0
-            },
-            {
-              "date": "2026-07-26",
               "interest": 40.0
             },
             {
-              "date": "2026-08-02",
-              "interest": 74.0
+              "date": "2026-03-01",
+              "interest": 26.0
             },
             {
-              "date": "2026-08-09",
-              "interest": 87.0
+              "date": "2026-03-08",
+              "interest": 27.0
             },
             {
-              "date": "2026-08-16",
-              "interest": 55.0
+              "date": "2026-03-15",
+              "interest": 32.0
             },
             {
-              "date": "2026-08-23",
+              "date": "2026-03-22",
+              "interest": 27.0
+            },
+            {
+              "date": "2026-03-29",
+              "interest": 25.0
+            },
+            {
+              "date": "2026-04-05",
+              "interest": 39.0
+            },
+            {
+              "date": "2026-04-12",
               "interest": 31.0
             },
             {
+              "date": "2026-04-19",
+              "interest": 30.0
+            },
+            {
+              "date": "2026-04-26",
+              "interest": 50.0
+            },
+            {
+              "date": "2026-05-03",
+              "interest": 33.0
+            },
+            {
+              "date": "2026-05-10",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-05-17",
+              "interest": 31.0
+            },
+            {
+              "date": "2026-05-24",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-05-31",
+              "interest": 43.0
+            },
+            {
+              "date": "2026-06-07",
+              "interest": 34.0
+            },
+            {
+              "date": "2026-06-14",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-06-21",
+              "interest": 41.0
+            },
+            {
+              "date": "2026-06-28",
+              "interest": 36.0
+            },
+            {
+              "date": "2026-07-05",
+              "interest": 37.0
+            },
+            {
+              "date": "2026-07-12",
+              "interest": 30.0
+            },
+            {
+              "date": "2026-07-19",
+              "interest": 26.0
+            },
+            {
+              "date": "2026-07-26",
+              "interest": 41.0
+            },
+            {
+              "date": "2026-08-02",
+              "interest": 75.0
+            },
+            {
+              "date": "2026-08-09",
+              "interest": 86.0
+            },
+            {
+              "date": "2026-08-16",
+              "interest": 67.0
+            },
+            {
+              "date": "2026-08-23",
+              "interest": 40.0
+            },
+            {
               "date": "2026-08-30",
-              "interest": 81.0
+              "interest": 87.0
             },
             {
               "date": "2026-09-06",
-              "interest": 63.0
+              "interest": 66.0
             },
             {
               "date": "2026-09-13",
-              "interest": 58.0
+              "interest": 59.0
             },
             {
               "date": "2026-09-20",
-              "interest": 16.0
+              "interest": 27.0
             },
             {
               "date": "2026-09-27",
-              "interest": 12.0
+              "interest": 25.0
             },
             {
               "date": "2026-10-04",
-              "interest": 12.0
+              "interest": 23.0
             },
             {
               "date": "2026-10-11",
-              "interest": 11.0
+              "interest": 22.0
+            },
+            {
+              "date": "2026-10-18",
+              "interest": 26.0
             }
           ]
         }
       ]
     },
     "rankings": {
-      "checked_at": "2026-10-25T00:49:35+07:00",
+      "checked_at": "2026-10-26T04:12:36+07:00",
       "by_category": {
         "mochi": {
-          "source_url": "https://trends.google.com/trends/explore?date=2025-06-22+2026-10-25&geo=VN&q=mochi+kem%2Cdaifuku%2C%22b%C3%A1nh+d%C3%A0y%22%2C%22b%C3%A1nh+trung+thu+mochi%22%2C%22b%C3%A1nh+mochi+nh%E1%BA%ADt%22",
+          "metric": "related",
+          "seed": "\"bánh mochi\"",
           "items": [
             {
-              "query": "mochi kem",
-              "recent_average": 10.0,
-              "year_ago_average": 7.1,
-              "change_rate": 41.2,
-              "short_change_rate": 2.6,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "daifuku",
-              "recent_average": 39.4,
-              "year_ago_average": 1.0,
-              "change_rate": 3841.7,
-              "short_change_rate": -98.6,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "\"bánh dày\"",
-              "recent_average": 33.8,
-              "year_ago_average": 43.7,
-              "change_rate": -22.7,
-              "short_change_rate": 30.5,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "\"bánh trung thu mochi\"",
-              "recent_average": 1.8,
-              "year_ago_average": 4.2,
-              "change_rate": -58.8,
-              "short_change_rate": 100.0,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "\"bánh mochi nhật\"",
-              "recent_average": 0.1,
-              "year_ago_average": 0.0,
+              "query": "bánh mochi nhật",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 38.0,
+              "rising_value": null,
+              "recent_average": 38.0,
+              "year_ago_average": null,
               "change_rate": null,
               "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi kem lạnh",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 23.0,
+              "rising_value": "+90%",
+              "recent_average": 23.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi nhật bản",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 17.0,
+              "rising_value": null,
+              "recent_average": 17.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi dẻo",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 14.0,
+              "rising_value": null,
+              "recent_average": 14.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi đài loan",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 11.0,
+              "rising_value": null,
+              "recent_average": 11.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi đậu đỏ",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 8.0,
+              "rising_value": "Đột phá",
+              "recent_average": 8.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi nướng",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 8.0,
+              "rising_value": "+70%",
+              "recent_average": 8.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi chấm kem",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 7.0,
+              "rising_value": null,
+              "recent_average": 7.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi hàn quốc",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 5.0,
+              "rising_value": null,
+              "recent_average": 5.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh mochi trung quốc",
+              "source": "연관 인기",
+              "origin": "\"bánh mochi\"",
+              "related_value": 4.0,
+              "rising_value": null,
+              "recent_average": 4.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
               "data_status": "normal"
             }
           ]
         },
         "sticky-rice": {
-          "source_url": "https://trends.google.com/trends/explore?date=2025-06-22+2026-10-25&geo=VN&q=%22b%C3%A1nh+n%E1%BA%BFp%22%2C%22ch%C3%A8+tr%C3%B4i+n%C6%B0%E1%BB%9Bc%22%2C%22b%C3%A1nh+%C3%ADt%22%2C%22b%C3%A1nh+d%E1%BA%BBo%22",
+          "metric": "related",
+          "seed": "\"bánh nếp\"",
           "items": [
             {
-              "query": "\"bánh nếp\"",
-              "recent_average": 5.5,
-              "year_ago_average": 5.1,
-              "change_rate": 8.2,
-              "short_change_rate": 0.0,
+              "query": "bánh nếp đậu xanh",
+              "source": "연관 인기",
+              "origin": "\"bánh nếp\"",
+              "related_value": 45.0,
+              "rising_value": "+40%",
+              "recent_average": 45.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             },
             {
-              "query": "\"chè trôi nước\"",
-              "recent_average": 7.0,
-              "year_ago_average": 6.4,
-              "change_rate": 9.1,
-              "short_change_rate": -46.2,
+              "query": "bánh nếp nhân đậu xanh",
+              "source": "연관 인기",
+              "origin": "\"bánh nếp\"",
+              "related_value": 40.0,
+              "rising_value": null,
+              "recent_average": 40.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             },
             {
-              "query": "\"bánh ít\"",
-              "recent_average": 20.1,
-              "year_ago_average": 19.6,
-              "change_rate": 2.6,
-              "short_change_rate": -7.5,
+              "query": "bánh nếp chiên",
+              "source": "연관 인기",
+              "origin": "\"bánh nếp\"",
+              "related_value": 34.0,
+              "rising_value": null,
+              "recent_average": 34.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             },
             {
-              "query": "\"bánh dẻo\"",
-              "recent_average": 34.6,
-              "year_ago_average": 34.8,
-              "change_rate": -0.7,
-              "short_change_rate": -13.9,
+              "query": "bánh nếp nướng",
+              "source": "연관 인기",
+              "origin": "\"bánh nếp\"",
+              "related_value": 26.0,
+              "rising_value": "+90%",
+              "recent_average": 26.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             }
-          ]
+          ],
+          "kept_from": "2026-10-26T03:20:39+07:00",
+          "error": "SerpApi 오류: Google Trends hasn't returned any results for this query."
         },
         "fruit": {
-          "source_url": "https://trends.google.com/trends/explore?date=2025-06-22+2026-10-25&geo=VN&q=kem+d%E1%BB%ABa%2Ckem+xo%C3%A0i%2C%22hoa+qu%E1%BA%A3+d%E1%BA%A7m%22%2C%22s%E1%BB%AFa+chua+tr%C3%A1i+c%C3%A2y%22%2C%22tr%C3%A1i+c%C3%A2y+t%C3%B4%22",
+          "metric": "related",
+          "seed": "trái cây",
           "items": [
             {
-              "query": "kem dừa",
-              "recent_average": 52.8,
-              "year_ago_average": 46.4,
-              "change_rate": 13.8,
-              "short_change_rate": -18.1,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "kem xoài",
-              "recent_average": 7.6,
-              "year_ago_average": 7.8,
-              "change_rate": -3.2,
-              "short_change_rate": -50.0,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "\"hoa quả dầm\"",
-              "recent_average": 5.7,
-              "year_ago_average": 2.5,
-              "change_rate": 126.7,
-              "short_change_rate": 33.3,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "\"sữa chua trái cây\"",
-              "recent_average": 1.1,
-              "year_ago_average": 1.4,
-              "change_rate": -23.5,
+              "query": "sữa trái cây",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 29.0,
+              "rising_value": null,
+              "recent_average": 29.0,
+              "year_ago_average": null,
+              "change_rate": null,
               "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             },
             {
-              "query": "\"trái cây tô\"",
-              "recent_average": 2.2,
-              "year_ago_average": 1.3,
-              "change_rate": 68.8,
+              "query": "trà trái cây",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 24.0,
+              "rising_value": null,
+              "recent_average": 24.0,
+              "year_ago_average": null,
+              "change_rate": null,
               "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
+              "data_status": "normal"
+            },
+            {
+              "query": "bánh trái cây",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 18.0,
+              "rising_value": null,
+              "recent_average": 18.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "kẹo trái cây",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 11.0,
+              "rising_value": null,
+              "recent_average": 11.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "trái cây sấy",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 9.0,
+              "rising_value": null,
+              "recent_average": 9.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "kem trái cây",
+              "source": "연관 인기",
+              "origin": "trái cây",
+              "related_value": 9.0,
+              "rising_value": null,
+              "recent_average": 9.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
               "data_status": "normal"
             }
           ]
         },
         "k-dessert": {
-          "source_url": "https://trends.google.com/trends/explore?date=2025-06-22+2026-10-25&geo=VN&q=bingsu%2Chotteok%2Cyakgwa%2Cinjeolmi%2Cbungeoppang",
+          "metric": "related",
+          "seed": "bingsu",
           "items": [
             {
-              "query": "bingsu",
-              "recent_average": 52.8,
-              "year_ago_average": 24.4,
-              "change_rate": 116.0,
-              "short_change_rate": -62.3,
-              "is_new": false,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "hotteok",
-              "recent_average": 26.8,
-              "year_ago_average": 0.0,
-              "change_rate": null,
-              "short_change_rate": -98.0,
-              "is_new": true,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "yakgwa",
-              "recent_average": 24.7,
-              "year_ago_average": 0.0,
-              "change_rate": null,
-              "short_change_rate": -99.3,
-              "is_new": true,
-              "coverage": 1.0,
-              "data_status": "normal"
-            },
-            {
-              "query": "injeolmi",
-              "recent_average": 0.0,
-              "year_ago_average": 0.0,
+              "query": "kem bingsu",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 6.0,
+              "rising_value": null,
+              "recent_average": 6.0,
+              "year_ago_average": null,
               "change_rate": null,
               "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
               "data_status": "normal"
             },
             {
-              "query": "bungeoppang",
-              "recent_average": 0.0,
-              "year_ago_average": 0.0,
+              "query": "snow bingsu",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 4.0,
+              "rising_value": null,
+              "recent_average": 4.0,
+              "year_ago_average": null,
               "change_rate": null,
               "short_change_rate": null,
               "is_new": false,
-              "coverage": 1.0,
+              "data_status": "normal"
+            },
+            {
+              "query": "bingsu ngon",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 2.0,
+              "rising_value": null,
+              "recent_average": 2.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bingsu nha trang",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 1.0,
+              "rising_value": null,
+              "recent_average": 1.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bingsu phổ quang",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 0.0,
+              "rising_value": "+4.000%",
+              "recent_average": 0.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
+              "data_status": "normal"
+            },
+            {
+              "query": "bingsu trần hưng đạo",
+              "source": "연관 인기",
+              "origin": "bingsu",
+              "related_value": 0.0,
+              "rising_value": "+2.650%",
+              "recent_average": 0.0,
+              "year_ago_average": null,
+              "change_rate": null,
+              "short_change_rate": null,
+              "is_new": false,
               "data_status": "normal"
             }
           ]
         }
+      },
+      "category_errors": {
+        "sticky-rice": "SerpApi 오류: Google Trends hasn't returned any results for this query."
       }
     },
     "fruit_flavors": {
@@ -1486,342 +1659,2932 @@
       ]
     },
     "regions": {
-      "checked_at": "2026-10-25T00:36:27+07:00",
-      "query": "\"bánh mochi\"",
-      "source_url": "https://trends.google.com/trends/explore?date=today+3-m&geo=VN&q=%22b%C3%A1nh+mochi%22",
-      "items": [
+      "checked_at": "2026-10-26T04:39:49+07:00",
+      "by_category": [
         {
-          "geo": "VN-49",
-          "name": "Vĩnh Long",
-          "location": "Vĩnh Long",
-          "interest": 100,
-          "rank": 1,
-          "data_status": "normal"
+          "id": "mochi",
+          "query": "\"bánh mochi\" + \"bánh dày\"",
+          "source_url": "https://trends.google.com/trends/explore?date=today+3-m&geo=VN&q=%22b%C3%A1nh+mochi%22+%2B+%22b%C3%A1nh+d%C3%A0y%22",
+          "items": [
+            {
+              "geo": "VN-HN",
+              "name": "하노이",
+              "location": "Hà Nội",
+              "interest": 100,
+              "rank": 1,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-13",
+              "name": "꽝닌",
+              "location": "Quảng Ninh",
+              "interest": 97,
+              "rank": 2,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-24",
+              "name": "꽝빈",
+              "location": "Quảng Bình",
+              "interest": 85,
+              "rank": 3,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HP",
+              "name": "하이퐁",
+              "location": "Hải Phòng",
+              "interest": 80,
+              "rank": 4,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-26",
+              "name": "트어티엔후에",
+              "location": "Thừa Thiên Huế",
+              "interest": 72,
+              "rank": 5,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-61",
+              "name": "하이즈엉",
+              "location": "Hải Dương",
+              "interest": 71,
+              "rank": 6,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-66",
+              "name": "흥옌",
+              "location": "Hưng Yên",
+              "interest": 69,
+              "rank": 7,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-SG",
+              "name": "호찌민",
+              "location": "Hồ Chí Minh",
+              "interest": 67,
+              "rank": 8,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-54",
+              "name": "박장",
+              "location": "Bắc Giang",
+              "interest": 66,
+              "rank": 9,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-35",
+              "name": "럼동",
+              "location": "Lâm Đồng",
+              "interest": 62,
+              "rank": 10,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-CT",
+              "name": "껀터",
+              "location": "Cần Thơ",
+              "interest": 56,
+              "rank": 11,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-34",
+              "name": "카인호아",
+              "location": "Khánh Hòa",
+              "interest": 55,
+              "rank": 12,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-21",
+              "name": "타인호아",
+              "location": "Thanh Hoá",
+              "interest": 53,
+              "rank": 13,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-56",
+              "name": "박닌",
+              "location": "Bắc Ninh",
+              "interest": 52,
+              "rank": 14,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-57",
+              "name": "빈즈엉",
+              "location": "Bình Dương",
+              "interest": 51,
+              "rank": 15,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-40",
+              "name": "빈투언",
+              "location": "Bình Thuận",
+              "interest": 51,
+              "rank": 16,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-43",
+              "name": "바리어붕따우",
+              "location": "Bà Rịa - Vũng Tàu",
+              "interest": 50,
+              "rank": 17,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-39",
+              "name": "동나이",
+              "location": "Đồng Nai",
+              "interest": 46,
+              "rank": 18,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-DN",
+              "name": "다낭",
+              "location": "Đà Nẵng",
+              "interest": 43,
+              "rank": 19,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-22",
+              "name": "응에안",
+              "location": "Nghệ An",
+              "interest": 42,
+              "rank": 20,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-33",
+              "name": "닥락",
+              "location": "Đắk Lắk",
+              "interest": 38,
+              "rank": 21,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-53",
+              "name": "박깐",
+              "location": "Bắc Kạn",
+              "interest": 24,
+              "rank": 22,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-03",
+              "name": "Hà Giang",
+              "location": "Hà Giang",
+              "interest": 15,
+              "rank": 23,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-05",
+              "name": "선라",
+              "location": "Sơn La",
+              "interest": 12,
+              "rank": 24,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-09",
+              "name": "랑선",
+              "location": "Lạng Sơn",
+              "interest": 12,
+              "rank": 25,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-67",
+              "name": "남딘",
+              "location": "Nam Định",
+              "interest": 12,
+              "rank": 26,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-14",
+              "name": "호아빈",
+              "location": "Hòa Bình",
+              "interest": 12,
+              "rank": 27,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-68",
+              "name": "푸토",
+              "location": "Phú Thọ",
+              "interest": 10,
+              "rank": 28,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-02",
+              "name": "라오까이",
+              "location": "Lào Cai",
+              "interest": 10,
+              "rank": 29,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-04",
+              "name": "Cao Bằng",
+              "location": "Cao Bằng",
+              "interest": 10,
+              "rank": 30,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-18",
+              "name": "닌빈",
+              "location": "Ninh Bình",
+              "interest": 9,
+              "rank": 31,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-69",
+              "name": "타이응우옌",
+              "location": "Thái Nguyên",
+              "interest": 9,
+              "rank": 32,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-23",
+              "name": "하띤",
+              "location": "Hà Tĩnh",
+              "interest": 9,
+              "rank": 33,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-27",
+              "name": "꽝남",
+              "location": "Quảng Nam",
+              "interest": 8,
+              "rank": 34,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-20",
+              "name": "타이빈",
+              "location": "Thái Bình",
+              "interest": 8,
+              "rank": 35,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-72",
+              "name": "닥농",
+              "location": "Đăk Nông",
+              "interest": 8,
+              "rank": 36,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-63",
+              "name": "하남",
+              "location": "Hà Nam",
+              "interest": 8,
+              "rank": 37,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-70",
+              "name": "빈푹",
+              "location": "Vĩnh Phúc",
+              "interest": 8,
+              "rank": 38,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-29",
+              "name": "꽝응아이",
+              "location": "Quảng Ngãi",
+              "interest": 7,
+              "rank": 39,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-07",
+              "name": "뚜옌꽝",
+              "location": "Tuyên Quang",
+              "interest": 7,
+              "rank": 40,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-58",
+              "name": "빈프억",
+              "location": "Bình Phước",
+              "interest": 6,
+              "rank": 41,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-30",
+              "name": "잘라이",
+              "location": "Gia Lai",
+              "interest": 6,
+              "rank": 42,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-06",
+              "name": "옌바이",
+              "location": "Yên Bái",
+              "interest": 6,
+              "rank": 43,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-49",
+              "name": "빈롱",
+              "location": "Vĩnh Long",
+              "interest": 6,
+              "rank": 44,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-31",
+              "name": "빈딘",
+              "location": "Bình Định",
+              "interest": 5,
+              "rank": 45,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-25",
+              "name": "꽝찌",
+              "location": "Quảng Trị",
+              "interest": 5,
+              "rank": 46,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-47",
+              "name": "끼엔장",
+              "location": "tỉnh Kiên Giang",
+              "interest": 5,
+              "rank": 47,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-41",
+              "name": "롱안",
+              "location": "Long An",
+              "interest": 5,
+              "rank": 48,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-59",
+              "name": "까마우",
+              "location": "Cà Mau",
+              "interest": 4,
+              "rank": 49,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-32",
+              "name": "푸옌",
+              "location": "Phú Yên",
+              "interest": 4,
+              "rank": 50,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-45",
+              "name": "동탑",
+              "location": "Đồng Tháp",
+              "interest": 4,
+              "rank": 51,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-46",
+              "name": "띠엔장",
+              "location": "Tiền Giang",
+              "interest": 4,
+              "rank": 52,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-44",
+              "name": "안장",
+              "location": "An Giang",
+              "interest": 3,
+              "rank": 53,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-37",
+              "name": "떠이닌",
+              "location": "Tây Ninh",
+              "interest": 3,
+              "rank": 54,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-52",
+              "name": "속짱",
+              "location": "Sóc Trăng",
+              "interest": 3,
+              "rank": 55,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-50",
+              "name": "벤째",
+              "location": "Bến Tre",
+              "interest": 3,
+              "rank": 56,
+              "data_status": "normal"
+            }
+          ]
         },
         {
-          "geo": "VN-61",
-          "name": "Hải Dương",
-          "location": "Hải Dương",
-          "interest": 70,
-          "rank": 2,
-          "data_status": "normal"
+          "id": "sticky-rice",
+          "query": "\"bánh nếp\"",
+          "source_url": "https://trends.google.com/trends/explore?date=today+3-m&geo=VN&q=%22b%C3%A1nh+n%E1%BA%BFp%22",
+          "items": [
+            {
+              "geo": "VN-20",
+              "name": "타이빈",
+              "location": "Thái Bình",
+              "interest": 100,
+              "rank": 1,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HN",
+              "name": "하노이",
+              "location": "Hà Nội",
+              "interest": 25,
+              "rank": 2,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-SG",
+              "name": "호찌민",
+              "location": "Hồ Chí Minh",
+              "interest": 16,
+              "rank": 3,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-26",
+              "name": "트어티엔후에",
+              "location": "Thừa Thiên Huế",
+              "interest": 6,
+              "rank": 4,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-21",
+              "name": "타인호아",
+              "location": "Thanh Hoá",
+              "interest": 5,
+              "rank": 5,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-18",
+              "name": "닌빈",
+              "location": "Ninh Bình",
+              "interest": 5,
+              "rank": 6,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-67",
+              "name": "남딘",
+              "location": "Nam Định",
+              "interest": 3,
+              "rank": 7,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-57",
+              "name": "빈즈엉",
+              "location": "Bình Dương",
+              "interest": 2,
+              "rank": 8,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-34",
+              "name": "카인호아",
+              "location": "Khánh Hòa",
+              "interest": 2,
+              "rank": 9,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-22",
+              "name": "응에안",
+              "location": "Nghệ An",
+              "interest": 2,
+              "rank": 10,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-DN",
+              "name": "다낭",
+              "location": "Đà Nẵng",
+              "interest": 2,
+              "rank": 11,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-39",
+              "name": "동나이",
+              "location": "Đồng Nai",
+              "interest": 2,
+              "rank": 12,
+              "data_status": "normal"
+            }
+          ]
+        },
+        {
+          "id": "fruit",
+          "query": "\"sữa trái cây\" + \"trà trái cây\" + \"bánh trái cây\" + \"kẹo trái cây\" + \"trái cây sấy\" + \"kem trái cây\"",
+          "source_url": "https://trends.google.com/trends/explore?date=today+3-m&geo=VN&q=%22s%E1%BB%AFa+tr%C3%A1i+c%C3%A2y%22+%2B+%22tr%C3%A0+tr%C3%A1i+c%C3%A2y%22+%2B+%22b%C3%A1nh+tr%C3%A1i+c%C3%A2y%22+%2B+%22k%E1%BA%B9o+tr%C3%A1i+c%C3%A2y%22+%2B+%22tr%C3%A1i+c%C3%A2y+s%E1%BA%A5y%22+%2B+%22kem+tr%C3%A1i+c%C3%A2y%22",
+          "items": [
+            {
+              "geo": "VN-SG",
+              "name": "호찌민",
+              "location": "Hồ Chí Minh",
+              "interest": 100,
+              "rank": 1,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-59",
+              "name": "까마우",
+              "location": "Cà Mau",
+              "interest": 97,
+              "rank": 2,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-34",
+              "name": "카인호아",
+              "location": "Khánh Hòa",
+              "interest": 96,
+              "rank": 3,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-39",
+              "name": "동나이",
+              "location": "Đồng Nai",
+              "interest": 92,
+              "rank": 4,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-33",
+              "name": "닥락",
+              "location": "Đắk Lắk",
+              "interest": 89,
+              "rank": 5,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-50",
+              "name": "벤째",
+              "location": "Bến Tre",
+              "interest": 86,
+              "rank": 6,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-35",
+              "name": "럼동",
+              "location": "Lâm Đồng",
+              "interest": 84,
+              "rank": 7,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-CT",
+              "name": "껀터",
+              "location": "Cần Thơ",
+              "interest": 82,
+              "rank": 8,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-57",
+              "name": "빈즈엉",
+              "location": "Bình Dương",
+              "interest": 77,
+              "rank": 9,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-37",
+              "name": "떠이닌",
+              "location": "Tây Ninh",
+              "interest": 76,
+              "rank": 10,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-46",
+              "name": "띠엔장",
+              "location": "Tiền Giang",
+              "interest": 75,
+              "rank": 11,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-29",
+              "name": "꽝응아이",
+              "location": "Quảng Ngãi",
+              "interest": 72,
+              "rank": 12,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-31",
+              "name": "빈딘",
+              "location": "Bình Định",
+              "interest": 70,
+              "rank": 13,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-47",
+              "name": "끼엔장",
+              "location": "tỉnh Kiên Giang",
+              "interest": 68,
+              "rank": 14,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-49",
+              "name": "빈롱",
+              "location": "Vĩnh Long",
+              "interest": 67,
+              "rank": 15,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-DN",
+              "name": "다낭",
+              "location": "Đà Nẵng",
+              "interest": 67,
+              "rank": 16,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-43",
+              "name": "바리어붕따우",
+              "location": "Bà Rịa - Vũng Tàu",
+              "interest": 67,
+              "rank": 17,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-41",
+              "name": "롱안",
+              "location": "Long An",
+              "interest": 60,
+              "rank": 18,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-26",
+              "name": "트어티엔후에",
+              "location": "Thừa Thiên Huế",
+              "interest": 59,
+              "rank": 19,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-44",
+              "name": "안장",
+              "location": "An Giang",
+              "interest": 49,
+              "rank": 20,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-22",
+              "name": "응에안",
+              "location": "Nghệ An",
+              "interest": 45,
+              "rank": 21,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HN",
+              "name": "하노이",
+              "location": "Hà Nội",
+              "interest": 43,
+              "rank": 22,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HP",
+              "name": "하이퐁",
+              "location": "Hải Phòng",
+              "interest": 29,
+              "rank": 23,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-36",
+              "name": "닌투언",
+              "location": "Ninh Thuận",
+              "interest": 11,
+              "rank": 24,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-40",
+              "name": "빈투언",
+              "location": "Bình Thuận",
+              "interest": 10,
+              "rank": 25,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-72",
+              "name": "닥농",
+              "location": "Đăk Nông",
+              "interest": 8,
+              "rank": 26,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-58",
+              "name": "빈프억",
+              "location": "Bình Phước",
+              "interest": 8,
+              "rank": 27,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-32",
+              "name": "푸옌",
+              "location": "Phú Yên",
+              "interest": 8,
+              "rank": 28,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-55",
+              "name": "박리에우",
+              "location": "Bạc Liêu",
+              "interest": 7,
+              "rank": 29,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-30",
+              "name": "잘라이",
+              "location": "Gia Lai",
+              "interest": 7,
+              "rank": 30,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-45",
+              "name": "동탑",
+              "location": "Đồng Tháp",
+              "interest": 6,
+              "rank": 31,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-27",
+              "name": "꽝남",
+              "location": "Quảng Nam",
+              "interest": 6,
+              "rank": 32,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-63",
+              "name": "하남",
+              "location": "Hà Nam",
+              "interest": 6,
+              "rank": 33,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-51",
+              "name": "짜빈",
+              "location": "Trà Vinh",
+              "interest": 6,
+              "rank": 34,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-73",
+              "name": "허우장",
+              "location": "Hậu Giang",
+              "interest": 6,
+              "rank": 35,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-52",
+              "name": "속짱",
+              "location": "Sóc Trăng",
+              "interest": 6,
+              "rank": 36,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-05",
+              "name": "선라",
+              "location": "Sơn La",
+              "interest": 5,
+              "rank": 37,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-56",
+              "name": "박닌",
+              "location": "Bắc Ninh",
+              "interest": 4,
+              "rank": 38,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-69",
+              "name": "타이응우옌",
+              "location": "Thái Nguyên",
+              "interest": 3,
+              "rank": 39,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-13",
+              "name": "꽝닌",
+              "location": "Quảng Ninh",
+              "interest": 3,
+              "rank": 40,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-70",
+              "name": "빈푹",
+              "location": "Vĩnh Phúc",
+              "interest": 3,
+              "rank": 41,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-21",
+              "name": "타인호아",
+              "location": "Thanh Hoá",
+              "interest": 3,
+              "rank": 42,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-20",
+              "name": "타이빈",
+              "location": "Thái Bình",
+              "interest": 2,
+              "rank": 43,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-61",
+              "name": "하이즈엉",
+              "location": "Hải Dương",
+              "interest": 2,
+              "rank": 44,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-66",
+              "name": "흥옌",
+              "location": "Hưng Yên",
+              "interest": 2,
+              "rank": 45,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-54",
+              "name": "박장",
+              "location": "Bắc Giang",
+              "interest": 1,
+              "rank": 46,
+              "data_status": "normal"
+            }
+          ]
+        },
+        {
+          "id": "k-dessert",
+          "query": "bingsu",
+          "source_url": "https://trends.google.com/trends/explore?date=today+3-m&geo=VN&q=bingsu",
+          "items": [
+            {
+              "geo": "VN-SG",
+              "name": "호찌민",
+              "location": "Hồ Chí Minh",
+              "interest": 100,
+              "rank": 1,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HP",
+              "name": "하이퐁",
+              "location": "Hải Phòng",
+              "interest": 67,
+              "rank": 2,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-DN",
+              "name": "다낭",
+              "location": "Đà Nẵng",
+              "interest": 64,
+              "rank": 3,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-HN",
+              "name": "하노이",
+              "location": "Hà Nội",
+              "interest": 53,
+              "rank": 4,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-34",
+              "name": "카인호아",
+              "location": "Khánh Hòa",
+              "interest": 52,
+              "rank": 5,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-47",
+              "name": "끼엔장",
+              "location": "tỉnh Kiên Giang",
+              "interest": 44,
+              "rank": 6,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-20",
+              "name": "타이빈",
+              "location": "Thái Bình",
+              "interest": 42,
+              "rank": 7,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-57",
+              "name": "빈즈엉",
+              "location": "Bình Dương",
+              "interest": 40,
+              "rank": 8,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-67",
+              "name": "남딘",
+              "location": "Nam Định",
+              "interest": 39,
+              "rank": 9,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-39",
+              "name": "동나이",
+              "location": "Đồng Nai",
+              "interest": 39,
+              "rank": 10,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-27",
+              "name": "꽝남",
+              "location": "Quảng Nam",
+              "interest": 38,
+              "rank": 11,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-70",
+              "name": "빈푹",
+              "location": "Vĩnh Phúc",
+              "interest": 38,
+              "rank": 12,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-66",
+              "name": "흥옌",
+              "location": "Hưng Yên",
+              "interest": 38,
+              "rank": 13,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-22",
+              "name": "응에안",
+              "location": "Nghệ An",
+              "interest": 38,
+              "rank": 14,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-33",
+              "name": "닥락",
+              "location": "Đắk Lắk",
+              "interest": 38,
+              "rank": 15,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-54",
+              "name": "박장",
+              "location": "Bắc Giang",
+              "interest": 37,
+              "rank": 16,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-35",
+              "name": "럼동",
+              "location": "Lâm Đồng",
+              "interest": 36,
+              "rank": 17,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-43",
+              "name": "바리어붕따우",
+              "location": "Bà Rịa - Vũng Tàu",
+              "interest": 35,
+              "rank": 18,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-30",
+              "name": "잘라이",
+              "location": "Gia Lai",
+              "interest": 35,
+              "rank": 19,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-13",
+              "name": "꽝닌",
+              "location": "Quảng Ninh",
+              "interest": 34,
+              "rank": 20,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-31",
+              "name": "빈딘",
+              "location": "Bình Định",
+              "interest": 33,
+              "rank": 21,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-69",
+              "name": "타이응우옌",
+              "location": "Thái Nguyên",
+              "interest": 32,
+              "rank": 22,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-61",
+              "name": "하이즈엉",
+              "location": "Hải Dương",
+              "interest": 32,
+              "rank": 23,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-68",
+              "name": "푸토",
+              "location": "Phú Thọ",
+              "interest": 29,
+              "rank": 24,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-21",
+              "name": "타인호아",
+              "location": "Thanh Hoá",
+              "interest": 27,
+              "rank": 25,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-41",
+              "name": "롱안",
+              "location": "Long An",
+              "interest": 25,
+              "rank": 26,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-56",
+              "name": "박닌",
+              "location": "Bắc Ninh",
+              "interest": 22,
+              "rank": 27,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-CT",
+              "name": "껀터",
+              "location": "Cần Thơ",
+              "interest": 20,
+              "rank": 28,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-44",
+              "name": "안장",
+              "location": "An Giang",
+              "interest": 18,
+              "rank": 29,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-49",
+              "name": "빈롱",
+              "location": "Vĩnh Long",
+              "interest": 2,
+              "rank": 30,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-58",
+              "name": "빈프억",
+              "location": "Bình Phước",
+              "interest": 1,
+              "rank": 31,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-45",
+              "name": "동탑",
+              "location": "Đồng Tháp",
+              "interest": 1,
+              "rank": 32,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-37",
+              "name": "떠이닌",
+              "location": "Tây Ninh",
+              "interest": 1,
+              "rank": 33,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-26",
+              "name": "트어티엔후에",
+              "location": "Thừa Thiên Huế",
+              "interest": 1,
+              "rank": 34,
+              "data_status": "normal"
+            },
+            {
+              "geo": "VN-46",
+              "name": "띠엔장",
+              "location": "Tiền Giang",
+              "interest": 1,
+              "rank": 35,
+              "data_status": "normal"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "geo": "VN-SG",
+          "name": "호찌민",
+          "location": "Hồ Chí Minh",
+          "categories": {
+            "mochi": 67,
+            "sticky-rice": 16,
+            "fruit": 100,
+            "k-dessert": 100
+          },
+          "avg_rank": 2.0,
+          "interest": 88.9,
+          "data_status": "normal",
+          "rank": 1
         },
         {
           "geo": "VN-HN",
           "name": "하노이",
           "location": "Hà Nội",
-          "interest": 54,
-          "rank": 3,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 100,
+            "sticky-rice": 25,
+            "fruit": 43,
+            "k-dessert": 53
+          },
+          "avg_rank": 3.5,
+          "interest": 72.2,
+          "data_status": "normal",
+          "rank": 2
         },
         {
-          "geo": "VN-SG",
-          "name": "호찌민",
-          "location": "Hồ Chí Minh",
-          "interest": 50,
-          "rank": 4,
-          "data_status": "normal"
+          "geo": "VN-34",
+          "name": "카인호아",
+          "location": "Khánh Hòa",
+          "categories": {
+            "mochi": 55,
+            "sticky-rice": 2,
+            "fruit": 96,
+            "k-dessert": 52
+          },
+          "avg_rank": 4.5,
+          "interest": 61.1,
+          "data_status": "normal",
+          "rank": 3
         },
         {
-          "geo": "VN-HP",
-          "name": "하이퐁",
-          "location": "Hải Phòng",
-          "interest": 46,
-          "rank": 5,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-57",
-          "name": "Bình Dương",
-          "location": "Bình Dương",
-          "interest": 39,
-          "rank": 6,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-43",
-          "name": "Bà Rịa - Vũng Tàu",
-          "location": "Bà Rịa - Vũng Tàu",
-          "interest": 6,
-          "rank": 7,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-13",
-          "name": "Quảng Ninh",
-          "location": "Quảng Ninh",
-          "interest": 5,
-          "rank": 8,
-          "data_status": "normal"
+          "geo": "VN-26",
+          "name": "트어티엔후에",
+          "location": "Thừa Thiên Huế",
+          "categories": {
+            "mochi": 72,
+            "sticky-rice": 6,
+            "fruit": 59,
+            "k-dessert": 1
+          },
+          "avg_rank": 5.5,
+          "interest": 50.0,
+          "data_status": "normal",
+          "rank": 4
         },
         {
           "geo": "VN-DN",
           "name": "다낭",
           "location": "Đà Nẵng",
-          "interest": 5,
-          "rank": 9,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 43,
+            "sticky-rice": 2,
+            "fruit": 67,
+            "k-dessert": 64
+          },
+          "avg_rank": 5.8,
+          "interest": 47.2,
+          "data_status": "normal",
+          "rank": 5
         },
         {
-          "geo": "VN-35",
-          "name": "Lâm Đồng",
-          "location": "Lâm Đồng",
-          "interest": 5,
-          "rank": 10,
-          "data_status": "normal"
+          "geo": "VN-57",
+          "name": "빈즈엉",
+          "location": "Bình Dương",
+          "categories": {
+            "mochi": 51,
+            "sticky-rice": 2,
+            "fruit": 77,
+            "k-dessert": 40
+          },
+          "avg_rank": 6.0,
+          "interest": 44.4,
+          "data_status": "normal",
+          "rank": 6
+        },
+        {
+          "geo": "VN-39",
+          "name": "동나이",
+          "location": "Đồng Nai",
+          "categories": {
+            "mochi": 46,
+            "sticky-rice": 2,
+            "fruit": 92,
+            "k-dessert": 39
+          },
+          "avg_rank": 6.2,
+          "interest": 41.7,
+          "data_status": "normal",
+          "rank": 7
+        },
+        {
+          "geo": "VN-20",
+          "name": "타이빈",
+          "location": "Thái Bình",
+          "categories": {
+            "mochi": 8,
+            "sticky-rice": 100,
+            "fruit": 2,
+            "k-dessert": 42
+          },
+          "avg_rank": 6.5,
+          "interest": 38.9,
+          "data_status": "normal",
+          "rank": 8
+        },
+        {
+          "geo": "VN-21",
+          "name": "타인호아",
+          "location": "Thanh Hoá",
+          "categories": {
+            "mochi": 53,
+            "sticky-rice": 5,
+            "fruit": 3,
+            "k-dessert": 27
+          },
+          "avg_rank": 7.0,
+          "interest": 33.3,
+          "data_status": "normal",
+          "rank": 9
         },
         {
           "geo": "VN-22",
-          "name": "Nghệ An",
+          "name": "응에안",
           "location": "Nghệ An",
-          "interest": 5,
-          "rank": 11,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 42,
+            "sticky-rice": 2,
+            "fruit": 45,
+            "k-dessert": 38
+          },
+          "avg_rank": 8.0,
+          "interest": 22.2,
+          "data_status": "normal",
+          "rank": 10
         },
         {
-          "geo": "VN-67",
-          "name": "Nam Định",
-          "location": "Nam Định",
-          "interest": 5,
-          "rank": 12,
-          "data_status": "normal"
+          "geo": "VN-13",
+          "name": "꽝닌",
+          "location": "Quảng Ninh",
+          "categories": {
+            "mochi": 97,
+            "fruit": 3,
+            "k-dessert": 34
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
-          "geo": "VN-68",
-          "name": "Phú Thọ",
-          "location": "Phú Thọ",
-          "interest": 5,
-          "rank": 13,
-          "data_status": "normal"
+          "geo": "VN-24",
+          "name": "꽝빈",
+          "location": "Quảng Bình",
+          "categories": {
+            "mochi": 85
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
-          "geo": "VN-34",
-          "name": "Khánh Hòa",
-          "location": "Khánh Hòa",
-          "interest": 4,
-          "rank": 14,
-          "data_status": "normal"
+          "geo": "VN-HP",
+          "name": "하이퐁",
+          "location": "Hải Phòng",
+          "categories": {
+            "mochi": 80,
+            "fruit": 29,
+            "k-dessert": 67
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-61",
+          "name": "하이즈엉",
+          "location": "Hải Dương",
+          "categories": {
+            "mochi": 71,
+            "fruit": 2,
+            "k-dessert": 32
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-66",
+          "name": "흥옌",
+          "location": "Hưng Yên",
+          "categories": {
+            "mochi": 69,
+            "fruit": 2,
+            "k-dessert": 38
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-54",
+          "name": "박장",
+          "location": "Bắc Giang",
+          "categories": {
+            "mochi": 66,
+            "fruit": 1,
+            "k-dessert": 37
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-35",
+          "name": "럼동",
+          "location": "Lâm Đồng",
+          "categories": {
+            "mochi": 62,
+            "fruit": 84,
+            "k-dessert": 36
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
           "geo": "VN-CT",
           "name": "껀터",
           "location": "Cần Thơ",
-          "interest": 4,
-          "rank": 15,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-26",
-          "name": "Thừa Thiên Huế",
-          "location": "Thừa Thiên Huế",
-          "interest": 4,
-          "rank": 16,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-37",
-          "name": "Tây Ninh",
-          "location": "Tây Ninh",
-          "interest": 4,
-          "rank": 17,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-70",
-          "name": "Vĩnh Phúc",
-          "location": "Vĩnh Phúc",
-          "interest": 4,
-          "rank": 18,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-45",
-          "name": "Đồng Tháp",
-          "location": "Đồng Tháp",
-          "interest": 3,
-          "rank": 19,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-66",
-          "name": "Hưng Yên",
-          "location": "Hưng Yên",
-          "interest": 3,
-          "rank": 20,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-27",
-          "name": "Quảng Nam",
-          "location": "Quảng Nam",
-          "interest": 3,
-          "rank": 21,
-          "data_status": "normal"
-        },
-        {
-          "geo": "VN-39",
-          "name": "Đồng Nai",
-          "location": "Đồng Nai",
-          "interest": 3,
-          "rank": 22,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 56,
+            "fruit": 82,
+            "k-dessert": 20
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
           "geo": "VN-56",
-          "name": "Bắc Ninh",
+          "name": "박닌",
           "location": "Bắc Ninh",
-          "interest": 3,
-          "rank": 23,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 52,
+            "fruit": 4,
+            "k-dessert": 22
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-40",
+          "name": "빈투언",
+          "location": "Bình Thuận",
+          "categories": {
+            "mochi": 51,
+            "fruit": 10
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-43",
+          "name": "바리어붕따우",
+          "location": "Bà Rịa - Vũng Tàu",
+          "categories": {
+            "mochi": 50,
+            "fruit": 67,
+            "k-dessert": 35
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-33",
+          "name": "닥락",
+          "location": "Đắk Lắk",
+          "categories": {
+            "mochi": 38,
+            "fruit": 89,
+            "k-dessert": 38
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-53",
+          "name": "박깐",
+          "location": "Bắc Kạn",
+          "categories": {
+            "mochi": 24
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-03",
+          "name": "Hà Giang",
+          "location": "Hà Giang",
+          "categories": {
+            "mochi": 15
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-05",
+          "name": "선라",
+          "location": "Sơn La",
+          "categories": {
+            "mochi": 12,
+            "fruit": 5
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-09",
+          "name": "랑선",
+          "location": "Lạng Sơn",
+          "categories": {
+            "mochi": 12
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-67",
+          "name": "남딘",
+          "location": "Nam Định",
+          "categories": {
+            "mochi": 12,
+            "sticky-rice": 3,
+            "k-dessert": 39
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-14",
+          "name": "호아빈",
+          "location": "Hòa Bình",
+          "categories": {
+            "mochi": 12
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-68",
+          "name": "푸토",
+          "location": "Phú Thọ",
+          "categories": {
+            "mochi": 10,
+            "k-dessert": 29
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-02",
+          "name": "라오까이",
+          "location": "Lào Cai",
+          "categories": {
+            "mochi": 10
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-04",
+          "name": "Cao Bằng",
+          "location": "Cao Bằng",
+          "categories": {
+            "mochi": 10
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-18",
+          "name": "닌빈",
+          "location": "Ninh Bình",
+          "categories": {
+            "mochi": 9,
+            "sticky-rice": 5
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-69",
+          "name": "타이응우옌",
+          "location": "Thái Nguyên",
+          "categories": {
+            "mochi": 9,
+            "fruit": 3,
+            "k-dessert": 32
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-23",
+          "name": "하띤",
+          "location": "Hà Tĩnh",
+          "categories": {
+            "mochi": 9
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-27",
+          "name": "꽝남",
+          "location": "Quảng Nam",
+          "categories": {
+            "mochi": 8,
+            "fruit": 6,
+            "k-dessert": 38
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-72",
+          "name": "닥농",
+          "location": "Đăk Nông",
+          "categories": {
+            "mochi": 8,
+            "fruit": 8
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-63",
+          "name": "하남",
+          "location": "Hà Nam",
+          "categories": {
+            "mochi": 8,
+            "fruit": 6
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-70",
+          "name": "빈푹",
+          "location": "Vĩnh Phúc",
+          "categories": {
+            "mochi": 8,
+            "fruit": 3,
+            "k-dessert": 38
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-29",
+          "name": "꽝응아이",
+          "location": "Quảng Ngãi",
+          "categories": {
+            "mochi": 7,
+            "fruit": 72
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-07",
+          "name": "뚜옌꽝",
+          "location": "Tuyên Quang",
+          "categories": {
+            "mochi": 7
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-58",
+          "name": "빈프억",
+          "location": "Bình Phước",
+          "categories": {
+            "mochi": 6,
+            "fruit": 8,
+            "k-dessert": 1
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-30",
+          "name": "잘라이",
+          "location": "Gia Lai",
+          "categories": {
+            "mochi": 6,
+            "fruit": 7,
+            "k-dessert": 35
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-06",
+          "name": "옌바이",
+          "location": "Yên Bái",
+          "categories": {
+            "mochi": 6
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-49",
+          "name": "빈롱",
+          "location": "Vĩnh Long",
+          "categories": {
+            "mochi": 6,
+            "fruit": 67,
+            "k-dessert": 2
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-31",
+          "name": "빈딘",
+          "location": "Bình Định",
+          "categories": {
+            "mochi": 5,
+            "fruit": 70,
+            "k-dessert": 33
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-25",
+          "name": "꽝찌",
+          "location": "Quảng Trị",
+          "categories": {
+            "mochi": 5
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-47",
+          "name": "끼엔장",
+          "location": "tỉnh Kiên Giang",
+          "categories": {
+            "mochi": 5,
+            "fruit": 68,
+            "k-dessert": 44
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
           "geo": "VN-41",
-          "name": "Long An",
+          "name": "롱안",
           "location": "Long An",
-          "interest": 2,
-          "rank": 24,
-          "data_status": "normal"
+          "categories": {
+            "mochi": 5,
+            "fruit": 60,
+            "k-dessert": 25
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         },
         {
-          "geo": "VN-21",
-          "name": "Thanh Hoá",
-          "location": "Thanh Hoá",
-          "interest": 2,
-          "rank": 25,
-          "data_status": "normal"
+          "geo": "VN-59",
+          "name": "까마우",
+          "location": "Cà Mau",
+          "categories": {
+            "mochi": 4,
+            "fruit": 97
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-32",
+          "name": "푸옌",
+          "location": "Phú Yên",
+          "categories": {
+            "mochi": 4,
+            "fruit": 8
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-45",
+          "name": "동탑",
+          "location": "Đồng Tháp",
+          "categories": {
+            "mochi": 4,
+            "fruit": 6,
+            "k-dessert": 1
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-46",
+          "name": "띠엔장",
+          "location": "Tiền Giang",
+          "categories": {
+            "mochi": 4,
+            "fruit": 75,
+            "k-dessert": 1
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-44",
+          "name": "안장",
+          "location": "An Giang",
+          "categories": {
+            "mochi": 3,
+            "fruit": 49,
+            "k-dessert": 18
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-37",
+          "name": "떠이닌",
+          "location": "Tây Ninh",
+          "categories": {
+            "mochi": 3,
+            "fruit": 76,
+            "k-dessert": 1
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-52",
+          "name": "속짱",
+          "location": "Sóc Trăng",
+          "categories": {
+            "mochi": 3,
+            "fruit": 6
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-50",
+          "name": "벤째",
+          "location": "Bến Tre",
+          "categories": {
+            "mochi": 3,
+            "fruit": 86
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-36",
+          "name": "닌투언",
+          "location": "Ninh Thuận",
+          "categories": {
+            "fruit": 11
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-55",
+          "name": "박리에우",
+          "location": "Bạc Liêu",
+          "categories": {
+            "fruit": 7
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-51",
+          "name": "짜빈",
+          "location": "Trà Vinh",
+          "categories": {
+            "fruit": 6
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
+        },
+        {
+          "geo": "VN-73",
+          "name": "허우장",
+          "location": "Hậu Giang",
+          "categories": {
+            "fruit": 6
+          },
+          "interest": null,
+          "avg_rank": null,
+          "rank": null,
+          "data_status": "insufficient"
         }
-      ]
+      ],
+      "combine": {
+        "method": "rank_average",
+        "compared": 10
+      }
     },
     "related": {
-      "checked_at": "2026-10-25T00:36:27+07:00",
+      "checked_at": "2026-10-26T02:37:45+07:00",
       "by_category": {
         "mochi": {
           "query": "\"bánh mochi\"",
           "rising": [
             {
+              "query": "cách làm bánh mochi nhật",
+              "value": "Đột phá",
+              "extracted_value": 67650
+            },
+            {
+              "query": "cách làm bánh mochi chấm kem sữa",
+              "value": "+80%",
+              "extracted_value": 80
+            },
+            {
               "query": "bánh mochi sweet",
-              "value": "+190%"
-            },
-            {
-              "query": "bánh mochi đậu đỏ",
-              "value": "+110%"
-            },
-            {
-              "query": "nguyên liệu làm bánh mochi",
-              "value": "+90%"
-            },
-            {
-              "query": "bánh mochi nướng",
-              "value": "+90%"
-            },
-            {
-              "query": "bánh mochi nhật bản",
-              "value": "+70%"
+              "value": "+50%",
+              "extracted_value": 50
             }
           ],
           "top": [
             {
               "query": "làm bánh mochi",
-              "value": "100"
+              "value": "100",
+              "extracted_value": 100
             },
             {
               "query": "cách làm bánh mochi",
-              "value": "42"
+              "value": "47",
+              "extracted_value": 47
             },
             {
               "query": "bánh mochi nhật",
-              "value": "37"
+              "value": "37",
+              "extracted_value": 37
             },
             {
               "query": "bánh mochi nhật bản",
-              "value": "17"
+              "value": "17",
+              "extracted_value": 17
+            },
+            {
+              "query": "bánh mochi dẻo",
+              "value": "13",
+              "extracted_value": 13
+            },
+            {
+              "query": "bánh mochi hàn quốc",
+              "value": "13",
+              "extracted_value": 13
+            },
+            {
+              "query": "bánh mochi đài loan",
+              "value": "11",
+              "extracted_value": 11
+            },
+            {
+              "query": "bánh mochi đậu đỏ",
+              "value": "9",
+              "extracted_value": 9
             },
             {
               "query": "bánh mochi kem lạnh",
-              "value": "15"
+              "value": "8",
+              "extracted_value": 8
+            },
+            {
+              "query": "bánh mochi nướng",
+              "value": "8",
+              "extracted_value": 8
+            },
+            {
+              "query": "bánh mochi bao nhiêu calo",
+              "value": "7",
+              "extracted_value": 7
+            },
+            {
+              "query": "mochi sweet",
+              "value": "6",
+              "extracted_value": 6
+            },
+            {
+              "query": "bánh mochi sweet",
+              "value": "5",
+              "extracted_value": 5
+            },
+            {
+              "query": "bánh mochi chấm kem",
+              "value": "5",
+              "extracted_value": 5
+            },
+            {
+              "query": "công thức làm bánh mochi",
+              "value": "4",
+              "extracted_value": 4
+            },
+            {
+              "query": "cách làm bánh mochi chấm kem sữa",
+              "value": "4",
+              "extracted_value": 4
+            },
+            {
+              "query": "cách làm bánh mochi nhật",
+              "value": "3",
+              "extracted_value": 3
             }
-          ]
+          ],
+          "topics": {
+            "rising": [
+              {
+                "title": "Bánh Mochi Dâu Nhật Bản",
+                "type": "Dòng sản phẩm",
+                "value": "Đột phá",
+                "extracted_value": 242450
+              },
+              {
+                "title": "Cơm",
+                "type": "Thức ăn",
+                "value": "Đột phá",
+                "extracted_value": 233000
+              },
+              {
+                "title": "Nguyên liệu",
+                "type": "Chủ đề",
+                "value": "Đột phá",
+                "extracted_value": 166650
+              },
+              {
+                "title": "Tuyết",
+                "type": "Chủ đề",
+                "value": "Đột phá",
+                "extracted_value": 62200
+              },
+              {
+                "title": "Bột năng",
+                "type": "Thực phẩm",
+                "value": "+350%",
+                "extracted_value": 350
+              },
+              {
+                "title": "Quả",
+                "type": "Thực phẩm",
+                "value": "+300%",
+                "extracted_value": 300
+              },
+              {
+                "title": "Đậu đỏ",
+                "type": "Cây họ đậu",
+                "value": "+250%",
+                "extracted_value": 250
+              },
+              {
+                "title": "Đài Loan",
+                "type": "Chủ đề",
+                "value": "+180%",
+                "extracted_value": 180
+              },
+              {
+                "title": "Công thức nấu ăn",
+                "type": "Thể loại văn học",
+                "value": "+90%",
+                "extracted_value": 90
+              },
+              {
+                "title": "Bột gạo",
+                "type": "Bột",
+                "value": "+90%",
+                "extracted_value": 90
+              },
+              {
+                "title": "Gạo",
+                "type": "Cây lương thực",
+                "value": "+70%",
+                "extracted_value": 70
+              },
+              {
+                "title": "Gạo nếp",
+                "type": "Gạo",
+                "value": "+40%",
+                "extracted_value": 40
+              },
+              {
+                "title": "Phô mai",
+                "type": "Sản phẩm từ sữa",
+                "value": "+40%",
+                "extracted_value": 40
+              }
+            ],
+            "top": [
+              {
+                "title": "Mochi",
+                "type": "Món",
+                "value": "100",
+                "extracted_value": 100
+              },
+              {
+                "title": "Bánh",
+                "type": "Món ăn",
+                "value": "94",
+                "extracted_value": 94
+              },
+              {
+                "title": "Kem lạnh",
+                "type": "Thực phẩm",
+                "value": "9",
+                "extracted_value": 9
+              },
+              {
+                "title": "Bột",
+                "type": "Thực phẩm",
+                "value": "9",
+                "extracted_value": 9
+              },
+              {
+                "title": "Bột gạo",
+                "type": "Bột",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Gạo nếp",
+                "type": "Gạo",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Đài Loan",
+                "type": "Chủ đề",
+                "value": "4",
+                "extracted_value": 4
+              },
+              {
+                "title": "Bột năng",
+                "type": "Thực phẩm",
+                "value": "4",
+                "extracted_value": 4
+              },
+              {
+                "title": "Bánh trung thu",
+                "type": "Bánh mứt kẹo",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Matcha",
+                "type": "Trà",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Bánh ngọt",
+                "type": "Bánh mứt kẹo",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Sô-cô-la",
+                "type": "Chế biến mứt kẹo",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Bánh Mochi Dâu Nhật Bản",
+                "type": "Dòng sản phẩm",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Gạo",
+                "type": "Cây lương thực",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Cơm",
+                "type": "Thức ăn",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Đậu đỏ",
+                "type": "Cây họ đậu",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Phô mai",
+                "type": "Sản phẩm từ sữa",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Kem",
+                "type": "Sản phẩm từ sữa",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Công thức nấu ăn",
+                "type": "Thể loại văn học",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Quả",
+                "type": "Thực phẩm",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Nguyên liệu",
+                "type": "Chủ đề",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Tuyết",
+                "type": "Chủ đề",
+                "value": "1",
+                "extracted_value": 1
+              }
+            ]
+          }
         },
         "sticky-rice": {
           "query": "\"bánh nếp\"",
-          "rising": [],
-          "top": [],
-          "error": "SerpApi 오류: Google Trends hasn't returned any results for this query."
+          "rising": [
+            {
+              "query": "bánh dày",
+              "value": "Đột phá",
+              "extracted_value": 134850
+            },
+            {
+              "query": "bánh nếp nướng",
+              "value": "+90%",
+              "extracted_value": 90
+            },
+            {
+              "query": "bánh tẻ",
+              "value": "+50%",
+              "extracted_value": 50
+            },
+            {
+              "query": "bánh nếp đậu xanh",
+              "value": "+40%",
+              "extracted_value": 40
+            }
+          ],
+          "top": [
+            {
+              "query": "cách làm bánh nếp",
+              "value": "100",
+              "extracted_value": 100
+            },
+            {
+              "query": "bánh tẻ",
+              "value": "51",
+              "extracted_value": 51
+            },
+            {
+              "query": "bánh nếp đậu xanh",
+              "value": "45",
+              "extracted_value": 45
+            },
+            {
+              "query": "bánh nếp nhân đậu xanh",
+              "value": "40",
+              "extracted_value": 40
+            },
+            {
+              "query": "bánh nếp chiên",
+              "value": "34",
+              "extracted_value": 34
+            },
+            {
+              "query": "bánh nếp nướng",
+              "value": "26",
+              "extracted_value": 26
+            },
+            {
+              "query": "bánh giò",
+              "value": "14",
+              "extracted_value": 14
+            },
+            {
+              "query": "bánh dày",
+              "value": "10",
+              "extracted_value": 10
+            }
+          ],
+          "topics": {
+            "rising": [
+              {
+                "title": "Bánh ngọt",
+                "type": "Bánh mứt kẹo",
+                "value": "Đột phá",
+                "extracted_value": 390650
+              },
+              {
+                "title": "Phô mai",
+                "type": "Sản phẩm từ sữa",
+                "value": "Đột phá",
+                "extracted_value": 133350
+              },
+              {
+                "title": "Rán",
+                "type": "Thức ăn",
+                "value": "+450%",
+                "extracted_value": 450
+              },
+              {
+                "title": "Chuối",
+                "type": "Quả",
+                "value": "+160%",
+                "extracted_value": 160
+              },
+              {
+                "title": "Bột",
+                "type": "Thực phẩm",
+                "value": "+70%",
+                "extracted_value": 70
+              },
+              {
+                "title": "Đậu đỏ",
+                "type": "Cây họ đậu",
+                "value": "+60%",
+                "extracted_value": 60
+              },
+              {
+                "title": "Bánh",
+                "type": "Món ăn",
+                "value": "+50%",
+                "extracted_value": 50
+              }
+            ],
+            "top": [
+              {
+                "title": "Bánh nếp",
+                "type": "Thức ăn",
+                "value": "100",
+                "extracted_value": 100
+              },
+              {
+                "title": "Gạo nếp",
+                "type": "Gạo",
+                "value": "63",
+                "extracted_value": 63
+              },
+              {
+                "title": "Bánh",
+                "type": "Món ăn",
+                "value": "24",
+                "extracted_value": 24
+              },
+              {
+                "title": "Bột",
+                "type": "Thực phẩm",
+                "value": "9",
+                "extracted_value": 9
+              },
+              {
+                "title": "Đậu xanh",
+                "type": "Đậu",
+                "value": "6",
+                "extracted_value": 6
+              },
+              {
+                "title": "Calo",
+                "type": "Chủ đề",
+                "value": "6",
+                "extracted_value": 6
+              },
+              {
+                "title": "Thịt",
+                "type": "Thực phẩm",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Rán",
+                "type": "Thức ăn",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Chuối",
+                "type": "Quả",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Bánh ngọt",
+                "type": "Bánh mứt kẹo",
+                "value": "4",
+                "extracted_value": 4
+              },
+              {
+                "title": "Dừa",
+                "type": "Họ Cau",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Nướng",
+                "type": "Kỹ thuật nấu nướng",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Bột gạo",
+                "type": "Bột",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Bánh giầy",
+                "type": "Thức ăn",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Đậu đỏ",
+                "type": "Cây họ đậu",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "Mochi",
+                "type": "Món",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Phô mai",
+                "type": "Sản phẩm từ sữa",
+                "value": "1",
+                "extracted_value": 1
+              }
+            ]
+          }
         },
         "fruit": {
           "query": "\"hoa quả dầm\"",
           "rising": [
             {
-              "query": "hoa quả dầm hàm long",
-              "value": "+250%"
+              "query": "hoa quả dầm tô tịch",
+              "value": "+190%",
+              "extracted_value": 190
             },
             {
-              "query": "hoa quả dầm hà nội",
-              "value": "+140%"
+              "query": "hoa quả dầm hàm long",
+              "value": "+140%",
+              "extracted_value": 140
+            },
+            {
+              "query": "hoa quả dầm thái phiên",
+              "value": "+50%",
+              "extracted_value": 50
             }
           ],
           "top": [
             {
+              "query": "sữa chua hoa quả dầm",
+              "value": "100",
+              "extracted_value": 100
+            },
+            {
               "query": "làm hoa quả dầm",
-              "value": "100"
-            },
-            {
-              "query": "hoa quả dầm sữa chua",
-              "value": "91"
-            },
-            {
-              "query": "hoa quả dầm hàm long",
-              "value": "74"
-            },
-            {
-              "query": "hoa quả dầm thái phiên",
-              "value": "67"
+              "value": "87",
+              "extracted_value": 87
             },
             {
               "query": "cách làm hoa quả dầm",
-              "value": "64"
+              "value": "71",
+              "extracted_value": 71
+            },
+            {
+              "query": "hoa quả dầm hàm long",
+              "value": "59",
+              "extracted_value": 59
+            },
+            {
+              "query": "hoa quả dầm tô tịch",
+              "value": "47",
+              "extracted_value": 47
+            },
+            {
+              "query": "hoa quả dầm thái phiên",
+              "value": "45",
+              "extracted_value": 45
             }
-          ]
+          ],
+          "topics": {
+            "rising": [
+              {
+                "title": "Hoa Quả Dầm - Hoa Béo Tô Tịch (Hà Nội) cơ sở Hải Phòng",
+                "type": "Cửa hàng kem ở Hải Phòng, Việt Nam",
+                "value": "Đột phá",
+                "extracted_value": 602350
+              },
+              {
+                "title": "Ớt",
+                "type": "Quả",
+                "value": "Đột phá",
+                "extracted_value": 55250
+              },
+              {
+                "title": "Hoa Quả Dầm 39 Hàng Mành",
+                "type": "Nhà hàng tráng miệng ở Hà Nội, Việt Nam",
+                "value": "Đột phá",
+                "extracted_value": 50200
+              },
+              {
+                "title": "HOA QUẢ DẦM 31 Hàm Long",
+                "type": "Cửa hàng thực phẩm thiên nhiên ở Hà Nội, Việt Nam",
+                "value": "+140%",
+                "extracted_value": 140
+              },
+              {
+                "title": "Phố Hàm Long",
+                "type": "Chủ đề",
+                "value": "+110%",
+                "extracted_value": 110
+              },
+              {
+                "title": "Hoa quả dầm - Chè khúc bạch MyMei",
+                "type": "Quán ăn nhỏ ở Hà Nội, Việt Nam",
+                "value": "+80%",
+                "extracted_value": 80
+              }
+            ],
+            "top": [
+              {
+                "title": "Quả",
+                "type": "Thực phẩm",
+                "value": "100",
+                "extracted_value": 100
+              },
+              {
+                "title": "Sữa chua",
+                "type": "Chế phẩm sữa",
+                "value": "47",
+                "extracted_value": 47
+              },
+              {
+                "title": "Sữa",
+                "type": "Sản phẩm từ sữa",
+                "value": "47",
+                "extracted_value": 47
+              },
+              {
+                "title": "HOA QUẢ DẦM 31 Hàm Long",
+                "type": "Cửa hàng thực phẩm thiên nhiên ở Hà Nội, Việt Nam",
+                "value": "39",
+                "extracted_value": 39
+              },
+              {
+                "title": "Phố Hàm Long",
+                "type": "Chủ đề",
+                "value": "33",
+                "extracted_value": 33
+              },
+              {
+                "title": "Hoa quả dầm - Chè khúc bạch MyMei",
+                "type": "Quán ăn nhỏ ở Hà Nội, Việt Nam",
+                "value": "25",
+                "extracted_value": 25
+              },
+              {
+                "title": "Phố Thái Phiên",
+                "type": "Chủ đề",
+                "value": "25",
+                "extracted_value": 25
+              },
+              {
+                "title": "Hoa Quả Dầm - Hoa Béo Tô Tịch (Hà Nội) cơ sở Hải Phòng",
+                "type": "Cửa hàng kem ở Hải Phòng, Việt Nam",
+                "value": "17",
+                "extracted_value": 17
+              },
+              {
+                "title": "Hoa quả dầm Nhung Khoát",
+                "type": "Nhà hàng ở Hà Nội, Việt Nam",
+                "value": "16",
+                "extracted_value": 16
+              },
+              {
+                "title": "Hoa Quả Dầm Tô Tịch",
+                "type": "Chủ đề",
+                "value": "10",
+                "extracted_value": 10
+              },
+              {
+                "title": "Muối ăn",
+                "type": "Phụ gia",
+                "value": "8",
+                "extracted_value": 8
+              },
+              {
+                "title": "Ớt",
+                "type": "Quả",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Hoa Quả Dầm 39 Hàng Mành",
+                "type": "Nhà hàng tráng miệng ở Hà Nội, Việt Nam",
+                "value": "1",
+                "extracted_value": 1
+              }
+            ]
+          }
         },
         "k-dessert": {
           "query": "bingsu",
           "rising": [
             {
-              "query": "bingsuya",
-              "value": "Đột phá"
+              "query": "bunny bingsu",
+              "value": "Đột phá",
+              "extracted_value": 11600
             },
             {
               "query": "bingsu near me",
-              "value": "+1.250%"
+              "value": "+1.500%",
+              "extracted_value": 1500
             }
           ],
           "top": [
             {
               "query": "bingsu near me",
-              "value": "100"
+              "value": "100",
+              "extracted_value": 100
             },
             {
               "query": "mrp",
-              "value": "8"
+              "value": "8",
+              "extracted_value": 8
             },
             {
               "query": "bingsu gần đây",
-              "value": "6"
+              "value": "6",
+              "extracted_value": 6
+            },
+            {
+              "query": "the bingsu",
+              "value": "6",
+              "extracted_value": 6
             },
             {
               "query": "kem bingsu",
-              "value": "5"
+              "value": "6",
+              "extracted_value": 6
             },
             {
               "query": "bingsu là gì",
-              "value": "4"
+              "value": "5",
+              "extracted_value": 5
+            },
+            {
+              "query": "boulevard bingsu",
+              "value": "5",
+              "extracted_value": 5
+            },
+            {
+              "query": "mr bingsu",
+              "value": "4",
+              "extracted_value": 4
+            },
+            {
+              "query": "boulevard",
+              "value": "4",
+              "extracted_value": 4
+            },
+            {
+              "query": "mrp bingsu & tea",
+              "value": "3",
+              "extracted_value": 3
+            },
+            {
+              "query": "bingsu ngon",
+              "value": "3",
+              "extracted_value": 3
+            },
+            {
+              "query": "bingsu đà nẵng",
+              "value": "2",
+              "extracted_value": 2
+            },
+            {
+              "query": "bingsu hà nội",
+              "value": "2",
+              "extracted_value": 2
+            },
+            {
+              "query": "what is bingsu",
+              "value": "2",
+              "extracted_value": 2
+            },
+            {
+              "query": "sul bingsu",
+              "value": "2",
+              "extracted_value": 2
+            },
+            {
+              "query": "bingsu quận 1",
+              "value": "2",
+              "extracted_value": 2
+            },
+            {
+              "query": "hata bingsu",
+              "value": "1",
+              "extracted_value": 1
+            },
+            {
+              "query": "máy làm bingsu",
+              "value": "1",
+              "extracted_value": 1
+            },
+            {
+              "query": "mango bingsu",
+              "value": "1",
+              "extracted_value": 1
+            },
+            {
+              "query": "bingsu tuyết hoa",
+              "value": "1",
+              "extracted_value": 1
+            },
+            {
+              "query": "bingsu quận 7",
+              "value": "1",
+              "extracted_value": 1
+            },
+            {
+              "query": "bunny bingsu",
+              "value": "<1",
+              "extracted_value": 0
             }
-          ]
+          ],
+          "topics": {
+            "rising": [],
+            "top": [
+              {
+                "title": "Bingsu",
+                "type": "Thức ăn",
+                "value": "100",
+                "extracted_value": 100
+              },
+              {
+                "title": "MrP Bingsu & Tea Phan Xích Long",
+                "type": "Quán cà phê ở Thành phố Hồ Chí Minh, Việt Nam",
+                "value": "5",
+                "extracted_value": 5
+              },
+              {
+                "title": "Thực đơn",
+                "type": "Chủ đề",
+                "value": "4",
+                "extracted_value": 4
+              },
+              {
+                "title": "Sul Bingsu (Kem Han Quoc)",
+                "type": "Cửa hàng kem ở Thành phố Hồ Chí Minh, Việt Nam",
+                "value": "3",
+                "extracted_value": 3
+              },
+              {
+                "title": "SNOW BINGS - Since 2015",
+                "type": "Cửa hàng kem ở Thành phố Hồ Chí Minh, Việt Nam",
+                "value": "2",
+                "extracted_value": 2
+              },
+              {
+                "title": "Kem lạnh",
+                "type": "Thực phẩm",
+                "value": "2",
+                "extracted_value": 2
+              }
+            ]
+          }
         }
       }
     },
     "seasonality": {
-      "checked_at": "2026-10-25T00:10:52+07:00",
+      "checked_at": "2026-10-25T23:58:58+07:00",
       "period": "today 5-y",
       "span": {
         "start": "2021-10-24",
@@ -1834,22 +4597,22 @@
           "months": [
             {
               "month": 1,
-              "interest": 41.5,
+              "interest": 41.9,
               "index": 83
             },
             {
               "month": 2,
-              "interest": 42.2,
+              "interest": 42.5,
               "index": 84
             },
             {
               "month": 3,
-              "interest": 47.5,
+              "interest": 47.4,
               "index": 94
             },
             {
               "month": 4,
-              "interest": 40.2,
+              "interest": 40.6,
               "index": 80
             },
             {
@@ -1859,22 +4622,22 @@
             },
             {
               "month": 6,
-              "interest": 42.1,
+              "interest": 42.4,
               "index": 84
             },
             {
               "month": 7,
-              "interest": 43.8,
+              "interest": 43.9,
               "index": 87
             },
             {
               "month": 8,
-              "interest": 50.3,
+              "interest": 50.5,
               "index": 100
             },
             {
               "month": 9,
-              "interest": 43.5,
+              "interest": 43.3,
               "index": 86
             },
             {
@@ -1884,85 +4647,105 @@
             },
             {
               "month": 11,
-              "interest": 32.9,
+              "interest": 32.8,
               "index": 65
             },
             {
               "month": 12,
               "interest": 35.5,
-              "index": 71
+              "index": 70
             }
           ],
           "data_status": "normal",
+          "weekly": {
+            "year_round": true
+          },
+          "geo": "VN",
           "source_url": "https://trends.google.com/trends/explore?date=today+5-y&geo=VN&q=b%C3%A1nh+mochi+%2B+mochi"
         },
         {
           "id": "gift-season",
-          "query": "quà tết + quà trung thu + hộp quà",
+          "query": "hộp quà + set quà + giỏ quà",
           "months": [
             {
               "month": 1,
-              "interest": 54.9,
+              "interest": 54.3,
               "index": 100
             },
             {
               "month": 2,
-              "interest": 22.9,
-              "index": 42
+              "interest": 28.9,
+              "index": 53
             },
             {
               "month": 3,
-              "interest": 7.9,
-              "index": 14
-            },
-            {
-              "month": 4,
-              "interest": 5.6,
-              "index": 10
-            },
-            {
-              "month": 5,
-              "interest": 6.1,
-              "index": 11
-            },
-            {
-              "month": 6,
-              "interest": 4.7,
-              "index": 9
-            },
-            {
-              "month": 7,
-              "interest": 5.3,
-              "index": 10
-            },
-            {
-              "month": 8,
-              "interest": 7.5,
-              "index": 14
-            },
-            {
-              "month": 9,
-              "interest": 14.0,
+              "interest": 13.9,
               "index": 26
             },
             {
+              "month": 4,
+              "interest": 9.2,
+              "index": 17
+            },
+            {
+              "month": 5,
+              "interest": 10.4,
+              "index": 19
+            },
+            {
+              "month": 6,
+              "interest": 8.2,
+              "index": 15
+            },
+            {
+              "month": 7,
+              "interest": 9.0,
+              "index": 17
+            },
+            {
+              "month": 8,
+              "interest": 10.4,
+              "index": 19
+            },
+            {
+              "month": 9,
+              "interest": 13.3,
+              "index": 24
+            },
+            {
               "month": 10,
-              "interest": 11.9,
-              "index": 22
+              "interest": 19.9,
+              "index": 37
             },
             {
               "month": 11,
-              "interest": 15.7,
-              "index": 29
+              "interest": 23.2,
+              "index": 43
             },
             {
               "month": 12,
-              "interest": 29.7,
-              "index": 54
+              "interest": 34.8,
+              "index": 64
             }
           ],
           "data_status": "normal",
-          "source_url": "https://trends.google.com/trends/explore?date=today+5-y&geo=VN&q=qu%C3%A0+t%E1%BA%BFt+%2B+qu%C3%A0+trung+thu+%2B+h%E1%BB%99p+qu%C3%A0"
+          "weekly": {
+            "start": {
+              "month": 12,
+              "week": 3
+            },
+            "peak": {
+              "month": 1,
+              "week": 3
+            },
+            "end": {
+              "month": 2,
+              "week": 2
+            },
+            "ratio": 0.5
+          },
+          "geo": "VN",
+          "source_url": "https://trends.google.com/trends/explore?date=today+5-y&geo=VN&q=h%E1%BB%99p+qu%C3%A0+%2B+set+qu%C3%A0+%2B+gi%E1%BB%8F+qu%C3%A0"
         },
         {
           "id": "danang-travel",
@@ -1970,67 +4753,143 @@
           "months": [
             {
               "month": 1,
-              "interest": 33.4,
+              "interest": 33.2,
               "index": 46
             },
             {
               "month": 2,
               "interest": 48.5,
-              "index": 66
+              "index": 67
             },
             {
               "month": 3,
-              "interest": 58.7,
+              "interest": 57.9,
               "index": 80
             },
             {
               "month": 4,
-              "interest": 66.6,
+              "interest": 66.0,
               "index": 91
             },
             {
               "month": 5,
-              "interest": 66.9,
-              "index": 91
+              "interest": 66.7,
+              "index": 92
             },
             {
               "month": 6,
-              "interest": 73.2,
+              "interest": 72.6,
               "index": 100
             },
             {
               "month": 7,
-              "interest": 68.8,
+              "interest": 68.5,
               "index": 94
             },
             {
               "month": 8,
-              "interest": 49.5,
-              "index": 68
+              "interest": 48.8,
+              "index": 67
             },
             {
               "month": 9,
-              "interest": 36.5,
-              "index": 50
-            },
-            {
-              "month": 10,
               "interest": 35.9,
               "index": 49
             },
             {
+              "month": 10,
+              "interest": 35.8,
+              "index": 49
+            },
+            {
               "month": 11,
-              "interest": 31.7,
+              "interest": 31.5,
               "index": 43
             },
             {
               "month": 12,
               "interest": 34.5,
-              "index": 47
+              "index": 48
             }
           ],
           "data_status": "normal",
+          "weekly": {
+            "year_round": true
+          },
+          "geo": "VN",
           "source_url": "https://trends.google.com/trends/explore?date=today+5-y&geo=VN&q=du+l%E1%BB%8Bch+%C4%91%C3%A0+n%E1%BA%B5ng"
+        },
+        {
+          "id": "danang-travel-kr",
+          "query": "다낭 여행 + 다낭",
+          "months": [
+            {
+              "month": 1,
+              "interest": 57.8,
+              "index": 87
+            },
+            {
+              "month": 2,
+              "interest": 53.0,
+              "index": 80
+            },
+            {
+              "month": 3,
+              "interest": 52.2,
+              "index": 78
+            },
+            {
+              "month": 4,
+              "interest": 48.0,
+              "index": 72
+            },
+            {
+              "month": 5,
+              "interest": 50.5,
+              "index": 76
+            },
+            {
+              "month": 6,
+              "interest": 60.1,
+              "index": 90
+            },
+            {
+              "month": 7,
+              "interest": 64.8,
+              "index": 97
+            },
+            {
+              "month": 8,
+              "interest": 66.5,
+              "index": 100
+            },
+            {
+              "month": 9,
+              "interest": 58.0,
+              "index": 87
+            },
+            {
+              "month": 10,
+              "interest": 54.5,
+              "index": 82
+            },
+            {
+              "month": 11,
+              "interest": 52.3,
+              "index": 79
+            },
+            {
+              "month": 12,
+              "interest": 55.3,
+              "index": 83
+            }
+          ],
+          "data_status": "normal",
+          "weekly": {
+            "year_round": true
+          },
+          "geo": "KR",
+          "source_url": "https://trends.google.com/trends/explore?date=today+5-y&geo=KR&q=%EB%8B%A4%EB%82%AD+%EC%97%AC%ED%96%89+%2B+%EB%8B%A4%EB%82%AD"
         }
       ],
       "fruits": [
@@ -2039,58 +4898,58 @@
           "months": [
             {
               "month": 1,
-              "interest": 71.4,
-              "index": 98
+              "interest": 71.9,
+              "index": 99
             },
             {
               "month": 2,
-              "interest": 65.2,
-              "index": 90
+              "interest": 65.8,
+              "index": 91
             },
             {
               "month": 3,
-              "interest": 72.8,
+              "interest": 72.3,
               "index": 100
             },
             {
               "month": 4,
-              "interest": 70.2,
-              "index": 96
+              "interest": 70.9,
+              "index": 98
             },
             {
               "month": 5,
-              "interest": 64.3,
-              "index": 88
-            },
-            {
-              "month": 6,
-              "interest": 62.1,
-              "index": 85
-            },
-            {
-              "month": 7,
-              "interest": 66.3,
-              "index": 91
-            },
-            {
-              "month": 8,
-              "interest": 66.9,
-              "index": 92
-            },
-            {
-              "month": 9,
               "interest": 64.6,
               "index": 89
             },
             {
+              "month": 6,
+              "interest": 62.6,
+              "index": 87
+            },
+            {
+              "month": 7,
+              "interest": 66.4,
+              "index": 92
+            },
+            {
+              "month": 8,
+              "interest": 67.8,
+              "index": 94
+            },
+            {
+              "month": 9,
+              "interest": 64.0,
+              "index": 89
+            },
+            {
               "month": 10,
-              "interest": 71.3,
-              "index": 98
+              "interest": 71.9,
+              "index": 99
             },
             {
               "month": 11,
-              "interest": 65.2,
-              "index": 90
+              "interest": 65.5,
+              "index": 91
             },
             {
               "month": 12,
@@ -2105,38 +4964,38 @@
           "months": [
             {
               "month": 1,
-              "interest": 48.9,
-              "index": 82
+              "interest": 49.0,
+              "index": 81
             },
             {
               "month": 2,
-              "interest": 53.3,
-              "index": 89
+              "interest": 52.9,
+              "index": 88
             },
             {
               "month": 3,
-              "interest": 53.5,
-              "index": 89
-            },
-            {
-              "month": 4,
-              "interest": 54.4,
+              "interest": 55.0,
               "index": 91
             },
             {
-              "month": 5,
-              "interest": 53.8,
+              "month": 4,
+              "interest": 54.5,
               "index": 90
             },
             {
+              "month": 5,
+              "interest": 53.0,
+              "index": 88
+            },
+            {
               "month": 6,
-              "interest": 52.6,
+              "interest": 52.8,
               "index": 88
             },
             {
               "month": 7,
-              "interest": 56.0,
-              "index": 93
+              "interest": 56.5,
+              "index": 94
             },
             {
               "month": 8,
@@ -2145,22 +5004,22 @@
             },
             {
               "month": 9,
-              "interest": 55.0,
+              "interest": 55.7,
               "index": 92
             },
             {
               "month": 10,
-              "interest": 59.9,
+              "interest": 60.3,
               "index": 100
             },
             {
               "month": 11,
-              "interest": 55.3,
+              "interest": 55.7,
               "index": 92
             },
             {
               "month": 12,
-              "interest": 50.8,
+              "interest": 51.0,
               "index": 85
             }
           ],
@@ -2171,48 +5030,48 @@
           "months": [
             {
               "month": 1,
-              "interest": 27.5,
+              "interest": 27.4,
               "index": 60
             },
             {
               "month": 2,
-              "interest": 32.5,
+              "interest": 32.7,
               "index": 71
             },
             {
               "month": 3,
-              "interest": 39.8,
-              "index": 87
+              "interest": 40.8,
+              "index": 89
             },
             {
               "month": 4,
-              "interest": 45.5,
+              "interest": 45.9,
               "index": 100
             },
             {
               "month": 5,
-              "interest": 40.3,
-              "index": 89
+              "interest": 40.0,
+              "index": 87
             },
             {
               "month": 6,
-              "interest": 33.5,
+              "interest": 34.1,
               "index": 74
             },
             {
               "month": 7,
-              "interest": 27.5,
-              "index": 60
+              "interest": 27.3,
+              "index": 59
             },
             {
               "month": 8,
-              "interest": 25.5,
-              "index": 56
+              "interest": 25.4,
+              "index": 55
             },
             {
               "month": 9,
               "interest": 24.4,
-              "index": 54
+              "index": 53
             },
             {
               "month": 10,
@@ -2221,8 +5080,8 @@
             },
             {
               "month": 11,
-              "interest": 25.3,
-              "index": 56
+              "interest": 25.1,
+              "index": 55
             },
             {
               "month": 12,
@@ -2242,58 +5101,58 @@
             },
             {
               "month": 2,
-              "interest": 24.4,
-              "index": 84
+              "interest": 24.6,
+              "index": 85
             },
             {
               "month": 3,
-              "interest": 25.7,
-              "index": 89
+              "interest": 25.4,
+              "index": 88
             },
             {
               "month": 4,
-              "interest": 24.4,
+              "interest": 24.5,
               "index": 84
             },
             {
               "month": 5,
-              "interest": 24.2,
+              "interest": 24.4,
               "index": 84
             },
             {
               "month": 6,
-              "interest": 28.2,
+              "interest": 28.3,
               "index": 98
             },
             {
               "month": 7,
-              "interest": 28.9,
+              "interest": 29.0,
               "index": 100
             },
             {
               "month": 8,
-              "interest": 28.2,
+              "interest": 28.3,
               "index": 98
             },
             {
               "month": 9,
-              "interest": 25.2,
-              "index": 87
+              "interest": 25.0,
+              "index": 86
             },
             {
               "month": 10,
-              "interest": 24.0,
-              "index": 83
+              "interest": 23.9,
+              "index": 82
             },
             {
               "month": 11,
-              "interest": 24.2,
+              "interest": 24.3,
               "index": 84
             },
             {
               "month": 12,
-              "interest": 26.3,
-              "index": 91
+              "interest": 26.6,
+              "index": 92
             }
           ],
           "data_status": "normal"
@@ -2309,7 +5168,7 @@
             {
               "month": 2,
               "interest": 13.9,
-              "index": 35
+              "index": 34
             },
             {
               "month": 3,
@@ -2318,47 +5177,47 @@
             },
             {
               "month": 4,
-              "interest": 25.1,
+              "interest": 25.3,
               "index": 63
             },
             {
               "month": 5,
-              "interest": 40.0,
+              "interest": 40.3,
               "index": 100
             },
             {
               "month": 6,
-              "interest": 35.1,
+              "interest": 35.4,
               "index": 88
             },
             {
               "month": 7,
-              "interest": 31.9,
-              "index": 80
+              "interest": 31.8,
+              "index": 79
             },
             {
               "month": 8,
-              "interest": 32.3,
+              "interest": 32.6,
               "index": 81
             },
             {
               "month": 9,
               "interest": 22.7,
-              "index": 57
+              "index": 56
             },
             {
               "month": 10,
-              "interest": 15.2,
-              "index": 38
+              "interest": 15.1,
+              "index": 37
             },
             {
               "month": 11,
-              "interest": 13.8,
+              "interest": 13.9,
               "index": 34
             },
             {
               "month": 12,
-              "interest": 12.3,
+              "interest": 12.4,
               "index": 31
             }
           ],
@@ -2369,62 +5228,62 @@
           "months": [
             {
               "month": 1,
-              "interest": 73.7,
+              "interest": 72.7,
               "index": 100
             },
             {
               "month": 2,
-              "interest": 71.3,
+              "interest": 70.8,
               "index": 97
             },
             {
               "month": 3,
-              "interest": 57.3,
-              "index": 78
+              "interest": 56.3,
+              "index": 77
             },
             {
               "month": 4,
-              "interest": 49.0,
-              "index": 66
+              "interest": 48.5,
+              "index": 67
             },
             {
               "month": 5,
-              "interest": 40.8,
-              "index": 55
+              "interest": 40.5,
+              "index": 56
             },
             {
               "month": 6,
-              "interest": 38.6,
-              "index": 52
+              "interest": 38.3,
+              "index": 53
             },
             {
               "month": 7,
-              "interest": 45.4,
+              "interest": 45.0,
               "index": 62
             },
             {
               "month": 8,
-              "interest": 49.9,
-              "index": 68
+              "interest": 49.0,
+              "index": 67
             },
             {
               "month": 9,
-              "interest": 63.7,
-              "index": 86
+              "interest": 62.9,
+              "index": 87
             },
             {
               "month": 10,
-              "interest": 61.9,
-              "index": 84
+              "interest": 60.2,
+              "index": 83
             },
             {
               "month": 11,
-              "interest": 60.6,
-              "index": 82
+              "interest": 60.1,
+              "index": 83
             },
             {
               "month": 12,
-              "interest": 66.2,
+              "interest": 65.2,
               "index": 90
             }
           ],
@@ -2435,62 +5294,62 @@
           "months": [
             {
               "month": 1,
-              "interest": 39.4,
+              "interest": 38.8,
               "index": 64
             },
             {
               "month": 2,
-              "interest": 41.5,
+              "interest": 41.2,
               "index": 68
             },
             {
               "month": 3,
-              "interest": 50.6,
-              "index": 83
+              "interest": 49.8,
+              "index": 82
             },
             {
               "month": 4,
-              "interest": 49.6,
-              "index": 81
+              "interest": 49.3,
+              "index": 82
             },
             {
               "month": 5,
-              "interest": 48.7,
+              "interest": 48.5,
               "index": 80
             },
             {
               "month": 6,
-              "interest": 55.2,
+              "interest": 54.5,
               "index": 90
             },
             {
               "month": 7,
-              "interest": 61.2,
+              "interest": 60.4,
               "index": 100
             },
             {
               "month": 8,
-              "interest": 45.0,
+              "interest": 44.4,
               "index": 74
             },
             {
               "month": 9,
-              "interest": 34.9,
+              "interest": 34.7,
               "index": 57
             },
             {
               "month": 10,
-              "interest": 35.8,
-              "index": 58
+              "interest": 35.6,
+              "index": 59
             },
             {
               "month": 11,
-              "interest": 40.8,
+              "interest": 40.3,
               "index": 67
             },
             {
               "month": 12,
-              "interest": 44.0,
+              "interest": 43.3,
               "index": 72
             }
           ],
@@ -2501,18 +5360,18 @@
           "months": [
             {
               "month": 1,
-              "interest": 20.7,
-              "index": 66
+              "interest": 20.3,
+              "index": 65
             },
             {
               "month": 2,
-              "interest": 31.5,
+              "interest": 31.2,
               "index": 100
             },
             {
               "month": 3,
-              "interest": 30.4,
-              "index": 97
+              "interest": 30.0,
+              "index": 96
             },
             {
               "month": 4,
@@ -2522,42 +5381,42 @@
             {
               "month": 5,
               "interest": 13.7,
-              "index": 43
+              "index": 44
             },
             {
               "month": 6,
-              "interest": 12.5,
+              "interest": 12.4,
               "index": 40
             },
             {
               "month": 7,
-              "interest": 12.8,
-              "index": 41
-            },
-            {
-              "month": 8,
               "interest": 12.5,
               "index": 40
             },
             {
+              "month": 8,
+              "interest": 12.3,
+              "index": 39
+            },
+            {
               "month": 9,
-              "interest": 11.7,
+              "interest": 11.5,
               "index": 37
             },
             {
               "month": 10,
               "interest": 12.7,
-              "index": 40
+              "index": 41
             },
             {
               "month": 11,
-              "interest": 13.2,
+              "interest": 13.0,
               "index": 42
             },
             {
               "month": 12,
-              "interest": 15.9,
-              "index": 50
+              "interest": 15.8,
+              "index": 51
             }
           ],
           "data_status": "normal"
@@ -2567,53 +5426,53 @@
           "months": [
             {
               "month": 1,
-              "interest": 7.3,
+              "interest": 7.2,
               "index": 33
             },
             {
               "month": 2,
-              "interest": 7.5,
+              "interest": 7.4,
               "index": 34
             },
             {
               "month": 3,
-              "interest": 8.5,
+              "interest": 8.4,
               "index": 38
             },
             {
               "month": 4,
-              "interest": 10.2,
+              "interest": 10.1,
               "index": 46
             },
             {
               "month": 5,
               "interest": 16.0,
-              "index": 72
+              "index": 73
             },
             {
               "month": 6,
-              "interest": 22.1,
+              "interest": 22.0,
               "index": 100
             },
             {
               "month": 7,
-              "interest": 16.3,
+              "interest": 16.2,
               "index": 74
             },
             {
               "month": 8,
-              "interest": 11.7,
-              "index": 53
+              "interest": 11.5,
+              "index": 52
             },
             {
               "month": 9,
-              "interest": 10.7,
+              "interest": 10.6,
               "index": 48
             },
             {
               "month": 10,
-              "interest": 9.0,
-              "index": 41
+              "interest": 8.9,
+              "index": 40
             },
             {
               "month": 11,
@@ -2622,7 +5481,7 @@
             },
             {
               "month": 12,
-              "interest": 7.6,
+              "interest": 7.5,
               "index": 34
             }
           ],
@@ -2634,51 +5493,51 @@
             {
               "month": 1,
               "interest": 6.8,
-              "index": 41
+              "index": 42
             },
             {
               "month": 2,
-              "interest": 7.8,
+              "interest": 7.6,
               "index": 47
             },
             {
               "month": 3,
-              "interest": 10.4,
+              "interest": 10.2,
               "index": 63
             },
             {
               "month": 4,
-              "interest": 13.3,
+              "interest": 13.1,
               "index": 81
             },
             {
               "month": 5,
-              "interest": 16.5,
+              "interest": 16.2,
               "index": 100
             },
             {
               "month": 6,
-              "interest": 13.7,
+              "interest": 13.5,
               "index": 83
             },
             {
               "month": 7,
-              "interest": 12.7,
+              "interest": 12.5,
               "index": 77
             },
             {
               "month": 8,
-              "interest": 12.5,
+              "interest": 12.3,
               "index": 76
             },
             {
               "month": 9,
-              "interest": 10.5,
+              "interest": 10.3,
               "index": 64
             },
             {
               "month": 10,
-              "interest": 9.7,
+              "interest": 9.6,
               "index": 59
             },
             {
@@ -2688,8 +5547,8 @@
             },
             {
               "month": 12,
-              "interest": 8.0,
-              "index": 48
+              "interest": 7.9,
+              "index": 49
             }
           ],
           "data_status": "normal"
