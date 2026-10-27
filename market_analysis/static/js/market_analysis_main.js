@@ -813,7 +813,7 @@ function renderCulture() {
     .filter(n => n.title !== "공식몰 집중")
     .map(n => ({ ...n, fact: String(n.fact || "").replace(/^\d{4}년\s*/, "") }));
   const ecCards = (ec.cards || []).map(x => `
-    <li><span class="ma-cg-stat">${esc(x.value)}</span><strong>${esc(x.label)}</strong><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");
+    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${esc(x.value)}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
   const shareItems = ec.shares?.items || [];
   const shareTotal = shareItems.reduce((sum, item) => sum + (Number(item.share) || 0), 0) || 100;
   let cumulative = 0;

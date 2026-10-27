@@ -615,3 +615,10 @@
 /* 두 칸 모두 내용을 칸 높이의 가운데에, 항목 사이는 적당한 간격(24px)으로 */
 .market-analysis-page .ma-cg-alert-col.is-avoid .ma-cg-rows { flex: 1 1 auto; align-content: center; row-gap: var(--space-8); }
 .market-analysis-page .ma-cg-alert-col.is-check > .ma-cg-rows { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: var(--space-5); }
+/* 기본 정보 6칸: 항목 이름 15px · 핵심 값 20px */
+.market-analysis-page .ma-cg-basic dt { font-size: var(--ma-fs-sm); }
+.market-analysis-page .ma-cg-basic dd { font-size: var(--fs-subheading); }
+/* 온라인 구매 채널 3칸: 이름(15px 세미굵게) → 값(명조 22px) → 보조(13px), 줄 간격 4px */
+.market-analysis-page .ma-cg-stats:not(.is-fill) li { gap: var(--space-2); }
+.market-analysis-page .ma-cg-stats:not(.is-fill) strong { font-size: var(--ma-fs-sm); font-weight: 600; }
+.market-analysis-page .ma-cg-stats:not(.is-fill) .ma-cg-stat { font-size: 22px; }
