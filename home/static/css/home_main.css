@@ -306,10 +306,9 @@
 }
 .home-page .home-event.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
 .home-page .home-period-bar.is-provisional { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); border-left: 3px dashed var(--gold); }
-.home-page .home-mainpanel > .home-paneltabs { flex: 0 0 auto; flex-direction: row; align-items: stretch; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line-strong); }
-.home-page .home-paneltab { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4); min-width: 148px; min-height: var(--control-height); margin-bottom: -1px; padding: var(--space-4) var(--space-7); border: 1px solid var(--line); border-bottom-color: var(--line-strong); background: var(--paper); color: var(--muted); font-family: var(--font-body); font-size: var(--home-body-size); font-weight: 500; cursor: pointer; }
-.home-page .home-paneltab:hover { color: var(--ink); border-color: var(--line-strong); }
-.home-page .home-paneltab[aria-selected="true"] { background: var(--white); color: var(--ink); border-color: var(--line-strong); border-bottom-color: var(--white); box-shadow: inset 0 3px 0 var(--teal); font-weight: 600; }
+/* 상단 탭 모양은 공통 탭(base.css .ui-tabs: 글자 + 금색 밑줄). 여기서는 배치만 정합니다. */
+.home-page .home-mainpanel > .home-paneltabs { flex: 0 0 auto; flex-direction: row; margin-bottom: var(--space-6); }
+.home-page .home-paneltab { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4); font-size: var(--home-body-size); }
 .home-page .home-paneltab:focus-visible { outline: 2px solid var(--accent); outline-offset: -5px; }
 .home-page .home-tab-index { font-family: var(--font-mono); font-size: var(--fs-table); color: var(--muted); }
 .home-page .home-btn-sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: var(--line); }
@@ -409,9 +408,7 @@
 .home-page .home-clock time { grid-column: 1 / -1; text-align: right; font-size: calc(var(--fs-table) * .85); color: var(--muted); }
 .home-page .home-grid { grid-template-columns: minmax(0, 1.98fr) minmax(0, 1fr); }
 .home-page .home-mainpanel { border: 0; padding: var(--space-6); }
-.home-page .home-mainpanel > .home-paneltabs { border: 0; margin-bottom: 0; gap: var(--space-2); }
-.home-page .home-paneltab, .home-page .home-paneltab:hover { border: 0; box-shadow: none; min-height: 44px; min-width: 0; margin-bottom: 0; padding: var(--space-5) var(--space-6); background: var(--paper); color: var(--muted); font-weight: 500; }
-.home-page .home-paneltab[aria-selected="true"] { border: 0; background: var(--white); color: var(--ink); box-shadow: inset 0 3px 0 var(--teal); font-weight: var(--title-weight); }
+.home-page .home-mainpanel > .home-paneltabs { margin-bottom: 0; }
 .home-page .home-mainpanel > .home-panel-actions { flex: 0 0 auto; display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); padding: var(--space-4) 0; }
 .home-page .home-panel-actions .btn, .home-page .home-panel-actions .home-icon-btn { border: 0; min-height: 32px; background: transparent; padding: var(--space-2) var(--space-4); }
 .home-page .home-panel-actions .btn:hover, .home-page .home-panel-actions .home-icon-btn:hover { background: var(--paper); }
@@ -523,7 +520,6 @@
 .home-page .home-card, .home-page .home-range, .home-page dialog, .home-page .btn, .home-page .home-icon-btn, .home-page input, .home-page textarea, .home-page select { border: 0; box-shadow: none; }
 /* 팝업의 입력칸은 밝은 바탕을 유지해 적을 수 있는 영역을 구분합니다. */
 .home-page dialog input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), .home-page dialog select, .home-page dialog textarea { background: var(--control-bg); }
-.home-page .home-mainpanel .home-paneltab { border: 0; }
 .home-page .home-news .home-suggestion { border: 0; }
 .home-page input:focus-visible, .home-page textarea:focus-visible, .home-page select:focus-visible, .home-page button:focus-visible, .home-page a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .home-page #calendar-period, .home-page #planner-title { font-size: calc(var(--fs-subheading) * 1.2); font-weight: var(--title-weight); font-family: var(--font-title); line-height: var(--line-height-heading); }
@@ -537,10 +533,9 @@
 
 /* STEP 1: 캘린더 카드의 공통 헤더만 정돈합니다. 날짜 칸·시간표·간트 내부는 유지합니다. */
 .home-page .home-calendar-widget { padding: var(--space-6); min-width: 0; }
-.home-page .home-calendar-widget > .home-paneltabs { flex: 0 0 auto; align-items: stretch; gap: var(--space-2); margin: 0; padding: 0; border: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-.home-page .home-calendar-widget .home-paneltab { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--control-height); margin: 0; padding: var(--space-4) var(--space-5); border: 0; background: transparent; box-shadow: none; color: var(--muted); font-family: var(--font-body); font-size: var(--fs-body); font-weight: 500; line-height: var(--line-height-heading); white-space: nowrap; }
-.home-page .home-calendar-widget .home-paneltab:hover { background: color-mix(in srgb, var(--teal) 5%, var(--white)); color: var(--ink); filter: none; }
-.home-page .home-calendar-widget .home-paneltab[aria-selected="true"] { background: color-mix(in srgb, var(--teal) 7%, var(--white)); box-shadow: inset 0 2px 0 var(--teal); color: var(--teal); font-weight: var(--title-weight); }
+/* 탭 모양(글자 + 금색 밑줄)은 공통 탭 base.css .ui-tabs. 여기서는 배치·크기만 정합니다. */
+.home-page .home-calendar-widget > .home-paneltabs { flex: 0 0 auto; margin: 0; padding: 0; overflow-y: hidden; }
+.home-page .home-calendar-widget .home-paneltab { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--control-height); font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--line-height-heading); }
 .home-page .home-calendar-widget .home-paneltab:focus-visible { outline: 2px solid var(--teal); outline-offset: -3px; }
 .home-page .home-calendar-widget > .home-panel-actions { margin: 0; padding: var(--space-5) 0; }
 .home-page .home-calendar-widget .home-calendar-navigation { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: var(--space-4); max-width: 100%; min-width: 0; }

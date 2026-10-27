@@ -159,6 +159,13 @@ button:hover { filter: brightness(.96); }
 a { color: inherit; text-underline-offset: 4px; }
 :lang(vi), .text-vi { font-family: var(--font-vi); }
 
+/* ---------- 공통 상단 탭 (콘텐츠 스튜디오 · 인플루언서 탭과 같은 디자인) ----------
+   글자 탭 + 선택된 탭은 금색 밑줄 · 진한 글씨. role="tab"이면 aria-selected, 링크면 aria-current="page"로 선택 표시. */
+.ui-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.ui-tabs > :is(a, button) { flex: none; appearance: none; margin-bottom: -1px; padding: var(--space-5) var(--space-6); border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; box-shadow: none; color: var(--muted); font: inherit; font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.ui-tabs > :is(a, button):hover { color: var(--ink); }
+.ui-tabs > :is([aria-selected="true"], [aria-current="page"]) { border-bottom-color: var(--gold); color: var(--ink); font-weight: 600; }
+
 /* ---------- 접이식 사이드바 · 본문 ---------- */
 .app { --sidebar-width: var(--sidebar-expanded); min-height: calc(100vh / var(--ui-zoom)); padding-left: var(--sidebar-width); }
 .app[data-sidebar="collapsed"] { --sidebar-width: var(--sidebar-collapsed); }

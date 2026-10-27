@@ -479,9 +479,7 @@
 
 .market-analysis-page .ma-ci-panel { padding-top: 0; }
 .market-analysis-page .ma-ci-tabs { display: flex; flex-wrap: wrap; gap: 0; margin: 0 calc(var(--panel-padding) * -1) var(--space-6); padding: 0 var(--panel-padding); border-bottom: 1px solid var(--line); }
-.market-analysis-page .ma-ci-tabs button { padding: var(--space-5) var(--space-6) var(--space-4); border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: 14px; cursor: pointer; }
 .market-analysis-page .ma-ci-tabs button small { margin-left: var(--space-1); color: var(--muted); font-size: 11px; }
-.market-analysis-page .ma-ci-tabs button[aria-selected="true"] { border-bottom-color: var(--brown); color: var(--ink); font-weight: 700; }
 .market-analysis-page .ma-ci-tabs button:focus-visible { outline: 2px solid var(--muted); outline-offset: -2px; }
 .market-analysis-page .ma-ci-h3 { margin: var(--space-6) 0 var(--space-4); font-size: 14px; }
 .market-analysis-page .ma-ci-body > .ma-ci-h3:first-child { margin-top: 0; }
@@ -527,9 +525,8 @@
 }
 @media (max-width: 720px) { .market-analysis-page .ma-tactics { grid-template-columns: 1fr; } }
 /* 경쟁사 탭: 탭 줄은 크림색, 탭 아래 내용 영역과 카드는 흰색으로 대비 (HOME 캘린더와 같은 방식) */
-.market-analysis-page .ma-ci-panel .ma-ci-tabs { gap: var(--space-1); margin-bottom: 0; padding-top: var(--space-5); border-bottom: 1px solid var(--line-strong); }
-.market-analysis-page .ma-ci-panel .ma-ci-tabs button { margin-bottom: -1px; padding: var(--space-4) var(--space-6); border: 1px solid var(--line-strong); border-bottom: 0; background: var(--paper); }
-.market-analysis-page .ma-ci-panel .ma-ci-tabs button[aria-selected="true"] { border-top: 2px solid var(--green); background: var(--page-bg); }
+/* 경쟁제품 하위 탭 모양은 공통 탭(base.css .ui-tabs). 여기서는 여백만 정합니다. */
+.market-analysis-page .ma-ci-panel .ma-ci-tabs { margin-bottom: 0; padding-top: var(--space-5); }
 .market-analysis-page .ma-ci-body { display: flex; flex-direction: column; min-height: 675px; padding: var(--space-6); border: 1px solid var(--line-strong); border-top: 0; background: var(--page-bg); }
 .market-analysis-page .ma-ci-body > .ma-tactics { flex: 1; grid-auto-rows: 1fr; }
 .market-analysis-page .ma-ci-body > .ma-priority { flex: 1; grid-auto-rows: minmax(0, 1fr); }

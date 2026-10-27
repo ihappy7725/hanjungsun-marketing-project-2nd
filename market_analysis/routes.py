@@ -519,7 +519,9 @@ def _csv_rows(path):
     text = _read_text(path)
     if not text:
         return []
-    return [{(k or "").strip(): (v or "").strip() for k, v in row.items() if k} for row in csv.DictReader(io.StringIO(text))]
+    # 통화 표기 통일: 조사 원문의 ₫(동)는 화면·AI에 보낼 때 VND로 바꿉니다(원본 CSV는 그대로).
+    vnd = lambda v: re.sub(r"\s*₫", " VND", v) if "₫" in v else v
+    return [{(k or "").strip(): vnd((v or "").strip()) for k, v in row.items() if k} for row in csv.DictReader(io.StringIO(text))]
 
 
 def _research_segment(product):
