@@ -13,6 +13,7 @@
     "sangjun": {
       "name": "상준(PM1)",
       "paths": [
+        "README.md",
         "app.py",
         "requirements.txt",
         ".gitignore",
