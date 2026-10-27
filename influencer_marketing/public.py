@@ -1,7 +1,7 @@
 """인플루언서 마케팅 → 다른 기능에 공개하는 함수 (담당: 진혁).
 
 사용하는 곳 (README 7장)
-- HOME(주연): get_collaborations(), get_today_tasks()
+- HOME(주연): get_collaborations(), get_today_tasks(), get_home_summary()
 - KPI(민지):  get_quote_summary(), get_creator_list()
 
 규칙
@@ -205,3 +205,77 @@ def get_creator_list(platform=None, segment=None):
         return out
     except Exception:
         return []
+
+
+# HOME 요약용: 할 일 종류 (인플루언서 '요약' 화면의 오늘의 할 일과 같은 순서·같은 기준)
+TASK_KINDS = [
+    ("review", "회신 확인 필요"), ("late", "제안 후 7일 넘게 회신 없음"), ("pick", "촬영일 확정 대기"), ("soon", "14일 안 촬영"),
+    ("outlier", "단가 이상값"), ("need_url", "주소 직접 확인 필요"), ("unsent", "제안 미발송"), ("stale", "지표 기준일 45일 지남"),
+]
+_CONFIRMED = ("confirmed", "shot", "posted")
+
+
+def _summary_block(influencers, quotes, inf_map, conf, today):
+    """인플루언서 '요약' 화면(influencer_main.js overview)과 같은 계산."""
+    from .routes import quote_metrics, todo_items
+
+    funnel = {
+        "registered": len(influencers),
+        "sent": sum(1 for i in influencers if i.get("sentAt")),
+        "replied": sum(1 for i in influencers if i.get("sentAt") and i.get("resp")),
+        "confirmed": sum(1 for i in influencers if i.get("status") in _CONFIRMED),
+    }
+    tasks = {k: 0 for k, _ in TASK_KINDS}
+    for t in todo_items(influencers, today):
+        tasks[t["kind"]] = tasks.get(t["kind"], 0) + 1
+    for q in quotes:
+        m = quote_metrics(q, inf_map, conf)
+        if m["tier"] and m["usd"]:
+            lo, hi = m["tier"]["usd"]
+            if m["usd"] > (hi or lo) * 10 or m["usd"] < lo / 10:
+                tasks["outlier"] += 1
+    tasks["need_url"] = sum(1 for i in influencers
+                            if any(ch and ch.get("need_url") and not ch.get("url") for ch in (i.get("pf") or {}).values()))
+    tasks["unsent"] = sum(1 for i in influencers if (i.get("status") or "candidate") == "candidate" and not i.get("sentAt"))
+    return {"funnel": funnel, "tasks": tasks, "task_total": sum(tasks.values())}
+
+
+def get_home_summary():
+    """HOME용 인플루언서 '요약' — 진행 단계 인원과 확인할 일의 종류별 건수.
+    인플루언서 탭 '요약' 화면과 같은 계산 기준이며, 실제 자료·시연(DEMO)·합계를 따로 줍니다.
+
+    Returns:
+        dict:
+            ok (bool)        True면 정상 조회(0건이어도 True). False면 조회 실패 — 숫자 대신 "불러오지 못함"으로 표시하세요.
+            error (str)      실패 이유(ok=False일 때). 정상이면 ""
+            as_of (str)      계산 기준일 'YYYY-MM-DD'
+            real / demo / all (dict)   실제 자료만 / 시연 데이터만 / 둘 다 합친 값. 각 dict:
+                funnel (dict)    registered(등록) · sent(제안 보냄) · replied(회신 받음) · confirmed(확정: 계약 확정·촬영 완료·게시 완료) 인원
+                tasks (dict)     할 일 종류별 건수 — 키는 TASK_KINDS 순서:
+                                 review(회신 확인 필요) · late(제안 후 7일 넘게 회신 없음) · pick(촬영일 확정 대기) ·
+                                 soon(14일 안 촬영) · outlier(단가 이상값) · need_url(주소 직접 확인 필요) ·
+                                 unsent(제안 미발송) · stale(지표 기준일 45일 지남)
+                task_total (int) tasks 합계
+            task_labels (dict)   tasks 키 → 한국어 이름
+            link (str)           인플루언서 탭 주소
+        실패 시에도 같은 키를 주되 숫자는 모두 0, ok=False 입니다.
+    """
+    labels = dict(TASK_KINDS)
+    empty = {"funnel": {"registered": 0, "sent": 0, "replied": 0, "confirmed": 0},
+             "tasks": {k: 0 for k, _ in TASK_KINDS}, "task_total": 0}
+    base = {"as_of": "", "task_labels": labels, "link": _link()}
+    try:
+        from . import models as store
+        from .routes import settings, today_str
+
+        conf, today = settings(), today_str()
+        infs, quotes = store.list_influencers(), store.list_quotes()
+        inf_map = {i["id"]: i for i in infs}
+        pick = lambda rows, demo: [x for x in rows if bool(x.get("example")) == demo]
+        return {"ok": True, "error": "", **base, "as_of": today,
+                "real": _summary_block(pick(infs, False), pick(quotes, False), inf_map, conf, today),
+                "demo": _summary_block(pick(infs, True), pick(quotes, True), inf_map, conf, today),
+                "all": _summary_block(infs, quotes, inf_map, conf, today)}
+    except Exception as e:  # 부르는 쪽(HOME)이 멈추지 않도록 예외 대신 ok=False
+        return {"ok": False, "error": f"인플루언서 요약을 불러오지 못했어요 ({e.__class__.__name__})", **base,
+                "real": empty, "demo": empty, "all": empty}
