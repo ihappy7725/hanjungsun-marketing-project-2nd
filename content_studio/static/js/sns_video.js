@@ -279,34 +279,13 @@ export function renderVideo(root, doc, options) {
   genButtons.forEach((button) => { button.disabled = !canGenerate(); });
 
   // 제품 사진은 칸 없이 서버가 고른 제품·컷 종류로 자동으로 보냅니다(routes_sns.py _photo_set).
-  // 레퍼런스 (선택): 분위기·구도·색감 참고 이미지 4장·참고 영상 1개. 썸네일 미리보기를 보여 주고,
-  // ×로 빼거나 [+ 추가]로 넣으면 바로 새 버전으로 저장합니다(↶로 되돌리기).
+  // 레퍼런스 (선택): 분위기·구도·색감 참고 이미지 4장·참고 영상 1개. ① 장면 구성과 ② 프롬프트 사이에 둡니다.
+  // [+ 추가]·×로 고른 것은 모아 두었다가 [프롬프트에 반영](= 저장)을 누르면 새 버전으로 저장되고 프롬프트에 레퍼런스 줄이 들어갑니다.
   const REFS_MAX = 4;
+  const refs = { user_refs: [...(doc.user_refs || [])], ref_video: doc.ref_video || null };  // 반영 전 고른 레퍼런스
+  const refsChanged = () => JSON.stringify(refs) !== JSON.stringify({ user_refs: doc.user_refs || [], ref_video: doc.ref_video || null });
   const refBox = el("div", "studio-video-photo");
   const refNote = el("span", "studio-hint");
-  const refItem = (node, label, patch) => {
-    const box = el("span", "studio-ref");
-    const remove = el("button", "studio-ref-remove", "×");
-    remove.type = "button";
-    remove.title = `${label} 빼기`;
-    remove.setAttribute("aria-label", `${label} 빼기`);
-    remove.addEventListener("click", () => saveDoc({ ...collect(), ...patch }));
-    box.append(node, remove);
-    return box;
-  };
-  (doc.user_refs || []).forEach((ref, index) => {
-    const thumb = el("img", "studio-video-photo-thumb");
-    thumb.src = ref.url;
-    thumb.alt = "레퍼런스 이미지";
-    refBox.append(refItem(thumb, "레퍼런스 이미지", { user_refs: doc.user_refs.filter((_, i) => i !== index) }));
-  });
-  if (doc.ref_video) {
-    const clip = el("video", "studio-video-photo-thumb");
-    clip.src = doc.ref_video.url;
-    clip.muted = true;
-    clip.preload = "metadata";
-    refBox.append(refItem(clip, "참고 영상", { ref_video: null }));
-  }
   const refInput = el("input");
   refInput.type = "file";
   refInput.accept = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm";
@@ -315,13 +294,52 @@ export function renderVideo(root, doc, options) {
   refButton.type = "button";
   refButton.title = `이미지 ${REFS_MAX}장·영상 1개까지 (영상을 다시 올리면 바뀜)`;
   refButton.addEventListener("click", () => refInput.click());
-  refBox.append(refButton, refInput, refNote);
+  const refApply = el("button", "btn dark", "프롬프트에 반영");
+  refApply.type = "button";
+  refApply.addEventListener("click", () => saveDoc());
+  const refItem = (node, label, remove) => {
+    const box = el("span", "studio-ref");
+    const x = el("button", "studio-ref-remove", "×");
+    x.type = "button";
+    x.title = `${label} 빼기`;
+    x.setAttribute("aria-label", `${label} 빼기`);
+    x.addEventListener("click", () => { remove(); refsEdited(); });
+    box.append(node, x);
+    return box;
+  };
+  function drawRefs() {
+    const items = refs.user_refs.map((ref, index) => {
+      const thumb = el("img", "studio-video-photo-thumb");
+      thumb.src = ref.url;
+      thumb.alt = "레퍼런스 이미지";
+      return refItem(thumb, "레퍼런스 이미지", () => refs.user_refs.splice(index, 1));
+    });
+    if (refs.ref_video) {
+      const clip = el("video", "studio-video-photo-thumb");
+      clip.src = refs.ref_video.url;
+      clip.muted = true;
+      clip.preload = "metadata";
+      items.push(refItem(clip, "참고 영상", () => { refs.ref_video = null; }));
+    }
+    refApply.disabled = !refsChanged();
+    refBox.replaceChildren(...items, refButton, refInput, refApply, refNote);
+  }
+  // 고른 레퍼런스가 바뀌면 저장 전 상태(만들기 버튼 꺼짐)로 두고, 반영 버튼으로 저장하게 합니다.
+  function refsEdited() {
+    drawRefs();
+    if (refsChanged()) {
+      markDirty();
+      refNote.textContent = "[프롬프트에 반영]을 누르면 저장되고 프롬프트에 들어가요.";
+    } else {
+      refNote.textContent = "";
+    }
+  }
   refInput.addEventListener("change", async () => {
     const file = refInput.files[0];
     refInput.value = "";
     if (!file) return;
     const isVideo = file.type.startsWith("video/");
-    if (!isVideo && (doc.user_refs || []).length >= REFS_MAX) {
+    if (!isVideo && refs.user_refs.length >= REFS_MAX) {
       refNote.textContent = `레퍼런스 이미지는 ${REFS_MAX}장까지 넣을 수 있어요.`;
       return;
     }
@@ -329,17 +347,18 @@ export function renderVideo(root, doc, options) {
     refNote.textContent = isVideo ? "참고 영상을 올리는 중…" : "레퍼런스 이미지를 올리는 중…";
     try {
       const ref = await onUploadRef(file);
-      const next = collect();
-      if (isVideo) next.ref_video = ref;
-      else next.user_refs = [...(doc.user_refs || []), ref];
-      await saveDoc(next);
+      if (isVideo) refs.ref_video = ref;
+      else refs.user_refs.push(ref);
+      refsEdited();
     } catch (error) {
       refNote.textContent = `올리지 못했어요. (${error.message})`;
+    } finally {
       refButton.disabled = false;
     }
   });
+  drawRefs();
   // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
-  const maxScenes = Math.min(doc.duration, 12);
+  const maxScenes = Math.min(doc.duration, 5);  // 사람이 [컷 추가]로 늘릴 수 있는 최대 (videos.py MAX_MANUAL_SCENES, 자동·AI는 2~3컷)
   const addScene = el("button", "btn studio-video-add", `+ 컷 추가 (${doc.scenes.length}/${maxScenes})`);
   addScene.type = "button";
   addScene.disabled = doc.scenes.length >= maxScenes;
@@ -354,23 +373,22 @@ export function renderVideo(root, doc, options) {
   scenesBlock.append(
     status,
     el("h3", "", "① 장면 구성"),
-    el("p", "studio-hint", "시간을 누르면 끝나는 초를 고칠 수 있어요. 자막은 영상 위에 얹는 베트남어 문구입니다."),
     sceneList,
     addScene,
   );
 
+  // 영어·한국어 제목 줄은 같은 높이(sns.css .studio-video-prompt-head), 두 상자도 같은 높이입니다.
+  const englishTitle = el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용) ");
+  englishTitle.append(el("span", "studio-hint", "읽기 전용"));
   const englishHead = el("div", "studio-video-prompt-head");
-  englishHead.append(el("h3", "", "② 프롬프트 검토 (영어 · Higgsfield용)"), copy);
+  englishHead.append(englishTitle, copy);
   const englishBlock = el("div");
-  englishBlock.append(
-    englishHead,
-    el("p", "studio-hint", "읽기 전용 · 오른쪽 한국어를 고쳐 저장하면 여기에 반영돼요. 글자는 영상에 그리지 않고 장면 자막을 얹습니다."),
-    prompt,
-  );
+  englishBlock.append(englishHead, prompt);
+  const koreanHead = el("div", "studio-video-prompt-head");
+  koreanHead.append(el("h3", "", "한국어 (고치기)"));
   const koreanBlock = el("div");
   koreanBlock.append(
-    el("h3", "", "한국어 (고치기)"),
-    el("p", "studio-hint", "고친 줄은 [저장]할 때 영어로 바꿔요. 지운 줄은 영어에서도 빠져요."),
+    koreanHead,
     promptKo,
     untranslated,
     actions(save, reset),
@@ -381,8 +399,6 @@ export function renderVideo(root, doc, options) {
   const generateBlock = el("div", "studio-video-generate");
   generateBlock.append(
     el("h3", "", "③ 영상 만들기"),
-    el("h4", "", "레퍼런스 (선택)"),
-    refBox,
     actions(makeImage, makeCut, generate),
     genStatus,
   );
@@ -467,16 +483,15 @@ export function renderVideo(root, doc, options) {
   // scene: 미리보기 이미지를 만들 컷(0부터). 없으면 모든 컷.
   async function askGenerate(target, scene = null) {
     genButtons.forEach((button) => { button.disabled = true; });
-    genStatus.textContent = "비용과 남은 크레딧을 확인하는 중… (무료)";
+    genStatus.textContent = "비용과 남은 크레딧을 확인하는 중…";
     try {
       let { quote } = await call("/generate/quote", { method: "POST", body: { target, scene } });
       while (await confirmDialog(target, quote)) {
         genStatus.textContent = `${TARGET[target].label} 요청을 보내는 중…`;
         try {
           const data = await call("/generate", { method: "POST", body: { target, scene, credits: quote.credits } });
-          applyResult(data.design, `✓ ${fmt(data.spent)} 크레딧으로 ${TARGET[target].label} 요청을 보냈어요 · `
-            + `오늘 대시보드 사용 ${fmt(data.today_used)} / ${fmt(data.daily_limit)} · 만드는 동안 상태를 확인합니다`
-            + (data.warning ? ` · ${data.warning}` : ""));
+          // 보낸 뒤 "✓ …" 안내 없이 바로 진행 상태를 보여 줍니다(2026-10-27 유진 요청). 일부만 보냈을 때의 경고만 남깁니다.
+          applyResult(data.design, data.warning || "");
           return;
         } catch (error) {
           // 비용이 바뀌었거나 한도를 넘으면 새 숫자로 다시 묻습니다.
@@ -588,6 +603,8 @@ export function renderVideo(root, doc, options) {
     });
     // 한국어를 고쳤으면 그 글을 보내고 영어는 서버가 다시 만듭니다. 비우면 자동 프롬프트로 돌아갑니다.
     // 고치지 않았으면 그대로 둡니다(예전에 영어만 고친 작업의 custom 유지).
+    next.user_refs = [...refs.user_refs];
+    next.ref_video = refs.ref_video;
     const ko = promptKo.value.trim();
     if (ko !== (doc.prompt_ko || "").trim()) {
       next.custom_ko = ko;
@@ -621,7 +638,10 @@ export function renderVideo(root, doc, options) {
   const top = el("div", "studio-video-top");
   top.append(preview, scenesBlock);
   const wrap = el("div", "studio-video");
-  wrap.append(top, prompts, generateBlock);
+  // 위: 미리보기 | ① 장면 구성 → 레퍼런스(프롬프트에 반영) → ② 프롬프트 검토 → ③ 만들기
+  const refsBlock = el("div", "studio-video-refs");
+  refsBlock.append(el("h3", "", "레퍼런스 (선택)"), refBox);
+  wrap.append(top, refsBlock, prompts, generateBlock);
   root.replaceChildren(wrap);
   updateTimes();
   select(Math.min(cut, doc.scenes.length - 1), false);
