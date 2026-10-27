@@ -1100,10 +1100,20 @@ function renderSimOptions() {
     opt.label = parts.filter(Boolean).join(" · ");
     return opt;
   }));
+  // 인플루언서 탭 크리에이터 목록(get_creator_list, 실제 계정 자료 · 단가 없음): 같은 이름이 여러 플랫폼이면 플랫폼마다 한 줄
+  const creators = d.creator_list || [];
+  $("sim-accounts").append(...creators.map((c) => {
+    const opt = el("option");
+    opt.value = c.name;
+    opt.label = [c.platform, c.followers != null ? `팔로워 ${followersText(c.followers)}` : "", c.tier, c.category, c.is_demo ? "시연" : "실제 자료"]
+      .filter(Boolean).join(" · ");
+    return opt;
+  }));
   syncSimUnit();
   setText(
     "sim-source",
-    `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}${inf.status === "demo" ? " · 시연" : ""}`,
+    `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}${inf.status === "demo" ? " · 시연" : ""}`
+      + (creators.length ? ` · 크리에이터 목록 ${num(creators.length)}명(실제 자료${creators[0].list_as_of ? ` ${creators[0].list_as_of}` : ""})` : ""),
   );
   setSimType(sim.type);
 }
@@ -1121,6 +1131,23 @@ function accountListEntry() {
 }
 
 const followersText = (n) => (n >= 10000 ? `${(n / 10000).toFixed(1).replace(/\.0$/, "")}만` : num(n));
+
+// 크리에이터 목록에서 계정 찾기: 같은 이름이 여러 플랫폼에 있으면 지금 고른 매체를 먼저(없으면 팔로워 많은 쪽)
+function accountCreator() {
+  const name = simForm().elements.account.value.trim();
+  const found = (sim.data?.creator_list || []).filter((c) => c.name === name);
+  return found.find((c) => c.platform === simForm().elements.media.value) || found[0] || null;
+}
+
+// 크리에이터 목록 계정(단가 없음): 집행 매체를 그 플랫폼으로 맞추고, 예산은 직접 입력하도록 안내
+function applyCreator() {
+  const f = simForm().elements;
+  const c = accountCreator();
+  if (SIM_MEDIA.kol.some((m) => m.value === c.platform)) f.media.value = c.platform;
+  onMediaChange();
+  const info = [c.followers != null ? `팔로워 ${followersText(c.followers)}` : "", c.tier].filter(Boolean).join(" · ");
+  setText("sim-quote-help", `크리에이터 목록(실제 자료${c.list_as_of ? ` ${c.list_as_of}` : ""}) · ${info} · 단가 없음 — 예산 직접 입력`);
+}
 
 function applyQuote() {
   const f = simForm().elements;
@@ -2330,7 +2357,8 @@ root.addEventListener("change", (event) => {
 root.addEventListener("input", (event) => {
   if (event.target.matches("[data-kpi-money]")) formatMoneyInput(event.target);
   if (event.target.matches('[data-kpi="sim-account"]')) {
-    if (accountQuotes().length || accountListEntry()) applyQuote();
+    if (accountQuotes().length || accountListEntry()) applyQuote();  // 단가 · 탭 리스트가 우선
+    else if (accountCreator()) applyCreator();
     else { fillFormats(); setText("sim-quote-help", ""); }  // 탭에 없는 계정이면 매체 기본 형식만
   }
   if (event.target.matches('[data-kpi="sim-roas"]')) sim.roasEdited = event.target.value.trim() !== "";
