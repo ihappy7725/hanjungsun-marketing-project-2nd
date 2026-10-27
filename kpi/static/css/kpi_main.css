@@ -252,18 +252,19 @@
 .kpi-page .kpi-panel.is-expanded {
   position: fixed;
   top: 50%;
-  /* 왼쪽 메뉴(--sidebar-width)를 뺀 본문 영역을 본문과 같은 좌우 여백(--page-padding)으로 꽉 채웁니다. */
+  /* 폭은 최대 1200px로 본문 영역(왼쪽 메뉴 제외) 가운데에 띄웁니다(현지조사 트렌드 확대 창과 같은 크기). */
   --kpi-modal-gap: var(--page-padding, 16px);
-  right: var(--kpi-modal-gap);
+  right: auto;
   bottom: auto;
-  left: calc(var(--sidebar-width, 0px) + var(--kpi-modal-gap));
+  left: calc(var(--sidebar-width, 0px) + (100vw / var(--ui-zoom, 1) - var(--sidebar-width, 0px)) / 2);
+  width: min(1200px, calc(100vw / var(--ui-zoom, 1) - var(--sidebar-width, 0px) - 2 * var(--kpi-modal-gap)));
   z-index: 30;
   height: auto;
-  max-height: calc(100vh / var(--ui-zoom, 1) - 40px);  /* 화면 배율(zoom) 보정: 화면 높이 기준 */
+  max-height: calc(100vh / var(--ui-zoom, 1) - 80px);  /* 화면 위아래 40px씩 여백(zoom 보정) */
   background: var(--page-bg);
   padding: var(--space-8) var(--space-8) var(--space-6);
   overflow-y: auto;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 .kpi-page .kpi-panel.is-expanded .kpi-detail { display: block; }
 .kpi-page .kpi-panel.is-expanded .kpi-compact-only { display: none; }

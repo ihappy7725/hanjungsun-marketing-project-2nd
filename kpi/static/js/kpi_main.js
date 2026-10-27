@@ -2163,14 +2163,14 @@ function animatePanel(panel) {
   requestAnimationFrame(() => {
     panelCharts().forEach((chart) => {
       chart.stop();
-      chart.resize();
+      fitChart(chart);
       chart.reset();
       chart.draw();
     });
     setTimeout(() => {
       if (!panel.classList.contains("is-expanded")) return;
       panelCharts().forEach((chart) => {
-        chart.resize();
+        fitChart(chart);
         // 기준선(손익분기 · 전체 평균 같은 선)은 제자리에 두고, 막대만 왼쪽부터 차례로(같은 항목의 막대 2개는 함께) 올라오게
         chart.data.datasets.forEach((ds) => { if ((ds.type || chart.config.type) === "line") ds.animation = false; });
         chart.options.animation = chart.config.type === "doughnut"
@@ -2185,8 +2185,15 @@ function animatePanel(panel) {
 }
 
 // ---------- 블록 확대 ----------
+// 화면 배율(zoom 0.8)에서는 Chart.js가 칸 크기를 작게 재므로, 칸의 CSS 크기를 직접 넘겨 차트를 칸에 꼭 맞춥니다.
+function fitChart(chart) {
+  const box = chart.canvas.parentElement;
+  if (box?.clientWidth && box.clientHeight) chart.resize(box.clientWidth, box.clientHeight);
+  else chart.resize();
+}
+
 function resizeCharts() {
-  requestAnimationFrame(() => Object.values(charts).forEach((c) => c.resize()));
+  requestAnimationFrame(() => Object.values(charts).forEach(fitChart));
 }
 
 // 4개 블록 높이를 예산 블록(기본 화면) 높이에 맞춥니다. 넘치는 내용은 블록 안에서 스크롤합니다.
