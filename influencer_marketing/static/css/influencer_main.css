@@ -21,7 +21,7 @@
 /* 머리글·탭 */
 .influencer-page .im-head{display:flex;align-items:center;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-4)}
 .influencer-page .im-head>div{flex:1;min-width:0}
-.influencer-page .im-head h1{font-family:var(--font-title);font-size:var(--fs-display);font-weight:var(--title-weight)}  /* 공통 규격(마케팅 성과 기준): 페이지 제목 40px */
+.influencer-page .im-head h1{margin:0;line-height:var(--line-height-heading);font-family:var(--font-title);font-size:var(--fs-display);font-weight:var(--title-weight)}  /* 공통 규격(마케팅 성과 기준): 페이지 제목 40px */
 .influencer-page .im-head p{margin:var(--space-1) 0 0;font-size:var(--fs-body)}
 .influencer-page .im-tabs{display:flex;gap:var(--space-1);overflow-x:auto;border-bottom:1px solid var(--im-line);margin-bottom:var(--space-6);scrollbar-width:none}
 .influencer-page .im-tabs::-webkit-scrollbar{display:none}

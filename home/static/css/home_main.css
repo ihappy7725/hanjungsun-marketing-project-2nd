@@ -8,7 +8,7 @@
 .home-page textarea { resize: vertical; }
 .home-page a { text-decoration: none; }
 .home-page a:hover { text-decoration: underline; }
-.home-page h1 { font-family: var(--font-title); font-size: var(--fs-display); font-weight: var(--title-weight); margin: var(--space-3) 0; line-height: var(--line-height); }
+.home-page h1 { font-family: var(--font-title); font-size: var(--fs-display); font-weight: var(--title-weight); margin: 0; line-height: var(--line-height-heading); }  /* 제목 위치 공통(줄 높이 1.35 · 여백 0) */
 .home-page h2 { font-size: var(--fs-body); font-weight: 500; margin: var(--space-2) 0 0; }
 .home-page h3 { font-size: var(--fs-body); margin: var(--space-3) 0; font-weight: 600; }
 .home-page .home-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); margin-bottom: var(--space-4); }
