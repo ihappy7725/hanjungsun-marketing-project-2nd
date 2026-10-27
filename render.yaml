@@ -2,7 +2,7 @@ services:
   - type: web
     name: hanjeongseon
     runtime: python
-    branch: premain
+    branch: main
     # 무료 인스턴스: 장시간 미사용 시 절전되며 로컬 파일은 영구 보존되지 않습니다.
     plan: free
     buildCommand: pip install -r requirements.txt
