@@ -6,6 +6,7 @@ API:   /influencer_marketing/api/...              (아래 각 함수 참고)
 CSV:   /influencer_marketing/export/<종류>.csv
 """
 import csv
+import hashlib
 import io
 import re
 import secrets
@@ -56,50 +57,51 @@ DEFAULT_SETTINGS = {
 }
 
 # ---------------------------------------------------------------- 시연 데이터 (실제 인물 아님)
+# 채널 주소는 예약 도메인 example.com의 가짜 주소예요 (실제 계정과 겹치지 않게, Ver_018: 요약 '주소 확인' 단계 시연용)
 DEMO_INFLUENCERS = [
-    {"id": "demo_inf_a", "name": "크리에이터 A", "handle": "@vd_banhngot_a", "category": "디저트·먹방", "segment": disc.SEGMENT_NAMES[1], "city": "호치민",
-     "email": "creator.a@example.com", "pf": {"tt": {"f": 182000, "v": 46000, "url": ""}, "fb": {"f": 95000, "v": 12000, "url": ""}},
-     "metricsDate": "2026-10-15", "metricsSource": "인플루언서 제출", "status": "confirmed", "sentAt": "2026-10-08T09:00:00",
+    {"id": "demo_inf_a", "name": "Linh Ăn Vặt", "handle": "@demo_linh_an_vat", "category": "디저트·먹방", "segment": disc.SEGMENT_NAMES[1], "city": "호치민",
+     "email": "demo.a@example.com", "pf": {"tt": {"f": 182000, "v": 46000, "url": "https://example.com/demo/person-a/tt"}, "fb": {"f": 95000, "v": 12000, "url": "https://example.com/demo/person-a/fb"}},
+     "metricsDate": "2026-10-15", "metricsSource": "시연용 가상 데이터", "status": "confirmed", "sentAt": "2026-10-08T09:00:00",
      "confirmedShoot": "2026-11-05", "postDate": "2026-11-12", "notes": "샘플 30개 발송 예정", "eventId": "",
      "resp": {"avail": "yes", "neg": ["2026-10-24"], "shoot": ["2026-11-05", "2026-11-07"], "post": "2026-11-12", "fee": 18000000,
               "cur": "VND", "formats": ["TikTok 영상"], "note": "팥 앙금 맛 위주로 시식 영상 희망", "review": False, "ambig": [],
               "raw": "", "via": "form", "at": "2026-10-14T10:00:00"}},
-    {"id": "demo_inf_b", "name": "크리에이터 B", "handle": "@vd_anvat_b", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "하노이",
-     "email": "creator.b@example.com", "pf": {"tt": {"f": 42000, "v": 15000, "url": ""}, "ig": {"f": 18000, "v": 4200, "url": ""}},
-     "metricsDate": "2026-10-16", "metricsSource": "직접 확인", "status": "replied", "sentAt": "2026-10-09T09:00:00", "eventId": "",
+    {"id": "demo_inf_b", "name": "Minh Review Quán", "handle": "@demo_minh_review_quan", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "하노이",
+     "email": "demo.b@example.com", "pf": {"tt": {"f": 42000, "v": 15000, "url": "https://example.com/demo/person-b/tt"}, "ig": {"f": 18000, "v": 4200, "url": "https://example.com/demo/person-b/ig"}},
+     "metricsDate": "2026-10-16", "metricsSource": "시연용 가상 데이터", "status": "replied", "sentAt": "2026-10-09T09:00:00", "eventId": "",
      "resp": {"avail": "cond", "neg": ["2026-10-28"], "shoot": ["2026-11-10", "2026-11-12"], "post": "", "fee": 6500000, "cur": "VND",
               "formats": ["TikTok 영상", "Instagram Reels"], "note": "영상 2차 활용은 3개월까지만 가능하다는 조건", "review": True,
               "ambig": ["10/11 표기가 일/월인지 확인 필요"], "raw": "1) B - có thể nếu chỉ dùng lại video trong 3 tháng\n2) 28/10\n3) 10/11 hoặc 12/11\n5) 6,5 triệu",
               "via": "rule", "at": "2026-10-17T15:00:00"}},
-    {"id": "demo_inf_c", "name": "크리에이터 C", "handle": "@vd_meva_be_c", "category": "가족·육아", "segment": disc.SEGMENT_NAMES[3], "city": "다낭",
-     "email": "creator.c@example.com", "manager": "시연 매니지먼트",
-     "pf": {"fb": {"f": 310000, "v": 38000, "url": ""}, "yt": {"f": 120000, "v": 21000, "url": ""}},
-     "metricsDate": "2026-10-10", "metricsSource": "에이전시 자료", "status": "sent", "sentAt": "2026-10-12T09:00:00", "notes": "매니저 경유 연락", "eventId": ""},
-    {"id": "demo_inf_d", "name": "크리에이터 D", "handle": "@vd_kfood_d", "category": "K-컬처", "segment": disc.SEGMENT_NAMES[2], "city": "호치민",
-     "email": "creator.d@example.com", "pf": {"yt": {"f": 640000, "v": 150000, "url": ""}, "tt": {"f": 520000, "v": 210000, "url": ""}},
-     "metricsDate": "2026-10-18", "metricsSource": "YouTube API", "status": "negotiating", "sentAt": "2026-10-07T09:00:00", "notes": "단가 협상 중", "eventId": "",
+    {"id": "demo_inf_c", "name": "Thảo Mẹ Bỉm", "handle": "@demo_thao_me_bim", "category": "가족·육아", "segment": disc.SEGMENT_NAMES[3], "city": "다낭",
+     "email": "demo.c@example.com", "manager": "시연 매니지먼트",
+     "pf": {"fb": {"f": 310000, "v": 38000, "url": "https://example.com/demo/person-c/fb"}, "yt": {"f": 120000, "v": 21000, "url": "https://example.com/demo/person-c/yt"}},
+     "metricsDate": "2026-10-10", "metricsSource": "시연용 가상 데이터", "status": "sent", "sentAt": "2026-10-12T09:00:00", "notes": "매니저 경유 연락", "eventId": ""},
+    {"id": "demo_inf_d", "name": "Huy K-Food", "handle": "@demo_huy_kfood", "category": "K-컬처", "segment": disc.SEGMENT_NAMES[2], "city": "호치민",
+     "email": "demo.d@example.com", "pf": {"yt": {"f": 640000, "v": 150000, "url": "https://example.com/demo/person-d/yt"}, "tt": {"f": 520000, "v": 210000, "url": "https://example.com/demo/person-d/tt"}},
+     "metricsDate": "2026-10-18", "metricsSource": "시연용 가상 데이터", "status": "negotiating", "sentAt": "2026-10-07T09:00:00", "notes": "단가 협상 중", "eventId": "",
      "resp": {"avail": "yes", "neg": ["2026-10-27"], "shoot": ["2026-11-05", "2026-11-14"], "post": "2026-11-20", "fee": 2600, "cur": "USD",
               "formats": ["YouTube 영상", "YouTube Shorts"], "note": "", "review": False, "ambig": [], "raw": "", "via": "manual", "at": "2026-10-15T11:00:00"}},
-    {"id": "demo_inf_e", "name": "크리에이터 E", "handle": "@vd_songdep_e", "category": "라이프스타일", "segment": disc.SEGMENT_NAMES[3], "city": "하노이",
-     "email": "creator.e@example.com", "pf": {"ig": {"f": 26000, "v": 7000, "url": ""}, "tt": {"f": 9000, "v": 3500, "url": ""}},
-     "metricsDate": "2026-08-20", "metricsSource": "직접 확인", "status": "candidate", "eventId": ""},
-    {"id": "demo_inf_f", "name": "크리에이터 F", "handle": "@vd_review_f", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "호치민",
-     "email": "creator.f@example.com", "pf": {"tt": {"f": 75000, "v": 9000, "url": ""}}, "metricsDate": "2026-10-11",
-     "metricsSource": "TikTok One", "status": "declined", "sentAt": "2026-10-08T09:00:00", "eventId": "",
+    {"id": "demo_inf_e", "name": "Vy Sống Đẹp", "handle": "@demo_vy_song_dep", "category": "라이프스타일", "segment": disc.SEGMENT_NAMES[3], "city": "하노이",
+     "email": "demo.e@example.com", "pf": {"ig": {"f": 26000, "v": 7000, "url": "https://example.com/demo/person-e/ig"}, "tt": {"f": 9000, "v": 3500, "url": "https://example.com/demo/person-e/tt"}},
+     "metricsDate": "2026-08-20", "metricsSource": "시연용 가상 데이터", "status": "candidate", "eventId": ""},
+    {"id": "demo_inf_f", "name": "Tú Food Tour", "handle": "@demo_tu_food_tour", "category": "맛집 리뷰", "segment": disc.SEGMENT_NAMES[0], "city": "호치민",
+     "email": "demo.f@example.com", "pf": {"tt": {"f": 75000, "v": 9000, "url": "https://example.com/demo/person-f/tt"}}, "metricsDate": "2026-10-11",
+     "metricsSource": "시연용 가상 데이터", "status": "declined", "sentAt": "2026-10-08T09:00:00", "eventId": "",
      "resp": {"avail": "no", "neg": [], "shoot": [], "post": "", "fee": None, "cur": "VND", "formats": [], "note": "12월까지 일정이 차 있음",
               "review": False, "ambig": [], "raw": "", "via": "manual", "at": "2026-10-13T09:00:00"}},
-    {"id": "demo_inf_g", "name": "크리에이터 G", "handle": "@vd_danang_trip_g", "category": "여행", "segment": disc.SEGMENT_NAMES[4], "city": "다낭",
-     "email": "creator.g@example.com", "pf": {"yt": {"f": 86000, "v": 24000, "url": ""}}, "metricsDate": "2026-10-20",
-     "metricsSource": "직접 확인", "status": "candidate", "notes": "한국인 2030 대상 다낭 여행 브이로그", "eventId": ""},
+    {"id": "demo_inf_g", "name": "다낭 여행자 준호", "handle": "@demo_junho_danang", "category": "여행", "segment": disc.SEGMENT_NAMES[4], "city": "다낭",
+     "email": "demo.g@example.com", "pf": {"yt": {"f": 86000, "v": 24000, "url": "https://example.com/demo/person-g/yt"}}, "metricsDate": "2026-10-20",
+     "metricsSource": "시연용 가상 데이터", "status": "candidate", "notes": "한국인 2030 대상 다낭 여행 브이로그", "eventId": ""},
 ]
 DEMO_QUOTES = [
-    {"id": "demo_q_1", "infId": "demo_inf_a", "name": "크리에이터 A", "platform": "tt", "format": "TikTok 영상", "layer": "contract",
+    {"id": "demo_q_1", "infId": "demo_inf_a", "name": "Linh Ăn Vặt", "platform": "tt", "format": "TikTok 영상", "layer": "contract",
      "date": "2026-10-20", "amount": 18000000, "cur": "VND", "followers": 182000, "actualViews": 61000, "cond": "VAT 별도, 2차 활용 1개월"},
-    {"id": "demo_q_2", "infId": "demo_inf_b", "name": "크리에이터 B", "platform": "tt", "format": "TikTok 영상", "layer": "quote",
+    {"id": "demo_q_2", "infId": "demo_inf_b", "name": "Minh Review Quán", "platform": "tt", "format": "TikTok 영상", "layer": "quote",
      "date": "2026-10-19", "amount": 6500000, "cur": "VND", "followers": 42000, "cond": "2차 활용 3개월"},
-    {"id": "demo_q_3", "infId": "demo_inf_d", "name": "크리에이터 D", "platform": "yt", "format": "YouTube 영상", "layer": "quote",
+    {"id": "demo_q_3", "infId": "demo_inf_d", "name": "Huy K-Food", "platform": "yt", "format": "YouTube 영상", "layer": "quote",
      "date": "2026-10-18", "amount": 2600, "cur": "USD", "followers": 640000, "cond": "제작비 포함"},
-    {"id": "demo_q_4", "infId": "demo_inf_c", "name": "크리에이터 C", "platform": "fb", "format": "Facebook Reels", "layer": "quote",
+    {"id": "demo_q_4", "infId": "demo_inf_c", "name": "Thảo Mẹ Bỉm", "platform": "fb", "format": "Facebook Reels", "layer": "quote",
      "date": "2026-10-21", "amount": 24000000, "cur": "VND", "followers": 310000, "cond": "에이전시 수수료 포함"},
 ]
 
@@ -257,68 +259,158 @@ def _guess_year(day, month, today):
     return y
 
 
+_ITEM_RE = re.compile(r"^\s*(?:[-*•>]\s*)*([1-6])\s*[).:：\-]\s*(.*)$")
+_NOTE_LABEL_RE = re.compile(r"(ý kiến khác|y kien khac|other comments?|others?|기타 의견|기타)\s*[:：]\s*(.*)", re.I)
+_NONE_RE = re.compile(r"không có|không thể|không áp dụng|chưa|none|n/?a|없음|해당 없음", re.I)
+_CLOSING_RE = re.compile(r"^(trân trọng|thân ái|best regards|regards|sincerely|감사합니다|mong sớm|cảm ơn)", re.I)
+
+
+def _strip_md(s):
+    """**굵게**, __밑줄__ 같은 표시를 지웁니다."""
+    return re.sub(r"(\*\*|__|\*|`)", "", s)
+
+
+def _split_items(text):
+    """'1) …', '1. …', '1: …' 형식의 번호 항목을 {번호: 내용}으로 나눕니다. 항목이 여러 줄이면 빈 줄 전까지 이어 붙입니다."""
+    items, cur = {}, None
+    for raw in text.splitlines():
+        line = _strip_md(raw).rstrip()
+        m = _ITEM_RE.match(line)
+        if m and int(m.group(1)) not in items:
+            cur = int(m.group(1))
+            body = m.group(2)
+            if ":" in body or "：" in body:  # '협업 가능 여부: A. Có thể' → 콜론 뒤만
+                body = re.split(r"[:：]", body, 1)[1]
+            items[cur] = body.strip()
+            continue
+        if cur is None:
+            continue
+        if not line.strip() or _CLOSING_RE.match(line.strip()):
+            cur = None
+            continue
+        items[cur] = (items[cur] + " " + line.strip()).strip()
+    return items
+
+
+def _dates_in(s, today, r):
+    out = []
+    for dm in _DATE_RE.finditer(s):
+        day, month = int(dm.group(1)), int(dm.group(2))
+        if not (1 <= day <= 31 and 1 <= month <= 12):
+            continue
+        year = dm.group(3)
+        if year and len(year) not in (2, 4):
+            continue
+        year = (int(year) + 2000 if len(year) == 2 else int(year)) if year else _guess_year(day, month, today)
+        try:
+            iso = date(year, month, day).isoformat()
+        except (TypeError, ValueError):
+            continue
+        if day <= 12 and day != month:
+            r["ambig"].append(f"{dm.group(0)}을 {month}월 {day}일(일/월 순서)로 읽었어요")
+        out.append((dm.group(0), iso))
+    return out
+
+
+def _fee_in(s):
+    for rx in _FEE_RE:
+        fm = rx.search(s)
+        if fm:
+            raw = re.sub(r"[.,](?=\d{3}\b)", "", fm.group(1)).replace(",", ".")
+            try:
+                n = float(raw)
+            except ValueError:
+                continue
+            if re.match(r"tri|tr|million", fm.group(2), re.I):
+                n *= 1_000_000
+            return int(round(n))
+    return None
+
+
+def _avail_from_words(low):
+    if re.search(r"không thể|từ chối|rất tiếc|unfortunately|can'?t|cannot|not available|불가|어렵", low):
+        return "no"
+    if re.search(r"điều kiện|nếu|condition|if you|조건", low):
+        return "cond"
+    if re.search(r"có thể|đồng ý|sẵn sàng|\bok\b|\byes\b|happy to|가능", low):
+        return "yes"
+    return ""
+
+
 def parse_reply(text, today=None):
-    """베트남어·영어·한국어 회신에서 가능 여부·날짜(dd/mm)·희망 비용을 뽑습니다. 결과는 반드시 사람이 확인합니다."""
+    """베트남어·영어·한국어 회신에서 가능 여부·날짜(dd/mm)·희망 비용·기타 의견을 뽑습니다. 결과는 반드시 사람이 확인합니다.
+
+    1) 우리 메일의 번호 양식(1)~6), '1.' '1:'도 인정)으로 답했으면 번호별로 읽습니다.
+       2번=협의일, 3번=촬영일, 4번=게시일, 5번=비용, 6번=기타 의견. 6번 안의 날짜는 일정에 넣지 않고 '확인할 점'에 알립니다.
+    2) 번호 양식이 없으면 줄마다 단어(trao đổi·quay·đăng 등)로 짐작합니다(예전 방식).
+    """
     today = today or date.today()
     r = blank_reply()
     r["raw"] = text
-    low = text.lower()
-    m = re.search(r"1\)[^\n]*?\b([abc])\b", text, re.I)
-    if m:
-        r["avail"] = {"a": "yes", "b": "cond", "c": "no"}[m.group(1).lower()]
-    elif re.search(r"không thể|từ chối|rất tiếc|unfortunately|can'?t|cannot|not available|불가|어렵", low):
-        r["avail"] = "no"
-    elif re.search(r"điều kiện|nếu|condition|if you|조건", low):
-        r["avail"] = "cond"
-    elif re.search(r"có thể|đồng ý|sẵn sàng|\bok\b|\byes\b|happy to|가능", low):
-        r["avail"] = "yes"
+    items = _split_items(text)
 
-    context = "shoot"
-    for line in text.splitlines():
-        l = line.lower()
-        if re.search(r"2\)|trao đổi|thống nhất|discuss|meet|협의", l):
-            context = "neg"
-        elif re.search(r"3\)|quay|film|shoot|촬영", l):
-            context = "shoot"
-        elif re.search(r"4\)|đăng|post|upload|게시", l):
-            context = "post"
-        for dm in _DATE_RE.finditer(line):
-            day, month = int(dm.group(1)), int(dm.group(2))
-            if not (1 <= day <= 31 and 1 <= month <= 12):
-                continue
-            year = dm.group(3)
-            year = (int(year) + 2000 if len(year) == 2 else int(year)) if year else _guess_year(day, month, today)
-            try:
-                iso = date(year, month, day).isoformat()
-            except (TypeError, ValueError):
-                continue
-            if day <= 12 and day != month:
-                r["ambig"].append(f"{dm.group(0)}을 {month}월 {day}일(일/월 순서)로 읽었어요")
-            if context == "neg":
-                r["neg"].append(iso)
-            elif context == "post":
-                r["post"] = r["post"] or iso
-            else:
-                r["shoot"].append(iso)
+    if len(items) >= 2:
+        a = items.get(1, "")
+        m = re.match(r"\s*\(?([abc])\b", a, re.I) or re.search(r"(?<![\w])([abc])[.)]\s", a + " ", re.I)
+        r["avail"] = {"a": "yes", "b": "cond", "c": "no"}[m.group(1).lower()] if m else _avail_from_words(a.lower())
+        for key, n in (("neg", 2), ("shoot", 3)):
+            r[key] = [iso for _, iso in _dates_in(items.get(n, ""), today, r)]
+        posts = _dates_in(items.get(4, ""), today, r)
+        r["post"] = posts[0][1] if posts else ""
+        if len(posts) > 1:
+            r["ambig"].append(f"게시 가능일이 {len(posts)}개라 첫 날짜({posts[0][1]})만 넣었어요")
+        r["fee"] = _fee_in(items.get(5, ""))
+        if r["fee"] is None and items.get(5) and not _NONE_RE.search(items[5]):
+            r["ambig"].append(f"희망 비용을 숫자로 읽지 못했어요: '{items[5][:40]}'")
+        note = items.get(6, "")
+        for raw_d, iso in _dates_in(note, today, {"ambig": []}):
+            r["ambig"].append(f"기타 의견 속 날짜({raw_d})는 일정에 넣지 않았어요. 샘플 기한 등인지 확인하세요")
         if r["fee"] is None:
-            for rx in _FEE_RE:
-                fm = rx.search(line)
-                if fm:
-                    raw = re.sub(r"[.,](?=\d{3}\b)", "", fm.group(1)).replace(",", ".")
-                    try:
-                        n = float(raw)
-                    except ValueError:
-                        continue
-                    if re.match(r"tri|tr|million", fm.group(2), re.I):
-                        n *= 1_000_000
-                    r["fee"] = int(round(n))
-                    break
+            fee6 = _fee_in(note)
+            if fee6:
+                r["ambig"].append(f"기타 의견에 금액({fee6:,})이 있어요. 희망 비용 칸은 직접 확인하세요")
+        r["note"] = note[:500]
+        if 6 not in items:
+            r["ambig"].append("기타 의견(6번)을 찾지 못했어요. 원문 보기에서 확인하세요")
+    else:
+        low = text.lower()
+        m = re.search(r"1\)[^\n]*?\b([abc])\b", text, re.I)
+        r["avail"] = {"a": "yes", "b": "cond", "c": "no"}[m.group(1).lower()] if m else _avail_from_words(low)
+        context = "shoot"
+        for line in text.splitlines():
+            l = line.lower()
+            if _NOTE_LABEL_RE.search(line):
+                context = "note"
+            elif re.search(r"trao đổi|thống nhất|discuss|meet|협의", l):
+                context = "neg"
+            elif re.search(r"quay|film|shoot|촬영", l):
+                context = "shoot"
+            elif re.search(r"đăng|post|upload|게시", l):
+                context = "post"
+            for raw_d, iso in _dates_in(line, today, r):
+                if context == "note":
+                    r["ambig"].append(f"기타 의견 속 날짜({raw_d})는 일정에 넣지 않았어요. 확인하세요")
+                elif context == "neg":
+                    r["neg"].append(iso)
+                elif context == "post":
+                    r["post"] = r["post"] or iso
+                else:
+                    r["shoot"].append(iso)
+            if r["fee"] is None and context != "note":
+                r["fee"] = _fee_in(line)
+        nm = None
+        for line in text.splitlines():
+            nm = _NOTE_LABEL_RE.search(_strip_md(line))
+            if nm:
+                break
+        r["note"] = nm.group(2).strip()[:500] if nm else ""
+        if not nm:
+            r["ambig"].append("기타 의견을 따로 찾지 못했어요. 원문 보기에서 확인하세요")
     r["neg"] = sorted(set(r["neg"]))
     r["shoot"] = sorted(set(r["shoot"]))
-    r["ambig"] = list(dict.fromkeys(r["ambig"]))[:3]
+    r["ambig"] = list(dict.fromkeys(r["ambig"]))[:6]
     if not r["avail"]:
         r["ambig"].insert(0, "협업 가능 여부를 찾지 못했어요")
-    r["note"] = text.strip()[:300]
     return r
 
 
@@ -382,7 +474,7 @@ def clean_influencer(data, existing=None):
             if ch:
                 f, v, url = _num(ch.get("f")), _num(ch.get("v")), str(ch.get("url") or "").strip()
                 extra = _clean_channel_extra(ch)
-                if f or v or url or extra.get("avg") or extra.get("er"):
+                if f or v or url or extra.get("avg") or extra.get("er") or extra.get("need_url"):
                     pf[key] = {"f": f, "v": v, "url": url, **extra}
         out["pf"] = pf
     if "resp" in data:
@@ -414,6 +506,8 @@ def _clean_channel_extra(ch):
     if ch.get("src") in disc.SOURCE_TYPES:
         out["src"] = ch["src"]
         out["conf"] = disc.confidence_of(ch["src"])
+    if ch.get("need_url") and not str(ch.get("url") or "").strip():
+        out["need_url"] = True  # 주소 직접 확인 필요 (주소를 넣으면 자동으로 사라짐)
     if ch.get("at"):
         out["at"] = _date(ch["at"])
     return out
@@ -587,6 +681,9 @@ def api_save_quote():
              "date": _date(d.get("date")) or today_str(), "amount": amount, "cur": d.get("cur") if d.get("cur") in CURRENCIES else "VND",
              "followers": ((inf.get("pf") or {}).get(platform) or {}).get("f"), "expViews": _num(d.get("expViews")),
              "actualViews": _num(d.get("actualViews")), "cond": str(d.get("cond") or "")[:300], "example": False}
+        old = next((x for x in store.list_quotes() if x.get("id") == d.get("id")), None) if d.get("id") else None
+        if old:
+            q["example"] = bool(old.get("example"))  # 수정해도 시연 데이터 표시는 그대로
     except InputError as e:
         return _error(str(e))
     return jsonify(store.save_quote(q))
@@ -824,6 +921,13 @@ def api_phyllo_test():
     return _ext(ext.phyllo_test)
 
 
+@bp.post("/api/translate")
+def api_translate():
+    """대시보드 안 번역 (MyMemory, 무료·키 없음). 입력: text, source, target (ko·en·vi). 긴 글은 서버가 나눠 보냅니다."""
+    d = request.get_json(silent=True) or {}
+    return _ext(ext.mymemory_translate, str(d.get("text") or ""), str(d.get("source") or ""), str(d.get("target") or ""))
+
+
 @bp.post("/api/youtube/channel")
 def api_youtube_channel():
     return _ext(ext.youtube_channel, str((request.get_json(silent=True) or {}).get("ref") or ""))
@@ -852,7 +956,7 @@ def api_youtube_add_candidate():
             return _error(f"이미 등록된 채널이에요 ({i['name']})")
     data = {"name": str(d.get("title") or "이름 없음")[:120], "handle": str(d.get("handle") or ""), "status": "candidate",
             "pf": {"yt": {"f": d.get("subscribers"), "v": None, "url": f"https://www.youtube.com/channel/{cid}"}},
-            "metricsDate": today_str(), "metricsSource": "YouTube API", "notes": "YouTube 검색으로 추가"}
+            "metricsDate": today_str(), "metricsSource": "시연용 가상 데이터", "notes": "YouTube 검색으로 추가"}
     try:
         return jsonify(store.save_influencer(clean_influencer(data)))
     except InputError as e:
@@ -878,7 +982,7 @@ def api_youtube_refresh_all():
         pf["yt"] = {**yt, "f": r["subscribers"] if r["subscribers"] is not None else yt.get("f"),  # 추가 키(평균·참여율 등)는 유지
                     "v": r["median_views"] if r["median_views"] is not None else yt.get("v"), "url": yt["url"],
                     "src": "official_api", "prov": "YouTube Data API", "at": today_str(), "conf": "high"}
-        saved = store.save_influencer({**i, "pf": pf, "metricsDate": today_str(), "metricsSource": "YouTube API"})
+        saved = store.save_influencer({**i, "pf": pf, "metricsDate": today_str(), "metricsSource": "시연용 가상 데이터"})
         record_snapshots(i, saved)
         done.append(i["name"])
     return jsonify({"updated": done, "failed": failed, "influencers": store.list_influencers(), "status": ext.status()})
@@ -890,6 +994,8 @@ def _mark_duplicates(rows):
     keys = disc.existing_keys(store.list_influencers())
     for r in rows:
         k = disc.account_key(r["platform"], r.get("url") or r.get("handle"))
+        if not k and r.get("no_url"):
+            k = disc.name_key(r["platform"], r.get("name"))  # 주소 없는 참고 자료 계정은 이름으로 중복 확인
         hit = keys.get(k) if k else None
         r["account_key"] = k
         r["duplicate"] = bool(hit)
@@ -1000,12 +1106,15 @@ def _record_from_input(r):
         raise InputError("플랫폼을 골라 주세요")
     ref = str(r.get("url") or r.get("handle") or "").strip()
     k = disc.account_key(platform, ref)
+    if not k and r.get("no_url") and str(r.get("name") or "").strip():
+        # 참고 자료에서 주소를 아직 모르는 계정: '플랫폼+이름'으로 등록하고 '주소 직접 확인 필요'로 표시
+        k, ref = disc.name_key(platform, r.get("name")), ""
     if not k:
         raise InputError("계정 주소 또는 @핸들을 확인하세요")
-    handle = k.split(":", 1)[1]
+    handle = "" if k.startswith("name:") else k.split(":", 1)[1]
     st = r.get("source_type") if r.get("source_type") in disc.SOURCE_TYPES else "manual"
     rec = {"platform": platform, "handle": handle.lstrip("@"), "name": str(r.get("name") or "").strip()[:120] or handle.lstrip("@"),
-           "url": ref if ref.startswith("http") else disc.profile_url(platform, handle),
+           "url": ref if ref.startswith("http") else disc.profile_url(platform, handle) if handle else "",
            "followers": _num(r.get("followers")), "median_views": _num(r.get("median_views")), "avg_views": _num(r.get("avg_views")),
            "er": _num(r.get("er")), "vn_audience": _num(r.get("vn_audience")), "country": str(r.get("country") or "")[:40],
            "language": str(r.get("language") or "")[:20], "provider": str(r.get("provider") or "")[:60], "source_type": st,
@@ -1040,11 +1149,12 @@ def api_discovery_register():
                     "manual": "TikTok One" if "TikTok One" in rec["provider"] else "직접 확인"}.get(rec["source_type"], rec["provider"].split(" ")[0])
         if src_name not in METRIC_SOURCES:
             src_name = "직접 확인"
-        data = {"name": rec["name"], "handle": "@" + rec["handle"].lstrip("@"), "status": "candidate",
+        need_url = not rec["url"]
+        data = {"name": rec["name"], "handle": ("@" + rec["handle"].lstrip("@")) if rec["handle"] else "", "status": "candidate",
                 "segment": rec["segment"],
                 "category": rec["category"] if rec["category"] in CATEGORIES else next((x["category"] for x in disc.SEGMENTS if x["name"] == rec["segment"]), ""),
                 "pf": {rec["platform"]: disc.to_channel(rec)}, "metricsDate": rec["collected_on"], "metricsSource": src_name,
-                "notes": ("발굴: " + (rec["provider"] or disc.SOURCE_TYPES[rec["source_type"]]["label"]) + (" · " + rec["notes"] if rec["notes"] else ""))[:500],
+                "notes": (("[주소 직접 확인 필요] " if need_url else "") + "발굴: " + (rec["provider"] or disc.SOURCE_TYPES[rec["source_type"]]["label"]) + (" · " + rec["notes"] if rec["notes"] else ""))[:500],
                 "eventId": str(d.get("eventId") or "")}
         try:
             clean = clean_influencer(data)
@@ -1087,12 +1197,13 @@ def api_discovery_import_csv():
     f = request.files.get("file")
     if not f:
         return _error("CSV 파일을 골라 주세요")
+    blob = f.read(MAX_UPLOAD_READ)
     form = request.form
     st = form.get("source", "")
     st = st if st in ("saas", "submitted", "manual") else ""
     platform = form.get("platform", "") if form.get("platform", "") in PLATFORM_NAME else ""
     try:
-        records, errors, report = disc.cleanse_file(f.read(MAX_UPLOAD_READ), source_type=st, provider=str(form.get("provider", ""))[:60],
+        records, errors, report = disc.cleanse_file(blob, source_type=st, provider=str(form.get("provider", ""))[:60],
                                                     default_platform=platform, is_demo=form.get("demo") == "1", today=today_str())
     except ValueError as e:
         return _error(str(e))
@@ -1113,7 +1224,45 @@ def api_discovery_import_csv():
         rows.append(rec)
     report["rows_ok"] = len(rows)
     report["row_errors"] = len(errors)
+    report.update(_tally_time_saved(blob, report, demo=form.get("demo") == "1"))
     return jsonify({"rows": _mark_duplicates(rows), "errors": errors, "report": report})
+
+
+# ---------------------------------------------------------------- 칼퇴 지표 (파일 자동 정제로 아낀 시간, 추정)
+TIME_SAVED_KEY = "time_saved"
+SEC_PER_CELL = 10  # 손으로 한 칸 고치는 데 10초로 계산 (화면에 기준을 같이 표시)
+
+
+def _tally_time_saved(blob, report, demo=False):
+    """정제 결과에 '자동 정리 칸·중복 제외·아낀 시간'을 붙이고 이번 달 누적에 더합니다.
+    같은 파일(내용이 같은 파일)을 같은 달에 다시 올리면 누적에 다시 더하지 않습니다."""
+    cells = int(report.get("fixed_cells") or 0) + int(report.get("date_filled") or 0)
+    dups = len(report.get("duplicates_in_file") or [])
+    out = {"auto_cells": cells, "dup_removed": dups, "saved_sec": cells * SEC_PER_CELL, "sec_per_cell": SEC_PER_CELL, "counted": False, "demo": demo}
+    month = today_str()[:7]
+    data = store.get_setting(TIME_SAVED_KEY, {}) or {}
+    m = {"cells": 0, "dups": 0, "files": 0, "demo_cells": 0, "demo_dups": 0, "demo_files": 0, "hashes": [], **(data.get(month) or {})}
+    h = ("d:" if demo else "") + hashlib.sha1(blob).hexdigest()[:16]
+    if h not in m["hashes"]:
+        pre = "demo_" if demo else ""  # 시연용 파일은 따로 셈 (요약에서 '시연 데이터 포함'일 때만 더함)
+        m = {**m, pre + "cells": m[pre + "cells"] + cells, pre + "dups": m[pre + "dups"] + dups, pre + "files": m[pre + "files"] + 1,
+             "hashes": (m["hashes"] + [h])[-500:]}
+        data = {k: v for k, v in data.items() if k >= f"{int(month[:4]) - 1}{month[4:]}"}  # 최근 12개월만 보관
+        data[month] = m
+        store.save_setting(TIME_SAVED_KEY, data)
+        out["counted"] = True
+    return out
+
+
+@bp.get("/api/time-saved")
+def api_time_saved():
+    """이번 달 파일 자동 정제로 아낀 시간(추정). 기준: 자동 정리 1칸 = 10초."""
+    month = today_str()[:7]
+    m = {"cells": 0, "dups": 0, "files": 0, "demo_cells": 0, "demo_dups": 0, "demo_files": 0,
+         **((store.get_setting(TIME_SAVED_KEY, {}) or {}).get(month) or {})}
+    return jsonify({"month": month, "cells": m["cells"], "dups": m["dups"], "files": m["files"],
+                    "saved_sec": m["cells"] * SEC_PER_CELL, "sec_per_cell": SEC_PER_CELL,
+                    "demo": {"cells": m["demo_cells"], "dups": m["demo_dups"], "files": m["demo_files"], "saved_sec": m["demo_cells"] * SEC_PER_CELL}})
 
 
 # ---------------------------------------------------------------- 인기 순위 (공식 API만 사용, 크롤링 없음)
