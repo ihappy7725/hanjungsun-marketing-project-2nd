@@ -204,10 +204,10 @@ a { color: inherit; text-underline-offset: 4px; }
 .nav-label { overflow-wrap: anywhere; }
 /* 시장 선택(메뉴 아래, 계정과의 사이에 auto 여백): 테두리 있는 선택 상자 —
    국기 + 시장 이름은 상자 정중앙, 좌우 여백을 같게 두고 ▾는 오른쪽 여백 안. 누르면 '추후 지원' 안내창. */
-.sidebar-market { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-3); flex: none; width: 100%; min-height: 48px; margin: var(--space-8) 0; margin-top: 0; margin-bottom: auto; padding: var(--space-3) 16px; border: 1px solid var(--sidebar-line); border-radius: var(--radius); background: var(--control-bg); color: var(--sidebar-text); font-size: var(--fs-body); font-weight: 600; letter-spacing: 0; text-align: center; }
+.sidebar-market { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-3); flex: none; width: 100%; min-height: 48px; margin: var(--space-8) 0; margin-top: 0; margin-bottom: auto; padding: var(--space-3) var(--space-4); border: 1px solid var(--sidebar-line); border-radius: var(--radius); background: var(--control-bg); color: var(--sidebar-text); font-size: var(--fs-table); font-weight: 600; letter-spacing: 0; text-align: center; }
 .sidebar-market:hover { filter: none; border-color: var(--accent); color: var(--accent); }
-.sidebar .market-flag { width: 30px; height: 20px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
-.sidebar .market-caret { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 12px; height: 8px; fill: currentColor; stroke: none; color: var(--muted); }
+.sidebar .market-flag { width: 28px; height: 19px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
+.sidebar .market-caret { flex: none; width: 10px; height: 7px;  /* 국기 · 이름과 한 묶음(가운데 정렬) */ fill: currentColor; stroke: none; color: var(--muted); }
 .sidebar-market:hover .market-caret { color: var(--accent); }
 .sidebar-account { display: flex; align-items: center; flex: none; gap: var(--space-5); margin-top: 0; padding-top: var(--space-8); border-top: 1px solid var(--sidebar-line); }
 .account-avatar { display: grid; place-items: center; width: var(--control-height); height: var(--control-height); flex: none; background: var(--control-bg); color: var(--sidebar-icon); border-radius: 50%; }
