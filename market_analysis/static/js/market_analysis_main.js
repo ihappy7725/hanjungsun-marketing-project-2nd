@@ -814,8 +814,10 @@ function renderCulture() {
     .map(n => ({ ...n, fact: String(n.fact || "").replace(/^\d{4}년\s*/, "") }));
   // 화면 표기만 '○○억 달러' → '$○○억' (데이터 파일은 그대로)
   const usdText = (v) => String(v ?? "").replace(/^([\d.,]+)\s*억\s*달러$/, (_, n) => `$${n}억`);
+  // $ 기호: VND와 같은 명조의 S에 세로줄 하나를 그어 표시(명조 글꼴의 $는 세로줄이 두 개라서). 화면 읽기용으로는 '$'
+  const usdHtml = (v) => esc(usdText(v)).replace(/^\$/, () => '<span class="ma-usd"><span class="ma-sr">$</span><span aria-hidden="true">S</span></span>');
   const ecCards = (ec.cards || []).map(x => `
-    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${esc(usdText(x.value))}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
+    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${usdHtml(x.value)}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
   const shareItems = ec.shares?.items || [];
   const shareTotal = shareItems.reduce((sum, item) => sum + (Number(item.share) || 0), 0) || 100;
   let cumulative = 0;

@@ -622,3 +622,7 @@
 .market-analysis-page .ma-cg-stats:not(.is-fill) li { gap: var(--space-2); }
 .market-analysis-page .ma-cg-stats:not(.is-fill) strong { font-size: var(--ma-fs-sm); font-weight: 600; }
 .market-analysis-page .ma-cg-stats:not(.is-fill) .ma-cg-stat { font-size: 22px; }
+/* 달러 기호: VND와 같은 명조 S + 가운데 세로줄 하나 (명조 글꼴의 $는 세로줄 두 개) */
+.market-analysis-page .ma-usd { position: relative; display: inline-block; }
+.market-analysis-page .ma-usd::after { content: ""; position: absolute; left: 50%; top: 0.02em; bottom: 0.06em; width: 0.075em; background: currentColor; transform: translateX(-50%); }
+.market-analysis-page .ma-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
