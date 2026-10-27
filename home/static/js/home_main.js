@@ -609,19 +609,11 @@ async function initialize() {
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
     $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
-    const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
-    const scopedCreators = creators();
-    const rows = scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
-    const collaborationSummary = signals?.collaborations.state === 'ok' ? `<div class="home-collab-summary"><span>촬영 예정 <strong>${scopedCreators.filter(c => !['shot', 'posted'].includes(c.status) && validDate(c.shoot_date) && c.shoot_date >= today).length}</strong></span><span>게시 예정 <strong>${scopedCreators.filter(c => c.status !== 'posted' && validDate(c.post_date) && c.post_date >= today).length}</strong></span><span>확인 필요 <strong>${scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id))).length}</strong></span></div>` : '';
-    $('#collaboration-list').innerHTML = collaborationSummary + (rows.map(c => {
-      const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
-      // 촬영일만 지났는데 게시일이 지난 것처럼 알리지 않습니다. 날짜가 없으면 경과로 보지 않습니다.
-      const postLate = validDate(c.post_date) && c.post_date < today;
-      const shootLate = validDate(c.shoot_date) && c.shoot_date < today && !['shot', 'posted'].includes(c.status);
-      const state = needs ? '확인 필요' : postLate ? '게시일 경과' : shootLate ? '촬영일 경과' : validDate(c.post_date) ? '게시 임박' : '일정 미정';
-      return `<article class="home-collaboration"><div class="home-task-top"><div><h3>${esc(c.influencer)}</h3><span class="home-signal-meta">${esc(c.main_platform || '채널 미정')} · ${esc(c.status_label || c.status || '상태 미제공')}</span></div>${badge(state, Boolean(needs) || postLate || shootLate)}</div><dl class="home-collab-dates"><div><dt>촬영</dt><dd>${esc(c.shoot_date || '미정')}</dd></div><div><dt>게시</dt><dd>${esc(c.post_date || '미정')}</dd></div></dl><p class="home-collab-action"><strong>다음 할 일</strong> ${esc(c.next_action || task?.detail || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
-    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.')));
-    if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
+    // 요약 목록만 거릅니다. 달력의 촬영·게시 일정에 사용하는 원본 목록은 유지합니다.
+    const rows = creators().filter(c => ['sent', 'replied', 'negotiating', 'confirmed', 'shot'].includes(c.status));
+    $('#collaboration-list').innerHTML = rows.length
+      ? `<table class="home-collab-table"><caption class="home-sr-only">제안 발송부터 촬영 완료 단계의 인플루언서 협업</caption><thead><tr><th scope="col">이름</th><th scope="col">채널</th><th scope="col">진행현황</th></tr></thead><tbody>${rows.map(c => `<tr><td><a href="${esc(safeUrl(c.link || '/influencer_marketing/') || '/influencer_marketing/')}">${esc(c.influencer || '이름 미제공')}</a></td><td>${esc(c.main_platform || '채널 미제공')}</td><td>${badge(c.status_label || c.status)}</td></tr>`).join('')}</tbody></table>`
+      : empty(signalMessage('collaborations', '제안 발송 이후 진행 중인 협업이 없습니다.'));
     const news = (signals?.news.items || []).filter(n => n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved').sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
     const newsMarkup = news.map(n => {
