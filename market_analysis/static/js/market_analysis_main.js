@@ -8,7 +8,7 @@ const data = JSON.parse(page.querySelector('[data-ma="dashboard"]').textContent)
 const country = data.countries.find((c) => c.code === data.country) || data.countries[0];
 const DANANG = /da\s*nang|đà\s*nẵng|다낭/i;
 const MONTHS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 7;
 const SEGMENT_ORDER = [
   "모찌 아이스크림",
   "크림·코팅 모찌",
@@ -793,14 +793,14 @@ function renderCulture() {
   const checkList = adItems((d.notices || []).map(n => ({ title: n[0], fact: n[1] })));
   const adWarning = `
     <section class="ma-cg-section ma-cg-alert">
-      <header class="ma-cg-head"><h2>⚠️ 유의사항</h2><p>최종 판단: 현지 검수자</p></header>
+      <header class="ma-cg-head"><h2>유의사항</h2><p>최종 판단: 현지 검수자</p></header>
       <div class="ma-cg-alert-grid">
         <div class="ma-cg-alert-col is-check">
-          <h3 class="ma-cg-alert-h3">✅ 올리기 전 확인사항</h3>
+          <h3 class="ma-cg-alert-h3">올리기 전 확인사항</h3>
           ${checkList}
         </div>
         <div class="ma-cg-alert-col is-avoid">
-          <h3 class="ma-cg-alert-h3">🚫 피할 표현 <span class="ma-cg-dim">증빙 없는 최상급·비교·건강 효과 주장 주의</span></h3>
+          <h3 class="ma-cg-alert-h3"><span class="ma-cg-alert-title">피할 표현</span></h3>
           <div class="ma-cg-cols">${avoidList}</div>
         </div>
       </div>
@@ -881,7 +881,6 @@ function renderCulture() {
   // 넓은 화면은 2칸 배치(.ma-cg-pair), 좁은 화면은 1칸
   const pair = (left, right) => `<div class="ma-cg-pair">${left}${right}</div>`;
   const snsBody = `<ul class="ma-cg-stats is-fill">${facts || empty()}</ul><p class="ma-cg-source">출처: DataReportal</p>`;
-  const cultureBtn = `<button type="button" class="ma-cg-open-btn" data-ma="culture-open">베트남 문화 보기 ↗</button>`;
   cultureModalBody = `
     <header class="ma-rd-head">
       <div class="ma-rd-brand">베트남 문화 가이드</div>
@@ -894,7 +893,6 @@ function renderCulture() {
       ${pair(section("선물 예절", "", rows(d.gift_etiquette)), section("숫자", "", numberBody))}
     </div>`;
   view.innerHTML = `<div class="ma-cg">
-    <div class="ma-cg-top-bar">${cultureBtn}</div>
     <section class="ma-cg-section ma-cg-basic-sec">${basicRow}</section>
     ${pair(section("디지털·SNS 이용", "", snsBody),
       section("온라인 구매 채널", "", ecBody))}
@@ -1201,6 +1199,8 @@ function showTab(tab) {
   page.querySelectorAll(".ma-tabs [data-tab]").forEach((b) => {
     b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   });
+  const cultureButton = page.querySelector(".ma-toolbar-culture-btn");
+  if (cultureButton) cultureButton.hidden = tab !== "culture";
   renderers[tab]();
   const url = new URL(window.location.href);
   url.searchParams.set("country", data.country);
