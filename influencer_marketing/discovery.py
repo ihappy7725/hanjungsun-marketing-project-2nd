@@ -11,6 +11,8 @@
 """
 import csv
 import io
+import json
+import os
 import re
 import unicodedata
 import urllib.parse
@@ -115,25 +117,71 @@ def profile_url(platform, handle):
     return {"tt": f"https://www.tiktok.com/@{h}", "ig": f"https://www.instagram.com/{h}/", "fb": f"https://www.facebook.com/{h}"}.get(platform, "")
 
 
+NANO_MIN = 1000  # 인플루언서 기준: Nano(팔로워 1천) 이상. 1천 미만으로 확인된 계정은 발굴 결과에서 뺌
+
+
+def plain_name(s):
+    """검색하기 쉬운 이름: 꾸민 글꼴(𝙃𝙤̀𝙖)을 일반 글자로, 이모지·장식 기호는 공백으로. 베트남어 성조는 유지."""
+    s = unicodedata.normalize("NFKC", str(s or ""))
+    out = []
+    for ch in s:
+        cat = unicodedata.category(ch)
+        if ch in "\u200d\ufe0e\ufe0f" or 0x1F3FB <= ord(ch) <= 0x1F3FF:  # 이모지 결합 문자·피부색 표시
+            continue
+        if cat[0] in "LNM" or ch in " .,_-&()'/":
+            out.append(ch)
+        else:
+            out.append(" ")
+    return unicodedata.normalize("NFC", re.sub(r"\s+", " ", "".join(out)).strip(" .,_-"))
+
+
+def name_key(platform, name):
+    """주소를 모르는 계정의 중복 확인 키: 플랫폼 + 정리한 이름(소문자)"""
+    n = plain_name(name).lower()
+    return f"name:{platform}:{n}" if n else ""
+
+
+def search_links(name, handle=""):
+    """사용자가 직접 눌러 여는 검색 링크(자동 수집 아님). 계정 ID를 알면 ID로, 모르면 이름으로 찾습니다."""
+    q = (handle or plain_name(name)).strip()
+    if not q:
+        return {}
+    e = urllib.parse.quote(q)
+    return {"TikTok": f"https://www.tiktok.com/search/user?q={e}",
+            "Instagram": f"https://www.instagram.com/explore/search/keyword/?q={e}",
+            "YouTube": f"https://www.youtube.com/results?search_query={e}&sp=EgIQAg%253D%253D",
+            "Facebook": f"https://www.facebook.com/search/top?q={e}",
+            "Google": f"https://www.google.com/search?q={urllib.parse.quote(q + ' influencer')}"}
+
+
 def existing_keys(influencers):
-    """기존 인플루언서의 채널 주소로 만든 계정 키 → (id, 이름)"""
+    """기존 인플루언서의 채널 주소로 만든 계정 키 → (id, 이름). 주소가 없는 채널은 '플랫폼+이름' 키로 대신합니다."""
     out = {}
     for i in influencers:
         for p, ch in (i.get("pf") or {}).items():
             k = account_key(p, (ch or {}).get("url") or "")
             if k:
                 out[k] = (i["id"], i["name"])
+            nk = name_key(p, i.get("name"))
+            if nk:
+                out.setdefault(nk, (i["id"], i["name"]))
     return out
 
 
 # ---------------------------------------------------------------- 제공업체 목록
 def providers():
+    """[발굴] '조회할 곳' 목록: YouTube → 참고 자료 CSV(reference_data) → 유료 API·검색 없는 서비스 순서."""
     st = ext.status()
+    youtube = {"key": "youtube", "name": "YouTube Data API", "configured": st["youtube"]["configured"], "platforms": ["yt"],
+               "source_type": "official_api", "search": True,
+               "filters": ["카테고리(키워드)", "최소·최대 구독자"], "not_supported": ["참여율", "베트남 시청자 비중", "조회수 중앙값(검색 단계)"],
+               "cost": "검색 1번 약 101유닛 (하루 10,000유닛)"}
+    return [youtube] + ref_providers() + _api_providers_tail(st)
+
+
+def _api_providers_tail(st):
+    """YouTube 다음에 보일 기존 제공업체(순서 유지)."""
     return [
-        {"key": "youtube", "name": "YouTube Data API", "configured": st["youtube"]["configured"], "platforms": ["yt"],
-         "source_type": "official_api", "search": True,
-         "filters": ["카테고리(키워드)", "최소·최대 구독자"], "not_supported": ["참여율", "베트남 시청자 비중", "조회수 중앙값(검색 단계)"],
-         "cost": "검색 1번 약 101유닛 (하루 10,000유닛)"},
         {"key": "modash", "name": "Modash", "configured": st["modash"]["configured"], "platforms": ["tt", "ig", "yt"],
          "source_type": "saas", "search": True,
          "filters": ["국가", "팔로워", "최소 조회수", "참여율", "언어", "베트남 시청자 비중"], "not_supported": ["카테고리"],
@@ -149,6 +197,174 @@ def providers():
          "search": False, "filters": [], "not_supported": ["API 권한 미확인 → 화면 연계(이동·기준 복사·직접 입력·CSV)"],
          "cost": "광고주 계정으로 화면 이용"},
     ]
+
+
+# ---------------------------------------------------------------- 참고 자료 CSV (reference_data 폴더)
+# 폴더에 CSV를 넣고 sources.json에 이름·기준일을 적으면 [발굴] '조회할 곳'에 나타납니다. 외부 사이트에 접속하지 않고 파일만 읽습니다.
+REF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reference_data")
+REF_MAX_BYTES = 5 * 1024 * 1024
+_PF_BY_NAME = {"tiktok": "tt", "instagram": "ig", "youtube": "yt", "facebook": "fb", "tt": "tt", "ig": "ig", "yt": "yt", "fb": "fb"}
+_ref_cache = {}
+
+
+def _ref_manifest():
+    try:
+        with open(os.path.join(REF_DIR, "sources.json"), encoding="utf-8") as f:
+            items = json.load(f).get("sources") or []
+    except (OSError, ValueError, AttributeError):
+        items = []
+    out, seen = [], set()
+    for it in items:
+        fn = os.path.basename(str(it.get("file") or ""))
+        if it.get("hidden"):  # Ver_023: 화면 선택지에서 숨김(파일은 그대로 보관)
+            seen.add(fn)
+            continue
+        if fn.lower().endswith(".csv") and fn not in seen:
+            seen.add(fn)
+            out.append({"file": fn, "label": str(it.get("label") or fn)[:60], "as_of": str(it.get("as_of") or "")[:10],
+                        "note": str(it.get("note") or "")[:80], "detail": str(it.get("detail") or "")[:80],
+                        "kind": "demo" if it.get("kind") == "demo" else "real"})
+    try:  # 설정에 없는 CSV도 파일 이름으로 보여 줌
+        for fn in sorted(os.listdir(REF_DIR)):
+            if fn.lower().endswith(".csv") and fn not in seen:
+                out.append({"file": fn, "label": fn[:-4][:60], "as_of": "", "note": "", "detail": "sources.json에 기준일 미기재", "kind": "real"})
+    except OSError:
+        pass
+    return out
+
+
+def _num_or_none(v):
+    v = str(v or "").replace(",", "").strip()
+    if not v:
+        return None
+    try:
+        n = float(v)
+    except ValueError:
+        return None
+    return int(n) if n == int(n) else n
+
+
+def _ref_load(src):
+    """CSV 한 개를 표준 후보 레코드 목록으로 읽습니다. 파일이 바뀌면 다시 읽습니다."""
+    path = os.path.join(REF_DIR, src["file"])
+    try:
+        st = os.stat(path)
+    except OSError:
+        return [], "파일을 찾지 못했어요"
+    if st.st_size > REF_MAX_BYTES:
+        return [], "파일이 5MB를 넘어요"
+    key = (path, st.st_mtime, st.st_size)
+    if key in _ref_cache:
+        return _ref_cache[key]
+    with open(path, "rb") as f:
+        raw = f.read()
+    text = raw.decode("utf-8-sig", errors="replace")
+    head = next(csv.reader(io.StringIO(text)), [])
+    rows = []
+    as_of = src["as_of"] or date.today().isoformat()
+    provider = f"{src['label']}({as_of[2:].replace('-', '/')} 기준)"[:60]  # Ver_023: 26/10/24 기준
+    if "레코드 ID" in head and "분류" in head:  # Ver_003 실제 자료 형식
+        for r in csv.DictReader(io.StringIO(text)):
+            pf = _PF_BY_NAME.get((r.get("플랫폼") or "").strip().lower())
+            if not pf:
+                continue
+            url = (r.get("프로필 URL") or "").strip()
+            fol = _num_or_none(r.get("팔로워·구독자"))
+            rows.append({"provider": provider, "source_type": "saas_estimate", "platform": pf, "handle": "", "url": url,
+                         "name": r.get("계정명(Nox 표기)") or "", "followers": fol, "median_views": _num_or_none(r.get("조회수 중앙값")),
+                         "views_basis": "", "avg_views": _num_or_none(r.get("평균 조회수")), "er": _num_or_none(r.get("참여율(%)")),
+                         "vn_audience": _num_or_none(r.get("베트남 시청자 비중(%)")), "country": "VN", "language": "vi",
+                         "collected_on": as_of, "segment": r.get("타깃 그룹 제안") or "",
+                         "notes": f"{r.get('레코드 ID', '')} · Nox {r.get('순위 종류', '')} {r.get('Nox 순위', '')}위 · {r.get('분류', '')}({r.get('색', '')}) · 식품 관련성 {r.get('식품 관련성 점수(0~3)') or '-'}/3"
+                                  + (f" · 팔로워는 {r.get('팔로워 출처')} 추정({r.get('팔로워 기준일')})" if fol is not None else ""),
+                         "ref_class": r.get("분류") or "", "ref_color": r.get("색") or "", "ref_identity": r.get("순위 계정과 동일 여부") or "",
+                         "ref_food": r.get("식품 관련성 점수(0~3)") or "", "ref_next": r.get("다음 할 일") or "",
+                         "record_id": r.get("레코드 ID") or "", "fol_source": r.get("팔로워 출처") or "",
+                         "fol_source_url": r.get("팔로워 출처 URL") or "", "fol_as_of": r.get("팔로워 기준일") or "",
+                         "ref_rank": f"{r.get('순위 종류', '')} {r.get('Nox 순위', '')}위", "ref_fol_src": f"{r.get('팔로워 출처', '')} {r.get('팔로워 기준일', '')}".strip(),
+                         "no_url": not url, "display_name": r.get("계정명(Nox 표기)") or "",
+                         # 분야는 화면의 카테고리 필터로 정하지 않고, 타깃 그룹의 기본 분야(없으면 기타)를 씀
+                         "category": next((x["category"] for x in SEGMENTS if x["name"] == (r.get("타깃 그룹 제안") or "")), "기타")})
+        err = ""
+    elif "레코드 ID" in head and "가상 계정명" in head:  # Ver_003 가상 자료 형식
+        for r in csv.DictReader(io.StringIO(text)):
+            pf = _PF_BY_NAME.get((r.get("플랫폼") or "").strip().lower())
+            if not pf:
+                continue
+            seg = r.get("타깃 그룹") or ""
+            rows.append({"provider": provider, "source_type": "demo", "platform": pf, "handle": "", "url": r.get("가상 프로필 URL") or "",
+                         "name": r.get("가상 계정명") or "", "followers": _num_or_none(r.get("팔로워·구독자")),
+                         "median_views": _num_or_none(r.get("조회수 중앙값")), "views_basis": "median", "avg_views": None,
+                         "er": _num_or_none(r.get("참여율(%)")), "vn_audience": _num_or_none(r.get("베트남 시청자 비중(%)")),
+                         "country": "KR" if seg.startswith("한국") else "VN", "language": "ko" if seg.startswith("한국") else "vi",
+                         "collected_on": as_of, "segment": seg, "category": r.get("분야") or "",
+                         "notes": f"[DEMO_SYNTHETIC·발표용 가상 계정] {r.get('레코드 ID', '')} · {r.get('도시', '')}",
+                         "ref_class": r.get("분류(가상 예시)") or "", "ref_color": "보라", "ref_identity": "가상 계정(실존하지 않음)",
+                         "ref_food": "", "ref_next": "발표·시연용", "ref_rank": "", "ref_fol_src": "가상값", "no_fill": True, "no_url": False})
+        err = ""
+    else:  # 그 밖의 CSV는 '파일로 여러 명 가져오기'와 같은 규칙으로 정제
+        try:
+            recs, _errors, _report = cleanse_file(raw, source_type="saas", provider=provider, is_demo=src["kind"] == "demo", today=as_of)
+        except ValueError as e:
+            return [], str(e)
+        for r in recs:
+            r.pop("_line", None); r.pop("_issues", None)
+            r.update({"handle": "", "ref_class": "", "ref_color": "", "ref_identity": "", "ref_food": "", "ref_next": "", "ref_rank": "",
+                      "ref_fol_src": "", "no_url": not r.get("url"), "no_fill": src["kind"] == "demo"})
+            rows.append(r)
+        err = ""
+    _ref_cache.clear()
+    _ref_cache[key] = (rows, err)
+    return rows, err
+
+
+def ref_providers():
+    out = []
+    for i, src in enumerate(_ref_manifest()):
+        rows, err = _ref_load(src)
+        pfs = sorted({r["platform"] for r in rows})
+        as_of = src["as_of"][2:].replace("-", "/") if src["as_of"] else "기준일 미기재"  # Ver_023: 26/10/24
+        demo = src["kind"] == "demo"
+        out.append({"key": f"ref:{src['file']}", "name": src["label"], "configured": bool(rows), "platforms": pfs or ["tt", "ig", "yt"],
+                    "source_type": "demo" if demo else "saas_estimate", "search": True, "ref": True, "kind": src["kind"],
+                    "note": (f"(*{src['note'] or '발표용 가상 데이터'} · {as_of}" if demo else f"({src['note'] + ' ' if src['note'] else ''}{as_of} 기준")
+                            + (f", {src['detail']}" if src["detail"] else "") + ")",
+                    "count": len(rows), "error": err,
+                    "filters": ["플랫폼", "팔로워(값 있는 계정만)", "참여율(값 있는 계정만)"],
+                    "not_supported": ["카테고리·키워드(파일의 분류 사용)"],
+                    "cost": f"무료 · 파일 {len(rows)}개 계정" if rows else (err or "읽을 계정이 없어요")})
+    return out
+
+
+def dashboard_usable(r, include_excluded=False):
+    """Ver_023 대시보드 사용 기준. [발굴] 결과와 public.get_creator_list()가 같이 씀.
+    팔로워·구독자 수가 있고 Nano(1천) 이상, 분야(타깃 그룹)가 대시보드 5개 중 하나, 분류가 'D 제외'가 아닌 계정.
+    기준 밖 계정은 CSV에는 남기고 화면·공개 함수에서만 뺌."""
+    f = r.get("followers")
+    return (f is not None and f >= NANO_MIN and r.get("segment") in SEGMENT_NAMES
+            and (include_excluded or not str(r.get("ref_class") or "").startswith("D")))
+
+
+def _ref_search(provider, platform, f, include_excluded=False):
+    src = next((s for s in _ref_manifest() if f"ref:{s['file']}" == provider), None)
+    if not src:
+        raise ext.ApiError("참고 자료 파일을 찾지 못했어요. reference_data 폴더와 sources.json을 확인하세요")
+    rows, err = _ref_load(src)
+    if err and not rows:
+        raise ext.ApiError(f"참고 자료를 읽지 못했어요: {err}")
+    total = len(rows)
+    rows = [dict(r) for r in rows if r["platform"] == platform]
+    for r in rows:
+        k = account_key(platform, r.get("url") or "")
+        r["handle"] = k.split(":", 1)[1].lstrip("@") if k else ""
+        r["display_name"] = r.get("display_name") or r.get("name") or ""
+        r["name"] = plain_name(r["display_name"]) or r["display_name"]  # 등록·검색용 이름(꾸민 글꼴·이모지 제거)
+        r["search_links"] = search_links(r["name"], "" if r["handle"].startswith("UC") else r["handle"])
+    pf_total = len(rows)
+    rows = [r for r in rows if dashboard_usable(r, include_excluded)]  # 대시보드 사용 기준(위 함수)
+    hidden_excluded = pf_total - len(rows)
+    return rows, {"ref": True, "label": src["label"], "as_of": src["as_of"], "kind": src["kind"], "total": total,
+                  "platform_total": pf_total, "hidden_excluded": hidden_excluded}
 
 
 # ---------------------------------------------------------------- 검색 실행
@@ -227,14 +443,18 @@ def search(provider, platform, f):
         rows, meta = ext.modash_search(platform, f)
     elif provider == "hypeauditor":
         rows, meta = ext.hypeauditor_search(platform, f)
+    elif provider.startswith("ref:"):
+        rows, meta = _ref_search(provider, platform, f, bool(f.get("include_excluded")))
     elif provider in ("phyllo", "tiktok_one"):
         raise ext.ApiError("이 서비스는 검색 기능이 없어요. TikTok One 연계(직접 입력·CSV)나 다른 제공업체를 쓰세요")
     else:
         raise ext.ApiError("알 수 없는 제공업체예요")
     rows = [standardize(r, f) for r in rows]
+    below = [r for r in rows if r.get("followers") is not None and r["followers"] < NANO_MIN]
+    rows = [r for r in rows if not (r.get("followers") is not None and r["followers"] < NANO_MIN)]
     before = len(rows)
     rows = apply_filters(rows, f)
-    meta = {**(meta or {}), "returned": before, "after_filter": len(rows),
+    meta = {**(meta or {}), "returned": before, "after_filter": len(rows), "below_nano": len(below),
             "category_filter_applied": provider == "youtube" and bool(f.get("categories")) and f.get("country_code") != "kr"}
     return rows, meta
 
@@ -246,7 +466,7 @@ def to_channel(r):
     return {"f": r.get("followers"), "v": r.get("median_views"), "url": r.get("url") or profile_url(r["platform"], r.get("handle")),
             "avg": r.get("avg_views"), "er": r.get("er"), "aud_vn": r.get("vn_audience"), "country": r.get("country") or "",
             "lang": r.get("language") or "", "src": st, "prov": r.get("provider") or "", "at": r.get("collected_on") or date.today().isoformat(),
-            "conf": confidence_of(st)}
+            "conf": confidence_of(st), **({"need_url": True} if not (r.get("url") or r.get("handle")) else {})}
 
 
 # ---------------------------------------------------------------- 외부 파일 정제 (CSV·TSV)
