@@ -358,7 +358,7 @@ export function renderVideo(root, doc, options) {
   });
   drawRefs();
   // 컷 추가: 서버 규칙(videos.py add_scene)으로 마지막 컷 앞에 넣습니다. 고치던 내용은 먼저 저장합니다.
-  const maxScenes = Math.min(doc.duration, 12);
+  const maxScenes = Math.min(doc.duration, 5);  // 사람이 [컷 추가]로 늘릴 수 있는 최대 (videos.py MAX_MANUAL_SCENES, 자동·AI는 2~3컷)
   const addScene = el("button", "btn studio-video-add", `+ 컷 추가 (${doc.scenes.length}/${maxScenes})`);
   addScene.type = "button";
   addScene.disabled = doc.scenes.length >= maxScenes;

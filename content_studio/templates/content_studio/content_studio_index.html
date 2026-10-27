@@ -1,6 +1,7 @@
 {% extends "platform_core/base.html" %}
 {# 메인 + 세 탭(포스터·카드뉴스·영상) 공통 화면 [유진] — 희주 화면 요소가 필요하면 유진에게 요청 #}
-{% set tab_labels = {"main": "작업", "poster": "포스터", "cardnews": "카드뉴스", "video": "영상"} %}
+{# 탭: 메인 · 포스터 · 영상 (카드뉴스 탭은 2026-10-27 유진 결정으로 뺌, 예전 카드뉴스 작업은 DB에 남고 목록에서만 숨김) #}
+{% set tab_labels = {"main": "작업", "poster": "포스터", "video": "영상"} %}
 
 {% block title %}콘텐츠 스튜디오{% endblock %}
 
@@ -22,7 +23,6 @@
   <nav class="studio-tabs" data-role="tabs" aria-label="콘텐츠 스튜디오 탭">
     <a href="{{ url_for('content_studio.index') }}"{% if tab == 'main' %} aria-current="page"{% endif %}>메인</a>
     <a href="{{ url_for('content_studio.index', tab='poster') }}"{% if tab == 'poster' %} aria-current="page"{% endif %}>포스터</a>
-    <a href="{{ url_for('content_studio.index', tab='cardnews') }}"{% if tab == 'cardnews' %} aria-current="page"{% endif %}>카드뉴스</a>
     <a href="{{ url_for('content_studio.index', tab='video') }}"{% if tab == 'video' %} aria-current="page"{% endif %}>영상</a>
     <button type="button" class="btn dark studio-tabs-new" data-role="new"{% if tab == 'main' %} hidden{% endif %}>+ 새로 만들기</button>
   </nav>
@@ -46,7 +46,7 @@
         {% if tab == 'main' %}
         <div class="studio-seg" data-role="list-kind" role="group" aria-label="종류로 거르기">
           <button type="button" class="btn dark" data-value="" aria-pressed="true">전체</button>
-          {% for key in ("poster", "cardnews", "video") %}<button type="button" class="btn" data-value="{{ key }}" aria-pressed="false">{{ tab_labels[key] }}</button>{% endfor %}
+          {% for key in ("poster", "video") %}<button type="button" class="btn" data-value="{{ key }}" aria-pressed="false">{{ tab_labels[key] }}</button>{% endfor %}
         </div>
         {% endif %}
         <button type="button" class="btn" data-role="list-sort" title="수정일 기준 정렬 바꾸기">최신순 ↓</button>
@@ -97,21 +97,14 @@
           </div>
           <div class="studio-option">
             <span class="studio-option-label">비율</span>
-            {# 비율: 영상 9:16 · 16:9 · 1:1 / 포스터·카드뉴스 3:4 · 4:3 · 9:16 · 16:9 · 1:1 (designs.py DESIGN_RATIOS, 기존 4:5 작업은
+            {# 비율: 영상 9:16 · 16:9 · 1:1 / 포스터 3:4 · 4:3 · 9:16 · 16:9 · 1:1 (designs.py DESIGN_RATIOS, 기존 4:5 작업은
                편집 화면에서 위 툴바를 숨기므로 버튼 없음) #}
             <div class="studio-seg" data-role="set-ratio">
-              <button type="button" class="btn" data-value="3:4" data-kinds="poster cardnews">3:4</button>
-              <button type="button" class="btn" data-value="4:3" data-kinds="poster cardnews">4:3</button>
-              <button type="button" class="btn" data-value="9:16" data-kinds="video poster cardnews">9:16</button>
-              <button type="button" class="btn" data-value="16:9" data-kinds="video poster cardnews">16:9</button>
-              <button type="button" class="btn" data-value="1:1" data-kinds="video poster cardnews">1:1</button>
-            </div>
-          </div>
-          {# 카드뉴스 장수 (초안 전에만, 기본 5) #}
-          <div class="studio-option">
-            <span class="studio-option-label">장수</span>
-            <div class="studio-seg" data-role="set-pages" role="group" aria-label="장수" hidden>
-              {% for count in [3, 4, 5, 6] %}<button type="button" class="btn" data-value="{{ count }}" aria-label="{{ count }}장">{{ count }}</button>{% endfor %}
+              <button type="button" class="btn" data-value="3:4" data-kinds="poster">3:4</button>
+              <button type="button" class="btn" data-value="4:3" data-kinds="poster">4:3</button>
+              <button type="button" class="btn" data-value="9:16" data-kinds="video poster">9:16</button>
+              <button type="button" class="btn" data-value="16:9" data-kinds="video poster">16:9</button>
+              <button type="button" class="btn" data-value="1:1" data-kinds="video poster">1:1</button>
             </div>
           </div>
           <div class="studio-option">
