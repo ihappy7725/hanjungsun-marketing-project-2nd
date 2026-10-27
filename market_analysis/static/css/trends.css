@@ -11,7 +11,9 @@
 
 .market-analysis-page .ma-trends{min-width:0;font-family:var(--font-body);background:transparent}.market-analysis-page .ma-trends .trends-page{padding:0}.market-analysis-page .ma-trends svg{max-width:100%}.market-analysis-page .ma-trends button{cursor:pointer}.market-analysis-page .ma-trends .rate-up{color:var(--teal)}.market-analysis-page .ma-trends .rate-down{color:var(--badge-red-ink)}
 
-.market-analysis-page .ma-trends{--peak-soft:var(--badge-green-bg);--neutral-bar:var(--line-strong);--spark:var(--teal);--bar:var(--teal);--track:var(--line-soft);--up:var(--teal);--down:var(--badge-red-ink)}
+.market-analysis-page .ma-trends{--peak-soft:var(--badge-green-bg);--neutral-bar:var(--orange);--spark:var(--teal);--bar:var(--teal);--track:var(--progress-bg);--up:var(--teal);--down:var(--badge-red-ink)}
+.market-analysis-page .ma-trends .month-bar.peak .month-fill{background:var(--teal)}
+.market-analysis-page .ma-trends .bar-rows li:nth-child(n+3) .bar-fill{background:var(--orange)}
 .market-analysis-page .ma-trends .more-toggle{display:block;width:100%;margin-top:12px;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--ink);cursor:pointer}.market-analysis-page .ma-trends .more-toggle:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
 .market-analysis-page .ma-trends .trend-panels .card:has(> #fruit-flavors),.market-analysis-page .ma-trends .trend-panels .card:has(> #regions){display:flex;flex-direction:column}.market-analysis-page .ma-trends #fruit-flavors,.market-analysis-page .ma-trends #regions{flex:1;display:flex;flex-direction:column}.market-analysis-page .ma-trends .list-foot{margin-top:auto}
 .market-analysis-page .ma-trends .theme-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.market-analysis-page .ma-trends .theme-card{display:flex;flex-direction:column;min-width:0}.market-analysis-page .ma-trends .theme-card .mini-label small{margin-left:4px}.market-analysis-page .ma-trends .theme-sources{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:auto;padding-top:8px}@media(max-width:850px){.market-analysis-page .ma-trends .theme-grid{grid-template-columns:1fr}}
@@ -75,11 +77,13 @@
 .market-analysis-page .ma-trends .seasonality-body .season-callout{margin-top:20px;padding:16px 18px;font-size:14px}
 .market-analysis-page .ma-trends .seasonality-body .fruit-calendar{margin-top:20px}
 @media(max-width:1100px){.market-analysis-page .ma-trends .seasonality-head{align-items:flex-start;flex-direction:column}.market-analysis-page .ma-trends .seasonality-head .season-tabs{justify-content:flex-start}.market-analysis-page .ma-trends .seasonality-body .month-chart{min-height:160px}}
+.market-analysis-page .ma-trends .insight-grid li{flex-direction:column;align-items:stretch;gap:6px}
+.market-analysis-page .ma-trends .insight-head{display:flex;align-items:center;gap:8px}
 .market-analysis-page .ma-trends .season-ads .ad-h3{margin:8px 0 10px!important;font-size:14px!important}
 .market-analysis-page .ma-trends .season-ads .insight-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.market-analysis-page .ma-trends .season-ads .insight-grid li{gap:8px;padding:10px}
+.market-analysis-page .ma-trends .season-ads .insight-grid li{gap:5px;padding:10px 12px}
 .market-analysis-page .ma-trends .season-ads .insight-grid strong{font-size:13px}
-.market-analysis-page .ma-trends .season-ads .insight-grid p{margin:2px 0 0;font-size:12px;line-height:1.5}
+.market-analysis-page .ma-trends .season-ads .insight-grid p{margin:0;font-size:12px;line-height:1.5}
 .market-analysis-page .ma-trends .season-ads .insight-no{width:20px;height:20px;font-size:11px}
 .market-analysis-page .ma-trends .card:has(> #ad-trends){display:flex;flex-direction:column}
 .market-analysis-page .ma-trends #ad-trends{flex:1;display:flex;flex-direction:column}
@@ -131,7 +135,7 @@
 .market-analysis-page .ma-trends .rank-trend-value{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
 .market-analysis-page .ma-trends .rank-trend-rate{font-size:12px;white-space:nowrap}
 .market-analysis-page .ma-trends .rank-trend-spark .sparkline{height:30px}
-.market-analysis-page .ma-trends .rank-trend-spark .sparkline path{stroke:var(--accent)}
+.market-analysis-page .ma-trends .rank-trend-spark .sparkline path{stroke:var(--teal)}
 .market-analysis-page .ma-trends .rank-trend-row small{color:var(--muted);font-size:11px;white-space:nowrap}
 @media(max-width:650px){.market-analysis-page .ma-trends .rank-trend-row{grid-template-columns:auto auto 1fr}.market-analysis-page .ma-trends .rank-trend-spark{grid-column:1 / -1}}
 

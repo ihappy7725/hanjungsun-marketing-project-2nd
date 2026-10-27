@@ -324,7 +324,7 @@ function adResearch(r) {
   return `
     <h3 class="ad-h3">베트남 광고에서 반복되는 트렌드 <small>여러 자료에서 반복 확인된 신호</small></h3>
     <ol class="insight-grid">${r.insights.map((item, i) => `
-      <li><span class="insight-no">${i + 1}</span><div><strong>${esc(item.title)}</strong><p>${esc(item.body)}</p></div></li>`).join("")}
+      <li><div class="insight-head"><span class="insight-no">${i + 1}</span><strong>${esc(item.title)}</strong></div><p>${esc(item.body)}</p></li>`).join("")}
     </ol>`;
   // '주제별 광고 트렌드'(themeCards)는 화면에서 뺐습니다. 데이터(r.themes)는 API에 그대로 있습니다.
 }
