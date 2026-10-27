@@ -1,6 +1,7 @@
 # [PM1 상준만 수정] 라이브러리 추가는 PM1에게 요청합니다. (README 2장)
 Flask>=3.0,<4
 Flask-SQLAlchemy>=3.1,<4
+gunicorn>=22,<24
 opencv-python-headless>=4.10,<6
 numpy>=2.0,<3
 Pillow>=10.0,<14

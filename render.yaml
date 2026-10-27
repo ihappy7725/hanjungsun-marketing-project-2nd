@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: hanjeongseon
+    runtime: python
+    branch: premain
+    # 이미지 배경 제거 모델까지 실행하려면 2GB 메모리를 권장합니다.
+    plan: 1c-2g
+    buildCommand: pip install -r requirements.txt
+    startCommand: flask --app app:create_app init-db && gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"
+    disk:
+      name: hanjeongseon-data
+      mountPath: /opt/render/project/src/instance
+      sizeGB: 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: U2NET_HOME
+        value: /opt/render/project/src/instance/models
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: CALENDARIFIC_API_KEY
+        sync: false
+      - key: ECOS_API_KEY
+        sync: false
+      - key: DEEPL_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: PHYLLO_CLIENT_ID
+        sync: false
+      - key: PHYLLO_CLIENT_SECRET
+        sync: false
+      - key: PHYLLO_ENV
+        value: production
+      - key: MODASH_API_KEY
+        sync: false
+      - key: HYPEAUDITOR_CLIENT_ID
+        sync: false
+      - key: HYPEAUDITOR_API_TOKEN
+        sync: false
+      - key: HYPEAUDITOR_SANDBOX
+        value: "0"
+      - key: HF_API_KEY_ID
+        sync: false
+      - key: HF_API_KEY_SECRET
+        sync: false
+      - key: FIGMA_ACCESS_TOKEN
+        sync: false
