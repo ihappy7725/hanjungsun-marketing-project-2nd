@@ -812,8 +812,10 @@ function renderCulture() {
   const ecNotes = (ec.notes || [])
     .filter(n => n.title !== "공식몰 집중")
     .map(n => ({ ...n, fact: String(n.fact || "").replace(/^\d{4}년\s*/, "") }));
+  // 화면 표기만 '○○억 달러' → '$○○억' (데이터 파일은 그대로)
+  const usdText = (v) => String(v ?? "").replace(/^([\d.,]+)\s*억\s*달러$/, (_, n) => `$${n}억`);
   const ecCards = (ec.cards || []).map(x => `
-    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${esc(x.value)}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
+    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${esc(usdText(x.value))}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
   const shareItems = ec.shares?.items || [];
   const shareTotal = shareItems.reduce((sum, item) => sum + (Number(item.share) || 0), 0) || 100;
   let cumulative = 0;
