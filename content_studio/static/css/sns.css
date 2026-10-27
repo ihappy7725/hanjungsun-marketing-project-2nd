@@ -1,7 +1,7 @@
 /* 콘텐츠 스튜디오 화면 전체 스타일 [유진]
    선택자는 .studio-page / .studio-chat / .studio-tabs 아래로 제한하고, 색·글꼴은 base.css 변수만 씁니다. */
 /* 탭 줄: 현지조사 탭(market_analysis .ma-tabs)과 같은 값 — 글자 탭, 아래 구분선, 지금 탭은 금색 밑줄 + 진한 글씨 */
-.studio-tabs { display: flex; gap: var(--space-1); margin: var(--space-7) 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.studio-tabs { display: flex; gap: var(--space-1); margin: 0 0 var(--space-7); border-bottom: 1px solid var(--line); overflow-x: auto; }
 .studio-tabs a { padding: var(--space-5) var(--space-6); border-bottom: 2px solid transparent; color: var(--muted); text-decoration: none; white-space: nowrap; }
 .studio-tabs a:hover { color: var(--ink); }
 .studio-tabs a[aria-current="page"] { border-bottom-color: var(--gold); color: var(--ink); font-weight: 600; }
