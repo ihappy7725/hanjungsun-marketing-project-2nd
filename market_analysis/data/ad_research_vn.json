@@ -16,12 +16,12 @@
     {"source": "TikTok Shop", "count": "0건", "used": "없음", "note": "오늘 직접 검증 가능한 최신 목록을 확보하지 못해 제외", "is_ad": false}
   ],
   "insights": [
-    {"title": "쫀득한 식감은 핵심 판매 언어", "body": "Meta 광고, Shopee 상품명·설명, YouTube 제목에서 부드럽고 쫀득한 식감이 반복됐습니다.", "sources": ["Meta", "Shopee", "YouTube"]},
-    {"title": "현지화는 맛의 조합에서 드러남", "body": "녹두, 코코넛, 말차, 타로, 두리안, 망고, 과일, 초콜릿처럼 익숙한 맛과 새로운 조합을 함께 사용했습니다.", "sources": ["Shopee", "YouTube"]},
-    {"title": "선물과 간식 상황이 중요", "body": "Meta에서는 계절 선물과 가족·사무실 간식, Shopee에서는 개별 포장과 대용량 믹스가 반복됐습니다.", "sources": ["Meta", "Shopee"]},
-    {"title": "제품을 빨리 보여주고 체험을 만들 것", "body": "TikTok에서는 첫 3초 제품 노출이 많았고, YouTube에서는 제조 과정·먹방·도전형 소재의 조회수가 크게 나타났습니다.", "sources": ["TikTok", "YouTube"]},
-    {"title": "구매 정보가 구체적", "body": "가격, 개수, 중량, 맛 구성, 배송 기준, 주문 채널을 광고 문구에 직접 넣었습니다.", "sources": ["Meta", "Shopee"]},
-    {"title": "'한국산'만으로는 근거 부족", "body": "표본에서는 원산지보다 맛·식감·상황·혜택이 더 구체적으로 제시됐습니다. 한국 정체성은 신뢰·차별화 요소로 쓰되 제품 효익 뒤에 배치하는 안을 먼저 시험합니다.", "sources": []}
+    {"title": "쫀득한 식감, 핵심 판매 언어", "body": "Meta 광고, Shopee 상품명·설명, YouTube 제목에서 부드럽고 쫀득한 식감의 반복 확인", "sources": ["Meta", "Shopee", "YouTube"]},
+    {"title": "익숙한 맛과 새로운 조합", "body": "녹두, 코코넛, 말차, 타로, 두리안, 망고, 과일, 초콜릿처럼 익숙한 맛과 새로운 조합을 함께 사용", "sources": ["Shopee", "YouTube"]},
+    {"title": "선물·간식 상황의 중요성", "body": "Meta의 계절 선물과 가족·사무실 간식, Shopee의 개별 포장과 대용량 믹스 반복 확인", "sources": ["Meta", "Shopee"]},
+    {"title": "빠른 제품 노출과 체험 유도", "body": "TikTok의 첫 3초 제품 노출, YouTube의 제조 과정·먹방·도전형 소재에서 높은 조회수 확인", "sources": ["TikTok", "YouTube"]},
+    {"title": "구체적인 구매 정보 제시", "body": "가격, 개수, 중량, 맛 구성, 배송 기준, 주문 채널을 광고 문구에 직접 제시", "sources": ["Meta", "Shopee"]},
+    {"title": "'한국산'만으로는 근거 부족", "body": "표본에서는 원산지보다 맛·식감·상황·혜택을 구체적으로 제시. 한국 정체성은 신뢰·차별화 요소로 활용하되 제품 효익 뒤 배치 후 우선 시험 필요", "sources": []}
   ],
   "tiktok": {
     "source_url": "https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?period=30&region=VN",

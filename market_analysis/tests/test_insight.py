@@ -101,6 +101,8 @@ class InsightRuleTests(unittest.TestCase):
         out = s.generate(BODY, CONFIG, TREND, GUIDELINES, [], today=date(2026, 10, 26), ai=fake_ai)
         self.assertEqual([step["month"] for step in seen["server_picks"]["timeline"]], [10, 11, 12])
         self.assertEqual({e["tag"] for e in seen["evidence"]}, set(out["evidence"]))
+        self.assertIn("K-기념일", out["evidence"])
+        self.assertTrue(out["holidays"]["items"])
         self.assertIn("★ 경쟁사 데이터가 없어 경쟁사 비교는 비어 있습니다.", out["limits"])
 
 
