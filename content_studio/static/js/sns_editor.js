@@ -1272,7 +1272,6 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
   function updateBar() {
     const item = pickable(selectedId);
     const head = el("div", "studio-editor-panel-head");
-    if (draft.demo) head.append(el("span", "demo", "DEMO · 예시 데이터"));
     head.append(status);
 
     const ratios = (DESIGN_RATIOS[draft.kind] || [draft.ratio]).map((value) => {
