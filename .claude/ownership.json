@@ -60,7 +60,15 @@
     },
     "minji": {
       "name": "민지",
-      "paths": ["kpi/*"]
+      "paths": [
+        "*",
+        "kpi/*",
+        "platform_core/*",
+        "home/*",
+        "market_analysis/*",
+        "content_studio/*",
+        "influencer_marketing/*"
+      ]
     },
     "jinhyuk": {
       "name": "진혁",
