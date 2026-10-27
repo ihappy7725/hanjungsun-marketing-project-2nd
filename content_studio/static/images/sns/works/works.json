@@ -1,0 +1,45 @@
+[
+  {
+    "file": "poster_honey_red_dragonfruit_roseday.png",
+    "title": "로즈데이 꿀 레드용과 포스터",
+    "product_id": "honey_red_dragonfruit",
+    "ratio": "3:4",
+    "style": "pop",
+    "name": "장미와 함께하는 달콤함",
+    "concept_ko": "빨간 장미 줄기 끝에 꿀 레드용과 찹쌀떡을 꽃송이처럼 엮고, 손글씨 제목과 하트로 로즈데이의 설렘을 경쾌하게 표현했다.",
+    "texts": [
+      {"vi": "Ngày Rose Day, ngọt ngào cùng hoa hồng", "ko": "로즈데이, 장미와 함께 달콤하게"},
+      {"vi": "Chapssal-tteok Thanh Long Mật Ong", "ko": "꿀 레드용과 찹쌀떡"}
+    ],
+    "prompt": "Playful Rose Day promotional poster for Hanjungsun honey red dragon fruit chapssal-tteok, top-down flat lay on a clean white background. Long-stemmed red roses with fresh water droplets fan out diagonally from the lower left; at the end of one stem the rice cake, wrapped in magenta tissue paper with a small paper tag, blooms like a rose. Beside it, a halved rice cake reveals glossy magenta dragon fruit filling with tiny black seeds and a thin golden honey layer. Soft pink felt hearts and small hand-drawn pink doodle accents are scattered around the frame. Hand-lettered brush script title in vivid pink at the top (Vietnamese only, render exactly): \"Ngày Rose Day, ngọt ngào cùng hoa hồng\". Bright, cheerful, romantic social-media mood, crisp natural daylight."
+  },
+  {
+    "file": "poster_all_tet.png",
+    "title": "설날 4구 선물세트 포스터",
+    "product_id": "honey_red_dragonfruit,mango_yogurt,mangosteen_yogurt,durian",
+    "ratio": "3:4",
+    "style": "editorial",
+    "name": "보자기에 담은 새해 인사",
+    "concept_ko": "분홍 보자기로 감싼 선물과 네 가지 맛을 담은 선물상자를 나란히 두고, 세로로 쓴 새해 인사로 차분하고 고급스러운 설 분위기를 냈다.",
+    "texts": [
+      {"vi": "CHÚC MỪNG NĂM MỚI", "ko": "새해 복 많이 받으세요"},
+      {"vi": "QUÀ TẾT ĐOÀN VIÊN", "ko": "온 가족이 모이는 설 선물"}
+    ],
+    "prompt": "Elegant Tết Nguyên Đán gift poster for the Hanjungsun four-flavor chapssal-tteok gift set, on a soft peach and blush-pink studio set with sheer pink chiffon drifting diagonally across the top of the frame. In the foreground, an open pink gift box with a cherry-blossom print holds four rice cakes, each wrapped in tissue paper in its flavor color (pale green durian, magenta honey red dragon fruit, orange mango yogurt, purple mangosteen yogurt) with small paper tags. Behind it, a gift bundle wrapped in sheer pink bojagi cloth tied with a soft bow, a red knot-flower ornament and a white tassel, rests on a round pink marble pedestal. Two lines of thin serif text set vertically in white on the upper left (Vietnamese only, render exactly): \"CHÚC MỪNG NĂM MỚI\" and \"QUÀ TẾT ĐOÀN VIÊN\". Soft diffused light, calm and premium New Year gifting mood."
+  },
+  {
+    "file": "poster_durian_teachersday.png",
+    "title": "스승의 날 두리안 찹쌀떡 포스터",
+    "product_id": "durian",
+    "ratio": "3:4",
+    "style": "editorial",
+    "name": "감사를 전하는 선물",
+    "concept_ko": "올리브 그린 선물상자와 반으로 가른 두리안 찹쌀떡을 햇살 드는 대리석 위에 두고, 베트남 스승의 날(11월 20일) 감사 문구로 단정하고 고급스럽게 구성했다.",
+    "texts": [
+      {"vi": "QUÀ TẶNG PHIÊN BẢN GIỚI HẠN", "ko": "한정판 선물"},
+      {"vi": "Ngày Nhà giáo Việt Nam 20.11", "ko": "베트남 스승의 날 11월 20일"},
+      {"vi": "Tri ân người gieo mầm tri thức bằng những điều ngọt lành nhất.", "ko": "지식의 씨앗을 뿌려 주신 분께 가장 달콤한 마음으로 감사를 전합니다."}
+    ],
+    "prompt": "Refined Vietnamese Teachers' Day (20.11) gift poster for Hanjungsun durian chapssal-tteok. Warm morning sunlight casts soft leaf shadows across a cream wall and an olive-green panel. On a light marble board sit a sage-green gift box embossed with gold lotus line art, a durian rice cake wrapped in pale green tissue paper with a small tag, and two halves of a rice cake showing creamy pale-yellow durian filling; pink carnations and a fallen petal in the foreground. Centered elegant serif typography (Vietnamese only, render exactly): a small letter-spaced line \"QUÀ TẶNG PHIÊN BẢN GIỚI HẠN\", the headline \"Ngày Nhà giáo Việt Nam\", a large gold \"20.11\" with a small lotus divider, and the italic line \"Tri ân người gieo mầm tri thức bằng những điều ngọt lành nhất.\" Short vertical phrases in thin serif along both sides. Calm, grateful, premium mood."
+  }
+]

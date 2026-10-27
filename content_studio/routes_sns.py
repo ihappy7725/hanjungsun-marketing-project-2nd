@@ -7,6 +7,7 @@ import copy
 import json
 import os
 import re
+import shutil
 import threading
 import time
 import urllib.error
@@ -21,7 +22,8 @@ from platform_core.extensions import db
 from . import bp
 from . import higgsfield
 from .designs import (ARTWORK_ROLE, DESIGN_RATIOS, DESIGN_REVISE_HINT, IMAGE_MODE, MAX_PAGES, MIN_PAGES,
-                      apply_design_ai, design_ai_messages, make_cardnews, make_poster, revise_design)
+                      STYLES as DESIGN_STYLES, apply_design_ai, design_ai_messages, make_cardnews, make_poster,
+                      revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
@@ -419,9 +421,55 @@ def delete_chat(chat_id):
 
 
 # ---------- 첫 화면 ----------
+# 기본 포스터 작업
+WORKS_DIR = os.path.join(bp.static_folder, "images", "sns", "works")
+_works_lock = threading.Lock()
+
+
+def _ensure_works():
+    if SnsChat.query.filter(SnsChat.kind.in_(TABS)).first():
+        return
+    with _works_lock:
+        if SnsChat.query.filter(SnsChat.kind.in_(TABS)).first():
+            return
+        try:
+            with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
+                items = json.load(source)
+        except (OSError, ValueError):
+            return
+        folder = _design_image_folder()
+        os.makedirs(folder, exist_ok=True)
+        try:
+            for item in items:
+                path = os.path.join(WORKS_DIR, os.path.basename(item["file"]))
+                ids = [value for value in item["product_id"].split(",") if get_product(value)]
+                if not os.path.isfile(path) or not ids or item["ratio"] not in DESIGN_RATIOS["poster"]:
+                    continue
+                name = f"{uuid.uuid4()}.png"
+                shutil.copyfile(path, os.path.join(folder, name))
+                style = item.get("style") if item.get("style") in DESIGN_STYLES else None
+                doc = {"kind": "poster", "ratio": item["ratio"], "demo": False, "mode": IMAGE_MODE, "style": style,
+                       "assistant": {"name": item["name"], "prompt": item["concept_ko"],
+                                     "notice": f"AI 그림 시안 · {DESIGN_STYLES.get(style, 'AI 추천')} · "
+                                               "그림 속 글자와 제품 정보는 꼭 확인해 주세요."},
+                       "pages": [{"bg": "#ffffff", "layout": "image", "prompt": item["prompt"], "texts": item["texts"],
+                                  "elements": [{"id": "p1-artwork", "role": ARTWORK_ROLE, "type": "image", "x": 0, "y": 0,
+                                                "w": 100, "h": 100, "z": 0, "radius": 0,
+                                                "src": url_for("content_studio.design_image", name=name)}]}]}
+                chat = SnsChat(kind="poster", title=item["title"][:40], product_id=",".join(ids))
+                chat.design = SnsDesign()
+                chat.design.push(doc)
+                db.session.add(chat)
+            db.session.commit()
+        except (KeyError, TypeError, OSError):
+            current_app.logger.exception("첫 작업 채우기 실패")
+            db.session.rollback()
+
+
 @bp.route("/api/gallery")
 def gallery():
     """작업 목록(최신순). kind를 주면 그 탭만, 비우면 세 탭 모두(메인 탭)."""
+    _ensure_works()
     kind = request.args.get("kind")
     if kind and kind not in KINDS:
         return _error("탭 종류(kind)가 올바르지 않습니다.")
