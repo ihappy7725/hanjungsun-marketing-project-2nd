@@ -804,7 +804,6 @@ function renderCulture() {
           <div class="ma-cg-cols">${avoidList}</div>
         </div>
       </div>
-      <p class="ma-cg-source">출처: 베트남 국회 (통합 광고법 · 2025 개정 광고법)</p>
     </section>`;
 
   // 온라인 구매 채널 (Metric 데이터 기사): 숫자 카드 + 도넛 차트·점유율 목록
@@ -847,8 +846,7 @@ function renderCulture() {
       <dl class="ma-cg-donut-list">${shareList}${noteRows}</dl>
     </div>` : (ecNotes.length ? rows(ecNotes) : "");
   const ecBody = `<ul class="ma-cg-stats">${ecCards || empty()}</ul>
-    ${donutBlock}
-    <p class="ma-cg-source">출처: Metric (VnEconomy · VietnamNet)</p>`;
+    ${donutBlock}`;
 
   // 디저트 소비 문화: 한국인 이용자가 처음 봐도 바로 이해할 수 있도록 쉬운 한국어로 풀어서 표시
   const DESSERT_KO = [
@@ -880,7 +878,9 @@ function renderCulture() {
 
   // 넓은 화면은 2칸 배치(.ma-cg-pair), 좁은 화면은 1칸
   const pair = (left, right) => `<div class="ma-cg-pair">${left}${right}</div>`;
-  const snsBody = `<ul class="ma-cg-stats is-fill">${facts || empty()}</ul><p class="ma-cg-source">출처: DataReportal</p>`;
+  const snsBody = `<ul class="ma-cg-stats is-fill">${facts || empty()}</ul>`;
+  // 출처는 베이지 블록 밖(흰 바탕) 아래에 작게: 블록과 출처를 한 묶음(.ma-cg-wrap)으로 둡니다.
+  const withSource = (html, source, cls = "") => `<div class="ma-cg-wrap${cls ? ` ${cls}` : ""}">${html}<p class="ma-cg-source">출처: ${esc(source)}</p></div>`;
   cultureModalBody = `
     <header class="ma-rd-head">
       <div class="ma-rd-brand">베트남 문화 가이드</div>
@@ -894,11 +894,23 @@ function renderCulture() {
     </div>`;
   view.innerHTML = `<div class="ma-cg">
     <section class="ma-cg-section ma-cg-basic-sec">${basicRow}</section>
-    ${pair(section("디지털·SNS 이용", "", snsBody),
-      section("온라인 구매 채널", "", ecBody))}
-    ${adWarning}
+    ${pair(withSource(section("디지털·SNS 이용", "", snsBody), "DataReportal"),
+      withSource(section("온라인 구매 채널", "", ecBody), "Metric (VnEconomy · VietnamNet)"))}
+    ${withSource(adWarning, "베트남 국회 (통합 광고법 · 2025 개정 광고법)", "is-fill")}
   </div>`;
+  fitCultureHeight();
 }
+
+// 국가·문화: 마지막 유의사항 블록이 화면 아래(본문 하단 여백 16px)까지 늘어나도록 화면 높이에 맞춥니다.
+// 공통 화면 배율(zoom)이 걸리면 화면 좌표를 CSS 좌표로 바꿔 계산합니다.
+function fitCultureHeight() {
+  const cg = document.querySelector(".market-analysis-page .ma-cg:not(.ma-cg-modal)");
+  if (!cg) return;
+  const z = cg.getBoundingClientRect().width / cg.offsetWidth || 1;
+  const top = (cg.getBoundingClientRect().top + window.scrollY) / z;
+  cg.style.minHeight = `${Math.max(0, Math.floor(window.innerHeight / z - top - 16))}px`;
+}
+window.addEventListener("resize", fitCultureHeight);
 
 // ---------- 4. AI 인사이트 ----------
 
