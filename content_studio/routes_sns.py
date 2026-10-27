@@ -8,6 +8,7 @@ import json
 import os
 import re
 import threading
+import time
 import urllib.error
 import uuid
 import urllib.request
@@ -19,15 +20,16 @@ from platform_core.extensions import db
 
 from . import bp
 from . import higgsfield
-from .designs import DESIGN_REVISE_HINT, make_cardnews, make_poster, revise_design
+from .designs import (ARTWORK_ROLE, DESIGN_RATIOS, DESIGN_REVISE_HINT, IMAGE_MODE, MAX_PAGES, MIN_PAGES,
+                      apply_design_ai, design_ai_messages, make_cardnews, make_poster, revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
                      phrase_pairs, refresh_prompts, revise_draft, scene_kind, translate_messages, video_title)
 
-TABS = ("poster", "cardnews", "video")
+TABS = ("poster", "video")  # 카드뉴스 탭은 2026-10-27 유진 결정으로 뺌 (예전 카드뉴스 작업은 DB에 남고 목록에서만 숨김)
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
-DEFAULT_RATIO = {"video": "9:16", "poster": "4:5", "cardnews": "4:5"}
+DEFAULT_RATIO = {"video": "9:16", "poster": "3:4", "cardnews": "3:4"}  # 포스터·카드뉴스 3:4 (2026-10-27, 4:5는 기존 작업용)
 DESIGN_KINDS = ("poster", "cardnews")  # 만들기·고치기 규칙은 희주 designs.py
 
 
@@ -147,17 +149,24 @@ def _openai_json(messages):
         return None, "OpenAI 응답 형식 오류"
 
 
-def _call_ai(kind, text, doc):
-    """AI로 요청을 이해합니다 (README 6장). 지금은 영상만 연결했고, 포스터·카드뉴스는 None(단어 규칙).
-    영상: 이해했으면 (새 문서, 바꾼 것 목록), 아니면 None → 부른 쪽이 단어 규칙(videos.py)을 씁니다.
+def _call_ai(kind, text, doc, page=None):
+    """AI로 고치기 요청을 이해합니다 (README 6장). 이미 있는 문서를 고칠 때만 씁니다(첫 생성은 None).
+    영상: videos.py ai_messages / apply_ai, 포스터·카드뉴스: 희주 designs.py design_ai_messages / apply_design_ai
+    (page = 지금 보는 장, 0부터). 이해했으면 (새 문서, 바꾼 것 목록), 아니면 None → 부른 쪽이 단어 규칙을 씁니다.
     키는 있는데 쓰지 못했으면(한도·실패) g.ai_note에 이유를 남겨 답장에 붙입니다."""
-    if kind != "video" or doc is None or not os.environ.get("OPENAI_API_KEY", "").strip():
+    if doc is None or not os.environ.get("OPENAI_API_KEY", "").strip():
+        return None
+    if kind == "video":
+        messages, apply = ai_messages(doc, text), (lambda data: apply_ai(doc, data))
+    elif kind in DESIGN_KINDS:
+        messages, apply = design_ai_messages(doc, text, page), (lambda data: apply_design_ai(doc, data, page))
+    else:
         return None
     if not _ai_take_turn():
         g.ai_note = f"오늘 AI 사용 한도({AI_DAILY_LIMIT}회)를 넘었어요"
         return None
-    data, error = _openai_json(ai_messages(doc, text))
-    result = apply_ai(doc, data) if error is None else None
+    data, error = _openai_json(messages)
+    result = apply(data) if error is None else None
     if result is None:
         g.ai_note = error or "AI 답을 읽지 못했어요"
         current_app.logger.warning("콘텐츠 스튜디오 AI 실패: %s", g.ai_note)
@@ -262,17 +271,21 @@ def post_message():
         current = chat.design.doc if chat.design else None
         if current is None:
             return _error("이 작업에는 고칠 결과물이 없습니다.")
-        if kind in DESIGN_KINDS:
+        if kind in DESIGN_KINDS and current.get("mode") == IMAGE_MODE:
+            # 그림 시안(Higgsfield 그림 문서)은 말로 고치기(그림 다시 그리기)가 2단계라, AI를 부르지 않고 안내만 합니다.
+            reply = "그림 시안을 말로 고치기(그림 다시 그리기)는 준비 중이에요."
+        elif kind in DESIGN_KINDS:
             # page: 화면에서 보고 있는 장(0부터). 없으면 1장 기준이고, "3장 배경 파랗게"처럼 말하면 그 장을 고칩니다.
             page = body.get("page")
-            doc = _call_ai(kind, text, current)
-            if doc is None:
-                doc, changes = revise_design(current, text, page=page if isinstance(page, int) else None)
+            page = page if isinstance(page, int) and not isinstance(page, bool) else None
+            ai = _call_ai(kind, text, current, page)  # AI가 없거나 실패하면 단어 규칙
+            doc, changes = ai if ai else revise_design(current, text, page=page)
             if changes:
                 chat.design.push(doc)
                 reply = "바꿨어요: " + ", ".join(changes)
             else:
                 reply = f"어떻게 고칠지 알아듣지 못했어요. {DESIGN_REVISE_HINT}"
+            reply = _with_ai_note(reply)
         else:
             ai = _call_ai(kind, text, current)
             doc, changes = ai if ai else revise_draft(current, text)
@@ -293,8 +306,8 @@ def post_message():
 
 
 # ---------- 첫 화면 AI 초안으로 새 작업 (포스터·카드뉴스) ----------
-# 희주 편집기(sns_editor.js renderStart)가 만든 초안을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
-DESIGN_RATIOS = {"poster": ("4:5", "9:16", "16:9", "1:1"), "cardnews": ("4:5", "1:1")}
+# 희주 renderChoices가 만든 시안(그림 문서)을 받아 새 작업(SnsChat)과 첫 버전(SnsDesign)으로 저장합니다.
+# 쓸 수 있는 비율은 희주 designs.py DESIGN_RATIOS를 그대로 씁니다(3:4 · 4:3 · 9:16 · 16:9 · 1:1 + 기존 작업용 4:5).
 DESIGN_MAX_BYTES = 160 * 1024
 TAB_LABELS = {"poster": "포스터", "cardnews": "카드뉴스", "video": "영상"}
 
@@ -334,7 +347,9 @@ def create_chat():
     product = get_product(body.get("product_id"))
     if product is None:
         return _error("제품을 골라 주세요.")
-    chat = SnsChat(kind=kind, title=_design_title(kind, design, product), product_id=product["id"])
+    # 작업 이름: 새로 만들기에서 직접 입력한 제목(30자), 없으면 1장 제목 글자 규칙
+    title = _clean_title(body.get("title")) or _design_title(kind, design, product)
+    chat = SnsChat(kind=kind, title=title, product_id=product["id"])
     chat.design = SnsDesign()
     chat.design.push(design)
     db.session.add(chat)
@@ -424,6 +439,9 @@ def gallery():
                 "scenes": doc["scenes"],
                 "video_url": job.get("video_url"),
                 "job_status": job.get("status"),
+                # 썸네일 보기용: 처음 완성된 컷 미리보기 이미지(없으면 None)
+                "thumb_url": next((cut["image_url"] for cut in _cuts(doc)
+                                   if cut and cut.get("status") == higgsfield.DONE and cut.get("image_url")), None),
                 "demo": doc.get("demo", False),
             })
         else:
@@ -504,9 +522,11 @@ REF_IMAGES_MAX = 7  # 제품 4종 × 단면·포장 = 8장 중 제품 사진 칸
 
 
 def _today_used():
-    """오늘(한국 시간 0시부터) 대시보드에서 쓴 크레딧."""
+    """오늘(한국 시간 0시부터) 대시보드에서 쓴 Higgsfield 크레딧. 미리보기 이미지·영상 기록만 셉니다
+    (희주 AI 배경 그림 job_kind="design_bg"는 달러 금액이라 이 한도에 섞지 않음)."""
     start = datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
-    rows = SnsCreditLog.query.filter(SnsCreditLog.created_at >= start).all()
+    rows = SnsCreditLog.query.filter(SnsCreditLog.created_at >= start,
+                                     SnsCreditLog.job_kind.in_(("image", "video"))).all()
     return round(sum(row.credits for row in rows), 2)
 
 
@@ -592,19 +612,19 @@ def _static_photo(name):
 def _photo_set(doc, kinds, scene_text=""):
     """보낼 제품 사진 [(경로, 역할 영어)]. kinds: 이번 요청에 들어가는 컷 종류(videos.py scene_kind) 집합.
     고른 제품이 카탈로그(products.py)에 있으면 사진을 자동으로 고릅니다:
-    겉모습 → 공통 겉모습 사진 · 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) + 겉모습 · 선물 → 선물세트 2장 + 맛별 포장.
-    직접 올린 사진만 있는 예전 작업은 그 사진들(제품 사진 칸 + 참고 사진)을 그대로 씁니다."""
+    자르지 않은 동그란 찹쌀떡(공통 겉모습 사진)은 어떤 제품·컷이든 늘 첫 번째로 보냅니다(2026-10-27 유진 결정).
+    그 뒤로: 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) · 선물 → 선물세트 2장 + 맛별 포장.
+    직접 올린 사진만 있는 예전 작업은 겉모습 사진 + 그 사진들(제품 사진 칸 + 참고 사진)을 씁니다."""
     names = doc.get("products") or [doc.get("product")]
     items = [item for name in names for item in PRODUCTS if item["name_ko"] == name]
     image_url = (doc.get("image") or {}).get("url", "") if isinstance(doc.get("image"), dict) else ""
-    if not items or PHOTO_URL.match(image_url):
-        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
-        return [(path, "the product photo") for path in legacy if path]
     whole = (_static_photo(COMMON_IMAGES["whole"]),
              "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")
-    photos = []
-    if kinds & {"outside", "inside"}:
-        photos.append(whole)
+    if not items or PHOTO_URL.match(image_url):
+        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
+        return [whole, *((path, "the product photo") for path in legacy if path)] if whole[0] else \
+            [(path, "the product photo") for path in legacy if path]
+    photos = [whole]
     if "inside" in kinds:
         named = [item for item in items if PRODUCT_EN.get(item["name_ko"], "").lower() in scene_text.lower()]
         for item in named or items:
@@ -921,3 +941,456 @@ def generate_status(chat_id):
     db.session.commit()
     return jsonify({"ok": True, "balance": balance, "today_used": _today_used(),
                     "daily_limit": higgsfield.DAILY_LIMIT, **_design_state(chat)})
+
+
+# ---------- 포스터·카드뉴스 시안 그림 (Higgsfield, 2026-10-26 유진 결정) ----------
+# 새로 만들기 [보내기] → 견적(무료) → 희주 design-assistant가 쓴 장별 프롬프트로 시안 3안 × 장수 그림 생성 → 상태 확인.
+# 아직 작업(chat)이 없을 때 만들므로 크레딧 기록은 chat_id 없이 남기고, 영상과 같은 하루 한도(_today_used)에 셉니다.
+# 끝난 그림은 instance/uploads/content_studio/design/에 내려받아 이 서버 주소로 돌려줍니다(외부 주소 만료·PNG 내보내기 대비).
+DESIGN_PROPOSALS = 3
+DESIGN_PROMPT_MAX = 2000
+DESIGN_IMAGE_MAX = 20 * 1024 * 1024  # 내려받을 그림 한 장 최대 20MB
+DESIGN_IMAGE_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+DESIGN_IMAGE_NAME = re.compile(r"^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(jpg|png|webp)$")
+
+
+def _design_target(body):
+    """(종류, 비율, 제품 목록, 장수). 제품은 product_ids(여러 개, products.py 순서) → product_id(하나) 순서로 찾습니다.
+    틀리면 ValueError(화면에 보여 줄 글)."""
+    kind, ratio = body.get("kind"), body.get("ratio")
+    if kind not in DESIGN_KINDS:
+        raise ValueError("포스터·카드뉴스만 시안 그림을 만들 수 있습니다.")
+    if ratio not in higgsfield.IMAGE_RATIOS:
+        raise ValueError("비율(ratio)이 올바르지 않습니다.")
+    ids = body.get("product_ids")
+    products = [item for item in PRODUCTS if item["id"] in ids] if isinstance(ids, list) else []
+    if not products and get_product(body.get("product_id")):
+        products = [get_product(body["product_id"])]
+    if not products:
+        raise ValueError("제품을 골라 주세요.")
+    pages = body.get("pages", 1)
+    if kind == "poster":
+        pages = 1
+    elif isinstance(pages, bool) or not isinstance(pages, int) or not MIN_PAGES <= pages <= MAX_PAGES:
+        raise ValueError(f"카드뉴스 장수는 {MIN_PAGES}~{MAX_PAGES}장입니다.")
+    return kind, ratio, products, pages
+
+
+def _design_refs(value):
+    """레퍼런스 이미지(첫 화면 레퍼런스 칸, 희주 업로드 API로 올린 것) [{file_id, url}] → 서버 파일 경로 목록.
+    없으면 []. 4장을 넘거나 업로드 주소가 아니거나 파일이 사라졌으면 ValueError."""
+    if value in (None, []):
+        return []
+    if not isinstance(value, list) or len(value) > USER_REFS_MAX:
+        raise ValueError(f"레퍼런스 이미지는 {USER_REFS_MAX}장까지입니다.")
+    cleaned = [_clean_upload(item) for item in value]
+    paths = [_photo_path({"image": item}) if item else None for item in cleaned]
+    if not all(paths):
+        raise ValueError("레퍼런스 이미지를 찾을 수 없습니다. 다시 올려 주세요.")
+    return paths
+
+
+# 장 프롬프트에 선물세트·포장 이야기가 있을 때만 보자기 선물세트 사진을 보냅니다. "gift mood"처럼 분위기만 말한 것에는
+# 걸리지 않게 물건을 가리키는 말만 찾습니다. 연 상자·개별 포장 사진은 꼬리표 글씨를 흉내 낸 가짜 글자가 생겨 보내지 않습니다.
+GIFT_WORDS = re.compile(r"gift\s*(box|set|basket)|packag|wrapped|wrapping|bojagi|h[ộo]p\s*qu[àa]|set\s*qu[àa]|"
+                        r"선물\s*(세트|상자|박스)|포장|보자기", re.I)
+
+
+def _design_photos(products, refs=(), with_gift=False):
+    """시안 그림에 보낼 사진 [(경로, 역할 영어)]. 중요한 순서로: 자르지 않은 찹쌀떡(겉모습) → 제품별 단면
+    → 레퍼런스(분위기 참고) → (with_gift일 때) 보자기 포장 선물세트.
+    Higgsfield 참고 이미지 한도(higgsfield.IMAGE_REFS)를 넘으면 뒤쪽부터 빠집니다."""
+    names = [(item, PRODUCT_EN.get(item["name_ko"], item["name_ko"])) for item in products]
+    photos = [(_static_photo(COMMON_IMAGES["whole"]),
+               "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")]
+    photos += [(_static_photo((item.get("images") or {}).get("cut")), f"the cross-section of {en}, showing its filling")
+               for item, en in names]
+    photos += [(path, "a mood reference (mood, composition and color only)") for path in refs]
+    if with_gift:
+        photos.append((_static_photo(COMMON_IMAGES["giftset_wrapped"]), "the gift set box wrapped in pink bojagi cloth"))
+    return [(path, role) for path, role in photos if path]
+
+
+def _design_quote(ratio, photos, pages, proposals=DESIGN_PROPOSALS):
+    """무료 확인: 시안 n안(proposals) × 장수의 비용 · 남은 크레딧 · 오늘 사용량. 실행할 수 없으면 reason에 이유.
+    photos: 이번에 보낼 사진(_design_photos) — 참고 사진 수에 따라 비용이 달라질 수 있어 그대로 넣어 봅니다.
+    비율 바꾸기(reratio)는 proposals=1(지금 작업의 장 수만큼)."""
+    count = proposals * pages
+    unit = higgsfield.cost(higgsfield.design_image_args("poster", ratio, photos))
+    credits = round(unit * count, 2)
+    balance = higgsfield.balance()
+    used = _today_used()
+    reason = None
+    if used + credits > higgsfield.DAILY_LIMIT:
+        reason = f"오늘 대시보드 한도({higgsfield.DAILY_LIMIT})를 넘습니다. (오늘 {used:g} 사용)"
+    elif credits > balance:
+        reason = "계정에 남은 크레딧이 모자랍니다."
+    return {"credits": credits, "unit": unit, "count": count, "pages": pages, "proposals": proposals,
+            "model": higgsfield.DESIGN_IMAGE_LABEL,
+            "balance": balance, "today_used": used, "daily_limit": higgsfield.DAILY_LIMIT,
+            "allowed": reason is None, "reason": reason}
+
+
+@bp.route("/api/design-images/quote", methods=["POST"])
+def design_images_quote():
+    """무료. body: {kind, ratio, product_id, pages(카드뉴스만), ref_images(선택, [{file_id, url}] 4장까지)}"""
+    body = request.get_json(silent=True) or {}
+    try:
+        _, ratio, products, pages = _design_target(body)
+        photos = _design_photos(products, _design_refs(body.get("ref_images")))
+        return jsonify({"ok": True, "quote": _design_quote(ratio, photos, pages)})
+    except ValueError as error:
+        return _error(str(error))
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+
+
+def _design_prompts(value, pages):
+    """[[장별 프롬프트] × 3안]. 틀리면 ValueError."""
+    if not isinstance(value, list) or len(value) != DESIGN_PROPOSALS:
+        raise ValueError(f"시안 {DESIGN_PROPOSALS}개의 프롬프트가 필요합니다.")
+    for proposal in value:
+        if not isinstance(proposal, list) or len(proposal) != pages:
+            raise ValueError(f"시안마다 {pages}장의 프롬프트가 필요합니다.")
+        for prompt in proposal:
+            if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > DESIGN_PROMPT_MAX:
+                raise ValueError(f"프롬프트는 1~{DESIGN_PROMPT_MAX}자여야 합니다.")
+    return value
+
+
+@bp.route("/api/design-images", methods=["POST"])
+def design_images():
+    """크레딧이 나갑니다. body: {kind, ratio, product_id(s), pages, credits(화면에서 확인한 비용), ref_images(선택, 견적과 같게),
+    포스터: proposals: [{layout: "A"|"B"|"C", texts: {badge_vi, eyebrow_vi, headline_vi, sub_vi}} × 3] → 베이스 템플릿으로 조립
+    카드뉴스(와 예전 방식 포스터): prompts: [[장별] × 3]}
+    견적과 같고 한도 안일 때만 장마다 1건씩 보냅니다. 중간에 실패하면 거기서 멈추고 이미 보낸 것만 기록합니다.
+    응답 jobs: [[{request_id, status} 또는 None(못 보냄)] × 3안], prompts: [[장별 최종 프롬프트 전문] × 3안]"""
+    body = request.get_json(silent=True) or {}
+    try:
+        kind, ratio, products, pages = _design_target(body)
+        exact = kind == "poster" and body.get("proposals") is not None
+        if exact:
+            style = body.get("style") or ""  # 스타일 버튼 값 ("" = AI 추천)
+            if style not in higgsfield.POSTER_STYLE_KEYS:
+                raise ValueError("스타일 값이 올바르지 않습니다.")
+            prompts = [[higgsfield.design_poster_prompt(products, item["layout"], ratio, item["texts"], style)]
+                       for item in _poster_proposals(body.get("proposals"))]
+        else:
+            prompts = _design_prompts(body.get("prompts"), pages)
+        refs = _design_refs(body.get("ref_images"))
+        photos = _design_photos(products, refs)
+        confirmed = body.get("credits")
+        quote = _design_quote(ratio, photos, pages)
+        if confirmed is None or float(confirmed) != quote["credits"]:
+            return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        if not quote["allowed"]:
+            return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
+    except (TypeError, ValueError) as error:
+        return _error(str(error) or "요청 값이 올바르지 않습니다.")
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+
+    # 선물세트·포장 이야기가 있는 장만 선물세트 사진을 함께 보냅니다(참고 사진 수와 관계없이 장당 비용은 같음).
+    # 포스터 장면 프롬프트(희주 도우미가 자유롭게 쓴 것)에는 로고 자리·금지 규칙만 붙이고, 참고 사진은 "생김새만 참고"
+    scene = kind == "poster" and not exact
+    args = [higgsfield.design_image_args(higgsfield.poster_scene_prompt(prompt) if scene else prompt, ratio,
+                                         _design_photos(products, refs, with_gift=bool(GIFT_WORDS.search(prompt))),
+                                         exact_product=exact)
+            for proposal in prompts for prompt in proposal]
+    flat, response = _send_design_jobs(args, None, quote)
+    if response is not None and not flat:
+        return response
+    jobs = [flat[p * pages:(p + 1) * pages] for p in range(len(prompts))]
+    # 결과 아래 "프롬프트 전문" 토글·문서 pages[].prompt 저장용. 참고 사진 문장은 보낼 때마다 붙이므로 빼고 돌려줍니다
+    # (비율 다시 그리기에서 두 번 붙지 않게).
+    return _design_jobs_reply(jobs, flat, response, quote, prompts=prompts)
+
+
+def _poster_proposals(value):
+    """포스터 시안 3안 [{layout, texts}]. 틀리면 ValueError."""
+    if not isinstance(value, list) or len(value) != DESIGN_PROPOSALS:
+        raise ValueError(f"시안 {DESIGN_PROPOSALS}개의 레이아웃·문구가 필요합니다.")
+    out = []
+    for item in value:
+        if not isinstance(item, dict) or item.get("layout") not in higgsfield.POSTER_LAYOUT_KEYS:
+            raise ValueError("레이아웃은 A · B · C 중 하나여야 합니다.")
+        texts = item.get("texts") or {}
+        if not isinstance(texts, dict) or not all(isinstance(texts.get(key, ""), str) for key in higgsfield.POSTER_TEXT_KEYS):
+            raise ValueError("문구(texts) 형식이 올바르지 않습니다.")
+        out.append({"layout": item["layout"], "texts": texts})
+    return out
+
+
+# Higgsfield 일시 오류(서버 5xx, 참고 사진 올리기 실패): 생성 전에 끊긴 것이라 크레딧이 나가지 않아 다시 보내도 됩니다.
+# "응답이 늦습니다"(시간 초과)는 요청이 들어갔을 수 있어 다시 보내지 않습니다(이중 결제 방지).
+TRANSIENT_HF = re.compile(r"HTTP (502|503|504|520|522|524)\b|upload_url|failed to PUT", re.I)
+TRANSIENT_RETRIES, TRANSIENT_WAIT = 2, 2  # 최대 2번 더, 2초 쉬고
+
+
+def _create_with_retry(args):
+    for attempt in range(TRANSIENT_RETRIES + 1):
+        try:
+            return higgsfield.create(args)
+        except higgsfield.HiggsfieldError as error:
+            if attempt == TRANSIENT_RETRIES or not TRANSIENT_HF.search(str(error)):
+                raise
+            current_app.logger.warning("Higgsfield 일시 오류, %s초 뒤 다시 보냄 (%s/%s): %s",
+                                       TRANSIENT_WAIT, attempt + 1, TRANSIENT_RETRIES, error)
+            time.sleep(TRANSIENT_WAIT)
+
+
+def _log_design_prompt(request_id, args, chat_id):
+    """보낸 그림 프롬프트를 instance/exports/content_studio/design_prompts.jsonl에 한 줄씩 남깁니다(원인 확인용, Git 제외).
+    기록 실패가 생성 자체를 막지 않게 합니다."""
+    try:
+        folder = os.path.join(current_app.config["EXPORT_ROOT"], "content_studio")
+        os.makedirs(folder, exist_ok=True)
+        record = {"at": datetime.now(KST).isoformat(timespec="seconds"), "request_id": request_id, "chat_id": chat_id,
+                  "model": args[0], "ratio": args[args.index("--aspect_ratio") + 1],
+                  "prompt": args[args.index("--prompt") + 1],
+                  "refs": [os.path.basename(args[i + 1]) for i, part in enumerate(args) if part == "--image-references"]}
+        with open(os.path.join(folder, "design_prompts.jsonl"), "a", encoding="utf-8") as out:
+            out.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception:
+        current_app.logger.exception("그림 프롬프트 기록 실패")
+
+
+def _send_design_jobs(arg_list, chat_id, quote):
+    """그림 요청을 차례로 보내고 보낸 만큼 크레딧을 기록합니다(시안 만들기·비율 바꾸기 공용).
+    돌려줌: (결과 목록 — 장마다 {request_id, status} 또는 None(못 보냄), 문제 응답 또는 None).
+    일시 오류는 장마다 최대 2번 다시 보내고(_create_with_retry), 그래도 실패하면 거기서 멈춥니다.
+    하나도 못 보냈으면 결과 목록이 비고 문제 응답(_hf_error)이 옵니다. 보낸 프롬프트는 파일에 남깁니다."""
+    results = [None] * len(arg_list)
+    sent, failure, unknown = [], None, False
+    for index, args in enumerate(arg_list):
+        try:
+            job = _create_with_retry(args)
+        except higgsfield.HiggsfieldError as error:  # CLI가 실패를 알림 → 이 건은 크레딧이 나가지 않음
+            failure = error
+            break
+        except Exception:  # 요청은 들어갔을 수 있음 → 크레딧을 기록하고 다시 누르지 않게
+            current_app.logger.exception("Higgsfield 시안 그림 응답 처리 실패")
+            sent.append(None)
+            unknown = True
+            break
+        results[index] = {"request_id": job["request_id"], "status": job["status"]}
+        sent.append(job["request_id"])
+        _log_design_prompt(job["request_id"], args, chat_id)
+    if not sent:
+        return [], _hf_error(failure)
+    try:
+        for request_id in sent:
+            db.session.add(SnsCreditLog(chat_id=chat_id, job_kind="image", model=higgsfield.DESIGN_IMAGE_MODEL,
+                                        credits=quote["unit"], request_id=str(request_id)[:64] if request_id else None))
+        db.session.commit()
+    except Exception:
+        current_app.logger.exception("시안 그림 크레딧 기록 실패")
+        db.session.rollback()
+    spent = round(quote["unit"] * len(sent), 2)
+    if unknown:
+        return results, (jsonify({"ok": False, "submitted": True, "spent": spent, "jobs": None,
+                                  "error": "요청은 Higgsfield에 들어갔어요(크레딧 사용). 다시 누르지 말고, 결과는 Higgsfield 내 작업 목록에서 확인해 주세요."}), 202)
+    return results, ({"warning": f"{len(sent)}장만 요청했어요. 나머지는 보내지 못했어요. ({failure})"} if failure else None)
+
+
+def _design_jobs_reply(jobs, flat, problem, quote, prompts=None):
+    """보낸 결과를 화면에 돌려줄 응답으로. problem: _send_design_jobs의 두 번째 값(202 응답 또는 경고 dict 또는 None).
+    prompts: 실제로 보낸 프롬프트 전문(있으면 응답에 그대로)."""
+    spent = round(quote["unit"] * sum(1 for job in flat if job), 2)
+    extra = {"prompts": prompts} if prompts is not None else {}
+    if isinstance(problem, tuple):  # 요청은 들어갔지만 작업 ID를 못 받음(202)
+        payload, status = problem
+        data = payload.get_json()
+        data.update(jobs=jobs, **extra)
+        return jsonify(data), status
+    data = {"ok": True, "jobs": jobs, "spent": spent, "today_used": quote["today_used"] + spent,
+            "daily_limit": higgsfield.DAILY_LIMIT, **extra}
+    if problem:
+        data.update(problem)
+    return jsonify(data)
+
+
+# ---------- 확정 뒤 비율 바꾸기 (그림 시안 작업, 2026-10-27 유진 결정) ----------
+# 그림 시안은 그림 한 장이라 비율을 바꾸려면 새로 그립니다. 장마다 저장된 프롬프트(pages[].prompt)로, 지금 그림을 참고 삼아
+# 새 비율로 생성합니다(장당 크레딧, 시안 만들기와 같은 하루 한도). 상태는 design-images/status, 저장은 PUT /chats/<id>/design
+# (희주 편집기가 ratio·장별 artwork src를 바꾼 새 문서를 저장 → 새 버전이라 되돌리기 가능).
+def _design_image_path(src):
+    """우리 서버 그림 주소(/content_studio/api/design-images/<작업ID>.png) → 파일 경로. 아니거나 없으면 None."""
+    name = str(src or "").rsplit("/", 1)[-1]
+    if not DESIGN_IMAGE_NAME.match(name) or src != url_for("content_studio.design_image", name=name):
+        return None
+    path = os.path.join(_design_image_folder(), name)
+    return path if os.path.isfile(path) else None
+
+
+def _reratio_target(chat, body):
+    """(새 비율, [(장 프롬프트, 지금 그림 경로)], 제품 목록). 틀리면 ValueError(화면에 보여 줄 글)."""
+    doc = chat.design.doc if chat.design else None
+    if not doc or doc.get("mode") != IMAGE_MODE:
+        raise ValueError("그림 시안 작업만 비율을 바꿔 다시 그릴 수 있습니다.")
+    ratio = body.get("ratio")
+    if ratio not in DESIGN_RATIOS[chat.kind] or ratio not in higgsfield.IMAGE_RATIOS:
+        raise ValueError("비율(ratio)이 올바르지 않습니다.")
+    if ratio == doc.get("ratio"):
+        raise ValueError("지금과 같은 비율입니다.")
+    pages = []
+    for page in doc.get("pages") or []:
+        art = next((item for item in page.get("elements") or []
+                    if isinstance(item, dict) and item.get("role") == ARTWORK_ROLE), None)
+        prompt, path = page.get("prompt"), _design_image_path((art or {}).get("src"))
+        if not isinstance(prompt, str) or not prompt.strip() or not path:
+            raise ValueError("다시 그릴 프롬프트나 그림이 없는 장이 있습니다.")
+        pages.append((prompt, path))
+    if not pages:
+        raise ValueError("다시 그릴 장이 없습니다.")
+    products = [item for item in PRODUCTS if item["id"] in str(chat.product_id or "").split(",")]
+    return ratio, pages, products
+
+
+def _reratio_photos(prompt, path, products):
+    """장 하나의 참고 사진: 지금 그림(구성·글자 유지 참고) + 제품 사진(선물 이야기가 있으면 선물세트까지)."""
+    return [(path, "the current design of this page: keep its concept, products, colors, typography style and "
+                   "all of its written text, only re-compose it for the new frame"),
+            *_design_photos(products, with_gift=bool(GIFT_WORDS.search(prompt)))]
+
+
+def _reratio_args(ratio, pages, products, kind="poster"):
+    """장마다 그림 요청 인자. 프롬프트 끝에 새 비율로 다시 배치하라는 문장을 붙입니다.
+    포스터 베이스 템플릿으로 만든 장(POSTER_BASE로 시작)은 만들 때처럼 "제품은 사진과 똑같이" 문장을 쓰고,
+    포스터 장면 프롬프트로 만든 장은 만들 때처럼 로고 자리·금지 규칙을 붙입니다."""
+    head = higgsfield.POSTER_BASE.split("\n", 1)[0]
+    orientation, frame = higgsfield.poster_frame(ratio)
+
+    def retarget(prompt):  # 템플릿 [TYPE] 줄의 예전 비율을 새 비율로
+        return re.sub(r"^\w+ premium dessert advertising poster, \d+:\d+ [\w ]+?, high-end",
+                      f"{orientation} premium dessert advertising poster, {ratio} {frame}, high-end", prompt, flags=re.M)
+    def full(prompt):
+        if prompt.startswith(head):
+            return retarget(prompt)
+        return higgsfield.poster_scene_prompt(prompt) if kind == "poster" else prompt
+    return [higgsfield.design_image_args(
+        f"{full(prompt).strip()} Re-compose this same design for a {ratio} frame, keeping the same text.",
+        ratio, _reratio_photos(prompt, path, products), exact_product=prompt.startswith(head)) for prompt, path in pages]
+
+
+def _reratio_quote(ratio, pages, products):
+    """무료 확인: 지금 작업의 장 수 × 장당 비용 (시안 만들기 견적과 같은 형식, proposals=1)."""
+    prompt, path = pages[0]
+    return _design_quote(ratio, _reratio_photos(prompt, path, products), len(pages), proposals=1)
+
+
+@bp.route("/api/chats/<int:chat_id>/reratio/quote", methods=["POST"])
+def reratio_quote(chat_id):
+    """무료. body: {ratio}"""
+    chat = _get_chat(chat_id)
+    if chat is None or chat.kind not in DESIGN_KINDS:
+        return _error("포스터·카드뉴스 작업을 찾을 수 없습니다.", 404)
+    try:
+        ratio, pages, products = _reratio_target(chat, request.get_json(silent=True) or {})
+        return jsonify({"ok": True, "quote": _reratio_quote(ratio, pages, products)})
+    except ValueError as error:
+        return _error(str(error))
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+
+
+@bp.route("/api/chats/<int:chat_id>/reratio", methods=["POST"])
+def reratio(chat_id):
+    """크레딧이 나갑니다. body: {ratio, credits(화면에서 확인한 비용)}
+    응답 jobs: [{request_id, status} 또는 None(못 보냄)] (장 순서). 문서는 바꾸지 않습니다(다 되면 화면이 PUT으로 저장)."""
+    chat = _get_chat(chat_id)
+    if chat is None or chat.kind not in DESIGN_KINDS:
+        return _error("포스터·카드뉴스 작업을 찾을 수 없습니다.", 404)
+    body = request.get_json(silent=True) or {}
+    try:
+        ratio, pages, products = _reratio_target(chat, body)
+        args = _reratio_args(ratio, pages, products, chat.kind)
+        quote = _reratio_quote(ratio, pages, products)
+        confirmed = body.get("credits")
+        if confirmed is None or float(confirmed) != quote["credits"]:
+            return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        if not quote["allowed"]:
+            return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
+    except (TypeError, ValueError) as error:
+        return _error(str(error) or "요청 값이 올바르지 않습니다.")
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    flat, response = _send_design_jobs(args, chat.id, quote)
+    if response is not None and not flat:
+        return response
+    return _design_jobs_reply(flat, flat, response, quote)
+
+
+def _design_image_folder():
+    return os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio", "design")
+
+
+def _saved_design_image(request_id):
+    """이미 내려받은 그림 이름. 없으면 None."""
+    folder = _design_image_folder()
+    for ext in DESIGN_IMAGE_TYPES.values():
+        if os.path.isfile(os.path.join(folder, f"{request_id}.{ext}")):
+            return f"{request_id}.{ext}"
+    return None
+
+
+def _download_design_image(request_id, url):
+    """끝난 그림을 내려받아 저장하고 이름을 돌려줍니다. https 그림(20MB 이하)만."""
+    if not isinstance(url, str) or not url.startswith("https://"):
+        raise ValueError("그림 주소가 올바르지 않습니다.")
+    with urllib.request.urlopen(url, timeout=60) as response:
+        ext = DESIGN_IMAGE_TYPES.get((response.headers.get("Content-Type") or "").split(";")[0].strip().lower())
+        if not ext:
+            raise ValueError("그림 파일이 아닙니다.")
+        data = response.read(DESIGN_IMAGE_MAX + 1)
+    if len(data) > DESIGN_IMAGE_MAX:
+        raise ValueError("그림이 너무 큽니다.")
+    folder = _design_image_folder()
+    os.makedirs(folder, exist_ok=True)
+    name = f"{request_id}.{ext}"
+    temp = os.path.join(folder, f"{name}.part")
+    with open(temp, "wb") as out:
+        out.write(data)
+    os.replace(temp, os.path.join(folder, name))
+    return name
+
+
+@bp.route("/api/design-images/status")
+def design_images_status():
+    """무료. ?ids=작업ID,작업ID… (이 대시보드가 보낸 작업만). 다시 만들지 않고 상태만 확인합니다.
+    응답 jobs: {작업ID: {status, url(끝나면 이 서버 주소, 아니면 None)}}"""
+    ids = [value for value in (request.args.get("ids") or "").split(",") if value]
+    if not ids or len(ids) > DESIGN_PROPOSALS * MAX_PAGES or not all(higgsfield.UUID.fullmatch(value) for value in ids):
+        return _error("작업 ID(ids)가 올바르지 않습니다.")
+    known = {row.request_id for row in SnsCreditLog.query.filter(SnsCreditLog.request_id.in_(ids)).all()}
+    if set(ids) - known:
+        return _error("이 대시보드에서 요청한 작업이 아닙니다.", 404)
+    jobs = {}
+    try:
+        for request_id in ids:
+            name = _saved_design_image(request_id)
+            if name:
+                jobs[request_id] = {"status": higgsfield.DONE, "url": url_for("content_studio.design_image", name=name)}
+                continue
+            job = higgsfield.get_job(request_id)
+            url = None
+            if job["status"] == higgsfield.DONE and job["url"]:
+                try:
+                    url = url_for("content_studio.design_image", name=_download_design_image(request_id, job["url"]))
+                except (OSError, ValueError, urllib.error.URLError):
+                    current_app.logger.exception("시안 그림 내려받기 실패")
+                    job["status"] = "processing"  # 다음 확인에서 다시 내려받기
+            jobs[request_id] = {"status": job["status"], "url": url}
+        running = any(job["status"] in RUNNING for job in jobs.values())
+        balance = higgsfield.balance() if not running else None
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    return jsonify({"ok": True, "jobs": jobs, "running": running, "balance": balance,
+                    "today_used": _today_used(), "daily_limit": higgsfield.DAILY_LIMIT})
+
+
+@bp.route("/api/design-images/<name>")
+def design_image(name):
+    if not DESIGN_IMAGE_NAME.match(name) or not os.path.isfile(os.path.join(_design_image_folder(), name)):
+        return _error("그림을 찾을 수 없습니다.", 404)
+    return send_from_directory(_design_image_folder(), name)

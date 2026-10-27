@@ -12,13 +12,6 @@
   width: 100%;
 }
 
-.studio-editor .studio-editor-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-
 .studio-editor .studio-editor-field {
   display: inline-flex;
   align-items: center;
@@ -27,10 +20,6 @@
 
 .studio-editor .studio-editor-field input[type="number"] {
   width: 72px;
-}
-
-.studio-editor .studio-editor-spacer {
-  flex: 1;
 }
 
 .studio-editor .studio-editor-view {
@@ -305,16 +294,82 @@
   width: min(720px, 92vw);
 }
 
-/* 편집 화면 2단: 왼쪽(장 번호 + 포스터) · 오른쪽(프롬프트 · 문구 · 검수 · Figma) [희주] */
-.studio-editor .studio-editor-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr); gap: var(--space-8); align-items: start; }
-.studio-editor .studio-editor-left { display: flex; gap: var(--space-4); align-items: flex-start; min-width: 0; }
-.studio-editor .studio-editor-left > .studio-editor-view { flex: 1; min-width: 0; }
-.studio-editor .studio-editor-left > .studio-editor-pages { flex-direction: column; flex-wrap: nowrap; } /* 장 번호 세로 한 줄 */
-.studio-editor .studio-editor-side { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
-.studio-editor .studio-editor-prompt-panel { display: flex; flex-direction: column; gap: var(--space-5); width: auto; padding: var(--space-6); background: var(--paper); border-radius: var(--radius); }
-.studio-editor .studio-editor-prompt-panel h2 { margin: 0; font-size: var(--fs-subheading); font-weight: 600; }
-.studio-editor .studio-editor-prompt-panel > p { margin: 0; }
-@media (max-width: 1100px) { .studio-editor .studio-editor-body { grid-template-columns: minmax(0, 1fr); } }
+/* 편집 화면 (renderDesign): 가운데 초안 · 오른쪽 고정 칸 [희주]
+   말로 고치기 입력창은 이 아래(sns.js 유진 chat-form)에 있습니다. */
+.studio-editor.studio-editor-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.studio-editor .studio-editor-center {
+  min-width: 0;
+}
+
+/* 오른쪽 고정 칸: 화면을 내려도 따라오고, 길면 칸 안에서만 내립니다.
+   높이는 초안과 같은 화면 70%(sns_editor.js MAX_VIEW)라 아래 입력창을 가리지 않습니다. */
+.studio-editor .studio-editor-panel {
+  position: sticky;
+  top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.studio-editor .studio-editor-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.studio-editor .studio-editor-panel-head:not(:has(> :not(:empty))) {
+  display: none;
+}
+
+.studio-editor .studio-editor-panel-section h3 {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  font-weight: 600;
+}
+
+.studio-editor .studio-editor-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.studio-editor .studio-editor-panel-section.is-selected {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.studio-editor .studio-editor-panel .studio-editor-font {
+  max-width: 100%;
+}
+
+.studio-editor .studio-editor-panel > .studio-hint {
+  margin: 0;
+}
+
+.studio-editor .studio-editor-translations summary {
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .studio-editor.studio-editor-work { grid-template-columns: minmax(0, 1fr); }
+  .studio-editor .studio-editor-panel { position: static; max-height: none; }
+}
 
 .studio-editor .studio-editor-prompt .studio-editor-field {
   display: flex;
@@ -560,6 +615,132 @@
   margin: var(--space-3) 0 0;
   white-space: pre-line;
   line-height: var(--line-height);
+}
+
+/* ---------- 새로 만들기 시안 3개 고르기 (renderChoices): 확인 칸 · 그림 카드 3개 · 진행 표시 [희주] ---------- */
+/* 화면 전체를 가운데에: 제목·안내·카드 3개·버튼 (2026-10-27 유진 요청) */
+.studio-editor.studio-editor-choices {
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: var(--space-8);
+}
+
+/* 위쪽 줄: 왼쪽 [← 조건 바꾸기] · 가운데 제목 */
+.studio-editor .studio-editor-choices-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.studio-editor .studio-editor-choices-head > .btn {
+  justify-self: start;
+}
+
+.studio-editor .studio-editor-choices-head > .btn[hidden] {
+  display: block;
+  visibility: hidden;  /* 버튼이 없어도 제목은 가운데에 */
+}
+
+.studio-editor.studio-editor-choices h2 {
+  margin: 0;
+  font-size: var(--fs-subheading);
+  font-weight: 600;
+  text-align: center;
+}
+
+.studio-editor.studio-editor-choices > [role="status"] {
+  margin: 0;
+  text-align: center;
+}
+
+.studio-editor.studio-editor-choices > .studio-editor-actions {
+  justify-content: center;
+}
+
+.studio-editor.studio-editor-choices > [role="status"]:empty,
+.studio-editor .studio-editor-cost[hidden] {
+  display: none;
+}
+
+/* 시안 카드 3개를 한 줄에 크게 */
+.studio-editor.studio-editor-choices .studio-editor-candidates {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-editor .studio-editor-image-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+/* 카드뉴스: 1장은 크게, 나머지 장은 아래에 작게 */
+.studio-editor .studio-editor-image-strip.is-pages {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-editor .studio-editor-image-strip.is-pages > :first-child {
+  grid-column: 1 / -1;
+}
+
+.studio-editor .studio-editor-image-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: var(--fs-min);
+  text-align: center;
+}
+
+.studio-editor .studio-editor-image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-editor .studio-editor-image-frame.is-failed {
+  color: var(--badge-red-ink);
+}
+
+/* 포스터 시안 카드: 확정 문서와 같은 자리에 로고 (위치·크기는 JS가 % 로 넣음) */
+.studio-editor .studio-editor-image-frame img.studio-editor-image-logo {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 프롬프트 전문 (닫힌 채 시작) */
+.studio-editor .studio-editor-candidate-prompt pre {
+  margin: var(--space-3) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+  font-size: var(--fs-min);
+  line-height: var(--line-height);
+}
+
+.studio-editor .studio-editor-candidate-prompt[hidden] {
+  display: none;
+}
+
+.studio-editor .studio-editor-image-no {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: 0 var(--space-3);
+  background: var(--white);
+  color: var(--ink);
+  font-size: var(--fs-min);
+}
+
+@media (max-width: 1100px) {
+  .studio-editor.studio-editor-choices .studio-editor-candidates { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* 썸네일 canvas (renderThumb): 틀 안에 비율대로 맞춥니다 */

@@ -18,10 +18,15 @@ from .products import PRODUCTS
 
 RATIOS = ("9:16", "16:9", "1:1")
 MIN_DURATION, MAX_DURATION = 5, 30
-MAX_SCENES = 8        # 길이로 자동으로 정하는 컷 수의 최대
-MAX_MANUAL_SCENES = 12  # 컷 추가로 늘릴 수 있는 최대 (컷마다 1초 이상)
+# 컷 수 (2026-10-27 유진 결정): 자동·AI는 2~3컷으로 압축하고 카메라가 끊기지 않는 원테이크로 잇습니다. 사람이 [컷 추가]로 5컷까지.
+MAX_SCENES = 3        # 자동·AI 컷 수의 최대
+MAX_MANUAL_SCENES = 5  # 컷 추가로 늘릴 수 있는 최대 (컷마다 1초 이상)
+# 영어 프롬프트 맨 앞에 늘 넣는 움직임 제어·형태 유지 키워드 (영어, 한국어 대조). higgsfield.video_args가 보낼 때도 확인합니다.
+CONTROL_KEYWORDS = ("continuous smooth movement, no hard cuts, stable camera, keep the product shape consistent.",
+                    "연속적이고 부드러운 움직임, 하드 컷 없음, 안정된 카메라, 제품 모양 일정하게 유지.")
 
-CAMERAS = ("slow smooth dolly-in", "steady medium push-in", "dynamic quick cuts")
+CAMERAS = ("slow smooth dolly-in", "steady medium push-in", "dynamic smooth tracking")
+CAMERA_ALIASES = {"dynamic quick cuts": CAMERAS[2]}  # 예전 작업에 저장된 값 → 끊기지 않는 움직임으로
 LIGHTINGS = ("dim warm low-key lighting", "soft warm natural lighting", "bright airy high-key lighting")
 
 # 제품 영어 이름(프롬프트용, mochi 대신 chapssal-tteok)·베트남어 이름(포장 태그 그대로). 맨 아래 두 줄은 예전 제품(기존 작업용).
@@ -71,7 +76,7 @@ ORDINALS = {"첫": 1, "두": 2, "세": 3, "네": 4, "다섯": 5, "여섯": 6, "�
 CAMERA_KO = {
     CAMERAS[0]: "천천히 부드럽게 다가가는 카메라",
     CAMERAS[1]: "안정적으로 조금씩 다가가는 카메라",
-    CAMERAS[2]: "빠르고 역동적인 컷 전환",
+    CAMERAS[2]: "빠르고 역동적으로 따라가는 카메라 움직임",
 }
 LIGHTING_KO = {
     LIGHTINGS[0]: "어둡고 따뜻한 저조도 조명",
@@ -119,9 +124,11 @@ FOOD_AVOID = ("no rubbery over-long stretching, nothing unappetizing (slimy, mel
               "고무처럼 길게 늘어나는 떡·미끈거림·녹아내림·처짐·칙칙한 색 등 식욕 떨어지는 모습 없음")
 
 # 제품이 갑자기 나타나거나 바뀌지 않게 (예시 프롬프트 분석)
-CONTINUITY = ("Continuity: everything changes gradually and naturally, nothing appears suddenly, "
-              "and the rice cakes keep the same shape, color, size and filling in every shot",
-              "연속성: 모든 변화는 단계적이고 자연스럽게, 갑자기 나타나는 것 없이, 모든 컷에서 찹쌀떡의 모양·색·크기·속 유지")
+CONTINUITY = ("Continuity: one continuous single shot with a smooth pan, the camera glides from one moment to the next "
+              "with no hard cuts; everything changes gradually and naturally, nothing appears suddenly, "
+              "and the rice cakes keep the same shape, color, size and filling throughout",
+              "연속성: 끊기지 않는 원테이크, 카메라가 부드럽게 이동하며 한 장면에서 다음 장면으로 자연스럽게 이어짐(하드 컷 없음); "
+              "모든 변화는 단계적이고 자연스럽게, 갑자기 나타나는 것 없이, 처음부터 끝까지 찹쌀떡의 모양·색·크기·속 유지")
 # 제품 사진은 컷 종류별로 보냅니다(routes_sns.py _photo_set): 겉모습 공통 사진 · 맛별 단면 · 선물세트
 PHOTO_MATCH = ("outside = the round white rice cake photo, filling = the cross-section photos",
                "겉은 동그란 하얀 찹쌀떡 사진, 속은 단면 사진대로")
@@ -237,7 +244,7 @@ STYLES = {
         "quality": ("realistic smartphone footage", "사실적인 휴대폰 영상"),
         "keywords": ("natural daylight, authentic and unpolished, real-time speed",
                      "자연광, 꾸미지 않은 진짜 같은 느낌, 실제 속도"),
-        "pace": ("casual jump cuts at real-time speed", "실제 속도의 편한 점프컷"),
+        "pace": ("casual real-time pacing in one continuous handheld take", "실제 속도의 편한 흐름, 끊기지 않는 핸드헬드 원테이크"),
         "camera": ("handheld phone camera with natural micro shake, real-time speed, no slow motion",
                    "자연스럽게 흔들리는 휴대폰 핸드헬드, 실제 속도, 슬로모션 없음"),
         "grade": ("natural phone colors, slightly bright highlights", "자연스러운 휴대폰 색감, 살짝 밝은 하이라이트"),
@@ -265,8 +272,10 @@ STYLES = {
         "quality": ("4K photorealistic", "4K 실사"),
         "keywords": ("bold contrast, vivid colors, dynamic motion blur, real food physics",
                      "강한 대비, 선명한 색, 역동적인 모션 블러, 실제 같은 음식 물리"),
-        "pace": ("fast rhythmic cuts on the beat, whip transitions, speed ramps", "비트에 맞춘 빠른 컷, 휩 전환, 스피드 램프"),
-        "camera": ("fast cuts timed to the beat, about one cut every 1-2 seconds", "비트에 맞춘 빠른 컷, 1~2초마다 한 번씩 전환"),
+        "pace": ("fast rhythmic energy on the beat with quick smooth whip pans and speed ramps inside one continuous take",
+                 "비트에 맞춘 빠른 리듬, 한 번에 이어지는 빠른 휩 패닝과 스피드 램프"),
+        "camera": ("quick, energetic camera moves timed to the beat, flowing continuously without cutting",
+                   "비트에 맞춘 빠르고 힘찬 카메라 움직임, 끊지 않고 계속 이어짐"),
         "grade": ("punchy saturated colors, crisp highlights", "쨍한 색감, 또렷한 하이라이트"),
         "lighting": 2,
         "music": ("upbeat electronic beat with bass drops and whoosh transitions", "신나는 전자음 비트, 베이스 드롭과 휙 전환음"),
@@ -293,7 +302,7 @@ STYLES = {
         "quality": ("authentic early-2000s camcorder footage", "2000년대 초 캠코더 실제 영상 느낌"),
         "keywords": ("consumer MiniDV camcorder look, slight color fading, soft focus, light video noise",
                      "MiniDV 캠코더 느낌, 살짝 바랜 색, 부드러운 초점, 약한 영상 노이즈"),
-        "pace": ("simple in-camera cuts, slightly abrupt like a home video", "홈비디오처럼 살짝 툭툭 끊기는 단순한 컷"),
+        "pace": ("simple home-video flow in one continuous take, slightly unpolished", "홈비디오처럼 꾸밈없이 한 번에 이어 찍은 흐름"),
         "camera": ("handheld camcorder, autofocus hunting, small exposure shifts, no polished cinematography",
                    "캠코더 핸드헬드, 초점이 살짝 헤맴, 노출이 조금씩 변함, 매끈한 영화 촬영 없음"),
         "grade": ("faded warm colors, slightly crushed blacks", "바랜 따뜻한 색, 살짝 뭉개진 검정"),
@@ -419,8 +428,8 @@ def _duration(value, default=MIN_DURATION):
 
 
 def scene_count(duration):
-    """5초 3컷, 10초 4컷, 15초 5컷 … 30초 8컷."""
-    return min(MAX_SCENES, 2 + math.ceil(duration / 5))
+    """자동 컷 수: 6초 이하 2컷, 그 이상 3컷 (12초도 3컷). 원테이크로 잇기 쉽게 적게 압축합니다."""
+    return 2 if duration <= 6 else MAX_SCENES
 
 
 def _even_ends(duration, count):
@@ -616,8 +625,29 @@ def _prompt_lines(doc, lang):
     컷마다 구간 이름·카메라·움직임·효과음은 저장하지 않고, 분위기와 컷 자리(소개·디테일·클라이맥스·히어로)로 매번 만듭니다.
     영어가 PROMPT_LIMIT을 넘으면(긴 영상) 디테일 컷의 구간 이름·카메라·질감 문장·효과음을 빼고 금지 줄을 짧게 씁니다.
     여러 제품이면 제품 줄의 맛별 속 문장도 뺍니다. 한국어도 똑같이 줄입니다."""
-    compact = len("\n".join(_lines(doc, 0, False))) > PROMPT_LIMIT
+    compact = len(_with_breaks(_lines(doc, 0, False), 0)) > PROMPT_LIMIT
     return _lines(doc, lang, compact)
+
+
+# 읽기 쉽게 묶음 사이에 빈 줄: 제목 / 스타일·편집·제품·배경 / 컷 구성 / 카메라·조명·연속성·소리 / 금지.
+# 빈 줄은 줄 짝·저장·번역에서 무시합니다(줄 목록 _prompt_lines에는 넣지 않고 합칠 때만).
+GROUP_STARTS = (("Style:", "Shots:", "Camera:", "Avoid:"), ("스타일:", "컷 구성:", "카메라:", "금지:"))
+
+
+def _with_breaks(lines, lang):
+    out = []
+    for i, line in enumerate(lines):
+        if i and line.startswith(GROUP_STARTS[lang]):
+            out.append("")
+        out.append(line)
+    return "\n".join(out)
+
+
+def _auto_prompt(doc, lang):
+    """자동 프롬프트 글. 빈 줄 때문에 영어가 한도를 넘는 아주 긴 영상은 두 언어 모두 빈 줄 없이 합칩니다(줄 짝 유지)."""
+    lines = _prompt_lines(doc, lang)
+    breaks = len(_with_breaks(_prompt_lines(doc, 0), 0)) <= PROMPT_LIMIT
+    return _with_breaks(lines, lang) if breaks else "\n".join(lines)
 
 
 def _lines(doc, lang, compact):
@@ -668,6 +698,7 @@ def _lines(doc, lang, compact):
         labels = ("Style", "Editing", "Setting", "Mood", "Shots:", "Camera", "Lighting and color", "Avoid")
     style_l, edit_l, setting_l, mood_l, shots_l, camera_l, light_l, avoid_l = labels
     return [
+        CONTROL_KEYWORDS[lang],  # 맨 앞: 움직임 제어·형태 유지 키워드 (2026-10-27 유진 결정)
         head,
         f"{style_l}: {style['keywords'][lang]}.",
         f"{edit_l}: {style['pace'][lang]}.",
@@ -676,7 +707,7 @@ def _lines(doc, lang, compact):
         f"{mood_l}: {doc.get('mood_ko') if lang and doc.get('mood_ko') else ko(MOOD_KO, doc['mood'])}.",
         shots_l,
         *shots,
-        f"{camera_l}: {ko(CAMERA_KO, doc['camera'])}; {style['camera'][lang]}.",
+        f"{camera_l}: {ko(CAMERA_KO, CAMERA_ALIASES.get(doc['camera'], doc['camera']))}; {style['camera'][lang]}.",
         f"{light_l}: {ko(LIGHTING_KO, doc['lighting'])}; {style['grade'][lang]}.",
         continuity,
         *([f"{(REFERENCE_SHORT if compact else REFERENCE_NOTE)[lang]}."] if doc.get("user_refs") or doc.get("ref_video") else []),
@@ -714,7 +745,7 @@ def build_prompt(doc):
     """Higgsfield로 보낼 영어 프롬프트 (여러 줄). 사용자가 직접 고친 문장(custom)이 있으면 그대로 씁니다."""
     if doc.get("custom"):
         return doc["custom"]
-    return "\n".join(_prompt_lines(doc, 0))
+    return _auto_prompt(doc, 0)
 
 
 def build_prompt_ko(doc):
@@ -724,7 +755,7 @@ def build_prompt_ko(doc):
         return doc["custom_ko"]
     if doc.get("custom"):
         return None
-    return "\n".join(_prompt_lines(doc, 1))
+    return _auto_prompt(doc, 1)
 
 
 # ---------- 직접 고친 한국어 → 영어 (단어 규칙, AI 연결 전) ----------
@@ -850,7 +881,8 @@ def korean_to_english(doc, translate=None):
                 lines.append(item[1])
     used = {item[0] for item in pending}
     doc["ai_lines"] = {ko: en for ko, en in cache.items() if ko in used}
-    return "\n".join(lines), untranslated
+    english = _with_breaks(lines, 0)
+    return (english if len(english) <= PROMPT_LIMIT else "\n".join(lines)), untranslated
 
 
 def refresh_prompts(doc, translate=None):
@@ -865,7 +897,7 @@ def refresh_prompts(doc, translate=None):
             doc.pop("ai_lines", None)
         else:
             english, doc["untranslated"] = korean_to_english(doc, translate)
-            doc["custom"] = "" if english == "\n".join(_prompt_lines(doc, 0)) else english
+            doc["custom"] = "" if english == _auto_prompt(doc, 0) else english
     doc["prompt"] = build_prompt(doc)
     doc["prompt_ko"] = build_prompt_ko(doc)
     return doc
@@ -1083,6 +1115,8 @@ AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드
 - background·mood는 영어, background_ko·mood_ko는 같은 뜻의 한국어
 - scenes는 1~{max_scenes}개. 각 장면은 ko(한국어 장면 설명), en(같은 뜻의 영어 화면 묘사, 20단어 이내), caption(베트남어 자막, 40자 이내, 없으면 "")
 - 장면 수는 영상 길이(초)보다 많을 수 없습니다. 첫 장면은 시작, 마지막 장면은 제품이 돋보이는 마무리로 둡니다.
+- 장면은 2~3개로 압축하고, 장면이 '탁' 끊기지 않게 카메라가 부드럽게 이동하는 원테이크(continuous single shot, smooth pan)로
+  이어지게 묘사합니다. 컷 전환·점프컷·빠른 컷 같은 끊기는 표현은 쓰지 마세요.
 - extras는 추가로 지킬 영어 문장 0~3개, extras_ko는 같은 순서의 한국어
 - 화면에 글자·로고를 그리라는 묘사는 넣지 마세요. 글은 caption(자막)으로만 넣습니다.
 - 제품({product})과 그 모양은 바꾸지 마세요. 과장된 효능·건강 표현은 쓰지 마세요.
@@ -1106,7 +1140,9 @@ def ai_messages(doc, text):
     instructions = AI_INSTRUCTIONS.format(
         styles=", ".join(f"{key}({style['label']})" for key, style in STYLES.items()),
         cameras=" | ".join(CAMERAS), lightings=" | ".join(LIGHTINGS),
-        max_scenes=MAX_MANUAL_SCENES, product=", ".join(doc.get("products") or [doc.get("product") or "찹쌀떡"]),
+        # AI는 2~3컷으로 압축. 사람이 [컷 추가]로 더 늘린 작업이면 그 컷 수까지는 그대로 둘 수 있게
+        max_scenes=max(MAX_SCENES, len(doc["scenes"])),
+        product=", ".join(doc.get("products") or [doc.get("product") or "찹쌀떡"]),
     )
     return [
         {"role": "system", "content": instructions},
