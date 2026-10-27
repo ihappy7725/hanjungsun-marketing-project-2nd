@@ -148,14 +148,18 @@ def image_args(doc, photos=(), index=0):
     return args + [part for path, _ in photos for part in ("--image-references", path)]
 
 
-def design_image_args(prompt, ratio, photos=(), exact_product=False):
+def design_image_args(prompt, ratio, photos=(), exact_product=False, edit=False):
     """포스터·카드뉴스 시안 한 장 그림 요청. prompt: 장 프롬프트(영어, 넣을 베트남어 문구 포함).
     photos: [(사진 경로, 역할 영어)] — 참고 사진으로 보내고 역할과 쓰는 법을 프롬프트 끝에 붙입니다.
     exact_product=False(카드뉴스·예전 방식): 사진은 생김새 참고일 뿐 새로 그리게("정확히 같게"라고 쓰면 오려 붙여서).
     exact_product=True(포스터 베이스 템플릿): 제품은 사진과 똑같이, 사진의 배경·소품·글자만 가져오지 않게."""
     photos = list(photos)[:IMAGE_REFS]
     text = prompt.strip()
-    if photos and exact_product:
+    if photos and edit:  # 말로 고치기: 첫 사진(지금 포스터)을 바탕으로 요청한 곳만 고침, 나머지 사진은 제품 생김새 참고
+        text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
+                 + ". Use photo 1 as the base image and change only what the request asks. The other photos only show "
+                   "what the product looks like. Never draw any text, letters or labels seen in the product photos.")
+    elif photos and exact_product:
         text += (" Attached photos: " + "; ".join(f"{i + 1}) {role}" for i, (_, role) in enumerate(photos))
                  + ". Reproduce the product itself exactly as in these photos (shape, size, surface and filling), "
                    "but place it naturally in this poster's scene and lighting. Do not copy the photos' backgrounds, "
