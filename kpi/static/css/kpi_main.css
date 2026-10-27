@@ -9,6 +9,8 @@
 /* KPI 전용 색: base.css에 분홍·빨강이 없어 KPI 안에서만 정의합니다(PM1 상준 확인, 다른 탭 영향 없음).
    공통 변수(--pink, --red 등)가 생기면 이 줄을 그 변수로 바꿉니다. */
 .kpi-page { --kpi-pink: #e89bb1; --kpi-red: #b5564b; --kpi-navy: #3b5b8c; }
+/* 손익 판정 '이익' 글자: base.css 청록(--teal)은 작은 글씨에서 검정처럼 보여 선명한 초록을 KPI 안에서만 정의합니다. */
+.kpi-page { --kpi-green: #2e8b57; }
 /* VOC 색: 예산 트래킹과 같은 4색(녹색 · 분홍 · 밝은 남색 · 아이보리)만 씁니다.
    행동이 필요한 것일수록 진한 색: 불만 = 밝은 남색(가장 진함) · 만족 = 녹색 · 보통 = 아이보리. 키워드 1위 = 남색, 나머지 = 아이보리 */
 .kpi-page {
@@ -37,7 +39,8 @@
 .kpi-page .kpi-head-side { display: flex; align-items: center; gap: var(--space-4); }
 /* 기준월 · 기본 순서로 · 새로고침: 같은 높이·너비의 테두리 박스 */
 .kpi-page .kpi-head-side > .badge,
-.kpi-page .kpi-head-side > .btn {
+.kpi-page .kpi-head-side > .btn,
+.kpi-page .kpi-export > .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -50,6 +53,51 @@
   border-radius: var(--radius);
   font-size: var(--fs-min);
   line-height: 1;
+}
+/* 새로고침: 같은 높이의 정사각형 아이콘 버튼 */
+.kpi-page .kpi-head-side > .kpi-refresh { width: 36px; padding: 0; }
+.kpi-page .kpi-refresh svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* 내보내기 메뉴: 버튼 아래로 펼침(PDF 보고서 · 엑셀) */
+.kpi-page .kpi-export { position: relative; }
+.kpi-page .kpi-export-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  display: grid;
+  min-width: 220px;
+  padding: var(--space-2);
+  border: 1px solid var(--line-strong);
+  background: var(--page-bg);
+  box-shadow: var(--shadow);
+}
+.kpi-page .kpi-export-menu[hidden] { display: none; }
+.kpi-page .kpi-export-menu button {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-min);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.kpi-page .kpi-export-menu button:hover,
+.kpi-page .kpi-export-menu button:focus-visible { background: var(--paper); outline: none; }
+.kpi-page .kpi-export-menu small { color: var(--muted); font-size: 0.8em; font-weight: 400; }
+
+/* 블록 확대 애니메이션: HTML 막대가 줄마다 차례로 왼쪽부터 늘어남(차트는 JS가 Chart.js 애니메이션으로) */
+@keyframes kpi-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.kpi-page .kpi-panel.is-animating :is(.kpi-burn-seg, .kpi-voc-chbar > span, .kpi-voc-ch-bar > span, .kpi-survey-bar > span, .kpi-bar-fill) {
+  transform-origin: left center;
+  animation: kpi-grow .6s cubic-bezier(.2, .7, .3, 1) both;
+  animation-delay: calc(var(--kpi-i, 0) * 90ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpi-page .kpi-panel.is-animating * { animation: none !important; }
 }
 
 /* ---------- 데이터 상태 범례 ---------- */
@@ -131,6 +179,8 @@
 .kpi-page .kpi-tip[hidden] { display: none; }
 /* 확대 화면에서는 ⓘ를 숨깁니다(상세 표와 겹치지 않게). */
 .kpi-page .kpi-panel.is-expanded .kpi-info { display: none; }
+/* 단, 확대 화면에만 있는 소제목(예: 설문 만족도)의 ⓘ는 계산식을 볼 곳이 그것뿐이라 보입니다. */
+.kpi-page .kpi-panel.is-expanded .kpi-detail-title .kpi-info { display: inline-grid; }
 
 /* ---------- 2×2 블록 ---------- */
 /* 4개 블록은 예산 블록(기본 화면) 높이 + 0.5cm에 맞춥니다. JS가 예산 블록 높이를 재서 --kpi-block-h로 넣습니다. */
@@ -252,15 +302,29 @@
 .kpi-page .kpi-sim-form [hidden] { display: none; }
 .kpi-page .kpi-sim-help { color: var(--muted); font-size: var(--fs-min); }
 .kpi-page .kpi-sim-help:empty { display: none; }
+/* 환율 참고 줄 · 예상 ROAS 기본값 근거는 한 단계 작게 */
+.kpi-page .kpi-sim-help[data-kpi="sim-rate-help"],
+.kpi-page .kpi-sim-help[data-kpi="sim-roas-help"] { font-size: calc(var(--fs-min) * .85); }
 .kpi-page .kpi-sim-row { display: flex; gap: var(--space-4); }
 .kpi-page .kpi-sim-row .field { flex: 1; min-width: 0; }
 .kpi-page .kpi-sim-row .kpi-sim-unit { flex: 0 0 110px; }
 .kpi-page .kpi-sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .kpi-page .kpi-sim-subtotal td { background: var(--paper); font-weight: 600; }
-/* 결과 카드: 흰 카드 4칸, 금액은 크게 + 총 예산 대비 %(작게). '집행 후 남는 예산'은 녹색 바탕으로 강조 */
+/* 손익 판정: 이익 선명한 초록 · 손해 벽돌빛(손익분기 미달과 같은 색) · 본전 밝은 남색 */
+.kpi-page .kpi-verdict { font-weight: 700; }
+.kpi-page .kpi-verdict.is-gain { color: var(--kpi-green); }
+.kpi-page .kpi-verdict.is-loss { color: var(--kpi-red); }
+.kpi-page .kpi-verdict.is-even { color: var(--kpi-navy); }
+.kpi-page td .kpi-verdict { margin-left: var(--space-2); font-size: 0.85em; }
+.kpi-page .kpi-sim-preview { margin: 0; padding: var(--space-3) var(--space-4); border-left: 2px solid var(--line-strong); background: var(--page-bg); font-size: var(--fs-table); }
+/* 예상 ROAS 드롭다운 · 직접 입력 칸: % 숫자만 들어가므로 좁게 */
+.kpi-page .kpi-sim-form [data-kpi="sim-roas-pick"],
+.kpi-page .kpi-sim-form [data-kpi="sim-roas"] { width: 140px; max-width: 100%; }
+.kpi-page .kpi-sim-result .kpi-verdict { font-family: inherit; font-size: inherit; line-height: inherit; }  /* 카드의 큰 금액 글씨 스타일을 받지 않게 */
+/* 결과 카드: 흰 카드 5칸, 금액은 크게 + 총 예산 대비 %(작게). '집행 후 남는 예산'은 녹색 바탕으로 강조 */
 .kpi-page .kpi-sim-result {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-4);
   margin-top: var(--space-5);
 }
@@ -564,7 +628,9 @@
 
 /* ---------- VOC 리뷰 보기 ---------- */
 /* 소통 창구 블록: 창구마다 건수 · 만족(녹)/보통(회)/불만(코랄) 비율 막대. 누르면 리뷰 목록을 그 창구로 거릅니다. */
-.kpi-page .kpi-voc-channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-5); }
+/* 카드(전체 + 창구)가 한 줄을 똑같이 나눠 채웁니다(auto-fit: 빈 칸 없이 늘어남). 좁으면 줄바꿈. */
+.kpi-page .kpi-voc-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-5); }
+@media (max-width: 900px) { .kpi-page .kpi-voc-channels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }  /* 좁으면 2 × 2(한 장만 남는 줄 방지) */
 .kpi-page .kpi-voc-ch {
   display: grid;
   gap: var(--space-2);
@@ -581,7 +647,8 @@
 .kpi-page .kpi-voc-ch-name { color: var(--muted); font-size: var(--fs-table); font-weight: 600; }
 .kpi-page .kpi-voc-ch strong { font-size: var(--fs-subheading); line-height: 1.2; }
 .kpi-page .kpi-voc-ch small { color: var(--muted); font-size: var(--fs-min); }
-.kpi-page .kpi-voc-ch-bar { display: flex; height: 6px; overflow: hidden; background: var(--line); }
+.kpi-page .kpi-voc-ch-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.kpi-page .kpi-voc-ch-bar { display: flex; height: 8px; overflow: hidden; background: var(--line); }
 .kpi-page .kpi-voc-ch-positive { background: var(--kpi-voc-good); }
 .kpi-page .kpi-voc-ch-neutral { background: var(--kpi-voc-mid); }
 .kpi-page .kpi-voc-ch-negative { background: var(--kpi-voc-bad); }

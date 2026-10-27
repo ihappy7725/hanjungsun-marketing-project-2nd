@@ -3,12 +3,15 @@
 API는 /content_studio/media/api/... 아래에 둡니다. 예: @bp.route("/media/api/remove-bg", methods=["POST"])
 업로드·결과 파일은 instance/uploads/content_studio/, instance/exports/content_studio/ 에 저장합니다.
 """
+import base64
 import copy
+import io
 import os
 import re
+import threading
 import uuid
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import Request, urlopen
@@ -20,9 +23,11 @@ from werkzeug.exceptions import NotFound
 from platform_core.extensions import db
 
 from . import bp
-from .designs import (SIZES, STYLES, build_cardnews_prompt, build_design_brief, design_proposal_schema,
-                      design_texts, proposal_design, validate_proposals)
-from .models_sns import SnsChat
+from .designs import (RULE_RETRY_NOTE, SIZES, CopyRuleError, background_element, background_photos, background_prompt,
+                      build_cardnews_prompt, build_design_brief, change_ratio, design_texts, finish_image_proposals,
+                      image_proposal_schema, validate_proposals)
+from .models_sns import SnsChat, SnsCreditLog
+from .products import get_product
 
 REVIEW_DISCLAIMER = "광고 표현·문화 참고 안내입니다. 법적 판단이 아닙니다."
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -267,57 +272,71 @@ def _cost_note(cost):
     return f" (이번 요청 {cost['total_tokens']:,} 토큰 · 예상 ${cost['usd']:.4f})" if cost else ""
 
 
-@bp.route("/media/api/design-brief", methods=["POST"])
-def design_brief():
-    try:
-        doc, options = _design_request(_media_body())
-        persona, brief, ready = build_design_brief(doc, options)
-    except (ValueError, TypeError, KeyError):
-        return _error("제품·요청·규격·장수를 확인해 주세요.")
-    return jsonify({"ok": True, "prompt": persona + "\n\n[제작 요청]\n" + json.dumps(brief, ensure_ascii=False, indent=2),
-                    "rules_ready": ready,
-                    "ai_ready": bool(current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY"))})
+def _sum_cost(first, second):
+    """두 번 요청했을 때 토큰 수·예상 비용을 합칩니다."""
+    if not first:
+        return second
+    total = {key: first[key] + second[key] for key in ("input_tokens", "cached_tokens", "output_tokens", "total_tokens")}
+    return {**total, "usd": round(first["usd"] + second["usd"], 6), "price_checked": PRICE_CHECKED}
 
 
+# 새로 만들기 시안 3개 (sns_editor.js renderChoices). 그림은 유진 쪽 Higgsfield API가 만듭니다.
+# 포스터·카드뉴스 모두 장면 프롬프트 — proposals: [{name, concept_ko, style, style_label, pages: [{prompt_en, texts: [{vi, ko}]}]}] × 3
+# (포스터 템플릿 방식은 2026-10-27 유진 결정으로 되돌림. 포스터는 1장)
+# 그림 글자 규칙(베트남어만 · 포스터 제목 7음절)에 걸리면 규칙을 덧붙여 한 번만 다시 요청합니다(글 단계라 그림 크레딧 없음).
 @bp.route("/media/api/design-assistant", methods=["POST"])
 def design_assistant():
     try:
         body = _media_body()
         doc, options = _design_request(body)
         persona, brief, ready = build_design_brief(doc, options)
-    except (ValueError, TypeError, KeyError):
+    except ValueError as error:
+        return _error(str(error))
+    except (TypeError, KeyError):
         return _error("제품·요청·규격·장수를 확인해 주세요.")
     if body.get("confirm_paid") is not True:
         return _error("유료 AI 제안 생성 버튼으로 실행해 주세요.")
     key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not key:
         return _error("OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요.", 503)
-    schema = design_proposal_schema(brief["pages"])
-    cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다.
+    schema = image_proposal_schema(brief["pages"])
+    instructions = persona
+    cost = None  # 응답을 받은 뒤 실패해도 쓴 토큰·비용을 알려 줍니다. (두 번 요청하면 합계)
     try:
-        response = _api_json("https://api.openai.com/v1/responses",
-                             {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                             {"model": ASSISTANT_MODEL, "store": False, "instructions": persona,
-                              "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 9000,
-                              "text": {"format": {"type": "json_schema", "name": "design_proposals",
-                                                   "strict": True, "schema": schema}}})
-        cost = _usage_cost(ASSISTANT_MODEL, response.get("usage"))
-        if response.get("status") != "completed":
-            return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요." + _cost_note(cost), 502)
-        output = "".join(part.get("text", "") for item in response.get("output", [])
-                         for part in item.get("content", []) if part.get("type") == "output_text")
-        result = json.loads(output)
-        validate_proposals(result, schema)
-        proposals = [{**item, "style_label": STYLES[item["style"]], "design": proposal_design(doc, item, options)}
-                     for item in result["proposals"]]
-        return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready,
-                        "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
+        for attempt in range(2):
+            response = _api_json("https://api.openai.com/v1/responses",
+                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                                 {"model": ASSISTANT_MODEL, "store": False, "instructions": instructions,
+                                  "input": json.dumps(brief, ensure_ascii=False), "max_output_tokens": 12000,
+                                  "text": {"format": {"type": "json_schema", "name": "design_image_proposals",
+                                                       "strict": True, "schema": schema}}})
+            cost = _sum_cost(cost, _usage_cost(ASSISTANT_MODEL, response.get("usage")))
+            if response.get("status") != "completed":
+                return _error("AI가 결과를 끝내지 못했습니다. 요청을 줄인 뒤 직접 다시 실행해 주세요." + _cost_note(cost), 502)
+            output = "".join(part.get("text", "") for item in response.get("output", [])
+                             for part in item.get("content", []) if part.get("type") == "output_text")
+            try:
+                result = json.loads(output)
+            except ValueError:  # JSON이 깨짐: 보여 줄 이유 문장이 없어 일반 안내
+                return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
+            validate_proposals(result, schema)
+            try:
+                proposals = finish_image_proposals(result["proposals"], brief["kind"])
+            except CopyRuleError as error:
+                if attempt == 0:  # 규칙을 덧붙여 한 번만 다시 요청
+                    instructions = persona + RULE_RETRY_NOTE
+                    continue
+                return _error(f"{error} 규칙을 덧붙여 한 번 더 요청했지만 또 걸렸어요." + _cost_note(cost), 502)
+            return jsonify({"ok": True, "proposals": proposals, "rules_ready": ready, "retried": attempt > 0,
+                            "usage": response.get("usage", {}), "cost": cost, "model": ASSISTANT_MODEL})
     except HTTPError as error:
         message = "API 키 또는 사용 권한을 확인해 주세요." if error.code in (401, 403) else "OpenAI 요청이 실패했습니다. 한도·잔액·모델 접근 권한을 확인해 주세요."
         return _error(message, 502)
     except (URLError, TimeoutError, OSError):
         return _error("AI 응답을 받지 못했습니다. 사용 내역 확인 후 다시 실행해 주세요. 자동 재시도하지 않았습니다.", 502)
-    except (ValueError, KeyError, TypeError, AttributeError):
+    except ValueError as error:  # 형식 검사(validate_proposals)에 걸림: 그 이유 문장을 그대로 보여 줍니다
+        return _error(f"{error} 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
+    except (KeyError, TypeError, AttributeError):
         return _error("AI 결과 형식이 올바르지 않아 적용하지 않았습니다. 기존 작업은 유지됩니다." + _cost_note(cost), 502)
 
 
@@ -434,6 +453,8 @@ def figma_image():
             response = uploaded_photo(match[1])
         elif match := NOBG_SRC_RE.match(src):
             response = remove_bg_result(match[1])
+        elif match := BG_SRC_RE.match(src):
+            response = design_bg_image(match[1])
         else:
             return _plugin_error("가져올 수 없는 사진 주소입니다.")
     except NotFound:
@@ -441,3 +462,229 @@ def figma_image():
     if isinstance(response, tuple):  # 파일이 없을 때 _error가 (응답, 상태) 를 돌려줍니다.
         return _for_plugin(*response)
     return _for_plugin(response)
+
+
+# ---------- 배경 그림 만들기 (OpenAI 이미지 모델) ----------
+# 글자 없는 배경 그림을 만들어 장 맨 아래에 깝니다. 베트남어 문구는 지금처럼 글 요소로 얹습니다(성조 부호 때문).
+# 비용이 나가는 API는 design-bg 하나뿐입니다. 화면에서 확인한 견적(usd)과 지금 견적이 같고 confirm_paid일 때만 보냅니다.
+# 자동 재시도는 하지 않습니다. 보낸 뒤 응답을 못 읽으면 사용 기록만 남기고(하루 한도에 포함) 다시 누르지 말라고 알립니다.
+IMAGE_API = "https://api.openai.com/v1/images/edits"  # 제품 사진을 참고 이미지로 넣는 방식
+IMAGE_MODEL = "gpt-image-2.5-sunburst"
+IMAGE_QUALITY = "medium"
+# 규격마다 잘리지 않는 크기 (가로·세로 16의 배수)
+IMAGE_SIZES = {"4:5": "1088x1360", "1:1": "1024x1024", "9:16": "1088x1936", "16:9": "1536x864"}
+IMAGE_DAILY_LIMIT = 20  # 하루(한국 시간 0시부터) 장수. KPI와 같은 키를 쓰므로 따로 둡니다.
+IMAGE_JOB_KIND = "design_bg"  # SnsCreditLog.job_kind. credits 칸에는 이 장의 비용($, 실제 usage 없으면 견적)을 적습니다.
+# 공개 단가(1M 토큰당 $). 실제 청구액은 OpenAI 사용 내역이 기준입니다.
+IMAGE_PRICES = {"text_input": 5.00, "image_input": 8.00, "image_output": 30.00}
+# 견적(추정): medium 1024×1024 한 장 약 $0.013(비교 사이트 기준)을 넓이로 늘리고, 참고 사진 1장당 약 $0.01을 더합니다.
+# 시험 호출의 실제 usage를 보고 고칩니다.
+IMAGE_BASE_USD = 0.013
+IMAGE_REF_USD = 0.01
+IMAGE_MAX_BYTES = 30 * 1024 * 1024
+BG_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+BG_SRC_RE = re.compile(r"^/content_studio/media/design-bg/([0-9a-f]{32})\.jpg$")
+KST = timezone(timedelta(hours=9))
+_image_lock = threading.Lock()  # 한 번에 한 장만 (두 번 눌러 두 번 결제되지 않게)
+
+
+def _openai_key():
+    return current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+
+
+def _bg_target(body):
+    """(작업, 문서, 장 번호, 제품, 요청 문장). 틀리면 ValueError."""
+    chat_id, page, wish = body.get("chat_id"), body.get("page", 0), body.get("request", "")
+    chat = db.session.get(SnsChat, chat_id) if isinstance(chat_id, int) and not isinstance(chat_id, bool) else None
+    doc = chat.design.doc if chat and chat.kind in FIGMA_KINDS and chat.design else None
+    if not doc or not doc.get("pages"):
+        raise ValueError("포스터·카드뉴스 작업을 찾을 수 없습니다.")
+    if isinstance(page, bool) or not isinstance(page, int) or not 0 <= page < len(doc["pages"]):
+        raise ValueError("장 번호가 올바르지 않습니다.")
+    if not isinstance(wish, str) or len(wish) > 500:
+        raise ValueError("원하는 장면은 500자 이하로 적어 주세요.")
+    if doc.get("ratio") not in IMAGE_SIZES:
+        raise ValueError("규격(ratio)이 올바르지 않습니다.")
+    return chat, doc, page, get_product(chat.product_id) if chat.product_id else None, wish.strip()
+
+
+def _image_today():
+    """오늘(한국 시간 0시부터) 만든 배경 그림 (장수, 비용 $)."""
+    start = datetime.now(KST).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+    rows = SnsCreditLog.query.filter(SnsCreditLog.job_kind == IMAGE_JOB_KIND, SnsCreditLog.created_at >= start).all()
+    return len(rows), round(sum(row.credits for row in rows), 4)
+
+
+def _bg_quote(doc, product, wish):
+    """무료 견적. 실행할 수 없으면 reason에 이유."""
+    width, height = map(int, IMAGE_SIZES[doc["ratio"]].split("x"))
+    photos = background_photos(product, wish)
+    usd = round(IMAGE_BASE_USD * width * height / (1024 * 1024) + IMAGE_REF_USD * len(photos), 3)
+    count, spent = _image_today()
+    reason = None
+    if not _openai_key():
+        reason = "OpenAI 연결이 필요합니다. PM1에게 서버 API 키 설정을 요청해 주세요."
+    elif count >= IMAGE_DAILY_LIMIT:
+        reason = f"오늘 배경 그림 한도({IMAGE_DAILY_LIMIT}장)를 다 썼습니다."
+    return {"model": IMAGE_MODEL, "quality": IMAGE_QUALITY, "size": IMAGE_SIZES[doc["ratio"]], "count": 1,
+            "photos": len(photos), "usd": usd, "today_count": count, "today_usd": spent,
+            "daily_limit": IMAGE_DAILY_LIMIT, "price_checked": PRICE_CHECKED, "allowed": reason is None, "reason": reason}
+
+
+def _multipart(fields, files):
+    """multipart/form-data 본문. files: [(칸 이름, 파일 이름, 내용 bytes, 종류)]"""
+    boundary = uuid.uuid4().hex
+    parts = [f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'.encode("utf-8")
+             for name, value in fields.items()]
+    for name, filename, data, mimetype in files:
+        parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"; filename="{filename}"\r\n'
+                     f"Content-Type: {mimetype}\r\n\r\n".encode("utf-8") + data + b"\r\n")
+    parts.append(f"--{boundary}--\r\n".encode("utf-8"))
+    return b"".join(parts), f"multipart/form-data; boundary={boundary}"
+
+
+def _image_cost(usage):
+    """응답 usage로 실제 비용($). 읽을 수 없으면 None."""
+    try:
+        details = usage.get("input_tokens_details") or {}
+        text_in, image_in = int(details.get("text_tokens") or 0), int(details.get("image_tokens") or 0)
+        if not (text_in or image_in):  # 나눠 주지 않으면 비싼 이미지 단가로 셉니다.
+            image_in = int(usage.get("input_tokens") or 0)
+        output = int(usage.get("output_tokens") or 0)
+    except (AttributeError, TypeError, ValueError):
+        return None
+    if not (text_in or image_in or output):
+        return None
+    return round((text_in * IMAGE_PRICES["text_input"] + image_in * IMAGE_PRICES["image_input"]
+                  + output * IMAGE_PRICES["image_output"]) / 1_000_000, 4)
+
+
+def _bg_log(chat_id, usd, file_id=None):
+    try:
+        db.session.add(SnsCreditLog(chat_id=chat_id, job_kind=IMAGE_JOB_KIND, model=IMAGE_MODEL, credits=usd,
+                                    request_id=file_id))
+        db.session.commit()
+    except Exception:  # noqa: BLE001  기록 실패로 결과를 잃지 않게 합니다.
+        current_app.logger.exception("배경 그림 사용 기록 실패")
+        db.session.rollback()
+
+
+def _bg_unknown(chat_id, usd):
+    """보낸 뒤 결과를 받지 못함 → 비용이 나갔을 수 있어 기록하고, 다시 누르지 말라고 알립니다."""
+    _bg_log(chat_id, usd)
+    return jsonify({"ok": False, "submitted": True,
+                    "error": "요청은 OpenAI에 들어갔을 수 있어요(비용이 나갔을 수 있음). 다시 누르지 말고 OpenAI 사용 내역을 "
+                             "확인해 주세요. 배경은 그대로 두었어요."}), 202
+
+
+def _bg_http_message(error):
+    """OpenAI가 거절한 이유를 쉬운 말로. 외부 오류 본문은 화면·로그에 그대로 내보내지 않습니다."""
+    try:
+        detail = error.read(4000).decode("utf-8", "ignore").lower()
+    except Exception:  # noqa: BLE001
+        detail = ""
+    if "verif" in detail:
+        return "OpenAI 조직 인증(Organization Verification)이 필요합니다. OpenAI 설정에서 인증을 마친 뒤 다시 시도해 주세요."
+    if error.code in (401, 403):
+        return "API 키 또는 이미지 모델 사용 권한을 확인해 주세요."
+    if error.code == 429:
+        return "OpenAI 사용 한도·잔액을 확인해 주세요."
+    if "safety" in detail or "moderation" in detail:
+        return "요청 내용이 OpenAI 안전 기준에 걸렸습니다. 원하는 장면 문장을 바꿔 다시 시도해 주세요."
+    return f"OpenAI가 요청을 거절했습니다. (HTTP {error.code}) 배경은 그대로 두었어요."
+
+
+@bp.route("/media/api/design-bg/quote", methods=["POST"])
+def design_bg_quote():
+    """무료 확인: 이번에 만들 장수 · 예상 비용 · 오늘 사용량."""
+    try:
+        _, doc, _, product, wish = _bg_target(_media_body())
+    except ValueError as error:
+        return _error(str(error))
+    quote = _bg_quote(doc, product, wish)
+    if quote["allowed"] and _image_lock.locked():
+        quote.update(allowed=False, reason="다른 배경 그림을 만드는 중입니다. 끝난 뒤 다시 확인해 주세요.")
+    return jsonify({"ok": True, "quote": quote})
+
+
+@bp.route("/media/api/design-bg", methods=["POST"])
+def design_bg():
+    """비용이 나가는 유일한 배경 그림 API. 만든 그림은 요소로 돌려주고, 문서 저장은 편집기(기존 저장 경로)가 합니다."""
+    try:
+        body = _media_body()
+        chat, doc, page, product, wish = _bg_target(body)
+    except ValueError as error:
+        return _error(str(error))
+    if body.get("confirm_paid") is not True:
+        return _error("비용 확인 창에서 [확인]을 눌러 실행해 주세요.")
+    if not _image_lock.acquire(blocking=False):
+        return _error("다른 배경 그림을 만드는 중입니다. 끝난 뒤 다시 확인해 주세요.", 409)
+    try:
+        quote = _bg_quote(doc, product, wish)
+        confirmed = body.get("usd")
+        if isinstance(confirmed, bool) or not isinstance(confirmed, (int, float)) or abs(confirmed - quote["usd"]) > 1e-9:
+            return jsonify({"ok": False, "error": "견적이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        if not quote["allowed"]:
+            return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
+        photos = background_photos(product, wish)
+        folder = os.path.join(bp.static_folder, "images", "sns")
+        files = []
+        for name, _ in photos:
+            with open(os.path.join(folder, name), "rb") as handle:
+                files.append(("image[]", name, handle.read(), "image/png" if name.endswith(".png") else "image/jpeg"))
+        data, content_type = _multipart(
+            {"model": IMAGE_MODEL, "prompt": background_prompt(doc, page, product, wish, [role for _, role in photos]),
+             "size": quote["size"], "quality": IMAGE_QUALITY, "n": "1", "output_format": "jpeg"}, files)
+        req = Request(IMAGE_API, data=data, headers={"Authorization": f"Bearer {_openai_key()}",
+                                                     "Content-Type": content_type})
+        try:
+            with urlopen(req, timeout=240) as response:
+                raw = response.read(IMAGE_MAX_BYTES + 1)
+            payload = json.loads(raw) if len(raw) <= IMAGE_MAX_BYTES else None
+        except HTTPError as error:  # OpenAI가 받아서 거절함
+            return _error(_bg_http_message(error), 502)
+        except URLError as error:
+            if isinstance(error.reason, TimeoutError):
+                return _bg_unknown(chat.id, quote["usd"])
+            return _error("OpenAI에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요. 요청은 보내지 않았어요.", 502)
+        except (TimeoutError, OSError, ValueError):  # 보낸 뒤 응답을 끝까지 읽지 못함
+            return _bg_unknown(chat.id, quote["usd"])
+        usage = payload.get("usage") if isinstance(payload, dict) else None
+        usd = _image_cost(usage) or quote["usd"]
+        try:
+            img = Image.open(io.BytesIO(base64.b64decode(payload["data"][0]["b64_json"], validate=True)))
+            img.load()
+            file_id = uuid.uuid4().hex
+            img.convert("RGB").save(os.path.join(_export_dir(), f"{file_id}_bg.jpg"), "JPEG", quality=92)
+        except (KeyError, IndexError, TypeError, ValueError, UnidentifiedImageError, OSError):
+            return _bg_unknown(chat.id, usd)
+        _bg_log(chat.id, usd, file_id)
+        count, spent = _image_today()
+        return jsonify({"ok": True, "page": page,
+                        "element": background_element(page, f"{bp.url_prefix}/media/design-bg/{file_id}.jpg"),
+                        "cost": {"usd": usd, "estimated": _image_cost(usage) is None, "price_checked": PRICE_CHECKED},
+                        "model": IMAGE_MODEL, "today_count": count, "today_usd": spent,
+                        "daily_limit": IMAGE_DAILY_LIMIT})
+    finally:
+        _image_lock.release()
+
+
+# ---------- 비율 바꾸기 (무료, AI 아님) ----------
+@bp.route("/media/api/design-ratio", methods=["POST"])
+def design_ratio():
+    """비율을 바꾼 새 문서를 돌려줍니다. 저장은 편집기가 기존 저장 경로(onSave)로 합니다."""
+    try:
+        body = _media_body()
+        doc, _ = _design_request({"design": body.get("design"), "options": {}})
+        return jsonify({"ok": True, "design": change_ratio(doc, body.get("ratio"))})
+    except ValueError as error:
+        return _error(str(error))
+    except (TypeError, KeyError, AttributeError):
+        return _error("초안 형식이 올바르지 않아 비율을 바꾸지 못했습니다.")
+
+
+@bp.route("/media/design-bg/<file_id>.jpg")
+def design_bg_image(file_id):
+    if not BG_ID_RE.match(file_id):
+        return _error("그림을 찾을 수 없습니다.", 404)
+    return send_from_directory(_export_dir(), f"{file_id}_bg.jpg", mimetype="image/jpeg")

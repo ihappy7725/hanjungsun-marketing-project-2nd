@@ -13,16 +13,18 @@
 AI 연결 전에는 정해진 틀로 만들고 demo=True로 표시합니다.
 """
 import copy
+import json
 import math
 import re
 from pathlib import Path
 
 from flask import url_for
 
-from .products import get_product
+from .products import COMMON_IMAGES, get_product
 
-SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080)}
-DEFAULT_RATIO = "4:5"
+SIZES = {"1:1": (1080, 1080), "4:5": (1080, 1350), "9:16": (1080, 1920), "16:9": (1920, 1080),
+         "3:4": (1080, 1440), "4:3": (1440, 1080)}  # 3:4·4:3은 Higgsfield 그림 시안 비율 (2026-10-26 유진 요청)
+DEFAULT_RATIO = "3:4"  # 2026-10-27 유진 요청: 새로 만들기 기본 3:4 (4:5는 기존 작업용으로 SIZES에 남김)
 BRAND = "HANJUNGSUN"
 
 # 제품 color(products.py)별 포스터 색. 빨강·금색 권장, 흰색·검정 위주는 주의 (README 6.3)
@@ -38,7 +40,7 @@ EVENT_TEXT = {
     "크리스마스": ("Giáng Sinh an lành", "Merry Christmas"),
 }
 # 규격별 제품 사진 너비(%). 사진은 정사각형으로 둡니다.
-PHOTO_W = {"4:5": 62, "1:1": 46, "9:16": 76}
+PHOTO_W = {"4:5": 62, "1:1": 46, "9:16": 76, "3:4": 64}
 
 
 def _line_h(size, height, lines=1):
@@ -89,9 +91,9 @@ def make_poster(text, ratio=DEFAULT_RATIO, product=None, event=None):
     badge = "NEW · MÓN MỚI" if product.get("new_menu") else "K-DESSERT"
     event_line = " · ".join(EVENT_TEXT[event]) if event in EVENT_TEXT else None
 
-    if ratio == "16:9":
+    if width > height:  # 가로 규격(16:9 · 4:3): 사진 오른쪽 · 글 왼쪽
         layout = "side"
-        photo_h = 76
+        photo_h = min(76, 43 * width / height)  # 정사각형 사진이 오른쪽 칸(너비 43% 이하)을 넘지 않게
         photo_w = photo_h * height / width
         photo = (52, 12, photo_w, photo_h)
         text_x, text_w, align = 5, 44, "left"
@@ -142,7 +144,8 @@ def make_poster(text, ratio=DEFAULT_RATIO, product=None, event=None):
 
 
 # ---------- 카드뉴스 (README 4장) ----------
-CARDNEWS_RATIOS = ("4:5", "1:1")
+# 새로 만들기는 3:4 · 4:3 · 9:16 · 16:9 · 1:1 (포스터와 같음). 4:5는 이미 만든 작업이 열리고 고쳐지게 남깁니다.
+CARDNEWS_RATIOS = ("3:4", "4:3", "9:16", "16:9", "1:1", "4:5")
 # 임시 템플릿 4종. 마케터가 실제 템플릿을 주면 바꿉니다. (README 4-2)
 TEMPLATES = {"clean": "깔끔 정보형", "photo": "사진 강조형", "checklist": "체크리스트형", "quote": "감성 문구형"}
 DEFAULT_TEMPLATE = "clean"
@@ -368,7 +371,7 @@ def _page_content(page):
         elif item.get("type") == "text" and role == "checks":
             content["checks"] = [line.strip().lstrip("✓").strip() for line in item.get("text", "").split("\n")
                                  if line.strip()]
-        elif item.get("type") == "image" and item.get("src"):
+        elif item.get("type") == "image" and item.get("src") and role != BG_ROLE:  # AI 배경 그림은 제품 사진이 아닙니다.
             content["photo"] = item["src"]
     return content
 
@@ -398,6 +401,7 @@ def _rebuild(doc, build):
                      for item in page.get("elements", []) if item.get("text_ko")}
                     for page in doc["pages"]]
     contents = [_page_content(page) for page in doc["pages"]]
+    backgrounds = [_backgrounds(page) for page in doc["pages"]]
     palette = _doc_palette(doc)
     doc["palette"] = palette
     doc["pages"] = build(contents, palette)
@@ -405,6 +409,7 @@ def _rebuild(doc, build):
         for item in page["elements"]:
             if item.get("text") in saved:
                 item["text_ko"], item["translation_source"] = saved[item["text"]]
+    _keep_backgrounds(doc, backgrounds)
 
 
 # ---------- 대화로 고치기 (단어 규칙, AI 연결 전) ----------
@@ -714,8 +719,8 @@ def revise_design(doc, text, page=None):
     page: 지금 편집기에서 보는 장(0부터). "3장 …"처럼 말하면 그 장, 색·글꼴은 말하지 않으면 모든 장에 적용합니다.
     """
     new_doc = copy.deepcopy(doc)
-    if not new_doc or not new_doc.get("pages"):
-        return new_doc, []
+    if not new_doc or not new_doc.get("pages") or new_doc.get("mode") == IMAGE_MODE:
+        return new_doc, []  # 그림 시안은 "그림 다시 그리기"(2단계)로 고칩니다.
     changes = []
     # 따옴표 안 문구는 쉼표·마침표가 있어도 나누지 않도록 잠시 바꿔 둡니다.
     quotes = []
@@ -736,9 +741,14 @@ def revise_design(doc, text, page=None):
 
 # ---------- 광고 표현 검수용 글 모으기 ----------
 def design_texts(doc):
-    """모든 장의 글 요소를 순서대로 모읍니다. 빈 글은 뺍니다."""
+    """모든 장의 글 요소를 순서대로 모읍니다. 빈 글은 뺍니다.
+    그림 시안 장(mode "image")은 그림에 넣은 문구 원문(page.texts의 vi)도 함께 모읍니다."""
     texts = []
     for page in (doc or {}).get("pages") or []:
+        for item in page.get("texts") or []:
+            text = str(item.get("vi") or "").strip() if isinstance(item, dict) else ""
+            if text:
+                texts.append(text)
         for item in page.get("elements") or []:
             text = str(item.get("text") or "").strip() if item.get("type") == "text" else ""
             if text:
@@ -832,40 +842,138 @@ def _option_product(options):
     return product
 
 
-# 전문 AI도 기존 요소 문서와 저장·되돌리기 경로를 그대로 사용합니다.
+def _option_products(options):
+    """고른 제품들: product_ids(여러 개, 라인업) → product_id(하나) 순서. 없으면 [], 목록에 없는 id면 ValueError."""
+    ids = options.get("product_ids")
+    if ids in (None, "", []):
+        product = _option_product(options)
+        return [product] if product else []
+    if not isinstance(ids, list) or len(ids) > 10 or not all(isinstance(value, str) for value in ids):
+        raise ValueError("고른 제품 형식이 올바르지 않습니다.")
+    products = [get_product(value) for value in dict.fromkeys(ids)]
+    if not all(products):
+        raise ValueError("고른 제품을 찾을 수 없습니다.")
+    return products
+
+
+# ---------- 시안 그림 프롬프트 (새로 만들기 → 시안 3개, 2026-10-26 유진 결정) ----------
+# design-assistant(gpt-4o-mini)가 시안 3안 × 장마다 그림 프롬프트(영어)와 그림에 넣을 베트남어 문구(검수용 원문)를 씁니다.
+# 그림은 유진 쪽 Higgsfield API가 만들고, 제품 참고 사진 문장도 그쪽에서 프롬프트 끝에 붙입니다.
+# 브랜드 색: 크림·브라운·골드 (값은 이 파일의 기존 색과 같음)
+BRAND_COLORS = {"cream": "#f6e7c8", "brown": "#6b4226", "gold": "#f2c14e"}
+IMAGE_PROMPT_MAX = 1500  # 장 프롬프트 글자 수 (연출 묘사용. 유진 API 한도 2000자 안에서 끝 줄·빠진 문구 자리를 남김)
+# 그림 속 글자는 베트남어만 (2026-10-27 유진 요청). 한글·한자가 보이면 그림을 만들기 전에 멈춥니다.
+FOREIGN_SCRIPT_RE = re.compile(r"[ᄀ-ᇿ㄰-㆏가-힣぀-ヿ一-鿿]")
+VIETNAMESE_ONLY_RULE = ("All text in the image must be exactly the quoted Vietnamese text (brand HANJUNGSUN excepted); "
+                        "no Korean, Chinese or any other text.")
+VIETNAMESE_ONLY_ERROR = "AI가 그림 글자에 베트남어가 아닌 글자(한국어 등)를 넣어 적용하지 않았어요. 다시 만들어 주세요. (그림 크레딧은 쓰지 않았어요)"
+IMAGE_TEXTS_MAX = 4      # 장마다 그림에 넣을 문구 수
+# 확정한 그림 시안 문서 (sns_editor.js renderChoices가 만듦):
+#   {kind, ratio, demo, mode: "image", style, assistant: {name, prompt, notice},
+#    pages: [{layout: "image", bg, prompt, texts: [{vi, ko}], elements: [그림 요소 1개]}]}
+#   그림 요소: {id: "p1-artwork", role: "artwork", type: "image", x: 0, y: 0, w: 100, h: 100, z: 0, src: 우리 서버 주소}
+#   글·배치를 따로 고치지 않으므로 단어 규칙·AI 말로 고치기·비율 바꾸기는 하지 않습니다. (그림 다시 그리기는 2단계)
+IMAGE_MODE = "image"
+ARTWORK_ROLE = "artwork"
+
+
 def build_design_brief(doc, options):
+    """시안 그림 프롬프트용 (지시문, 브리프, 현지 기준이 있는지). doc: 규격·장수 기준이 되는 빈 초안."""
     kind = doc.get("kind")
     if kind not in ("poster", "cardnews") or doc.get("ratio") not in SIZES:
         raise ValueError("포스터·카드뉴스와 지원 규격을 선택해 주세요.")
     if kind == "cardnews" and doc["ratio"] not in CARDNEWS_RATIOS:
-        raise ValueError("카드뉴스는 4:5 또는 1:1 규격을 사용해 주세요.")
-    fields = {}
-    for key in ("request", "purpose", "audience", "mood", "density", "custom_prompt"):
-        value = options.get(key, "")
-        limit = 12000 if key == "custom_prompt" else 1500
-        if not isinstance(value, str) or len(value) > limit:
-            raise ValueError("요청 항목이 너무 길거나 형식이 올바르지 않습니다.")
-        fields[key] = value.strip()
-    if not fields["request"]:
-        raise ValueError("제품과 원하는 내용을 입력해 주세요.")
-    product = _option_product(options)
+        raise ValueError(f"카드뉴스는 {' · '.join(CARDNEWS_RATIOS)} 규격을 사용해 주세요.")
+    wish = options.get("request", "")
+    if not isinstance(wish, str) or len(wish) > 1500:
+        raise ValueError("요청이 너무 길거나 형식이 올바르지 않습니다.")
+    if not wish.strip():
+        raise ValueError("만들 내용을 입력해 주세요.")
+    products = _option_products(options)
     count = options.get("pages", DEFAULT_PAGES) if kind == "cardnews" else 1
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= MAX_PAGES:
         raise ValueError("장수가 올바르지 않습니다.")
     if kind == "cardnews" and count < MIN_PAGES:
-        raise ValueError("카드뉴스는 3~6장입니다.")
+        raise ValueError(f"카드뉴스는 {MIN_PAGES}~{MAX_PAGES}장입니다.")
     persona = (Path(__file__).parent / "prompts" / f"{kind}_base.md").read_text(encoding="utf-8")
+    # 새로 만들기 화면의 스타일 버튼: 고른 느낌을 참고로만 넣습니다(3개가 서로 다른 style인 것은 그대로).
+    style = options.get("style") or None
+    if style is not None and style not in STYLE_HINTS:
+        raise ValueError("스타일 값이 올바르지 않습니다.")
+    if style:
+        persona += (f"\n\n[참고 분위기 - 마케터가 고른 느낌: {STYLES[style]}]\n- {STYLE_HINTS[style]}\n"
+                    "- 제안 3개 모두 이 느낌을 배치·색·글씨체·문구에 조금씩 반영한다. style은 서로 달라도 된다.")
     rules = _guideline_rules()
-    brief = {**fields, "kind": kind, "ratio": doc["ratio"], "pages": count,
-             "product": product and {"id": product["id"], "name_ko": product["name_ko"],
-                                     "name_vi": product.get("name_vi", "")},
-             "style_options": STYLES, "font_options": list(VI_FONTS),
-             **({"page_layout_options": PAGE_LAYOUTS} if kind == "cardnews" else {}),
-             "reference_texts": design_texts(doc), "local_guidelines": rules,
-             "reference_is_demo": bool(doc.get("demo", True)),
-             "reference_notice": "기존 초안은 참고용입니다. 시연 문구의 제품 정보·효능·가격을 사실 근거로 사용하지 마세요.",
+    width, height = SIZES[doc["ratio"]]
+    brief = {"request": wish.strip(), "kind": kind, "ratio": doc["ratio"],
+             "orientation": "landscape" if width > height else "square" if width == height else "portrait",
+             "pages": count,
+             "products": [{"id": item["id"], "name_ko": item["name_ko"], "name_vi": item.get("name_vi", ""),
+                           "flavor_en": item["id"].replace("_", " ")} for item in products],
+             "brand": BRAND, "brand_colors": BRAND_COLORS,
+             "colors_notice": "행사·시즌이 요청에 있으면 행사 색을 쓰고(예: 발렌타인 = 크림·분홍 + 진한 빨강 곡선), 없으면 브랜드 색",
+             "text_language": ("그림 속 글자는 베트남어만. 로고·HANJUNGSUN은 쓰지 않기(로고는 서버가 얹음)" if kind == "poster"
+                               else "그림 속 글자는 베트남어만 (HANJUNGSUN 제외)") + ". 한국어로 받은 문구는 베트남어로 바꿔 넣기",
+             **({"headline_max_syllables": POSTER_HEADLINE_WORDS} if kind == "poster" else {}),
+             "style_options": STYLES,
+             "prompt_max_chars": IMAGE_PROMPT_MAX, "texts_per_page_max": IMAGE_TEXTS_MAX,
+             "local_guidelines": rules,
              "guidelines_notice": "제공된 지침만 참고" if rules else "현지 검수 기준 준비 중"}
     return persona, brief, bool(rules)
+
+
+# ---------- 문구 규칙에 걸려 멈춤 (2026-10-27 유진 요청) ----------
+# 포스터 제목이 길거나(긴 제목은 그림에서 글자가 깨짐) 그림 글자에 한글·한자가 섞이면 그림을 만들기 전에 멈춥니다.
+# routes_media.py design-assistant는 이 오류일 때만 RULE_RETRY_NOTE를 덧붙여 한 번 다시 요청하고, 또 걸리면 이유를 보여 줍니다.
+POSTER_HEADLINE_WORDS = 7  # 포스터 제목 최대 음절 수 (베트남어는 띄어 쓴 한 덩어리가 1음절, 2~5음절 권장)
+POSTER_HEADLINE_ERROR = (f"AI가 포스터 제목을 {POSTER_HEADLINE_WORDS}음절보다 길게 써서 적용하지 않았어요. "
+                         "다시 만들어 주세요. (그림 크레딧은 쓰지 않았어요)")
+RULE_RETRY_NOTE = (f"\n\n[다시 요청 - 지난 답이 규칙에 걸렸다] 포스터 제목(texts의 첫 번째)은 {POSTER_HEADLINE_WORDS}음절 이내, "
+                   "그림에 넣는 글자(vi)와 prompt_en 속 글자는 베트남어만 쓴다. 한글·한자는 ko에만.")
+
+
+class CopyRuleError(ValueError):
+    """그림 글자 규칙(베트남어만 · 포스터 제목 길이)에 걸림 — 문장은 화면에 그대로 보여 줄 안내."""
+
+
+def image_proposal_schema(count):
+    """시안 3안 × 장 count개: 장마다 그림 프롬프트(영어) + 그림에 넣을 문구(베트남어 원문 · 한국어 뜻).
+    API 출력(JSON 스키마)과 서버 검사(validate_proposals)가 같은 제한을 씁니다."""
+    def obj(properties):
+        return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
+
+    def string(limit):
+        return {"type": "string", "minLength": 1, "maxLength": limit}
+
+    text = obj({"vi": string(80), "ko": string(160)})
+    page = obj({"prompt_en": string(IMAGE_PROMPT_MAX),
+                "texts": {"type": "array", "minItems": 1, "maxItems": IMAGE_TEXTS_MAX, "items": text}})
+    proposal = obj({"name": string(80), "concept_ko": string(300), "style": {"type": "string", "enum": list(STYLES)},
+                    "pages": {"type": "array", "minItems": count, "maxItems": count, "items": page}})
+    return obj({"proposals": {"type": "array", "minItems": 3, "maxItems": 3, "items": proposal}})
+
+
+def finish_image_proposals(proposals, kind="cardnews"):
+    """검사를 마친 시안에 스타일 이름을 붙이고, 넣을 문구가 프롬프트에 그대로 들어 있게 맞춥니다.
+    (검수는 texts 원문으로 하므로, 프롬프트에 빠진 문구는 끝에 정확한 글자로 붙입니다)
+    그림 속 글자는 베트남어만: 넣을 문구나 프롬프트에 한글·한자가 있으면 CopyRuleError (그림을 만들기 전에 멈춤),
+    포스터는 제목(texts 첫 번째)이 POSTER_HEADLINE_WORDS음절을 넘어도 CopyRuleError.
+    모든 장 프롬프트 끝에 다른 글자를 넣지 말라는 줄을 붙입니다."""
+    finished = []
+    for item in proposals:
+        pages = []
+        for page in item["pages"]:
+            prompt = page["prompt_en"].strip()
+            if FOREIGN_SCRIPT_RE.search(prompt) or any(FOREIGN_SCRIPT_RE.search(text["vi"]) for text in page["texts"]):
+                raise CopyRuleError(VIETNAMESE_ONLY_ERROR)
+            if kind == "poster" and len(page["texts"][0]["vi"].split()) > POSTER_HEADLINE_WORDS:
+                raise CopyRuleError(POSTER_HEADLINE_ERROR)
+            missing = [text["vi"] for text in page["texts"] if text["vi"] not in prompt]
+            if missing:
+                prompt += " Render this exact Vietnamese text with correct tone marks: " + "; ".join(f'"{vi}"' for vi in missing) + "."
+            pages.append({"prompt_en": f"{prompt} {VIETNAMESE_ONLY_RULE}", "texts": page["texts"]})
+        finished.append({**item, "pages": pages, "style_label": STYLES[item["style"]]})
+    return finished
 
 
 # ---------- 스타일 틀 (카페·F&B 포스터와 인스타 캐러셀 포트폴리오에서 자주 쓰는 배치) ----------
@@ -874,6 +982,14 @@ def build_design_brief(doc, options):
 # 요소에 붙는 선택 칸: rotate(도, 시계 방향) · opacity(0~1) · spacing(글자 간격 px) · stroke·stroke_w(도형 테두리, fill이 없으면 속이 빔)
 # paint: 색 조합의 어느 색을 칠했는지({"color": "text"} 등). 색 조합을 바꿀 때 이 정보로 다시 칠합니다.
 STYLES = {"bold": "큰 글자형", "editorial": "매거진형", "menu": "메뉴판형", "pop": "팝·스티커형", "minimal": "여백 미니멀형"}
+# 새로 만들기 화면의 스타일 버튼: 고르면 AI 3안 지시문(build_design_brief)에 "참고 분위기"로만 넣습니다(틀을 강제하지 않음).
+STYLE_HINTS = {
+    "bold": "한눈에 꽂히는 큰 제목과 강한 대비. 짧고 힘 있는 문구, 제품 사진은 크게, 활기찬 색",
+    "editorial": "잡지 화보처럼 정돈되고 고급스러운 느낌. 명조 계열 제목, 차분한 색, 여백과 얇은 선",
+    "menu": "카페 메뉴판처럼 깔끔하게 정리된 정보. 메뉴 이름과 짧은 설명 중심, 따뜻하고 단정한 색",
+    "pop": "발랄하고 귀여운 SNS 느낌. 밝은 색, 살짝 기울어진 요소와 스티커, 경쾌한 말투",
+    "minimal": "넓은 여백과 작은 글씨의 차분하고 감성적인 느낌. 색은 적게, 문구는 짧고 부드럽게",
+}
 STYLE_WORDS = {"bold": ("큰 글자형", "큰글자형", "볼드"), "editorial": ("매거진",), "menu": ("메뉴판",),
                "pop": ("팝형", "팝 스타일", "스티커형"), "minimal": ("미니멀", "여백형")}
 # 카드뉴스 장 역할. 표지는 첫 장, 마지막 장은 저장·팔로우 유도입니다.
@@ -1358,7 +1474,8 @@ def validate_proposals(value, schema):
             raise ValueError("AI 결과의 제안 수 또는 장수가 올바르지 않습니다.")
         for child in value:
             validate_proposals(child, schema["items"])
-    elif not isinstance(value, str) or not value.strip() or len(value) > schema.get("maxLength", 4000):
+    elif not isinstance(value, str) or len(value) > schema.get("maxLength", 4000) or (
+            schema.get("minLength", 1) > 0 and not value.strip()):  # minLength 0인 칸(포스터 배지 등)만 빈 값 허용
         raise ValueError("AI 결과의 문구가 비어 있거나 너무 깁니다.")
     elif "enum" in schema and value not in schema["enum"]:
         raise ValueError("AI 결과의 스타일·글꼴·장 구성이 올바르지 않습니다.")
@@ -1375,7 +1492,7 @@ def proposal_design(source, proposal, options):
     """
     product = _option_product(options) or {}
     photos = [next((item.get("src") for item in page.get("elements", [])
-                    if item.get("type") == "image" and item.get("src")), None)
+                    if item.get("type") == "image" and item.get("src") and item.get("role") != BG_ROLE), None)
               for page in source.get("pages", [])]
     cover_photo = (photos[0] if photos else None) or next((src for src in photos if src), None) or _image_src(product)
 
@@ -1411,3 +1528,296 @@ def proposal_design(source, proposal, options):
     if source.get("external_figma"):
         doc["external_figma"] = copy.deepcopy(source["external_figma"])
     return doc
+
+
+# ---------- 대화로 고치기 (AI · 텍스트 모델) ----------
+# routes_sns.py(유진) _call_ai가 영상과 같은 경로(gpt-4o-mini · JSON 답 · 하루 한도)로 부릅니다:
+#   messages = design_ai_messages(지금 문서, 요청, page) → AI 답 → apply_design_ai(지금 문서, 답, page)
+# AI는 둘 중 하나로 답합니다.
+# - edit: 요소 id마다 바꿀 칸만 → 그 요소만 바뀝니다.
+# - redesign: 3안 생성과 같은 스타일·색·글꼴·문구 한 벌 → 배치는 코드(스타일 틀)가 다시 짭니다. 사진·배경 그림은 그대로.
+# 형식이 틀리거나 바꿀 것이 없으면 None → 부른 쪽이 단어 규칙(revise_design)을 씁니다.
+DESIGN_AI_INSTRUCTIONS = """당신은 베트남에 진출한 한국 찹쌀떡 브랜드 '한정선(HANJUNGSUN)'의 SNS {label} 디자이너입니다.
+마케터의 수정 요청(한국어)을 받아 지금 디자인 문서를 고칩니다. JSON으로만 답하세요.
+
+답 형식: {{"mode": "edit" | "redesign" | "none", "changes": ["바꾼 것을 한국어로 짧게", ...], "edits": [...], "proposal": {{...}}}}
+
+1) mode "edit" — 일부만 고치는 요청 (예: "제목 더 크게", "본문 색 진하게", "부제 문구 바꿔")
+  edits: [{{"page": 장 번호(1부터), "id": "요소 id", "set": {{바꿀 칸만}}, "remove": false}}]
+  - 바꿀 수 있는 칸: text, text_ko(글의 한국어 뜻), size(px), color, bg(글 바탕색), fill(도형 색), weight(400 | 700),
+    font, align(left | center | right), x, y, w, h(페이지 대비 %, 0~100)
+  - 장 배경색은 "id": "@page", "set": {{"bg": "#rrggbb"}}
+  - 요소를 빼려면 "remove": true. 새 요소는 만들지 않습니다.
+  - 요청에 장 번호가 없으면 글 수정은 지금 보는 {current}장에, 색·글꼴처럼 전체 느낌은 모든 장에 적용합니다.
+  - 요청과 상관없는 요소는 edits에 넣지 않습니다.
+2) mode "redesign" — 전체 분위기·스타일을 새로 바꾸는 요청 (예: "크리스마스 느낌으로 확 바꿔", "더 고급스럽게 다시")
+  proposal: {{"name": 짧은 이름, "prompt": 디자인 설명(한국어 1~2문장), "style": {styles} 중 하나,
+    "palette": {{"bg", "accent", "text", "soft"}}(#rrggbb), "title_font", "body_font": {fonts} 중 하나,
+    "pages": [장마다 {{"layout": {layouts} 중 하나, "label_vi", "label_ko", "title_vi", "title_ko", "body_vi", "body_ko"}}]}}
+  - pages는 정확히 {count}개이고 첫 장 layout은 "cover"입니다. 배치·사진 위치는 코드가 정합니다.
+3) 알아듣지 못했거나 디자인과 상관없는 요청이면 mode "none".
+
+규칙
+- 디자인 속 글은 베트남어(성조 부호 정확히)입니다. 글을 바꾸면 text_ko에 한국어 뜻도 함께 적습니다.
+- 제품 이름·맛·효능·가격은 지금 문서에 있는 것만 씁니다. 지어내지 않습니다.
+- 색은 #rrggbb 6자리. 흰색·검정 위주는 피하고, 글자가 바탕에서 잘 읽히게 합니다.
+- 현지 기준(local_guidelines)이 있으면 지킵니다."""
+AI_EDIT_KEYS = ("text", "text_ko", "size", "color", "bg", "fill", "weight", "font", "align", "x", "y", "w", "h")
+AI_SUMMARY_KEYS = ("id", "role", "type") + AI_EDIT_KEYS + ("z",)
+AI_TEXT_MAX = 400
+AI_EDITS_MAX = 60
+AI_CHANGES_MAX = 8
+
+
+def design_ai_messages(doc, text, page=None):
+    """AI에 보낼 메시지. 사진 주소는 빼고, AI가 고칠 수 있는 칸만 보냅니다. page: 지금 보는 장(0부터)."""
+    count = len(doc["pages"])
+    current = page + 1 if isinstance(page, int) and 0 <= page < count else 1
+    summary = {
+        "kind": doc.get("kind"), "ratio": doc.get("ratio"), "style": doc.get("style"), "palette": doc.get("palette"),
+        "pages": [{"page": index + 1, "bg": data.get("bg"),
+                   "elements": [{key: item[key] for key in AI_SUMMARY_KEYS if key in item} for item in data["elements"]]}
+                  for index, data in enumerate(doc["pages"])],
+        "local_guidelines": _guideline_rules(),
+    }
+    instructions = DESIGN_AI_INSTRUCTIONS.format(
+        label="포스터" if doc.get("kind") == "poster" else "카드뉴스", current=current, count=count,
+        styles=" | ".join(STYLES), fonts=" | ".join(VI_FONTS), layouts=" | ".join(PAGE_LAYOUTS))
+    return [
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": f"지금 디자인 문서:\n{json.dumps(summary, ensure_ascii=False)}\n\n"
+                                    f"지금 보는 장: {current}장\n요청: {text}"},
+    ]
+
+
+def apply_design_ai(doc, data, page=None):
+    """AI 답 → (새 문서, 바꾼 것 목록). 형식이 틀리거나 바꾼 것이 없으면 None (부른 쪽이 revise_design을 씁니다)."""
+    if not isinstance(data, dict) or not doc or not doc.get("pages") or doc.get("mode") == IMAGE_MODE:
+        return None
+    if data.get("mode") == "redesign":
+        new_doc = _ai_redesign(doc, data.get("proposal"))
+    elif data.get("mode") == "edit":
+        new_doc = _ai_edit(doc, data.get("edits"))
+    else:
+        return None
+    if new_doc is None:
+        return None
+    raw = data.get("changes") if isinstance(data.get("changes"), list) else []
+    changes = [item.strip()[:60] for item in raw if isinstance(item, str) and item.strip()][:AI_CHANGES_MAX]
+    return new_doc, changes or ["AI 수정"]
+
+
+def _clean_proposal(proposal, count):
+    """AI 제안 하나를 3안 생성과 같은 형식으로 검사합니다. AI가 덧붙인 모르는 칸은 버리고(빠진 칸은 검사에서 걸림),
+    맞으면 정리한 제안, 틀리면 None."""
+    schema = design_proposal_schema(count)["properties"]["proposals"]["items"]
+    if not isinstance(proposal, dict) or not isinstance(proposal.get("pages"), list):
+        return None
+    page_keys = schema["properties"]["pages"]["items"]["properties"]
+    proposal = {key: proposal.get(key) for key in schema["properties"]}
+    proposal["pages"] = [{key: item.get(key) for key in page_keys} if isinstance(item, dict) else item
+                         for item in proposal["pages"]]
+    if isinstance(proposal["palette"], dict):
+        proposal["palette"] = {key: proposal["palette"].get(key) for key in schema["properties"]["palette"]["properties"]}
+    try:
+        validate_proposals(proposal, schema)
+    except ValueError:
+        return None
+    return proposal
+
+
+def _ai_redesign(doc, proposal):
+    """스타일·색·글꼴·문구를 새로 받아 스타일 틀로 다시 그립니다. 3안 생성과 같은 형식 검사를 씁니다."""
+    proposal = _clean_proposal(proposal, len(doc["pages"]))
+    if proposal is None:
+        return None
+    rebuilt = proposal_design(doc, proposal, {})
+    rebuilt["assistant"]["notice"] = f"AI 수정 · {STYLES[proposal['style']]} · 제품 정보와 번역은 검토해 주세요."
+    # 문서의 다른 칸(제목·기념일 등)은 남기고, 틀과 관련된 칸만 바꿉니다.
+    new_doc = {key: copy.deepcopy(value) for key, value in doc.items() if key != "template"}
+    new_doc.update(rebuilt)
+    _keep_backgrounds(new_doc, [_backgrounds(page) for page in doc["pages"]])
+    return new_doc
+
+
+def _ai_edit(doc, edits):
+    """요소 id마다 받은 칸만 검사해서 바꿉니다. 하나도 못 바꾸면 None."""
+    if not isinstance(edits, list) or not edits:
+        return None
+    new_doc = copy.deepcopy(doc)
+    pages = new_doc["pages"]
+    applied = 0
+    for edit in edits[:AI_EDITS_MAX]:
+        if not isinstance(edit, dict):
+            continue
+        number = edit.get("page")
+        if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= len(pages):
+            continue
+        page = pages[number - 1]
+        values = edit.get("set") if isinstance(edit.get("set"), dict) else {}
+        if edit.get("id") == "@page":
+            if HEX_RE.match(str(values.get("bg") or "")):
+                page["bg"] = values["bg"].lower()
+                applied += 1
+            continue
+        item = next((one for one in page["elements"] if one.get("id") == edit.get("id")), None)
+        if item is None:
+            continue
+        if edit.get("remove") is True:
+            page["elements"].remove(item)
+            applied += 1
+            continue
+        for key, value in values.items():
+            clean = _ai_value(item, key, value)
+            if clean is not None and item.get(key) != clean:
+                item[key] = clean
+                applied += 1
+        ko = _ai_value(item, "text_ko", values.get("text_ko"))
+        if ko is not None and item.get("text_ko") == ko:
+            item["translation_source"] = item.get("text")  # 한국어 뜻을 같이 받았으면 확인한 글로 둡니다.
+        if item.get("font") in SINGLE_WEIGHT:
+            item["weight"] = 400
+    return new_doc if applied else None
+
+
+def _ai_value(item, key, value):
+    """AI가 준 값 하나를 검사합니다. 쓸 수 없으면 None."""
+    kind = item.get("type")
+    number = isinstance(value, (int, float)) and not isinstance(value, bool)
+    if key in ("text", "text_ko"):
+        ok = kind == "text" and isinstance(value, str) and 0 < len(value.strip()) <= AI_TEXT_MAX
+        return value.strip() if ok else None
+    if key == "size":
+        return int(round(value)) if kind == "text" and number and 8 <= value <= 400 else None
+    if key in ("color", "bg", "fill"):
+        allowed = kind == "shape" if key == "fill" else kind == "text"
+        return value.lower() if allowed and HEX_RE.match(str(value)) else None
+    if key == "weight":
+        return value if kind == "text" and value in (400, 700) and not isinstance(value, bool) else None
+    if key == "font":
+        return value if kind == "text" and value in VI_FONTS else None
+    if key == "align":
+        return value if kind == "text" and value in ("left", "center", "right") else None
+    if key in ("x", "y"):
+        return round(value, 2) if number and -50 <= value <= 100 else None
+    if key in ("w", "h"):
+        return round(value, 2) if number and 2 <= value <= 100 else None
+    return None
+
+
+# ---------- 배경 그림 (AI · 이미지 모델) ----------
+# routes_media.py가 OpenAI 이미지 모델로 글자 없는 배경 그림을 만들고, 장 맨 아래(z=-1)에 이미지 요소로 깝니다.
+# 베트남어 글은 지금처럼 글 요소로 얹습니다(이미지 모델은 성조 부호를 자주 틀림). 제품 모양은 등록된 사진을 참고로 보냅니다.
+BG_ROLE = "background"
+
+
+def _backgrounds(page):
+    return [copy.deepcopy(item) for item in page.get("elements", []) if item.get("role") == BG_ROLE]
+
+
+def _keep_backgrounds(doc, backgrounds):
+    """틀을 다시 짠 뒤 장마다 원래 배경 그림을 맨 아래에 다시 깝니다."""
+    for page, items in zip(doc["pages"], backgrounds):
+        page["elements"] = items + [item for item in page["elements"] if item.get("role") != BG_ROLE]
+
+
+def background_element(page_index, src):
+    """장 전체를 덮는 배경 그림 요소. 편집기에서는 고르거나 옮길 수 없고, [배경 그림 빼기]로만 뺍니다."""
+    return {"id": f"p{page_index + 1}-{BG_ROLE}", "role": BG_ROLE, "type": "image",
+            "x": 0, "y": 0, "w": 100, "h": 100, "z": -1, "src": src, "radius": 0}
+
+
+def background_photos(product, wish=""):
+    """참고로 보낼 제품 사진 [(static/images/sns 안 파일 이름, 사진 설명 영어)]. 영상 탭(_photo_set)과 같은 기준입니다.
+    겉모습은 항상, 고른 맛이 있으면 그 맛 단면, 요청에 선물이 있으면 선물세트·포장 사진을 더합니다."""
+    photos = [(COMMON_IMAGES["whole"],
+               "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")]
+    images = (product or {}).get("images") or {}
+    flavor = _flavor_en(product)
+    if images.get("cut"):
+        photos.append((images["cut"], f"the cross-section of the {flavor} rice cake, showing its filling"))
+    if _has(wish or "", ("선물", "세트", "gift")):
+        photos += [(COMMON_IMAGES["giftset_wrapped"], "the gift set box wrapped in pink bojagi cloth"),
+                   (COMMON_IMAGES["giftset_open"], "the opened gift set box with individually wrapped rice cakes")]
+        if images.get("pack"):
+            photos.append((images["pack"], f"the individual package of the {flavor} rice cake"))
+    return photos
+
+
+def _flavor_en(product):
+    return (product or {}).get("id", "").replace("_", " ") or "chapssal-tteok"
+
+
+def background_prompt(doc, page_index, product, wish, roles):
+    """글자 없는 배경 그림 프롬프트(영어). 지금 장의 글 자리는 단순하게 비워 두라고 적습니다.
+    roles: 첨부 사진마다 무엇인지(순서대로)."""
+    page = doc["pages"][page_index]
+    texts = [item for item in page["elements"] if item.get("type") == "text"]
+    kind = "Instagram poster" if doc.get("kind") == "poster" else "Instagram card news slide"
+    parts = [
+        f"Photorealistic advertising photo for an {kind} of Hanjungsun, a Korean chapssal-tteok (soft rice cake) "
+        f"dessert brand in Vietnam, featuring the {_flavor_en(product)} rice cake.",
+        ("Attached photos: " + "; ".join(f"{index + 1}) {role}" for index, role in enumerate(roles))
+         + ". The rice cakes must match these photos exactly in shape, color and filling. Do not invent other products.")
+        if roles else "",
+        f"Scene and mood requested by the marketer (may be Korean): {wish}." if wish
+        else "Scene and mood: warm, appetizing, premium dessert styling with soft natural light.",
+        f"Use colors that suit this design: background {page.get('bg', '')}, accent {page.get('accent', '')}.",
+    ]
+    if texts:
+        top = max(0, round(min(item["y"] for item in texts)))
+        bottom = min(100, round(max(item["y"] + item["h"] for item in texts)))
+        parts.append(f"Keep the area from {top}% to {bottom}% of the image height calm, simple and low-detail, "
+                     "because text will be placed there later. Put the product where it does not cover that area.")
+    parts.append("Absolutely no text, no letters, no numbers, no logos, no watermarks and no labels anywhere in the image.")
+    return " ".join(part for part in parts if part)
+
+
+# ---------- 비율 바꾸기 (편집기 오른쪽 칸, routes_media.py design-ratio) ----------
+DESIGN_RATIOS = {"poster": tuple(SIZES), "cardnews": CARDNEWS_RATIOS}
+
+
+def change_ratio(doc, ratio):
+    """비율을 바꾼 새 문서. 스타일 틀·카드뉴스 템플릿 초안은 새 비율에 맞춰 다시 배치하고(글·사진·색·배경 그림 유지),
+    틀이 없는 초안은 요소 자리를 비율에 맞춰 옮깁니다(_fit_ratio). 바꾸기 전 문서는 되돌리기로 돌아갈 수 있습니다."""
+    kind = doc.get("kind")
+    if doc.get("mode") == IMAGE_MODE:
+        raise ValueError("그림 시안은 비율을 바꿀 수 없어요. 원하는 비율로 새로 만들어 주세요.")
+    allowed = DESIGN_RATIOS.get(kind, ())
+    if ratio not in allowed:
+        raise ValueError(f"{'포스터' if kind == 'poster' else '카드뉴스'} 비율은 {' · '.join(allowed)}만 쓸 수 있습니다.")
+    new_doc = copy.deepcopy(doc)
+    if ratio == doc.get("ratio"):
+        return new_doc
+    style, template = new_doc.get("style"), new_doc.get("template")
+    if style in STYLES:
+        fonts = new_doc.get("fonts") or dict(zip(("title", "body"), STYLE_FONTS[style]))
+        new_doc["ratio"] = ratio
+        _rebuild(new_doc, lambda contents, palette: _build_styled_pages(style, ratio, contents, palette, fonts))
+    elif kind == "cardnews" and template in TEMPLATES:
+        new_doc["ratio"] = ratio
+        _rebuild(new_doc, lambda contents, palette: _build_pages(template, ratio, contents, palette))
+    else:
+        _fit_ratio(new_doc, ratio)
+    return new_doc
+
+
+def _fit_ratio(doc, ratio):
+    """요소마다 가운데 자리(%)는 그대로 두고, 크기는 찌그러지지 않게 같은 배율로 맞춥니다.
+    한쪽을 꽉 채운 띠·덮개(99% 이상)와 배경 그림은 새 페이지도 꽉 채웁니다."""
+    old_w, old_h = SIZES.get(doc.get("ratio"), SIZES[DEFAULT_RATIO])
+    new_w, new_h = SIZES[ratio]
+    scale = min(new_w / old_w, new_h / old_h)
+    for page in doc["pages"]:
+        for item in page["elements"]:
+            if item.get("role") == BG_ROLE:
+                continue
+            for pos, size, old, new in (("x", "w", old_w, new_w), ("y", "h", old_h, new_h)):
+                if item[size] >= 99:
+                    continue
+                center = item[pos] + item[size] / 2
+                item[size] = round(item[size] * old * scale / new, 2)
+                item[pos] = round(center - item[size] / 2, 2)
+            if item.get("type") == "text":
+                item["size"] = max(8, round(item["size"] * scale))
+    doc["ratio"] = ratio

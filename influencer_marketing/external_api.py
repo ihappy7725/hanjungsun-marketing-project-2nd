@@ -1,4 +1,4 @@
-"""외부 API 연동 (담당: 진혁) - YouTube Data API v3, Phyllo, Modash, HypeAuditor.
+"""외부 API 연동 (담당: 진혁) - YouTube Data API v3, Phyllo, Modash, HypeAuditor, MyMemory 번역(Ver_022, 무료·키 없음).
 
 - API 키는 서버에서만 사용합니다(README 6장). 화면(JavaScript)으로는 절대 보내지 않습니다.
 - 키는 환경변수에서 읽습니다. 변수 이름은 PM1(상준)에게 .env.example 추가를 요청합니다.
@@ -648,3 +648,124 @@ def _pct(v):
     if v is None:
         return None
     return round(v * 100, 2) if v <= 1 else round(v, 2)
+
+
+# ---------------------------------------------------------------- 번역 (MyMemory, 무료·키 없음, Ver_022)
+# 공식 문서: https://mymemory.translated.net/doc/spec.php
+#  - GET https://api.mymemory.translated.net/get?q=...&langpair=ko|vi
+#  - q는 한 번에 500바이트까지 → 서버가 문장·줄 단위로 나눠 여러 번 보내고 순서대로 다시 합칩니다
+#  - 익명 무료 한도: 하루 5,000자(IP 기준). 'de'(연락용 이메일)를 넣으면 50,000자지만 지금은 넣지 않습니다
+MYMEMORY_URL = "https://api.mymemory.translated.net/get"
+MYMEMORY_LANGS = {"ko": "한국어", "en": "영어", "vi": "베트남어"}
+MYMEMORY_MAX_BYTES = 480        # 500바이트 제한보다 조금 여유
+MYMEMORY_MAX_CHARS = 5000       # 한 번에 받는 글 길이 (= 하루 익명 한도)
+_TR_CACHE = {}                  # 같은 글·같은 언어쌍은 다시 보내지 않음 (하루 한도 절약)
+
+
+def _utf8_len(s):
+    return len(s.encode("utf-8"))
+
+
+def _split_long(piece):
+    """한 줄이 480바이트를 넘으면 문장 → 단어 → 글자 순서로 자릅니다."""
+    if _utf8_len(piece) <= MYMEMORY_MAX_BYTES:
+        return [piece]
+    out, cur = [], ""
+    parts = re.split(r"(?<=[.!?。…])\s+", piece)
+    if len(parts) == 1:
+        parts = piece.split(" ")
+    for part in parts:
+        if _utf8_len(part) > MYMEMORY_MAX_BYTES:  # 띄어쓰기 없는 아주 긴 덩어리
+            if cur:
+                out.append(cur); cur = ""
+            buf = ""
+            for ch in part:
+                if _utf8_len(buf + ch) > MYMEMORY_MAX_BYTES:
+                    out.append(buf); buf = ""
+                buf += ch
+            cur = buf
+            continue
+        cand = (cur + " " + part) if cur else part
+        if _utf8_len(cand) > MYMEMORY_MAX_BYTES:
+            out.append(cur); cur = part
+        else:
+            cur = cand
+    if cur:
+        out.append(cur)
+    return out
+
+
+def chunk_text(text):
+    """줄 구조를 지키며 480바이트 이하 조각 목록을 만듭니다. 반환: [(조각, 앞 조각과 이을 문자열)]
+    한 줄을 문장 단위로 자른 경우는 띄어쓰기로, 줄이 바뀐 경우는 원래 줄바꿈 수만큼 다시 잇습니다."""
+    units, pending, first = [], 0, True   # (조각, 앞과 이을 문자열)
+    for line in text.replace("\r\n", "\n").split("\n"):
+        if not line.strip():
+            pending += 1
+            continue
+        for k, piece in enumerate(_split_long(line.strip())):
+            units.append((piece, "" if first else (" " if k else "\n" * (pending + 1))))
+            first = False
+        pending = 0
+    chunks, cur, cur_sep = [], None, ""
+    for piece, sep in units:
+        if cur is not None and _utf8_len(cur + sep + piece) <= MYMEMORY_MAX_BYTES:
+            cur += sep + piece
+        else:
+            if cur is not None:
+                chunks.append((cur, cur_sep))
+            cur, cur_sep = piece, sep
+    if cur is not None:
+        chunks.append((cur, cur_sep))
+    return chunks
+
+
+def _mymemory_one(q, src, tgt):
+    url = MYMEMORY_URL + "?" + urllib.parse.urlencode({"q": q, "langpair": f"{src}|{tgt}"})
+    t0 = time.time()
+    code, payload = _request("GET", url)
+    ms = int((time.time() - t0) * 1000)
+    data = payload.get("responseData") or {}
+    text = str(data.get("translatedText") or "")
+    status = payload.get("responseStatus")
+    try:
+        status = int(status)
+    except (TypeError, ValueError):
+        status = code
+    quota = payload.get("quotaFinished") is True or "MYMEMORY WARNING" in text.upper() or status == 429 or code == 429
+    if quota:
+        _log("MyMemory", "번역", "한도 초과", ms, 0, "오늘 무료 번역 한도를 다 썼어요")
+        raise ApiError("오늘 무료 번역 한도(하루 5,000자)를 다 썼어요. 내일 다시 쓰거나 [Google 번역 새 창]을 쓰세요")
+    if code != 200 or status != 200 or not text:
+        detail = str(payload.get("responseDetails") or text or f"상태 {status}")[:200]
+        _log("MyMemory", "번역", f"오류{status}", ms, 0, detail)
+        raise ApiError(f"번역 서비스가 요청을 처리하지 못했어요 ({detail}). [Google 번역 새 창]을 쓰세요")
+    _log("MyMemory", "번역", "성공", ms, 0, f"{len(q)}자")
+    return text
+
+
+def mymemory_translate(text, src, tgt):
+    """긴 글은 나눠 보내고 순서대로 합칩니다. 키·이메일은 보내지 않습니다(익명)."""
+    text = str(text or "").strip()
+    if src not in MYMEMORY_LANGS or tgt not in MYMEMORY_LANGS:
+        raise ApiError("언어는 한국어·영어·베트남어 중에서 골라 주세요")
+    if src == tgt:
+        raise ApiError("원문 언어와 번역 언어가 같아요. 다른 언어를 고르세요")
+    if not text:
+        raise ApiError("번역할 글이 없어요")
+    if len(text) > MYMEMORY_MAX_CHARS:
+        raise ApiError(f"글이 너무 길어요({len(text):,}자). 무료 번역은 하루 5,000자까지라 나눠서 번역하거나 [Google 번역 새 창]을 쓰세요")
+    key = (text, src, tgt)
+    if key in _TR_CACHE:
+        return {**_TR_CACHE[key], "cached": True}
+    pieces = chunk_text(text)
+    out = []
+    for piece, sep in pieces:
+        out.append(sep + _mymemory_one(piece, src, tgt))
+    result = {"translated": "".join(out), "chunks": len(pieces), "chars": len(text), "provider": "MyMemory",
+              "source": src, "target": tgt, "cached": False}
+    if len(_TR_CACHE) > 200:
+        _TR_CACHE.clear()
+    _TR_CACHE[key] = result
+    return result
+
