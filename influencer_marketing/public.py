@@ -2,7 +2,7 @@
 
 사용하는 곳 (README 7장)
 - HOME(주연): get_collaborations(), get_today_tasks()
-- KPI(민지):  get_quote_summary()
+- KPI(민지):  get_quote_summary(), get_creator_list()
 
 규칙
 - 다른 기능은 이 함수만 부르고, models.py·routes.py를 직접 import하지 않습니다.
@@ -141,6 +141,67 @@ def get_quote_summary(include_demo=True):
                 "amount_vnd": round(m["vnd"]), "quoted_on": q.get("date") or "", "followers": m["followers"] or None,
                 "expected_views": m["exp_views"] or None, "actual_views": q.get("actualViews"), "is_demo": bool(q.get("example")),
             })
+        return out
+    except Exception:
+        return []
+
+
+PLATFORM_LABEL = {"tt": "TikTok", "yt": "YouTube", "ig": "Instagram", "fb": "Facebook"}
+
+
+def get_creator_list(platform=None, segment=None):
+    """베트남 크리에이터 목록(reference_data/creator_list_vn.csv) 중 대시보드에 쓰는 계정. [발굴] 화면과 같은 기준·같은 결과.
+
+    대시보드 사용 기준: 팔로워(YouTube는 구독자) 수가 있고 1,000 이상(Nano 이상),
+    분야(타깃 그룹)가 대시보드 5개 중 하나, 분류가 'D 제외'가 아님. 기준 밖 계정은 CSV에만 있고 여기서는 빠집니다.
+
+    Args:
+        platform (str | None): "TikTok" / "YouTube" / "Instagram" / "Facebook" 중 하나로 거르기. None이면 전체.
+        segment (str | None): 분야(타깃 그룹) 이름으로 거르기. 예: "베트남(인) · 간식·디저트". None이면 전체.
+
+    Returns:
+        list[dict] (팔로워 많은 순), 각 항목:
+            creator_id (str)          레코드 ID. 바뀌지 않습니다 (예: "R3-TT-001", "G-TT-005")
+            name (str)                계정명
+            platform (str)            TikTok/YouTube/Instagram/Facebook
+            followers (int)           팔로워 수 (YouTube는 구독자 수)
+            tier (str)                규모: Nano/Micro/Mid/Macro/Mega
+            segment (str)             분야(타깃 그룹). 예: "베트남(인) · 식품(맛집·먹방)"
+            category (str)            세부 분야. 예: "맛집 리뷰"
+            profile_url (str)         프로필 주소. 없으면 ""
+            follower_source (str)     팔로워 수 출처 사이트·기사 이름
+            follower_source_url (str) 출처 주소. 없으면 ""
+            follower_as_of (str)      출처의 기준일(출처마다 표기가 다를 수 있음). 없으면 ""
+            list_as_of (str)          목록 기준일 'YYYY-MM-DD'
+            is_demo (bool)            시연 데이터 여부 (이 목록은 실제 계정 자료라 False)
+        ※ 팔로워 수는 모두 제3자 추정치(직접 확인 전)이며, 단가·견적 정보는 없습니다.
+          견적·계약 금액은 get_quote_summary()를 쓰세요.
+    """
+    try:
+        from . import discovery as disc
+        from .routes import TIERS
+
+        src = next((s for s in disc._ref_manifest() if s["file"] == "creator_list_vn.csv"), None)
+        if not src:
+            return []
+        rows, _err = disc._ref_load(src)
+        out = []
+        for r in rows:
+            if not disc.dashboard_usable(r):
+                continue
+            pf = PLATFORM_LABEL.get(r.get("platform"), "")
+            if (platform and pf != platform) or (segment and r.get("segment") != segment):
+                continue
+            f = int(r["followers"])
+            tier = next((t["n"] for t in TIERS if f >= t["min"] and (t.get("max") is None or f < t["max"])), "")
+            out.append({
+                "creator_id": r.get("record_id") or "", "name": disc.plain_name(r.get("name") or "") or r.get("name") or "",
+                "platform": pf, "followers": f, "tier": tier, "segment": r.get("segment") or "", "category": r.get("category") or "",
+                "profile_url": r.get("url") or "", "follower_source": r.get("fol_source") or "",
+                "follower_source_url": r.get("fol_source_url") or "", "follower_as_of": r.get("fol_as_of") or "",
+                "list_as_of": src.get("as_of") or "", "is_demo": src.get("kind") == "demo",
+            })
+        out.sort(key=lambda x: -x["followers"])
         return out
     except Exception:
         return []

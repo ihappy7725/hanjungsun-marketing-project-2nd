@@ -303,6 +303,7 @@ CSV는 UTF-8 BOM(엑셀 한글·베트남어 정상 표시)이며, `=`, `+`, `-`
 | `get_collaborations(event_id=None, include_demo=True)` | HOME | `collaboration_id`, `event_id`, `influencer`, `main_platform`, `followers`, `status`, `status_label`, `available_shoot_dates`, `shoot_date`, `post_date`, `is_demo`, `link` |
 | `get_today_tasks(limit=10, include_demo=True)` | HOME | `task_id`, `kind`, `collaboration_id`, `influencer`, `title`, `detail`, `due_date`, `is_demo`, `link` |
 | `get_quote_summary(include_demo=True)` | KPI | `quote_id`, `collaboration_id`, `influencer`, `platform`, `content_format`, `price_type`, `amount`, `currency`, `amount_usd`, `amount_vnd`, `quoted_on`, `followers`, `expected_views`, `actual_views`, `is_demo` |
+| **`get_creator_list(platform=None, segment=None)`** (Ver_023 추가) | KPI | `creator_id`, `name`, `platform`, `followers`, `tier`, `segment`, `category`, `profile_url`, `follower_source`, `follower_source_url`, `follower_as_of`, `list_as_of`, `is_demo` — '베트남 크리에이터 목록' 중 대시보드 사용 기준을 통과한 계정만([발굴] 화면과 같은 기준·결과, 팔로워 많은 순). 팔로워 수는 제3자 추정치, 단가 정보 없음 |
 
 - 오류가 나도 빈 목록을 돌려줍니다. 필드는 지우지 않고 추가만 합니다.
 - 상세 제안(HOME): `updated_at`, `milestones`, `next_action` 추가, 개별 협업 주소 `?collaboration_id=...`
