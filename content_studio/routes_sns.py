@@ -27,7 +27,7 @@ from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
                      phrase_pairs, refresh_prompts, revise_draft, scene_kind, translate_messages, video_title)
 
-TABS = ("poster", "cardnews", "video")
+TABS = ("poster", "video")  # 카드뉴스 탭은 2026-10-27 유진 결정으로 뺌 (예전 카드뉴스 작업은 DB에 남고 목록에서만 숨김)
 REVISE_HINT = '예: 고급스럽게·브이로그 느낌으로·미니어처로·판타지로·ASMR로, 더 밝게, 카메라 천천히, 10초로, 소리 켜줘, 2번 자막 "…"'
 DEFAULT_RATIO = {"video": "9:16", "poster": "3:4", "cardnews": "3:4"}  # 포스터·카드뉴스 3:4 (2026-10-27, 4:5는 기존 작업용)
 DESIGN_KINDS = ("poster", "cardnews")  # 만들기·고치기 규칙은 희주 designs.py
@@ -612,19 +612,19 @@ def _static_photo(name):
 def _photo_set(doc, kinds, scene_text=""):
     """보낼 제품 사진 [(경로, 역할 영어)]. kinds: 이번 요청에 들어가는 컷 종류(videos.py scene_kind) 집합.
     고른 제품이 카탈로그(products.py)에 있으면 사진을 자동으로 고릅니다:
-    겉모습 → 공통 겉모습 사진 · 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) + 겉모습 · 선물 → 선물세트 2장 + 맛별 포장.
-    직접 올린 사진만 있는 예전 작업은 그 사진들(제품 사진 칸 + 참고 사진)을 그대로 씁니다."""
+    자르지 않은 동그란 찹쌀떡(공통 겉모습 사진)은 어떤 제품·컷이든 늘 첫 번째로 보냅니다(2026-10-27 유진 결정).
+    그 뒤로: 속 → 고른 맛 단면(장면에 맛 이름이 있으면 그 맛만) · 선물 → 선물세트 2장 + 맛별 포장.
+    직접 올린 사진만 있는 예전 작업은 겉모습 사진 + 그 사진들(제품 사진 칸 + 참고 사진)을 씁니다."""
     names = doc.get("products") or [doc.get("product")]
     items = [item for name in names for item in PRODUCTS if item["name_ko"] == name]
     image_url = (doc.get("image") or {}).get("url", "") if isinstance(doc.get("image"), dict) else ""
-    if not items or PHOTO_URL.match(image_url):
-        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
-        return [(path, "the product photo") for path in legacy if path]
     whole = (_static_photo(COMMON_IMAGES["whole"]),
              "the outside of the rice cakes: round, soft and white with rice-flour dusting, the same for every flavor")
-    photos = []
-    if kinds & {"outside", "inside"}:
-        photos.append(whole)
+    if not items or PHOTO_URL.match(image_url):
+        legacy = [_photo_path(doc), *(_photo_path({"image": item}) for item in doc.get("ref_images") or [])]
+        return [whole, *((path, "the product photo") for path in legacy if path)] if whole[0] else \
+            [(path, "the product photo") for path in legacy if path]
+    photos = [whole]
     if "inside" in kinds:
         named = [item for item in items if PRODUCT_EN.get(item["name_ko"], "").lower() in scene_text.lower()]
         for item in named or items:

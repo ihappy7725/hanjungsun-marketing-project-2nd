@@ -10,7 +10,8 @@ import re
 import shutil
 import subprocess
 
-from .videos import COMMON_AVOID, FOOD_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot, scene_kind
+from .videos import (COMMON_AVOID, CONTROL_KEYWORDS, FOOD_AVOID, PRODUCT_EN, PRODUCT_LOOK, STYLES, _action, _shot,
+                     scene_kind)
 
 # 결정 사항 (README 10장, 2026-10-24 유진)
 VIDEO_MODEL = "kling4_0"            # Kling 4.0
@@ -82,7 +83,10 @@ def video_args(doc, start_image=None, photos=(), videos=(), end_image=None):
     참고 영상이 있으면 reference-to-video(Kling은 image-to-video에 영상을 못 넣음, 첫·끝 장면은 함께),
     없으면 미리보기 이미지가 있을 때 image-to-video, 사진만 있으면 reference-to-video.
     Kling 4.0에는 소리 옵션이 없어, 소리는 프롬프트 문장으로만 전달됩니다."""
-    args = [VIDEO_MODEL, "--prompt", doc.get("custom") or doc["prompt"], "--duration", str(doc["duration"]),
+    prompt = (doc.get("custom") or doc["prompt"]).strip()
+    if not prompt.lower().startswith(CONTROL_KEYWORDS[0].lower()):  # 직접 고친 프롬프트에도 움직임 제어 키워드를 맨 앞에
+        prompt = f"{CONTROL_KEYWORDS[0]}\n{prompt}"
+    args = [VIDEO_MODEL, "--prompt", prompt, "--duration", str(doc["duration"]),
             "--resolution", VIDEO_RESOLUTION]
     if end_image and not start_image:  # 첫 장면 없이 끝 장면만 있으면 참고 사진으로
         photos, end_image = [end_image, *photos], None

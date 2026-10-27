@@ -23,8 +23,9 @@ const DEMO_NEW_MENU = {
 };
 
 const KIND_LABELS = { poster: "포스터", cardnews: "카드뉴스", video: "영상" };
-const WORK_KINDS = ["video", "poster", "cardnews"];  // 작업 화면이 연결된 탭
-const DESIGN_KINDS = ["poster", "cardnews"];          // 희주 편집기(sns_editor.js)로 그리는 탭
+// 카드뉴스 탭은 2026-10-27 유진 결정으로 뺌 (메인 · 포스터 · 영상)
+const WORK_KINDS = ["video", "poster"];  // 작업 화면이 연결된 탭
+const DESIGN_KINDS = ["poster"];         // 희주 편집기(sns_editor.js)로 그리는 탭
 const RECS = 4;  // 메인 탭 추천 카드 수
 
 // ---------- 화면 요소 ----------
@@ -336,7 +337,7 @@ function recCard(rec) {
   const points = el("ul", "studio-rec-points");
   points.append(...rec.points.map((point) => el("li", "", point)));
   const kinds = el("div", "studio-rec-go");
-  for (const target of ["poster", "cardnews", "video"]) {  // 탭 순서
+  for (const target of ["poster", "video"]) {  // 탭 순서
     const button = el("button", "btn", KIND_LABELS[target]);
     button.type = "button";
     button.title = `${rec.title} ${KIND_LABELS[target]} 만들기`;
@@ -497,8 +498,7 @@ function renderWork() {
   $("work-screen").classList.toggle("is-design-new", designStart);
   $("style-row").hidden = !designStart;
   $("style-label").textContent = `${KIND_LABELS[kind]} 스타일`;
-  $("set-pages").hidden = !(designStart && kind === "cardnews");
-  for (const [role, value] of [["set-style", settings.style], ["set-pages", String(settings.pages)]]) {
+  for (const [role, value] of [["set-style", settings.style]]) {
     for (const button of $(role).children) {
       button.classList.toggle("dark", button.dataset.value === value);
       button.setAttribute("aria-pressed", String(button.dataset.value === value));
@@ -592,17 +592,6 @@ function feedback(type, text) {
   $("chat-choices").replaceChildren();
 }
 
-// 제품을 되물으면 답의 "(망고 요거트 찹쌀떡 / …)" 목록으로 고르기 버튼을 만듭니다.
-function showProductChoices(reply) {
-  const names = (reply.match(/\(([^)]+)\)/)?.[1] || "").split(" / ").filter(Boolean);
-  $("chat-choices").replaceChildren(...names.map((name) => {
-    const button = el("button", "btn", name);
-    button.type = "button";
-    button.addEventListener("click", () => send(`${name} ${work.pending.text}`, work.pending.extra));
-    return button;
-  }));
-}
-
 // 포스터·카드뉴스 초안 전 [보내기]: /api/messages 대신 가운데 칸에 시안 3개(희주 renderChoices).
 // 입력창은 숨기고(입력 글은 그대로 둠), onBack으로 돌아오면 지금 버튼 조건·입력 글이 남은 첫 화면이 됩니다.
 // 확정하면 기존 POST /api/chats로 새 작업을 저장합니다.
@@ -650,10 +639,12 @@ async function send(text, extra = {}) {
   if (!isNew && DESIGN_KINDS.includes(kind) && typeof editor.currentPage === "function") body.page = editor.currentPage();
   try {
     const data = await api("/messages", { method: "POST", body });
+    // 제품을 못 찾으면(위 버튼도 안 고르고 문장에도 제품 이름이 없음) 고르기 버튼 없이 한 줄만 알리고,
+    // 쓴 글은 입력창에 되돌려 둡니다(위 제품 버튼을 고르고 바로 다시 보내면 되게).
     if (data.ask === "product") {
-      work.pending = { text, extra };
-      feedback("ask", data.reply);
-      showProductChoices(data.reply);
+      feedback("ask", "제품을 먼저 골라 주세요");
+      $("chat-input").value = text;
+      fitInput();
       return;
     }
     work.pending = null;
@@ -889,12 +880,9 @@ function bindWork() {
       renderWork();
     });
   }
-  // 포스터·카드뉴스 스타일(한 개)·카드뉴스 장수: 초안 전에만 보이고, 다음 [보내기]에 씁니다.
+  // 포스터 스타일(한 개): 초안 전에만 보이고, 다음 [보내기]에 씁니다.
   for (const button of $("set-style").children) {
     button.addEventListener("click", () => { settings.style = button.dataset.value; renderWork(); });
-  }
-  for (const button of $("set-pages").children) {
-    button.addEventListener("click", () => { settings.pages = Number(button.dataset.value); renderWork(); });
   }
   $("set-duration").addEventListener("change", (event) => {
     const value = Math.min(30, Math.max(5, Math.round(Number(event.target.value)) || 5));
