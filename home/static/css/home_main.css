@@ -353,6 +353,20 @@
 .home-page .home-collab-table td > a { color: var(--ink); font-weight: 500; }
 .home-page .home-collab-table .home-badge { max-width: 100%; box-sizing: border-box; font-size: var(--fs-table); white-space: normal; }
 .home-page .home-collab-table tbody tr:last-child td { border-bottom: 0; }
+.home-page .home-collab-funnel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0 0 var(--space-7); }
+.home-page .home-collab-funnel > div { min-width: 0; padding: var(--space-4) 0; }
+.home-page .home-collab-funnel dt { color: var(--muted); font-size: var(--fs-table); line-height: var(--line-height-heading); }
+.home-page .home-collab-funnel dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); margin: var(--space-3) 0 0; color: var(--teal); }
+.home-page .home-collab-funnel dd strong { font-size: calc(var(--fs-subheading) * 1.2); font-weight: var(--title-weight); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-page .home-collab-funnel dd span { font-size: var(--fs-table); }
+.home-page .home-collab-checks { padding-top: var(--space-5); border-top: 1px solid var(--line); }
+.home-page .home-collab-checks h3 { display: flex; justify-content: space-between; gap: var(--space-4); margin: 0 0 var(--space-4); font-size: var(--fs-body); }
+.home-page .home-collab-checks h3 > span { color: var(--muted); font-size: var(--fs-table); font-weight: 500; }
+.home-page .home-collab-checks ul { list-style: none; margin: 0; padding: 0; }
+.home-page .home-collab-checks li { display: flex; justify-content: space-between; gap: var(--space-5); padding-block: var(--space-4); font-size: var(--fs-table); line-height: var(--line-height); }
+.home-page .home-collab-checks li > span { min-width: 0; overflow-wrap: anywhere; }
+.home-page .home-collab-checks li > strong { flex: 0 0 auto; color: var(--teal); font-weight: 500; font-variant-numeric: tabular-nums; }
+.home-page .home-collab-caption { color: var(--muted); font-size: var(--fs-table); margin: var(--space-5) 0 0; }
 .home-page .home-task { padding-inline: var(--space-3); }
 
 /* 뉴스는 배경의 농도와 간격으로 나누고 바깥 테두리를 겹치지 않습니다. */

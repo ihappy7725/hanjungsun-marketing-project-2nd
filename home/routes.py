@@ -554,6 +554,37 @@ def campaign_report(campaign_id):
     )
 
 
+def _collaboration_summary():
+    """공개 함수의 실제 자료만 전달합니다. 실패를 정상적인 0건으로 바꾸지 않습니다."""
+    try:
+        from influencer_marketing.public import get_home_summary
+
+        source = get_home_summary()
+        if not isinstance(source, dict) or source.get("ok") is not True:
+            raise ValueError("요약 조회 실패")
+        real, labels = source.get("real"), source.get("task_labels")
+        if not isinstance(real, dict) or not isinstance(labels, dict) or not labels:
+            raise ValueError("요약 형식 오류")
+        funnel, tasks, total = real.get("funnel"), real.get("tasks"), real.get("task_total")
+        stages = ("registered", "sent", "replied", "confirmed")
+        count = lambda value: type(value) is int and value >= 0
+        if (not isinstance(funnel, dict) or not all(count(funnel.get(key)) for key in stages)
+                or not isinstance(tasks, dict) or set(tasks) != set(labels)
+                or not all(isinstance(key, str) and key and isinstance(label, str) and label.strip()
+                           and count(tasks[key]) for key, label in labels.items())
+                or not count(total) or total != sum(tasks.values())):
+            raise ValueError("요약 건수 형식 오류")
+        as_of = source.get("as_of")
+        if not isinstance(as_of, str) or date.fromisoformat(as_of).isoformat() != as_of:
+            raise ValueError("요약 기준일 형식 오류")
+        return {"state": "ok", "as_of": as_of,
+                "funnel": {key: funnel[key] for key in stages},
+                "tasks": [{"kind": key, "label": label, "count": tasks[key]} for key, label in labels.items()],
+                "task_total": total}
+    except Exception:
+        return {"state": "error", "error": "인플루언서 요약을 불러오지 못했습니다. 잠시 후 다시 확인해주세요."}
+
+
 @bp.get("/api/signals")
 def signals():
     """일정·뉴스는 HOME 파일, 협업은 기존 공개 함수에서 읽습니다. DB에는 쓰지 않습니다."""
@@ -595,6 +626,7 @@ def signals():
     read("news", news)
     read("collaborations", collaborations)
     read("attention", tasks)
+    result["collaboration_summary"] = _collaboration_summary()
     return jsonify(result)
 
 
