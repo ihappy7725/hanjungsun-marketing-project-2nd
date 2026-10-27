@@ -83,7 +83,9 @@
 .studio-page .studio-work { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); align-items: start; }
 .studio-page .studio-work.has-history { grid-template-columns: 200px minmax(0, 1fr); }
 .studio-page .studio-history,
-.studio-page .studio-main { min-width: 0; padding: var(--space-6); background: var(--white); border: 1px solid var(--line); }
+.studio-page .studio-main { min-width: 0; padding: var(--panel-padding); background: var(--white); border: 1px solid var(--line); }  /* 블록 안쪽 여백: 공통 규격 24px */
+/* 버튼: 공통 규격(마케팅 성과 기준) 높이 36px — 콘텐츠 스튜디오 안에서만 */
+.studio-page .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding-block: 0; }
 .studio-page .studio-main { padding-bottom: 0; }
 
 .studio-page .studio-history-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
@@ -103,7 +105,7 @@
 .studio-page .studio-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
 .studio-page .studio-settings { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 /* 영상 제목 입력칸: 버튼과 같은 높이·테두리 */
-.studio-page .studio-title { min-width: 16em; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); }
+.studio-page .studio-title { min-width: 16em; min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); }
 /* 영상 제품 고르기: 비율 버튼과 같은 토글 버튼 줄([전체] + 4종, 여러 개 선택) */
 .studio-page .studio-product { flex-wrap: wrap; }
 .studio-page .studio-seg { display: flex; }
@@ -342,7 +344,7 @@
 /* 메인 목록 도구: 제목 줄 오른쪽에 종류 필터 · 정렬 · 검색 (버튼은 위 테두리 없는 모양, 검색칸은 영상 제목 칸과 같은 모양) */
 .studio-page .panelhead:has(.studio-list-tools) { flex-wrap: wrap; gap: var(--space-4); }
 .studio-page .studio-list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); margin-left: auto; }
-.studio-page .studio-list-search { width: 220px; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); font-size: var(--fs-body); }
+.studio-page .studio-list-search { width: 220px; min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control-bg); color: var(--ink); font-size: var(--fs-body); }
 .studio-page .studio-list-search:focus { border-color: var(--brown); outline: none; }
 /* 초안 뒤 아래 입력 영역: 위 경계선에 붙은 작은 탭 [접기] / 입력창(최소 2줄) | [보내기](아래 맞춤). 첫 생성 화면(is-start)은 그대로 */
 .studio-page .studio-work:not(.is-start) .studio-command-form { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-6); align-items: start; }
@@ -397,7 +399,7 @@
 .studio-page[data-tab="poster"] .studio-main, .studio-page[data-tab="cardnews"] .studio-main { padding: 0; border: 0; background: transparent; box-shadow: none; }
 /* 포스터·카드뉴스 새로 만들기(초안 전·시안 고르기, is-design-new)는 영상 첫 화면처럼 바깥 패널 안에 (편집 화면은 위 규칙 그대로) */
 .studio-page:is([data-tab="poster"], [data-tab="cardnews"]) .studio-work.is-design-new .studio-main {
-  padding: var(--space-6) var(--space-6) 0;
+  padding: var(--panel-padding) var(--panel-padding) 0;  /* 블록 안쪽 여백: 공통 규격 24px */
   border: 1px solid var(--line);
   background: var(--white);
   box-shadow: var(--shadow);
@@ -418,7 +420,7 @@
 .studio-page .studio-video-prompt-line:empty::before { content: "\00a0"; }
 /* 목록 보기 전환 (☰ 목록 / ▦ 썸네일): 테두리 없는 아이콘 버튼, 고른 쪽은 진하게 */
 .studio-page .studio-view-switch { display: flex; gap: var(--space-1); }
-.studio-page .studio-view-switch .btn { display: grid; place-items: center; width: 40px; min-height: 40px; padding: 0; }
+.studio-page .studio-view-switch .btn { display: grid; place-items: center; width: 36px; min-height: 36px; padding: 0; }
 .studio-page .studio-view-switch .btn:not(.dark) { border-color: transparent; background: transparent; color: var(--muted); }
 .studio-page .studio-view-switch .btn:not(.dark):hover { background: var(--paper); color: var(--ink); }
 /* 썸네일 보기: 카드 격자 (미리보기 틀 4:5 같은 높이) */

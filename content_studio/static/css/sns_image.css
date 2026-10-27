@@ -405,7 +405,7 @@
 
 .studio-editor .studio-editor-start-form h2 {
   margin: 0;
-  font-size: var(--fs-subheading);
+  font-size: var(--fs-panel-title);  /* 블록 제목 공통 규격 18px */
   font-weight: 600;
 }
 
@@ -646,7 +646,7 @@
 
 .studio-editor.studio-editor-choices h2 {
   margin: 0;
-  font-size: var(--fs-subheading);
+  font-size: var(--fs-panel-title);  /* 블록 제목 공통 규격 18px */
   font-weight: 600;
   text-align: center;
 }
