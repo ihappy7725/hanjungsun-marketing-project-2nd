@@ -279,6 +279,8 @@ def _ref_load(src):
                                   + (f" · 팔로워는 {r.get('팔로워 출처')} 추정({r.get('팔로워 기준일')})" if fol is not None else ""),
                          "ref_class": r.get("분류") or "", "ref_color": r.get("색") or "", "ref_identity": r.get("순위 계정과 동일 여부") or "",
                          "ref_food": r.get("식품 관련성 점수(0~3)") or "", "ref_next": r.get("다음 할 일") or "",
+                         "record_id": r.get("레코드 ID") or "", "fol_source": r.get("팔로워 출처") or "",
+                         "fol_source_url": r.get("팔로워 출처 URL") or "", "fol_as_of": r.get("팔로워 기준일") or "",
                          "ref_rank": f"{r.get('순위 종류', '')} {r.get('Nox 순위', '')}위", "ref_fol_src": f"{r.get('팔로워 출처', '')} {r.get('팔로워 기준일', '')}".strip(),
                          "no_url": not url, "display_name": r.get("계정명(Nox 표기)") or "",
                          # 분야는 화면의 카테고리 필터로 정하지 않고, 타깃 그룹의 기본 분야(없으면 기타)를 씀
@@ -334,6 +336,15 @@ def ref_providers():
     return out
 
 
+def dashboard_usable(r, include_excluded=False):
+    """Ver_023 대시보드 사용 기준. [발굴] 결과와 public.get_creator_list()가 같이 씀.
+    팔로워·구독자 수가 있고 Nano(1천) 이상, 분야(타깃 그룹)가 대시보드 5개 중 하나, 분류가 'D 제외'가 아닌 계정.
+    기준 밖 계정은 CSV에는 남기고 화면·공개 함수에서만 뺌."""
+    f = r.get("followers")
+    return (f is not None and f >= NANO_MIN and r.get("segment") in SEGMENT_NAMES
+            and (include_excluded or not str(r.get("ref_class") or "").startswith("D")))
+
+
 def _ref_search(provider, platform, f, include_excluded=False):
     src = next((s for s in _ref_manifest() if f"ref:{s['file']}" == provider), None)
     if not src:
@@ -350,11 +361,7 @@ def _ref_search(provider, platform, f, include_excluded=False):
         r["name"] = plain_name(r["display_name"]) or r["display_name"]  # 등록·검색용 이름(꾸민 글꼴·이모지 제거)
         r["search_links"] = search_links(r["name"], "" if r["handle"].startswith("UC") else r["handle"])
     pf_total = len(rows)
-    if not include_excluded:
-        rows = [r for r in rows if not str(r.get("ref_class") or "").startswith("D")]
-    # Ver_023 대시보드 사용 기준: 팔로워·구독자 수가 있고, 분야(타깃 그룹)가 대시보드의 5개 중 하나인 계정만.
-    # 수가 없거나 분야 밖인 계정은 CSV에는 남기고 화면 결과에서만 뺌. Nano(1천) 미만은 아래 공통 필터에서 뺌
-    rows = [r for r in rows if r.get("followers") is not None and r.get("segment") in SEGMENT_NAMES]
+    rows = [r for r in rows if dashboard_usable(r, include_excluded)]  # 대시보드 사용 기준(위 함수)
     hidden_excluded = pf_total - len(rows)
     return rows, {"ref": True, "label": src["label"], "as_of": src["as_of"], "kind": src["kind"], "total": total,
                   "platform_total": pf_total, "hidden_excluded": hidden_excluded}
