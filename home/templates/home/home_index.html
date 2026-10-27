@@ -30,11 +30,12 @@
         </div>
         <div id="campaign-actions" class="home-panel-actions home-dday-header" hidden>
           <div class="home-campaign-heading">
-            <div class="home-event-title"><h2 id="planner-title">이벤트를 선택하세요</h2><label class="home-event-switch"><span class="home-sr-only">이벤트 선택</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg><select id="campaign-select" aria-label="관리할 이벤트 선택"></select></label></div>
-            <div id="campaign-summary" class="home-campaign-meta"></div>
+            <div class="home-event-overview">
+              <div class="home-event-title"><h2 id="planner-title">이벤트를 선택하세요</h2><label class="home-event-switch"><span class="home-sr-only">이벤트 선택</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg><select id="campaign-select" aria-label="관리할 이벤트 선택"></select></label></div>
+              <div id="campaign-summary" class="home-campaign-meta"></div>
+            </div>
+            <div class="home-inline home-campaign-tools"><div class="home-dday-secondary"><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><button class="btn" id="replan-campaign" type="button" title="이벤트와 준비 업무 수정">수정</button><button class="btn" id="open-review" type="button">회고 관리</button><details id="campaign-more" class="home-dday-more"><summary>더보기 <span aria-hidden="true">···</span></summary><div class="home-dday-menu"><button id="clone-campaign" type="button">이벤트 복제</button><button id="delete-campaign" class="is-danger" type="button">이벤트 삭제</button></div></details></div><button class="btn dark" id="new-campaign" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>새 이벤트</button></div>
           </div>
-          <div id="campaign-progress" class="home-dday-progress"></div>
-          <div class="home-inline home-campaign-tools"><button class="btn dark" id="new-campaign" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>새 이벤트</button><div class="home-dday-secondary"><a class="btn" id="open-report" href="#" target="_blank" rel="noopener">보고서 ↗</a><button class="btn" id="replan-campaign" type="button" title="이벤트와 준비 업무 수정">수정</button><button class="btn" id="open-review" type="button">회고 관리</button><details id="campaign-more" class="home-dday-more"><summary>더보기 <span aria-hidden="true">···</span></summary><div class="home-dday-menu"><button id="clone-campaign" type="button">이벤트 복제</button><button id="delete-campaign" class="is-danger" type="button">이벤트 삭제</button></div></details></div></div>
         </div>
         <div id="calendar-panel" role="tabpanel" aria-labelledby="tab-calendar">
           <div id="calendar-body" class="home-calendar-body"></div>

@@ -165,9 +165,8 @@ async function initialize() {
   setupPanelResize(root);
   const $ = selector => root.querySelector(selector);
   let today = kstToday(), selectedDate = today, cursor = today, panel = 'month';
-  const TIMEZONE_LABEL = 'KST', WEEK_MODE_KEY = 'hjs-home-week-view-v1';
-  let weekMode = null, weekScroll = { start: '', top: null, left: 0 };
-  try { const saved = localStorage.getItem(WEEK_MODE_KEY); if (['timeline', 'list'].includes(saved)) weekMode = saved; } catch { /* 보기 설정만 보관합니다. */ }
+  const TIMEZONE_LABEL = 'KST';
+  let weekScroll = { start: '', top: null, left: 0 };
   let view = 'month';
   let store = blankStore(), locked = false, signals = null, requestNumber = 0, toastTimer;
   let renderedNewsMarkup = null;
@@ -361,8 +360,8 @@ async function initialize() {
     const state = monthEventState(e), label = state.label || ({ local: '현지 일정', campaign: '이벤트', schedule: '직접 일정', creator: '협업', task: '업무' }[e.kind]);
     const description = `${monthEventDescription(e, state)} · ${e.date}${e.end !== e.date ? ` ~ ${e.end}` : ''}${e.time ? ` · ${e.time} 마감 · 종료 시각 미등록` : ' · 종일'}`;
     const title = `<span class="home-week-chip-title">${esc(e.title)}</span>`;
-    const details = variant === 'timed' || variant === 'list'
-      ? `${title}<span class="home-week-chip-meta">${e.time ? `${esc(e.time)} 마감` : '종일'} · ${esc(label)}${variant === 'list' && e.date !== e.end ? ` · ${esc(e.date)} ~ ${esc(e.end)}` : ''}</span>`
+    const details = variant === 'timed'
+      ? `${title}<span class="home-week-chip-meta">${esc(e.time)} 마감 · ${esc(label)}</span>`
       : `${state.label ? `<span class="home-week-chip-state" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}${title}`;
     return `<button type="button" class="home-week-chip ${esc(e.kind)} is-${variant}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-week-kind="${esc(e.kind)}" data-week-id="${esc(e.id)}" data-week-date="${e.date}" data-week-title="${esc(e.title)}" title="${esc(description)}" aria-label="${esc(description)}" ${attributes}>${details}</button>`;
   }
@@ -390,19 +389,10 @@ async function initialize() {
     if (previous) weekScroll = { start: previous.dataset.weekStart, top: previous.scrollTop, left: previous.scrollLeft };
     const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
     const rows = events.filter(e => e.date <= end && e.end >= start);
-    if (!weekMode && serverToken) weekMode = rows.some(e => validTime(e.time)) ? 'timeline' : 'list';
-    const mode = weekMode || 'list', weekToday = kstToday();
-    const dateButton = (day, index, list = false) => `<button type="button" class="home-week-date${day === weekToday ? ' is-today' : ''}${list ? ' is-list-date' : ''}" data-date="${day}" data-week-day="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 날짜 선택"${day === weekToday ? ' aria-current="date"' : ''}><span>${['월', '화', '수', '목', '금', '토', '일'][index]}</span><strong>${Number(day.slice(8))}</strong>${list && (index === 0 || day.slice(8) === '01') ? `<small>${day.slice(0, 7).replace('-', '. ')}</small>` : ''}</button>`;
-    const toolbar = `<div class="home-week-toolbar"><span class="home-week-zone">한국 시간 · ${TIMEZONE_LABEL}</span><div class="home-week-modes" role="group" aria-label="주간 일정 표시 방식"><button type="button" data-week-mode="timeline" aria-pressed="${mode === 'timeline'}">시간표</button><button type="button" data-week-mode="list" aria-pressed="${mode === 'list'}">목록</button></div></div>`;
+    const weekToday = kstToday();
+    const dateButton = (day, index) => `<button type="button" class="home-week-date${day === weekToday ? ' is-today' : ''}" data-date="${day}" data-week-day="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 날짜 선택"${day === weekToday ? ' aria-current="date"' : ''}><span>${['월', '화', '수', '목', '금', '토', '일'][index]}</span><strong>${Number(day.slice(8))}</strong></button>`;
     const unavailable = [['events', '현지'], ['collaborations', '협업']].filter(([key]) => signals?.[key]?.state === 'error').map(([, label]) => label);
     const notice = !signals ? '<p class="home-week-notice" role="status">현지·협업 일정을 불러오는 중입니다.</p>' : unavailable.length ? `<p class="home-week-notice" role="status">${unavailable.join('·')} 일정을 불러오지 못했습니다. 확인된 업무와 일정만 표시합니다.</p>` : '';
-    if (mode === 'list') {
-      $('#calendar-body').innerHTML = `<div class="home-week-view is-list">${toolbar}${notice}<div class="home-week-list">${days.map((day, index) => {
-        const items = rows.filter(e => e.date <= day && e.end >= day).sort((a, b) => Number(Boolean(a.time)) - Number(Boolean(b.time)) || (a.time || '').localeCompare(b.time || '') || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-        return `<section class="home-week-list-day">${dateButton(day, index, true)}<div class="home-week-list-items">${items.length ? items.map(e => weekChip(e, 'list')).join('') : '<span class="home-week-empty">일정 없음</span>'}</div></section>`;
-      }).join('')}</div></div>`;
-      updateWeekNow(); return;
-    }
     const allDay = rows.filter(e => !e.time), periods = periodSegments(allDay, start).filter(s => s.lane < 3);
     const cells = days.map(day => {
       const daily = allDay.filter(e => e.date <= day && e.end >= day);
@@ -415,14 +405,14 @@ async function initialize() {
     });
     const allRows = Math.max(1, ...periods.map(s => s.lane + 1), ...cells.map(c => c.occupied + c.singles.length + Number(c.rest > 0)));
     const available = $('#calendar-body').clientHeight || 480;
-    const hourHeight = Math.max(24, Math.floor((available - 44 - 22 - 56 - (allRows * 24 + 8)) / 12));
+    const hourHeight = Math.max(24, Math.floor((available - 56 - (allRows * 24 + 8)) / 12));
     const allMarkup = `<div class="home-week-allday${allDay.length ? '' : ' is-empty'}"><div class="home-week-allday-grid" style="grid-template-rows:repeat(${allRows}, 24px)"><span class="home-week-all-label" style="grid-row:1 / -1">종일</span>${periods.map(s => weekChip(s.event, 'period', `style="grid-column:${s.column + 1} / span ${s.span};grid-row:${s.lane + 1}" data-period-start="${s.start}" data-period-end="${s.end}" data-continues-before="${s.continuesBefore}" data-continues-after="${s.continuesAfter}"`)).join('')}${cells.map((c, index) => c.singles.length || c.rest ? `<div class="home-week-all-cell" style="grid-column:${index + 2};grid-row:${c.occupied + 1} / -1">${c.singles.map(e => weekChip(e, 'all')).join('')}${c.rest ? `<button type="button" class="home-week-more" data-week-more="${c.day}" aria-label="${c.day}, 숨겨진 종일 일정 ${c.rest}건 · 전체 일정 보기">+${c.rest}개 더보기</button>` : ''}</div>` : '').join('')}</div></div>`;
     const hours = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`);
     const timeGrid = `<div class="home-week-time-grid"><div class="home-week-hours">${hours.map(label => `<div>${label}</div>`).join('')}</div>${days.map(day => {
       const points = weekPointLayout(rows.filter(e => e.date <= day && e.end >= day && e.time), hourHeight);
       return `<div class="home-week-time-day${day === weekToday ? ' is-today' : ''}" data-week-day="${day}">${hours.map(label => `<button type="button" class="home-week-slot" data-slot="${day} ${label}" aria-label="${day} ${label}, 날짜 선택"></button>`).join('')}${points.map(p => weekChip(p.event, 'timed', `style="top:${p.displayStart / 1440 * 100}%;left:calc(${p.lane / p.columns * 100}% + var(--space-1));width:calc(${100 / p.columns}% - var(--space-2));--week-point-offset:${(p.minute - p.displayStart) * hourHeight / 60}px"`)).join('')}<div class="home-week-now" hidden role="img"><span></span></div></div>`;
     }).join('')}</div>`;
-    $('#calendar-body').innerHTML = `<div class="home-week-view is-timeline" style="--home-week-hour:${hourHeight}px">${toolbar}${notice}<p class="home-week-time-note">08–20시 기준 · 하루 전체 스크롤 · 업무는 마감 시각 기준</p><div class="home-week-scroll" data-week-start="${start}"><div class="home-week-table"><div class="home-week-head"><span class="home-week-head-zone">${TIMEZONE_LABEL}</span>${days.map((day, index) => dateButton(day, index)).join('')}</div>${allMarkup}${timeGrid}</div></div></div>`;
+    $('#calendar-body').innerHTML = `<div class="home-week-view is-timeline" style="--home-week-hour:${hourHeight}px">${notice}<div class="home-week-scroll" data-week-start="${start}"><div class="home-week-table"><div class="home-week-head"><span class="home-week-head-zone">${TIMEZONE_LABEL}</span>${days.map((day, index) => dateButton(day, index)).join('')}</div>${allMarkup}${timeGrid}</div></div></div>`;
     const scroller = $('.home-week-scroll');
     scroller.scrollTop = weekScroll.start === start && weekScroll.top !== null ? weekScroll.top : 8 * hourHeight;
     scroller.scrollLeft = weekScroll.start === start ? weekScroll.left : 0;
@@ -554,15 +544,13 @@ async function initialize() {
       if (!canReport) { event.preventDefault(); toast('이벤트를 선택한 뒤 보고서를 열어주세요.'); }
     };
     report.hidden = !c;
-    $('#campaign-progress').hidden = !c;
     $('#gantt-note').hidden = true;
     if (!c) {
-      $('#campaign-summary').innerHTML = ''; $('#campaign-progress').innerHTML = '';
+      $('#campaign-summary').innerHTML = '';
       $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>이벤트 준비를 시작하세요</strong><p>새 이벤트에서 이름과 기준일을 정하면 준비 업무를 만듭니다.</p></div>'; return;
     }
     $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><time class="home-campaign-date" datetime="${esc(c.target_date)}">행사일 ${esc(c.target_date.replaceAll('-', '.'))}</time><span class="home-dday" title="한국 날짜 기준">${esc(dday(c.target_date, today))}</span>`;
-    const tasks = store.tasks.filter(t => t.campaign_id === c.id), p = progress(tasks), cancelled = tasks.filter(t => t.status === 'cancelled').length;
-    $('#campaign-progress').innerHTML = `<strong>${p.percent}%</strong><span>${p.done} / ${p.total}개 완료</span><div class="home-dday-progress-track" role="progressbar" aria-label="이벤트 준비 업무 완료율" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.percent}"><span style="width:${p.percent}%"></span></div>${cancelled ? `<small>취소 ${cancelled}개 제외</small>` : ''}`;
+    const tasks = store.tasks.filter(t => t.campaign_id === c.id);
     if (!tasks.length) { $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>등록된 준비 업무가 없습니다</strong><p>수정에서 준비 업무와 날짜를 확인해주세요.</p></div>'; return; }
     const rows = ganttTaskRows(tasks);
     const dates = rows.filter(r => !r.invalid).flatMap(r => [r.start, r.due].filter(Boolean)).sort();
@@ -614,7 +602,6 @@ async function initialize() {
     });
     $('#gantt').scrollLeft = previousCampaign === c.id ? scrollLeft : 0; $('#gantt').scrollTop = previousCampaign === c.id ? scrollTop : 0;
     const notes = [];
-    if (rows.some(r => r.estimated)) notes.push('* 시작일 미입력 업무는 기존 자동 기준일을 표시합니다.');
     if (rows.some(r => r.invalid)) notes.push('날짜가 맞지 않는 업무는 막대 대신 확인 안내를 표시합니다.');
     $('#gantt-note').textContent = notes.join(' '); $('#gantt-note').hidden = !notes.length;
   }
@@ -813,12 +800,6 @@ async function initialize() {
   root.addEventListener('click', async event => {
     const more = $('#campaign-more'); if (more.open && !more.contains(event.target)) more.open = false;
     const button = event.target.closest('button'); if (!button) return;
-    if (button.dataset.weekMode) {
-      if (!['timeline', 'list'].includes(button.dataset.weekMode)) return;
-      weekMode = button.dataset.weekMode;
-      try { localStorage.setItem(WEEK_MODE_KEY, weekMode); } catch { /* 업무 저장과는 별개입니다. */ }
-      renderCalendar(); root.querySelector(`[data-week-mode="${weekMode}"]`)?.focus({ preventScroll: true }); return;
-    }
     if (button.dataset.weekMore) { showMonthDay(button.dataset.weekMore); dialogOrigin = root.querySelector(`[data-week-more="${button.dataset.weekMore}"]`) || dialogOrigin; return; }
     if (button.dataset.weekKind) { await openMonthEvent(button.dataset.weekKind, button.dataset.weekId, button.dataset.weekDate, button.dataset.weekTitle); return; }
     if (button.dataset.monthMore) { showMonthDay(button.dataset.monthMore); return; }
