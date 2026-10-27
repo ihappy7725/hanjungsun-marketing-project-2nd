@@ -93,7 +93,7 @@
 
 .home-page .home-event.task { background: var(--home-c-task); color: var(--ink); border-left-color: var(--home-c-task-edge); }
 .home-page .home-event.creator { background: var(--home-c-creator); color: var(--ink); border-left-color: var(--orange); }
-.home-page .home-event.done { text-decoration: line-through; opacity: .6; }
+.home-page .home-event.done { text-decoration: none; opacity: 1; }
 .home-page .home-more { color: var(--muted); font-size: var(--home-body-size); }
 .home-page .home-agenda-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--line-soft); font-size: var(--home-body-size); }
 .home-page .home-agenda-row > div { min-width: 0; overflow-wrap: anywhere; }
@@ -106,13 +106,13 @@
 .home-page .home-task-list { min-height: 0; }
 .home-page .home-progress-card .home-progress-track { margin-bottom: 0; }
 .home-page .home-task-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
-.home-page .home-task.is-done .home-task-open { text-decoration: line-through; color: var(--muted); }
-.home-page .home-task.is-done .home-task-meta { color: var(--muted); opacity: .7; }
+.home-page .home-task.is-done .home-task-open { text-decoration: none; color: var(--muted); }
+.home-page .home-task.is-done .home-task-meta { color: var(--muted); }
 .home-page .home-progress-card .home-panel-head, .home-page .home-today-card .home-panel-head { margin-bottom: var(--space-5); }
 .home-page .home-progress-card .home-progress-track { margin-bottom: 0; }
 .home-page .home-task-actions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
-.home-page .home-task.is-done .home-task-open { text-decoration: line-through; color: var(--muted); }
-.home-page .home-task.is-done .home-task-meta { color: var(--muted); opacity: .7; }
+.home-page .home-task.is-done .home-task-open { text-decoration: none; color: var(--muted); }
+.home-page .home-task.is-done .home-task-meta { color: var(--muted); }
 .home-page .home-task { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--space-4); padding: var(--space-6) 0; border-bottom: 1px solid var(--line-soft); }
 .home-page .home-task input[type="checkbox"] { accent-color: var(--green); width: 16px; height: 16px; min-height: 16px; margin: var(--space-1) 0 0; cursor: pointer; }
 .home-page .home-task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); }
@@ -594,7 +594,7 @@
 .home-page .home-week-view .home-week-date > strong { display: grid; place-items: center; width: var(--space-8); height: var(--space-8); font-size: calc(var(--fs-table) * 1.1); font-weight: 500; line-height: 1; }
 .home-page .home-week-view .home-week-date.is-today > strong { border-radius: 50%; background: var(--teal); color: var(--on-dark); font-weight: var(--title-weight); }
 .home-page .home-week-view .home-week-date[aria-pressed="true"] { background: color-mix(in srgb, var(--teal) 8%, var(--page-bg)); }
-.home-page .home-week-view .home-week-date:hover { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); filter: none; }
+.home-page .home-week-view .home-week-date:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--teal) 5%, var(--page-bg)); filter: none; }
 .home-page .home-week-view .home-week-allday { position: sticky; top: var(--home-week-head); z-index: 7; padding-block: var(--space-2); background: var(--page-bg); box-shadow: inset 0 -1px var(--line); }
 .home-page .home-week-view .home-week-allday.is-empty { padding-block: 0; }
 .home-page .home-week-view .home-week-allday-grid { display: grid; grid-template-columns: var(--home-week-columns); }
@@ -663,7 +663,7 @@
 .home-page .home-dday-header .home-dday-progress-track > span { display: block; height: 100%; background: var(--teal); }
 .home-page .home-dday-header .home-campaign-tools { justify-content: space-between; align-items: center; gap: var(--space-4); }
 .home-page .home-dday-header .home-dday-secondary { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.home-page .home-dday-header .btn, .home-page .home-dday-header .home-dday-more > summary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 34px; margin: 0; padding: var(--space-2) var(--space-4); border: 0; background: transparent; color: var(--ink); font-size: var(--fs-table); white-space: nowrap; }
+.home-page .home-dday-header .btn, .home-page .home-dday-header .home-dday-more > summary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 36px; margin: 0; padding: var(--space-2) var(--space-4); border: 0; background: transparent; color: var(--ink); font-size: var(--fs-table); white-space: nowrap; }
 .home-page .home-dday-header #new-campaign { padding-inline: var(--space-5); background: var(--teal); color: var(--on-dark); }
 .home-page .home-dday-header #new-campaign svg { width: var(--space-6); height: var(--space-6); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .home-page .home-dday-header .home-dday-more { position: relative; }
@@ -696,7 +696,7 @@
 .home-page .home-dday-shell .home-dday-date sup { color: var(--teal); }
 .home-page .home-dday-shell .home-dday-state { max-width: calc(100% - var(--space-4)); padding: var(--space-1) var(--space-3); background: var(--paper); color: var(--ink); border-radius: var(--space-2); font-size: calc(var(--fs-table) * .8); line-height: var(--line-height-heading); text-align: center; }
 .home-page .home-dday-shell .home-dday-state.is-doing { background: var(--teal); color: var(--on-dark); }
-.home-page .home-dday-shell .home-dday-state.is-done { background: var(--celadon); color: var(--ink); }
+.home-page .home-dday-shell .home-dday-state.is-done { background: color-mix(in srgb, var(--celadon) 42%, var(--page-bg)); color: var(--ink); }
 .home-page .home-dday-shell .home-dday-state.is-overdue { background: color-mix(in srgb, var(--orange) 38%, var(--page-bg)); color: var(--ink); }
 .home-page .home-dday-shell .home-dday-state.is-cancelled { background: var(--white); color: var(--muted); }
 .home-page .home-dday-shell .home-dday-row.home-dday-table-head { position: sticky; top: 0; z-index: 5; height: 64px; background: var(--white); color: var(--teal); }
@@ -730,3 +730,84 @@
   .home-page .home-dday-shell .home-dday-date, .home-page .home-dday-shell .home-dday-state-cell { display: none; }
   .home-page .home-dday-shell .home-dday-name small { display: block; }
 }
+
+/* STEP 5: 화면별 상태와 피드백의 작은 차이만 정리합니다. */
+.home-page #progress-campaign { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.home-page .home-calendar-widget .home-month .home-month-status, .home-page .home-week-view .home-week-chip-state, .home-page .home-week-view .home-week-chip-meta, .home-page .home-dday-shell .home-dday-state, .home-page .home-dday-shell .home-dday-note { font-size: calc(var(--fs-table) * .85); }
+.home-page .home-week-view .home-week-chip.is-timed .home-week-chip-meta { font-size: calc(var(--fs-table) * .8); line-height: 1.2; }
+.home-page .home-dday-shell .home-dday-state.is-todo, .home-page .home-task-actions .home-badge.is-todo { background: color-mix(in srgb, var(--beige) 42%, var(--page-bg)); color: var(--ink); }
+.home-page .home-task-actions .home-badge.is-done { background: color-mix(in srgb, var(--celadon) 42%, var(--page-bg)); color: var(--ink); }
+.home-page .home-task-actions .home-badge.is-doing { background: var(--teal); color: var(--on-dark); }
+.home-page .home-task-actions .home-badge.is-overdue { background: color-mix(in srgb, var(--orange) 38%, var(--page-bg)); color: var(--ink); }
+.home-page .home-calendar-widget .home-month .home-event.is-blocked, .home-page .home-week-view .home-week-chip.is-blocked, .home-page .home-dday-shell .home-dday-state.is-blocked, .home-page .home-task-actions .home-badge.is-blocked { background: var(--paper); color: var(--ink); }
+.home-page .home-calendar-widget .home-month .home-event.is-cancelled, .home-page .home-week-view .home-week-chip.is-cancelled { background: var(--white); color: var(--muted); border-color: var(--line-strong); border-style: dashed; }
+.home-page button:disabled, .home-page select:disabled, .home-page input:disabled, .home-page textarea:disabled { cursor: not-allowed; opacity: .55; }
+.home-page button:disabled:hover { filter: none; box-shadow: none; }
+.home-page .home-event-switch:has(select:disabled) { color: var(--muted); cursor: not-allowed; }
+.home-page .home-calendar-widget button:not(:disabled):active { filter: brightness(.96); }
+
+/* HOME 가장 바깥 카드만 복구합니다. 안쪽 뉴스·조회 상자는 중첩 테두리를 만들지 않습니다. */
+.home-page .home-main-column > .home-card,
+.home-page .home-side-panels > .home-card { border: 1px solid var(--line); }
+
+/* 업무 편집: 체크박스와 문장을 같은 행에 놓고 긴 문장은 문장 안에서만 줄바꿈합니다. */
+.home-page #home-dialog .home-check-field { display: flex; align-items: center; gap: var(--space-4); margin-block: var(--space-5); cursor: pointer; }
+.home-page #home-dialog .home-check-field input[type="checkbox"] { flex: 0 0 16px; width: 16px; height: 16px; min-height: 16px; margin: 0; accent-color: var(--teal); }
+.home-page #home-dialog .home-check-field span { min-width: 0; line-height: var(--line-height); }
+
+/* 일정 상세: 날짜/대상 → 안내 → 출처 → 확인 범위 순서로 읽습니다. */
+.home-page #home-dialog .home-local-detail { min-width: 0; overflow-wrap: anywhere; }
+.home-page #home-dialog .home-local-lead { margin-bottom: var(--space-6); }
+.home-page #home-dialog .home-local-original { color: var(--muted); font-size: var(--fs-table); margin-block: var(--space-4) 0; }
+.home-page #home-dialog .home-local-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-6); margin: 0 0 var(--space-7); padding: var(--space-6); background: var(--control-bg); }
+.home-page #home-dialog .home-local-facts > div { min-width: 0; }
+.home-page #home-dialog .home-local-facts dt { color: var(--muted); font-size: var(--fs-table); margin-bottom: var(--space-2); }
+.home-page #home-dialog .home-local-facts dd { margin: 0; font-weight: 500; font-size: var(--fs-body); }
+.home-page #home-dialog .home-local-detail section { margin-block: var(--space-7); }
+.home-page #home-dialog .home-local-detail h3 { margin: 0 0 var(--space-4); font-size: var(--fs-panel-title); color: var(--teal); }
+.home-page #home-dialog .home-local-points { padding-left: var(--space-7); margin: var(--space-4) 0; }
+.home-page #home-dialog .home-local-points li { padding-left: var(--space-2); margin-block: var(--space-4); line-height: var(--line-height); font-size: var(--fs-body); }
+.home-page #home-dialog .home-local-sources { display: flex; flex-direction: column; gap: var(--space-3); font-size: var(--fs-table); }
+.home-page #home-dialog .home-local-sources br { display: none; }
+.home-page #home-dialog .home-local-sources a { padding-block: var(--space-2); text-underline-offset: 3px; }
+.home-page #home-dialog .home-local-verification summary { color: var(--teal); padding-block: var(--space-3); }
+.home-page #home-dialog .home-local-verification p { font-size: var(--fs-table); }
+
+/* 같은 행의 공지 3개가 제목·메타·요약·제안·펼침의 공통 행을 공유합니다. */
+@supports (grid-template-rows: subgrid) {
+  .home-page .home-news-grid { row-gap: 0; }
+  .home-page .home-news-grid > .home-news-item { display: grid; grid-template-rows: subgrid; grid-row: span 5; align-content: start; }
+  .home-page .home-news-grid > .home-news-item > .home-suggestion { align-self: start; }
+}
+.home-page .home-news-item > .home-suggestion[aria-hidden="true"] { visibility: hidden; }
+
+/* native select를 유지하므로 선택·키보드·폼 저장은 기존 브라우저 동작을 사용합니다. */
+.home-page :is(#home-dialog, .home-range) select { border-radius: var(--space-2); transition: background-color 180ms ease, box-shadow 180ms ease; }
+.home-page :is(#home-dialog, .home-range) select:not(:disabled) { cursor: pointer; }
+.home-page :is(#home-dialog, .home-range) select:not(:disabled):hover { background-color: color-mix(in srgb, var(--teal) 5%, var(--control-bg)); }
+@supports (appearance: base-select) {
+  .home-page :is(#home-dialog, .home-range) select,
+  .home-page :is(#home-dialog, .home-range) select::picker(select) { appearance: base-select; }
+  .home-page :is(#home-dialog, .home-range) select { align-items: center; padding: var(--space-4) var(--space-5); }
+  .home-page :is(#home-dialog, .home-range) select::picker-icon { color: var(--teal); transition: rotate 180ms ease; }
+  .home-page :is(#home-dialog, .home-range) select:open::picker-icon { rotate: 180deg; }
+  .home-page :is(#home-dialog, .home-range) select::picker(select) { padding: var(--space-2); margin-block: var(--space-2); max-block-size: min(280px, 50dvh); border: 1px solid var(--line); border-radius: var(--space-2); background: var(--control-bg); color: var(--ink); box-shadow: var(--shadow-overlay); opacity: 0; translate: 0 -4px; transition: opacity 180ms ease, translate 180ms ease, display 180ms allow-discrete, overlay 180ms allow-discrete; }
+  .home-page :is(#home-dialog, .home-range) select:open::picker(select) { opacity: 1; translate: 0 0; }
+  @starting-style {
+    .home-page :is(#home-dialog, .home-range) select:open::picker(select) { opacity: 0; translate: 0 -4px; }
+  }
+  .home-page :is(#home-dialog, .home-range) select option { padding: var(--space-4) var(--space-5); min-block-size: 36px; border: 0; border-radius: var(--space-1); font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--line-height); white-space: normal; overflow-wrap: anywhere; }
+  .home-page :is(#home-dialog, .home-range) select option:checked { background: color-mix(in srgb, var(--teal) 12%, var(--control-bg)); color: var(--teal); font-weight: var(--title-weight); }
+  .home-page :is(#home-dialog, .home-range) select option:not(:disabled):is(:hover, :focus-visible) { background: color-mix(in srgb, var(--teal) 7%, var(--control-bg)); color: var(--ink); outline: 1px solid var(--teal); outline-offset: -1px; }
+  .home-page :is(#home-dialog, .home-range) select option::checkmark { color: var(--teal); }
+}
+@media (max-width: 480px) {
+  .home-page #home-dialog .home-local-facts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page :is(#home-dialog, .home-range) select,
+  .home-page :is(#home-dialog, .home-range) select::picker-icon,
+  .home-page :is(#home-dialog, .home-range) select::picker(select) { transition: none; }
+}
+
+.home-page .home-week-view .home-week-modes button:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--teal) 4%, var(--white)); color: var(--ink); }

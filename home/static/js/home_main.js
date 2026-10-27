@@ -128,7 +128,7 @@ const id = () => `vn_home_${crypto.randomUUID()}_${new Date().getUTCFullYear()}`
 const kstToday = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const shortDate = value => value ? value.slice(5).replace('-', '/') : '날짜 없음';
 const empty = text => `<p class="home-empty">${esc(text)}</p>`;
-const badge = (text, warning = false) => `<span class="home-badge${warning ? ' warning' : ''}">${esc(text)}</span>`;
+const badge = (text, warning = false, state = '') => `<span class="home-badge${warning ? ' warning' : ''}${state ? ` is-${esc(state)}` : ''}">${esc(text)}</span>`;
 function safeUrl(value, fallback = '') {
   try { const url = new URL(value, location.origin); return ['https:', 'http:'].includes(url.protocol) ? url.href : fallback; } catch { return fallback; }
 }
@@ -181,9 +181,11 @@ async function initialize() {
   const workData = value => ({ version: 1, campaigns: value.campaigns, tasks: value.tasks, schedules: value.schedules, links: value.links });
   function storageControls(busy) {
     storageBusy = busy;
-    for (const selector of ['#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign', '#open-review']) {
-      const control = $(selector); if (control) control.disabled = busy;
+    const readOnly = busy || locked || serverToken === null;
+    for (const selector of ['#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign', '#open-review', '#campaign-select']) {
+      const control = $(selector); if (control) control.disabled = readOnly || (selector !== '#new-campaign' && !selected());
     }
+    root.querySelectorAll('[data-check]').forEach(control => { control.disabled = readOnly; });
     root.setAttribute('aria-busy', String(busy));
   }
   async function workRequest(method, payload) {
@@ -292,12 +294,21 @@ async function initialize() {
     return `${esc(from)}${to !== from ? ` ~ ${esc(to)}` : ''}`;
   }
   function eventSummary(e) {
-    return `<p class="home-signal-meta">${eventPeriod(e)}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
+    return `<p class="home-signal-meta">${eventPeriod(e)}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}`;
   }
   function showLocalEvent(eventId) {
     const e = localEvents().find(item => item.event_id === eventId);
     if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
-    openDialog(e.name, `${e.is_demo ? '' : badge(e.provisional ? '미확정 · 정부 공문 전' : '출처 확인 자료', e.provisional === true)}<p>${esc(e.official_name || e.name)}</p>${eventSummary(e)}<p>${esc(e.description || '')}</p>${e.original_period ? `<p class="home-muted">원문 기간: ${esc(e.original_period)}</p>` : ''}${e.schedule_nature ? `<p class="home-muted">일정 성격: ${esc(e.schedule_nature)}</p>` : ''}${e.verification_notes ? `<p class="home-muted">검증 범위: ${esc(e.verification_notes)}</p>` : ''}<div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></div>`);
+    // 저장된 문장을 나눠 읽기 쉽게 표시합니다. 사실을 새로 요약하거나 검증하지 않습니다.
+    const points = text => String(text || '').split(/(?<=[.!?。])\s+|\r?\n+/).filter(s => s.trim()).map(s => `<li>${esc(s.trim())}</li>`).join('');
+    openDialog(e.name, `<div class="home-local-detail">
+      <div class="home-local-lead">${e.is_demo ? badge('예시 데이터 (DEMO)') : badge(e.provisional ? '미확정 · 정부 공문 전' : '출처 확인 자료', e.provisional === true)}${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}<p class="home-local-original">${esc(e.official_name || e.name)}</p></div>
+      <dl class="home-local-facts"><div><dt>기간</dt><dd>${eventPeriod(e)}</dd></div>${e.region ? `<div><dt>지역</dt><dd>${esc(e.region)}</dd></div>` : ''}${e.applies_to ? `<div><dt>적용 대상</dt><dd>${esc(e.applies_to)}</dd></div>` : ''}${e.schedule_nature ? `<div><dt>일정 성격</dt><dd>${esc(e.schedule_nature)}</dd></div>` : ''}</dl>
+      ${e.description ? `<section><h3>일정 안내</h3><ul class="home-local-points">${points(e.description)}</ul></section>` : ''}
+      ${!e.is_demo ? `<section><h3>근거 자료</h3><div class="home-local-sources">${eventSources(e)}</div></section>` : ''}
+      ${e.original_period || e.verification_notes || e.verified_at ? `<details class="home-local-verification"><summary>원문 기간 · 확인 범위</summary>${e.original_period ? `<p><strong>원문 기간</strong> ${esc(e.original_period)}</p>` : ''}${e.verified_at ? `<p class="home-muted">자료 확인일: ${esc(e.verified_at)}</p>` : ''}${e.verification_notes ? `<ul class="home-local-points">${points(e.verification_notes)}</ul>` : ''}</details>` : ''}
+      <div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></div>
+    </div>`);
   }
   function eventAction(e) {
     if (e.kind === 'task') return `<button class="btn" data-task="${esc(e.id)}">열기</button>`;
@@ -334,11 +345,11 @@ async function initialize() {
     root.querySelector(`[data-month-more="${day}"]`)?.focus();
     openDialog(`${day} · 전체 일정 ${rows.length}건`, rows.map(e => {
       const state = monthEventState(e);
-      return `<div class="home-agenda-row"><div><strong>${esc(e.title)}</strong><p class="home-signal-meta">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}${state.label ? ` · ${esc(state.label)}` : ''}${e.provisional ? ' · 연휴 기간 미확정' : ''}</p></div><button class="btn" type="button" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}">상세 보기</button></div>`;
+      return `<div class="home-agenda-row"><div><strong>${esc(e.title)}</strong><p class="home-signal-meta">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}${state.label ? ` · ${esc(state.label)}` : ''}${e.provisional ? ' · 연휴 기간 미확정' : ''}</p></div><button class="btn" type="button" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" data-month-date="${e.date}" data-month-title="${esc(e.title)}">상세 보기</button></div>`;
     }).join(''));
   }
-  async function openMonthEvent(kind, eventId) {
-    const e = calendarEvents().find(item => item.kind === kind && item.id === eventId);
+  async function openMonthEvent(kind, eventId, date = '', title = '') {
+    const e = calendarEvents().find(item => item.kind === kind && item.id === eventId && (!date || item.date === date) && (!title || item.title === title));
     if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
     if (dialog.open) dialog.close();
     if (kind === 'task') editTask(eventId);
@@ -353,7 +364,7 @@ async function initialize() {
     const details = variant === 'timed' || variant === 'list'
       ? `${title}<span class="home-week-chip-meta">${e.time ? `${esc(e.time)} 마감` : '종일'} · ${esc(label)}${variant === 'list' && e.date !== e.end ? ` · ${esc(e.date)} ~ ${esc(e.end)}` : ''}</span>`
       : `${state.label ? `<span class="home-week-chip-state" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}${title}`;
-    return `<button type="button" class="home-week-chip ${esc(e.kind)} is-${variant}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-week-kind="${esc(e.kind)}" data-week-id="${esc(e.id)}" title="${esc(description)}" aria-label="${esc(description)}" ${attributes}>${details}</button>`;
+    return `<button type="button" class="home-week-chip ${esc(e.kind)} is-${variant}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-week-kind="${esc(e.kind)}" data-week-id="${esc(e.id)}" data-week-date="${e.date}" data-week-title="${esc(e.title)}" title="${esc(description)}" aria-label="${esc(description)}" ${attributes}>${details}</button>`;
   }
   function updateWeekNow() {
     const week = $('.home-week-view'); if (!week || view !== 'week') return;
@@ -426,7 +437,9 @@ async function initialize() {
       const weeks = Math.max(4, Math.ceil((dayDiff(nextMonth.toISOString().slice(0, 10), first) + weekday) / 7)); weekCount = weeks; end = addDays(start, weeks * 7 - 1);
     } else if (view === 'week') { start = addDays(cursor, -((new Date(cursor).getUTCDay() + 6) % 7)); end = addDays(start, 6); }
     else { start = `${cursor.slice(0, 7)}-01`; const next = new Date(start); next.setUTCMonth(next.getUTCMonth() + 1); end = addDays(next.toISOString().slice(0, 10), -1); }
-    $('#calendar-period').textContent = view === 'week' ? `${shortDate(start)} – ${shortDate(end)}` : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
+    $('#calendar-period').textContent = view === 'week'
+      ? `${start.slice(0, 4)}. ${shortDate(start).replace('/', '. ')} – ${start.slice(0, 4) === end.slice(0, 4) ? '' : `${end.slice(0, 4)}. `}${shortDate(end).replace('/', '. ')}`
+      : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
     if (view === 'week') {
       renderWeek(events, start, end); return;
     }
@@ -453,7 +466,7 @@ async function initialize() {
           const rest = dayEvents.length - shown + hiddenPeriods;
           const chips = dayEvents.slice(0, shown).map(e => {
             const state = monthEventState(e), description = monthEventDescription(e, state);
-            return `<button type="button" class="home-event ${e.kind}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" title="${esc(description)}" aria-label="${esc(description)}">${state.label ? `<span class="home-month-status" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}<span class="home-month-event-title">${esc(e.title)}</span></button>`;
+            return `<button type="button" class="home-event ${e.kind}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" data-month-date="${e.date}" data-month-title="${esc(e.title)}" title="${esc(description)}" aria-label="${esc(description)}">${state.label ? `<span class="home-month-status" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}<span class="home-month-event-title">${esc(e.title)}</span></button>`;
           }).join('') + (rest > 0 && room > 0 ? `<button type="button" class="home-more" data-month-more="${day}" aria-label="${day}, 숨겨진 일정 ${rest}건 · 전체 일정 보기">+${rest}개 더보기</button>` : '');
           html += `<button class="home-day${day === today ? ' is-today' : ''}${day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}"${day === today ? ' aria-current="date"' : ''} aria-label="${day}${day === today ? ', 오늘' : ''}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
           // 날짜 선택 버튼과 일정 버튼은 형제 요소로 배치해 중첩 버튼을 만들지 않습니다.
@@ -489,7 +502,7 @@ async function initialize() {
       t.due_date === selectedDate || (isToday && unfinished(t) && t.due_date && t.due_date < today))), today);
     $('#task-list').innerHTML = rows.map(t => {
       const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
-      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
+      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} ${storageBusy || locked || serverToken === null ? 'disabled' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done, late ? 'overdue' : t.status)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
     }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
     const tomorrow = addDays(today, 1);
     const upcoming = ordered(inScope().filter(t => t.due_date === tomorrow && unfinished(t)), today);
@@ -531,7 +544,7 @@ async function initialize() {
     $('#campaign-select').innerHTML = store.campaigns.length ? `${ongoing.length ? `<optgroup label="진행 중인 이벤트">${choices(ongoing)}</optgroup>` : ''}${previous.length ? `<optgroup label="지난 이벤트">${choices(previous)}</optgroup>` : ''}` : '<option value="">이벤트 없음</option>';
     $('#planner-title').textContent = c?.name || '이벤트를 선택하세요';
     $('#planner-title').title = c?.name || '';
-    ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
+    storageControls(storageBusy);
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
     const canReport = Boolean(c);
@@ -541,7 +554,6 @@ async function initialize() {
       if (!canReport) { event.preventDefault(); toast('이벤트를 선택한 뒤 보고서를 열어주세요.'); }
     };
     report.hidden = !c;
-    $('#open-review').disabled = !c;
     $('#campaign-progress').hidden = !c;
     $('#gantt-note').hidden = true;
     if (!c) {
@@ -609,7 +621,7 @@ async function initialize() {
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
-    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
+    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
     const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
     const scopedCreators = creators();
     const rows = scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
@@ -638,7 +650,7 @@ async function initialize() {
         <h3>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title)}</h3>
         <div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}</div>
         <p class="home-news-brief">${esc(newsPreview(n.summary, 70))}</p>
-        ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion, 60))}</p></div>` : ''}
+        ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion, 60))}</p></div>` : '<div class="home-suggestion" aria-hidden="true"></div>'}
         <details class="home-news-details"><summary>자세히 보기 · 출처와 확인 범위</summary>
           <h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>
           ${n.suggestion ? `<h4>적용 제안 · 전체 내용</h4><p>${esc(n.suggestion)}</p>` : ''}
@@ -682,7 +694,7 @@ async function initialize() {
   function options(values, selectedValue) { return Object.entries(values).map(([value, label]) => `<option value="${esc(value)}" ${value === selectedValue ? 'selected' : ''}>${esc(label)}</option>`).join(''); }
   function editTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId); if (!t) return;
-    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
+    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label class="home-check-field"><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}><span>이벤트 날짜가 바뀌어도 이 업무 날짜 유지</span></label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
     if (categoriesEnabled()) $('#task-form .home-form-grid').insertAdjacentHTML('beforeend', `<label class="home-field">업무 종류<select name="category">${options(TASK_CATEGORIES, t.category || '')}</select></label>`);
     $('#task-form').onsubmit = async event => {
       event.preventDefault(); const f = new FormData(event.currentTarget), title = f.get('title').trim(), start = f.get('start_date'), due = f.get('due_date');
@@ -808,9 +820,9 @@ async function initialize() {
       renderCalendar(); root.querySelector(`[data-week-mode="${weekMode}"]`)?.focus({ preventScroll: true }); return;
     }
     if (button.dataset.weekMore) { showMonthDay(button.dataset.weekMore); dialogOrigin = root.querySelector(`[data-week-more="${button.dataset.weekMore}"]`) || dialogOrigin; return; }
-    if (button.dataset.weekKind) { await openMonthEvent(button.dataset.weekKind, button.dataset.weekId); return; }
+    if (button.dataset.weekKind) { await openMonthEvent(button.dataset.weekKind, button.dataset.weekId, button.dataset.weekDate, button.dataset.weekTitle); return; }
     if (button.dataset.monthMore) { showMonthDay(button.dataset.monthMore); return; }
-    if (button.dataset.monthKind) { await openMonthEvent(button.dataset.monthKind, button.dataset.monthId); return; }
+    if (button.dataset.monthKind) { await openMonthEvent(button.dataset.monthKind, button.dataset.monthId, button.dataset.monthDate, button.dataset.monthTitle); return; }
     if (button.hasAttribute('data-cancel-delete')) dialog.close();
     if (button.dataset.confirmDelete) {
       const next = structuredClone(store), target = button.dataset.confirmDelete;
@@ -930,7 +942,7 @@ async function initialize() {
   function tickClocks() {
     // 두 도시의 현재 시각을 함께 보여 줍니다. 업무 기준일은 한국 시간 기준입니다.
     const now = new Date();
-    const fmt = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+    const fmt = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
     const dateLabel = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, month: '2-digit', day: '2-digit', weekday: 'short' }).format(now);
     const kst = $('#clock-kst'), ict = $('#clock-ict');
     if (kst) kst.textContent = fmt('Asia/Seoul');
@@ -938,6 +950,13 @@ async function initialize() {
     $('#clock-date-kst').textContent = dateLabel('Asia/Seoul');
     $('#clock-date-ict').textContent = dateLabel('Asia/Ho_Chi_Minh');
     ['#clock-date-kst', '#clock-date-ict'].forEach(sel => { $(sel).dateTime = now.toISOString(); });
+    const currentDay = kstToday();
+    if (currentDay !== today) {
+      const followingToday = selectedDate === today;
+      today = currentDay;
+      if (followingToday) selectedDate = today;
+      if (serverToken !== null) render();
+    }
     updateWeekNow();
   }
   tickClocks();

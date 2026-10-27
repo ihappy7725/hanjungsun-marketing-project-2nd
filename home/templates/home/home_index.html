@@ -86,7 +86,7 @@
       </section>
       </section>
       <section class="home-card home-opportunities-card home-resizable" aria-label="베트남 주요 일정">
-        <div class="home-opportunities"><div class="home-panel-head"><div><h2>베트남 주요 일정</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">전체 보기 ↗</a></div>
+        <div class="home-opportunities"><div class="home-panel-head"><div><h2>베트남 주요 일정</h2></div></div>
         <form id="range-form" class="home-range home-resizable">
           <div class="home-range-preset"><label class="home-field">조회 기간<select id="range-preset"><option value="30">앞으로 30일</option><option value="45" selected>앞으로 45일</option><option value="90">앞으로 90일</option><option value="custom">직접 입력</option></select></label><button class="btn" type="submit">조회</button></div>
           <details id="range-custom" class="home-range-custom"><summary>날짜 직접 지정</summary><div class="home-range-dates"><label class="home-field">시작일<input type="date" id="range-start" required></label><label class="home-field">종료일<input type="date" id="range-end" required></label></div></details>
@@ -96,7 +96,7 @@
         </div>
       </section>
       <section class="home-card home-collaborations-card home-resizable" aria-label="인플루언서 협업 요약">
-        <div class="home-collaborations"><div class="home-panel-head"><div><h2>인플루언서 협업 요약</h2></div><a href="{{ url_for('influencer_marketing.index') }}">전체 보기 ↗</a></div><div id="collaboration-list" class="home-scroll"></div></div>
+        <div class="home-collaborations"><div class="home-panel-head"><div><h2>인플루언서 협업 요약</h2></div><a href="{{ url_for('influencer_marketing.index') }}">인플루언서 마케팅 ↗</a></div><div id="collaboration-list" class="home-scroll"></div></div>
       </section>
       </div>
     </div>
