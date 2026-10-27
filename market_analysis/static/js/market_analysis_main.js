@@ -750,25 +750,15 @@ function renderCulture() {
     ${(basic?.indicators || []).map(x => `<div><dt>${esc(x.label)}</dt><dd>${esc(formatIndicatorValue(x))}</dd></div>`).join("")}
   </dl>`;
   if (!d) {
-    view.innerHTML = `<div class="ma-cg">${section("베트남 기본 정보", "", basicRow)}${empty()}</div>`;
+    view.innerHTML = `<div class="ma-cg"><section class="ma-cg-section ma-cg-basic-sec">${basicRow}</section>${empty()}</div>`;
     return;
   }
   const rows = (items) => (items?.length ? `<ul class="ma-cg-rows">${items.map(x => `
     <li><strong>${esc(x.title)}</strong><p>${esc(x.fact)}</p></li>`).join("")}</ul>` : empty());
 
-  // 숫자로 보는 디지털 이용 (DataReportal)
-  // 아이콘: 6개 항목 모두 우측에 통일된 단색 아이콘(SVG)을 표시합니다
-  const INLINE_ICONS = {
-    "인터넷 이용자": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>`,
-    "SNS 이용 계정": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-  };
-  const icon = (name, label = "") => (/^[a-z]+$/.test(name || "")
-    ? `<span class="ma-cg-icon is-svg" style="--icon:url('${esc(CULTURE_IMG(`sns/${name}.svg`))}')" aria-hidden="true"></span>`
-    : INLINE_ICONS[label]
-      ? `<span class="ma-cg-icon is-line" aria-hidden="true">${INLINE_ICONS[label]}</span>`
-      : "");
+  // 숫자로 보는 디지털 이용 (DataReportal): 항목명(강조) → 숫자 → 보조 설명 순, 중앙 정렬 및 아이콘 제거
   const facts = (d.consumer_facts || []).map(x => `
-    <li>${icon(x.icon, x.label)}<span class="ma-cg-stat">${esc(x.value)}</span><strong>${esc(x.label)}</strong><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");
+    <li><strong class="ma-cg-stat-title">${esc(x.label)}</strong><span class="ma-cg-stat">${esc(x.value)}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");
 
   // 색: 선물 포장에 권하는 색 / 피하는 색
   const prefs = d.color_preferences || {};
@@ -796,16 +786,24 @@ function renderCulture() {
     <div class="ma-cg-box is-good"><h3>선호하는 숫자</h3><ul class="ma-cg-nums">${(numbers.prefer || []).map(x => numberRow(x, "is-good")).join("") || empty()}</ul></div>
     <div class="ma-cg-box is-bad"><h3>피하는 숫자</h3><ul class="ma-cg-nums">${(numbers.avoid || []).map(x => numberRow(x, "is-bad")).join("") || empty()}</ul></div></div>`;
 
-  // 광고 표현 주의 (조항·출처 표시 없음)
+  // 유의사항: 좌측 '올리기 전 확인사항' · 우측 '피할 표현' 2열 배치로 시각적 구분 강화
   const adItems = (items) => `<ul class="ma-cg-rows">${items.map(x => `
     <li><strong>${esc(x.title)}</strong>${x.tag ? `<span class="ma-cg-tag is-warn">${esc(x.tag)}</span>` : ""}<p>${esc(x.fact)}</p></li>`).join("")}</ul>`;
-  const avoidList = `<div class="ma-cg-cols">${adItems((d.rules || []).map(r => ({ title: r[0], tag: r[1], fact: `피할 예 · ${r[2]}` })))}</div>`;
+  const avoidList = adItems((d.rules || []).map(r => ({ title: r[0], tag: r[1], fact: `피할 예 · ${r[2]}` })));
   const checkList = adItems((d.notices || []).map(n => ({ title: n[0], fact: n[1] })));
-  // 광고 올리기 전 확인 + 피할 표현: 담당자가 가장 중요하게 보는 영역이라 한 섹션으로 묶어 강조합니다
   const adWarning = `
-    <section class="ma-cg-section ma-cg-alert"><header class="ma-cg-head"><h2>⚠️ 광고 올리기 전 꼭 확인</h2><p>최종 판단: 현지 검수자</p></header>
-      <h3 class="ma-cg-alert-h3">✅ 올리기 전 확인</h3><div class="ma-cg-cols">${checkList}</div>
-      <h3 class="ma-cg-alert-h3">🚫 피할 표현 <span class="ma-cg-dim">증빙 없는 최상급·비교·건강 효과 주장 주의</span></h3>${avoidList}
+    <section class="ma-cg-section ma-cg-alert">
+      <header class="ma-cg-head"><h2>⚠️ 유의사항</h2><p>최종 판단: 현지 검수자</p></header>
+      <div class="ma-cg-alert-grid">
+        <div class="ma-cg-alert-col is-check">
+          <h3 class="ma-cg-alert-h3">✅ 올리기 전 확인사항</h3>
+          ${checkList}
+        </div>
+        <div class="ma-cg-alert-col is-avoid">
+          <h3 class="ma-cg-alert-h3">🚫 피할 표현 <span class="ma-cg-dim">증빙 없는 최상급·비교·건강 효과 주장 주의</span></h3>
+          <div class="ma-cg-cols">${avoidList}</div>
+        </div>
+      </div>
       <p class="ma-cg-source">출처: 베트남 국회 (통합 광고법 · 2025 개정 광고법)</p>
     </section>`;
 
@@ -896,7 +894,8 @@ function renderCulture() {
       ${pair(section("선물 예절", "", rows(d.gift_etiquette)), section("숫자", "", numberBody))}
     </div>`;
   view.innerHTML = `<div class="ma-cg">
-    ${section("베트남 기본 정보", "", basicRow, cultureBtn)}
+    <div class="ma-cg-top-bar">${cultureBtn}</div>
+    <section class="ma-cg-section ma-cg-basic-sec">${basicRow}</section>
     ${pair(section("디지털·SNS 이용", "", snsBody),
       section("온라인 구매 채널", "", ecBody))}
     ${adWarning}
