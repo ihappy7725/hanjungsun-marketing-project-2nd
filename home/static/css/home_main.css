@@ -1,14 +1,14 @@
 /* HOME 화면 스타일 [주연]
    모든 선택자는 .home-page 아래로 제한합니다. body·button·table 전체 스타일은 바꾸지 않습니다.
    색·글꼴은 platform_core/static/css/base.css 변수(var(--gold) 등)만 씁니다. (README 6·7장) */
-.home-page { --home-body-size: var(--fs-menu); font-size: var(--home-body-size); }
+.home-page { --home-body-size: var(--fs-body);  /* 공통 규격(마케팅 성과 기준) 본문 16px */ font-size: var(--home-body-size); }
 .home-page [hidden] { display: none !important; }
 .home-page button, .home-page input, .home-page select, .home-page textarea { min-height: var(--control-height); font-size: var(--home-body-size); }
 .home-page input, .home-page textarea, .home-page select { color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--white); padding: var(--space-3) var(--space-4); max-width: 100%; }
 .home-page textarea { resize: vertical; }
 .home-page a { text-decoration: none; }
 .home-page a:hover { text-decoration: underline; }
-.home-page h1 { font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); margin: var(--space-3) 0; line-height: var(--line-height); }
+.home-page h1 { font-family: var(--font-title); font-size: var(--fs-display); font-weight: var(--title-weight); margin: var(--space-3) 0; line-height: var(--line-height); }
 .home-page h2 { font-size: var(--fs-body); font-weight: 500; margin: var(--space-2) 0 0; }
 .home-page h3 { font-size: var(--fs-body); margin: var(--space-3) 0; font-weight: 600; }
 .home-page .home-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); margin-bottom: var(--space-4); }
@@ -99,7 +99,7 @@
 .home-page .home-agenda-row > div { min-width: 0; overflow-wrap: anywhere; }
 .home-page .home-muted, .home-page .home-footnote { color: var(--muted); font-size: var(--home-body-size); }
 .home-page .home-empty { padding: var(--space-7) var(--space-2); color: var(--muted); font-size: var(--home-body-size); line-height: var(--line-height); }
-.home-page .home-progress-number { color: var(--green); font-family: var(--font-serif); font-size: var(--fs-kpi); line-height: var(--line-height); }
+.home-page .home-progress-number { color: var(--green); font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); line-height: var(--line-height); }  /* 큰 숫자 규격: 명조 30px */
 .home-page .home-progress-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
 .home-page .home-progress-track { height: 6px; background: var(--progress-bg); margin: var(--space-4) 0 var(--space-6); }
 .home-page .home-progress-track > span { display: block; height: 100%; background: var(--green); }
@@ -270,12 +270,13 @@
 .home-page .home-tl-cell .home-event { border-radius: 999px; padding: 0 var(--space-2); }
 .home-page .home-tl-head { border-radius: var(--radius) var(--radius) 0 0; }
 .home-page .home-tl-head { padding-block: var(--space-3); gap: var(--space-1); }
-.home-page .home-tl-hour { padding-top: var(--space-2); font-family: var(--font-mono); background: var(--paper); }
+.home-page .home-tl-hour { padding-top: var(--space-2); font-family: var(--font-body); font-variant-numeric: tabular-nums; background: var(--paper); }
 .home-page .home-tl-cell { min-height: calc(var(--control-height) + var(--space-2)); padding: var(--space-1); }
 .home-page .home-side-column .home-card { padding: var(--space-7); }
 .home-page .home-side-column .home-panel-head { min-height: 28px; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); }
-.home-page .home-panel-head h2 { margin: 0; font-family: var(--font-title); font-size: var(--fs-panel-title); font-weight: var(--title-weight); line-height: var(--line-height); }
-.home-page .home-card .btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: var(--control-height); padding-inline: var(--space-5); }
+/* 블록 제목: 공통 규격(마케팅 성과 기준) Pretendard 18px 세미굵게 */
+.home-page .home-panel-head h2 { margin: 0; font-family: var(--font-body); font-size: var(--fs-panel-title); font-weight: 600; line-height: var(--line-height); }
+.home-page .home-card .btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 36px; padding-block: 0;  /* 버튼 규격 36px */ padding-inline: var(--space-5); }
 .home-page .home-side-column .home-text-btn { min-height: 28px; padding: var(--space-1) var(--space-3); }
 .home-page .home-task:last-child, .home-page .home-opportunity:last-child, .home-page .home-collaboration:last-child { border-bottom: 0; }
 .home-page .home-side-panels { display: flex; flex-direction: column; gap: var(--space-6); }
@@ -310,7 +311,7 @@
 .home-page .home-mainpanel > .home-paneltabs { flex: 0 0 auto; flex-direction: row; margin-bottom: var(--space-6); }
 .home-page .home-paneltab { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4); font-size: var(--home-body-size); }
 .home-page .home-paneltab:focus-visible { outline: 2px solid var(--accent); outline-offset: -5px; }
-.home-page .home-tab-index { font-family: var(--font-mono); font-size: var(--fs-table); color: var(--muted); }
+.home-page .home-tab-index { font-family: var(--font-body); font-variant-numeric: tabular-nums; font-size: var(--fs-table); color: var(--muted); }
 .home-page .home-btn-sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: var(--line); }
 .home-page .home-btn-quiet { color: var(--muted); }
 .home-page .home-controls { display: grid; grid-template-columns: minmax(160px, 1.2fr) repeat(2, minmax(132px, 1fr)); align-items: end; gap: var(--space-5); width: min(100%, 580px); }
@@ -356,7 +357,7 @@
 .home-page .home-collab-funnel > div { min-width: 0; padding: var(--space-4) 0; }
 .home-page .home-collab-funnel dt { color: var(--muted); font-size: var(--fs-table); line-height: var(--line-height-heading); }
 .home-page .home-collab-funnel dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); margin: var(--space-3) 0 0; color: var(--teal); }
-.home-page .home-collab-funnel dd strong { font-size: calc(var(--fs-subheading) * 1.2); font-weight: var(--title-weight); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-page .home-collab-funnel dd strong { font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .home-page .home-collab-funnel dd span { font-size: var(--fs-table); }
 .home-page .home-collab-checks { padding-top: var(--space-5); border-top: 1px solid var(--line); }
 .home-page .home-collab-checks h3 { display: flex; justify-content: space-between; gap: var(--space-4); margin: 0 0 var(--space-4); font-size: var(--fs-body); }
@@ -404,17 +405,17 @@
 .home-page .home-clock { display: grid; grid-template-columns: auto auto; align-items: baseline; gap: var(--space-1) var(--space-4); min-width: 118px; }
 .home-page .home-clock-zone { display: flex; align-items: baseline; gap: var(--space-3); margin: 0; color: var(--ink); }
 .home-page .home-clock-zone small { font-size: var(--fs-table); color: var(--muted); }
-.home-page .home-clock b { font-family: var(--font-mono); font-size: var(--fs-subheading); line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--teal); text-align: right; }
+.home-page .home-clock b { font-family: var(--font-body); font-size: var(--fs-subheading); line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--teal); text-align: right; }
 .home-page .home-clock time { grid-column: 1 / -1; text-align: right; font-size: calc(var(--fs-table) * .85); color: var(--muted); }
 .home-page .home-grid { grid-template-columns: minmax(0, 1.98fr) minmax(0, 1fr); }
 .home-page .home-mainpanel { border: 0; padding: var(--space-6); }
 .home-page .home-mainpanel > .home-paneltabs { margin-bottom: 0; }
 .home-page .home-mainpanel > .home-panel-actions { flex: 0 0 auto; display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); padding: var(--space-4) 0; }
-.home-page .home-panel-actions .btn, .home-page .home-panel-actions .home-icon-btn { border: 0; min-height: 32px; background: transparent; padding: var(--space-2) var(--space-4); }
+.home-page .home-panel-actions .btn, .home-page .home-panel-actions .home-icon-btn { border: 0; min-height: 28px; background: transparent; padding: 0 var(--space-4); }
 .home-page .home-panel-actions .btn:hover, .home-page .home-panel-actions .home-icon-btn:hover { background: var(--paper); }
 .home-page .home-panel-actions .btn.dark { background: var(--teal); color: var(--on-dark); }
 .home-page .home-panel-actions .home-inline { gap: var(--space-2); }
-.home-page .home-panel-actions h2 { margin: 0; font-family: var(--font-title); font-size: var(--fs-subheading); }
+.home-page .home-panel-actions h2 { margin: 0; font-family: var(--font-body); font-size: var(--fs-panel-title); font-weight: 600; }
 .home-page .home-segment { background: var(--paper); padding: var(--space-1); }
 .home-page .home-segment button { min-height: 28px; padding: var(--space-1) var(--space-5); font-size: var(--fs-table); }
 .home-page #calendar-panel, .home-page #campaign-panel { box-sizing: border-box; padding: var(--space-4); background: var(--page-bg); border: 0; }
@@ -484,9 +485,7 @@
 .home-page .home-tomorrow p { margin: var(--space-2) 0; font-size: var(--fs-table); }
 .home-page .home-today-card.has-no-today .home-task-list { flex: 0 0 auto; }
 .home-page .home-tomorrow.is-prominent { flex: 1 1 auto; max-height: 220px; }
-.home-page .home-panel-head h2 { font-size: var(--fs-subheading); }
-.home-page .home-news #news-title { font-size: calc(var(--fs-subheading) * 1.2); }
-.home-page .home-news-heading { font-family: var(--font-title); font-size: var(--fs-subheading); font-weight: var(--title-weight); }
+.home-page .home-news-heading { font-family: var(--font-body); font-size: var(--fs-body); font-weight: 600; }  /* 블록 안 소제목 16px */
 .home-page .home-news-item { min-height: 0; resize: none; padding: var(--space-5); }
 .home-page .home-news-item > h3 { font-size: var(--fs-panel-title); line-height: var(--line-height-heading); margin: 0 0 var(--space-3); }
 .home-page .home-news-item > h3 a { color: var(--ink); }
