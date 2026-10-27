@@ -44,11 +44,11 @@ const num = (value, digits = 0) =>
   value === null || value === undefined || value === "" ? "—"
     : Number(value).toLocaleString("ko-KR", { maximumFractionDigits: digits });
 
-const vnd = (value) => (value === null || value === undefined ? "—" : `${num(value)} ₫`);
+const vnd = (value) => (value === null || value === undefined ? "—" : `${num(value)} VND`);
 
 const priceRange = (min, max) => {
   if (min === null || min === undefined) return "—";
-  return max && max !== min ? `${num(min)}~${num(max)} ₫` : vnd(min);
+  return max && max !== min ? `${num(min)}~${num(max)} VND` : vnd(min);
 };
 
 const evidenceClass = (value) => value === "개별 상품 확인" ? "is-verified"
@@ -327,7 +327,7 @@ function renderCompetitor() {
   return data.competitors.source === "research" ? renderCompetitorResearch() : renderCompetitorLegacy();
 }
 
-const range = (spread, unit = "₫") => spread
+const range = (spread, unit = "VND") => spread
   ? (spread.min === spread.max ? `${num(spread.min)} ${unit}` : `${num(spread.min)}~${num(spread.max)} ${unit}`) : "—";
 const koName = (text) => String(text || "").replace(/\s*\(원문 번역\)$/, "");
 
@@ -337,7 +337,7 @@ function priceBar(spread, scale) {
   const left = (spread.min / scale) * 100;
   const width = Math.max(((spread.max - spread.min) / scale) * 100, 1.2);
   const mid = (spread.median / scale) * 100;
-  return `<div class="ma-pbar" role="img" aria-label="${esc(range(spread))}, 중간 ${esc(num(spread.median))}₫">
+  return `<div class="ma-pbar" role="img" aria-label="${esc(range(spread))}, 중간 ${esc(num(spread.median))} VND">
     <i class="ma-pbar-range" style="left:${left}%;width:${width}%"></i><i class="ma-pbar-mid" style="left:${mid}%"></i></div>`;
 }
 
@@ -399,8 +399,8 @@ function competitorPrice(c) {
 const MARKETING_TACTICS = [
   { key: "gift", title: "선물·포장", what: "상자 그림·색에 의미를 부여하고 한 상자에 넣는 제품 수를 다양화한 선물 구성",
     ids: ["ME001", "ME002", "ME010", "ME014", "ME015"],
-    cases: [["Mochi Sweets", "상자의 은행나무 그림에 '번영·평안' 의미를 붙이고 3·6·9·12·18개입으로 구성. 18개입 Luxury 690,000₫"],
-      ["Royal Family", "빨간 선물상자(132g×2 86,000₫, 514g 216,000₫)로 명절 선물 구성"]],
+    cases: [["Mochi Sweets", "상자의 은행나무 그림에 '번영·평안' 의미를 붙이고 3·6·9·12·18개입으로 구성. 18개입 Luxury 690,000 VND"],
+      ["Royal Family", "빨간 선물상자(132g×2 86,000 VND, 514g 216,000 VND)로 명절 선물 구성"]],
     take: "보자기·보름달 같은 한국 상징과 제품 수가 다른 여러 상자를 활용한 선물 수요 대응" },
   { key: "season", title: "명절·시즌 공략", what: "추석·설·성탄 전 예약 할인과 한정판 운영",
     ids: ["ME008", "ME009", "ME021"],
@@ -420,8 +420,8 @@ const MARKETING_TACTICS = [
     take: "다낭 Mochi Sweets 매장과의 직접 경쟁을 고려한 관광지 매장·보냉 배송 설계" },
   { key: "trend", title: "원재료·트렌드형 제품", what: "새로운 섭취 방식과 고급 원재료를 활용한 화제성 강화",
     ids: ["ME003", "ME006", "ME016", "ME019"],
-    cases: [["Minh Nhật", "생크림 소스에 '찍어 먹는 모찌' 85g 23,000₫, 냉장 유통기한 7일"],
-      ["Mochi Sweets", "제비집·식용 금 모찌 3개입 145,000₫를 '건강 선물'로(현재 품절), 일본 정통성 강조"],
+    cases: [["Minh Nhật", "생크림 소스에 '찍어 먹는 모찌' 85g 23,000 VND, 냉장 유통기한 7일"],
+      ["Mochi Sweets", "제비집·식용 금 모찌 3개입 145,000 VND를 '건강 선물'로(현재 품절), 일본 정통성 강조"],
       ["Lotte Yukimi", "판매처가 '열풍·유행 따라잡기' 문구로 소개"]],
     take: "과일·찹쌀 조합 한정 맛과 '한국 정통 찹쌀떡' 이야기로 화제성 확보" },
 ];
@@ -513,7 +513,7 @@ function renderCompetitorResearch() {
   const bodies = { rivals: competitorRivals, marketing: competitorMarketing, list: competitorList };
   view.innerHTML = `<div class="ma-research">
     <article class="panel ma-wide ma-ci-panel">
-      <div class="ma-ci-tabs" role="tablist">${COMPETITOR_TABS.map(([key, label]) => `
+      <div class="ma-ci-tabs ui-tabs" role="tablist">${COMPETITOR_TABS.map(([key, label]) => `
         <button type="button" role="tab" data-ctab="${key}" aria-selected="${key === tab}">${esc(label)}</button>`).join("")}</div>
       <div class="ma-ci-body">${bodies[tab](c)}</div>
     </article>
@@ -622,7 +622,7 @@ function renderCompetitorLegacy() {
       <div class="kpi"><div class="label">고유 경쟁 제품 <span>${esc(c.as_of || "")}</span></div><div class="value">${summary.product_count || c.items.length}<small>개</small></div></div>
       <div class="kpi"><div class="label">판매처 조사</div><div class="value">${summary.listing_count || 0}<small>건</small></div></div>
       <div class="kpi"><div class="label">확인한 판매 채널</div><div class="value">${summary.channel_count || 0}<small>개</small></div></div>
-      <div class="kpi"><div class="label">100g당 중간가격</div><div class="value">${normalizedPrices.length ? num(Math.round(median(normalizedPrices))) : "—"}<small>₫</small></div></div>
+      <div class="kpi"><div class="label">100g당 중간가격</div><div class="value">${normalizedPrices.length ? num(Math.round(median(normalizedPrices))) : "—"}<small> VND</small></div></div>
     </div>
     <div class="ma-segment-all">${allSegmentButton}</div>
     <div class="ma-segments">${segmentButtons}</div>
@@ -804,7 +804,6 @@ function renderCulture() {
           <div class="ma-cg-cols">${avoidList}</div>
         </div>
       </div>
-      <p class="ma-cg-source">출처: 베트남 국회 (통합 광고법 · 2025 개정 광고법)</p>
     </section>`;
 
   // 온라인 구매 채널 (Metric 데이터 기사): 숫자 카드 + 도넛 차트·점유율 목록
@@ -813,8 +812,12 @@ function renderCulture() {
   const ecNotes = (ec.notes || [])
     .filter(n => n.title !== "공식몰 집중")
     .map(n => ({ ...n, fact: String(n.fact || "").replace(/^\d{4}년\s*/, "") }));
+  // 화면 표기만 '○○억 달러' → '$○○억' (데이터 파일은 그대로)
+  const usdText = (v) => String(v ?? "").replace(/^([\d.,]+)\s*억\s*달러$/, (_, n) => `$${n}억`);
+  // $ 기호: VND와 같은 명조의 S에 세로줄 하나를 그어 표시(명조 글꼴의 $는 세로줄이 두 개라서). 화면 읽기용으로는 '$'
+  const usdHtml = (v) => esc(usdText(v)).replace(/^\$/, () => '<span class="ma-usd"><span class="ma-sr">$</span><span aria-hidden="true">S</span></span>');
   const ecCards = (ec.cards || []).map(x => `
-    <li><span class="ma-cg-stat">${esc(x.value)}</span><strong>${esc(x.label)}</strong><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");
+    <li><strong>${esc(x.label)}</strong><span class="ma-cg-stat">${usdHtml(x.value)}</span><span class="ma-cg-dim">${esc(x.note)}</span></li>`).join("");  // 이름 → 값 → 보조 설명(디지털·SNS 카드와 같은 순서)
   const shareItems = ec.shares?.items || [];
   const shareTotal = shareItems.reduce((sum, item) => sum + (Number(item.share) || 0), 0) || 100;
   let cumulative = 0;
@@ -847,8 +850,7 @@ function renderCulture() {
       <dl class="ma-cg-donut-list">${shareList}${noteRows}</dl>
     </div>` : (ecNotes.length ? rows(ecNotes) : "");
   const ecBody = `<ul class="ma-cg-stats">${ecCards || empty()}</ul>
-    ${donutBlock}
-    <p class="ma-cg-source">출처: Metric (VnEconomy · VietnamNet)</p>`;
+    ${donutBlock}`;
 
   // 디저트 소비 문화: 한국인 이용자가 처음 봐도 바로 이해할 수 있도록 쉬운 한국어로 풀어서 표시
   const DESSERT_KO = [
@@ -880,7 +882,9 @@ function renderCulture() {
 
   // 넓은 화면은 2칸 배치(.ma-cg-pair), 좁은 화면은 1칸
   const pair = (left, right) => `<div class="ma-cg-pair">${left}${right}</div>`;
-  const snsBody = `<ul class="ma-cg-stats is-fill">${facts || empty()}</ul><p class="ma-cg-source">출처: DataReportal</p>`;
+  const snsBody = `<ul class="ma-cg-stats is-fill">${facts || empty()}</ul>`;
+  // 출처는 베이지 블록 밖(흰 바탕) 아래에 작게: 블록과 출처를 한 묶음(.ma-cg-wrap)으로 둡니다.
+  const withSource = (html, source, cls = "") => `<div class="ma-cg-wrap${cls ? ` ${cls}` : ""}">${html}<p class="ma-cg-source">출처: ${esc(source)}</p></div>`;
   cultureModalBody = `
     <header class="ma-rd-head">
       <div class="ma-rd-brand">베트남 문화 가이드</div>
@@ -894,11 +898,23 @@ function renderCulture() {
     </div>`;
   view.innerHTML = `<div class="ma-cg">
     <section class="ma-cg-section ma-cg-basic-sec">${basicRow}</section>
-    ${pair(section("디지털·SNS 이용", "", snsBody),
-      section("온라인 구매 채널", "", ecBody))}
-    ${adWarning}
+    ${pair(withSource(section("디지털·SNS 이용", "", snsBody), "DataReportal"),
+      withSource(section("온라인 구매 채널", "", ecBody), "Metric (VnEconomy · VietnamNet)"))}
+    ${withSource(adWarning, "베트남 국회 (통합 광고법 · 2025 개정 광고법)", "is-fill")}
   </div>`;
+  fitCultureHeight();
 }
+
+// 국가·문화: 마지막 유의사항 블록이 화면 아래(본문 하단 여백 16px)까지 늘어나도록 화면 높이에 맞춥니다.
+// 공통 화면 배율(zoom)이 걸리면 화면 좌표를 CSS 좌표로 바꿔 계산합니다.
+function fitCultureHeight() {
+  const cg = document.querySelector(".market-analysis-page .ma-cg:not(.ma-cg-modal)");
+  if (!cg) return;
+  const z = cg.getBoundingClientRect().width / cg.offsetWidth || 1;
+  const top = (cg.getBoundingClientRect().top + window.scrollY) / z;
+  cg.style.minHeight = `${Math.max(0, Math.floor(window.innerHeight / z - top - 16))}px`;
+}
+window.addEventListener("resize", fitCultureHeight);
 
 // ---------- 4. AI 인사이트 ----------
 

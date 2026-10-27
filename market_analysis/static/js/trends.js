@@ -297,7 +297,11 @@ function renderAds() {
   const research = ads.research;
   $("ad-trends").innerHTML = (research ? adResearch(research) : "")
     + (ads.summary ? renderCaseSummary(ads) : "")
-    + (research ? adSourceNote(research) : "");
+    + "";
+  // 출처는 광고 트렌드 블록 밖(흰 바탕) 아래에 작게 둡니다.
+  const card = $("ad-trends").closest("article");
+  card?.parentElement.parentElement.querySelector(".ad-source-out")?.remove();
+  if (research && card) card.parentElement.insertAdjacentHTML("afterend", `<div class="ad-source-out">${adSourceNote(research)}</div>`);
 }
 
 function adSourceNote(research) {
@@ -388,3 +392,47 @@ export function initTrends() {
   load();
 }
 
+// ---------- 블록 확대 (마케팅 성과의 블록 확대와 같은 방식) ----------
+// 트렌드 4개 블록 오른쪽 위에 ⛶ 버튼. 누르면 본문 폭으로 커지고 뒤는 어둡게, ⛶ · Esc · 바깥 클릭으로 닫습니다.
+function setupTrendExpand() {
+  const root = document.querySelector(".ma-trends");
+  if (!root || root.dataset.expandReady) return;
+  root.dataset.expandReady = "1";
+  const backdrop = document.createElement("div");
+  backdrop.className = "ma-trend-backdrop";
+  backdrop.hidden = true;
+  root.append(backdrop);
+  const close = () => {
+    root.querySelectorAll(".trend-panels > .ma-trend-placeholder").forEach((ph) => ph.remove());
+    root.querySelectorAll(".trend-panels > .card.is-expanded").forEach((c) => {
+      c.classList.remove("is-expanded");
+      c.querySelector(".ma-trend-expand")?.setAttribute("aria-label", "블록 확대");
+    });
+    backdrop.hidden = true;
+  };
+  root.querySelectorAll(".trend-panels > .card").forEach((card) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ma-trend-expand";
+    btn.setAttribute("aria-label", "블록 확대");
+    btn.title = "확대";
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+    btn.addEventListener("click", () => {
+      const open = !card.classList.contains("is-expanded");
+      close();
+      if (!open) return;
+      // 확대하는 동안 원래 자리를 같은 크기로 비워 두어 뒤쪽 블록이 밀려 움직이지 않게 합니다.
+      const ph = document.createElement("div");
+      ph.className = "ma-trend-placeholder";
+      ph.style.height = `${card.offsetHeight}px`;
+      card.before(ph);
+      card.classList.add("is-expanded");
+      btn.setAttribute("aria-label", "확대 닫기");
+      backdrop.hidden = false;
+    });
+    card.append(btn);
+  });
+  backdrop.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+}
+setupTrendExpand();

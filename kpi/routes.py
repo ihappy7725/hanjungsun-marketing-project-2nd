@@ -340,7 +340,7 @@ def _simulator_influencers():
     if error or not quotes:
         quotes = DEMO_INFLUENCER_QUOTES
         status = "demo"
-        note = f"{error} 시연 후보를 씁니다." if error else "인플루언서 탭 단가가 아직 없어 시연 후보를 씁니다."
+        note = f"{error} 기본 후보를 씁니다." if error else "인플루언서 탭 단가가 아직 없어 기본 후보를 씁니다."
     options, skipped = [], 0
     for q in quotes:
         q = q or {}
@@ -473,10 +473,10 @@ def _build_ga4():
         "sessions": DEMO_GA4["sessions"],
         "engaged_sessions": DEMO_GA4["engaged_sessions"],
         "status": "demo",
-        "source": "시연 값",
+        "source": "기본값",
         "period": None,
         "scope": "가상 한정선 사이트",
-        "note": "kpi/data/ga4_demo.json이 없어 시연 값을 씁니다.",
+        "note": "kpi/data/ga4_demo.json이 없어 기본값을 씁니다.",
         "channels": [],
         "top_events": [],
     }
@@ -485,16 +485,16 @@ def _build_ga4():
     except (OSError, ValueError) as exc:
         code = exc.args[0] if exc.args and isinstance(exc.args[0], str) and exc.args[0].isupper() else exc.__class__.__name__
         demo = None
-        ga4["note"] = f"GA4 데모 JSON을 읽지 못해({code}) 시연 값을 씁니다."
+        ga4["note"] = f"GA4 데이터 파일을 읽지 못해({code}) 기본값을 씁니다."
     if demo and demo.get("sessions"):
         ga4.update(
             sessions=demo["sessions"],
             engaged_sessions=demo.get("engaged_sessions"),
             status="public_demo",
-            source="GA4 공식 데모 · Google Merchandise Store",
+            source="GA4 · Google Merchandise Store",
             period=demo["period"] or None,
-            scope="글로벌 데모 (한정선 데이터 아님)",
-            note="GA4 데이터 형식 검증용 공개 데모 데이터입니다.",
+            scope="글로벌 (한정선 데이터 아님)",
+            note="GA4 데이터 형식 검증용 공개 데이터입니다.",
             channels=demo.get("channels") or [],
             top_events=demo.get("top_events") or [],
             top_events_note=demo.get("top_events_note") or "",

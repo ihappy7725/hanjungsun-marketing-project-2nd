@@ -228,7 +228,7 @@
           <div class="kpi-seg" role="group" aria-label="통화 단위">
             <button type="button" class="is-on" data-kpi-action="currency" data-cur="KRW" aria-pressed="true">원</button>
             <button type="button" data-kpi-action="currency" data-cur="USD" aria-pressed="false">달러</button>
-            <button type="button" data-kpi-action="currency" data-cur="VND" aria-pressed="false">동</button>
+            <button type="button" data-kpi-action="currency" data-cur="VND" aria-pressed="false">VND</button>
           </div>
           {{ move_tools() }}
           {{ expand_button() }}
@@ -265,7 +265,7 @@
         </div>
       </div>
       <div class="kpi-panel-body">
-        <!-- AI 요약: 창구별 한 줄 요약 + 유의할 점. AI 분석 전에는 데이터로 센 자동 집계를 보여 줍니다. -->
+        <!-- AI 요약: 창구별 한 줄 요약 + 유의할 점. [AI로 분석]을 누른 화면에서만 표시하고, 누르기 전에는 안내 문구만 보여 줍니다. -->
         <div class="kpi-ai-summary" data-kpi="voc-summary"></div>
         <p class="kpi-error" data-kpi="voc-error" hidden></p>
         <div class="kpi-voc">

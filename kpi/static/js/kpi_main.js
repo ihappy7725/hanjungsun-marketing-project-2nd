@@ -27,9 +27,8 @@ const $ = (name) => root.querySelector(`[data-kpi="${name}"]`);
 const setText = (name, text) => {
   const el = $(name);
   if (el) {
-    const description = /시연|데모|가상|\bdemo\b/i.test(String(text ?? ""));
-    el.textContent = description ? "" : text;
-    el.hidden = description || !String(text ?? "").trim();
+    el.textContent = text;
+    el.hidden = !String(text ?? "").trim();
   }
 };
 
@@ -257,12 +256,12 @@ function renderBudget(data) {
   setText(
     "influencer-link",
     !link.ok
-      ? `${link.error} — 협찬비는 시연 값으로 표시합니다.`
+      ? `${link.error} — 협찬비는 기본값으로 표시합니다.`
       : link.total === 0
-        ? "인플루언서 탭 단가 데이터: 아직 없음 — 협찬비는 시연 값으로 표시합니다."
-        : `인플루언서 탭 단가 ${link.total}건 연동(견적 ${link.counts.quote} · 계약 ${link.counts.contract}). 예산 반영 기준은 확정 전이라 협찬비는 시연 값입니다.`,
+        ? "인플루언서 탭 단가 데이터: 아직 없음 — 협찬비는 기본값으로 표시합니다."
+        : `인플루언서 탭 단가 ${link.total}건 연동(견적 ${link.counts.quote} · 계약 ${link.counts.contract}). 예산 반영 기준은 확정 전이라 협찬비는 기본값입니다.`,
   );
-  setText("budget-meta", `출처: 시연 값 · 기간: ${data.campaign_month} · 범위: 베트남 전체 이벤트 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
+  setText("budget-meta", `기간: ${data.campaign_month} · 범위: 베트남 전체 이벤트 · 단위: 원(기준 환율 ${data.fx.base_rate.toFixed(2)}원/100 VND)`);
 
   // 확대 시: 채널별 집행액과 총 예산 대비 비중
   const rate = data.fx.base_rate;
@@ -548,7 +547,7 @@ function setGa4Visible(show) {
     setText("ga4-meta", ga4View.meta);
   } else {
     setStatus("ga4-badge", "시연", "demo", "크리에이터별 클릭·전환은 시연 값입니다.");
-    setText("ga4-meta", "출처: 시연 값(인플루언서 탭 공개 함수에 클릭·전환 항목 추가 필요) · 범위: 베트남 · 표본: 크리에이터 5명");
+    setText("ga4-meta", "범위: 베트남 · 표본: 크리에이터 5명 (인플루언서 탭 공개 함수에 클릭·전환 항목 추가 필요)");
   }
   resizeCharts();
   // 큰 창(확대)에서 바꾸면 새로 보이는 차트도 확대할 때와 같이 막대가 하나씩 올라오게 합니다.
@@ -887,7 +886,7 @@ function showVocAi(demoReviews, ai) {
     text: "OpenAI 분석 · 검수 전",
     status: "live",
     title: `${ai.model} · ${ai.analyzed_at} · AI 번역·분류는 사람이 검수하기 전 결과입니다.`,
-    meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전) · 원문은 시연 리뷰`,
+    meta: `OpenAI ${ai.model} 분석(${ai.analyzed_at}, 검수 전)`,
   });
 }
 
@@ -1109,7 +1108,7 @@ function renderSimOptions() {
   syncSimUnit();
   setText(
     "sim-source",
-    `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}${inf.status === "demo" ? " · 시연" : ""}`
+    `KOL 자동완성: ${list.length ? `인플루언서 탭 리스트 ${num(list.length)}명 · ` : ""}${inf.note}`
       + (creators.length ? ` · 크리에이터 목록 ${num(creators.length)}명(실제 자료${creators[0].list_as_of ? ` ${creators[0].list_as_of}` : ""})` : ""),
   );
   setSimType(sim.type);
@@ -1404,7 +1403,7 @@ window.addEventListener("scroll", hideTip, { capture: true, passive: true });
 // ---------- 내보내기 (PDF 보고서 · 엑셀) ----------
 // [내보내기] 메뉴: PDF 보고서(새 창 미리보기 → [PDF로 저장]) · 엑셀(.xlsx, 새 라이브러리 없이 kpi_xlsx.js로 생성)
 const REPORT_TITLE = "마케팅 성과 보고서";
-const DATA_NOTE = "데이터 상태: 예산·ROAS·VOC는 시연 데이터, GA4는 공식 데모 계정(한정선 데이터 아님), AI 요약은 사람 검수 전 결과입니다. '추정'은 계산·가정으로 나온 값입니다.";
+const DATA_NOTE = "데이터 상태: GA4는 Google Merchandise Store 공개 데이터(한정선 데이터 아님), AI 요약은 사람 검수 전 결과입니다. '추정'은 계산·가정으로 나온 값입니다.";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 const stamp = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -1453,7 +1452,7 @@ function reportHighlights() {
   const g = d?.ga4;
   if (g && !$("ga4-panel").hidden) {
     const low = [...(g.channels || [])].filter((c) => c.engagement_rate_percent != null).sort((x, y) => x.engagement_rate_percent - y.engagement_rate_percent)[0];
-    lines.push(`GA4 유효 참여율 ${pct(g.engagement_rate_percent)}${low ? ` · 참여율이 가장 낮은 유입 채널 ${low.channel} ${pct(low.engagement_rate_percent)}` : ""} (${g.status === "public_demo" ? "공식 데모 데이터, 한정선 아님" : "시연 값"})`);
+    lines.push(`GA4 유효 참여율 ${pct(g.engagement_rate_percent)}${low ? ` · 참여율이 가장 낮은 유입 채널 ${low.channel} ${pct(low.engagement_rate_percent)}` : ""} (${g.status === "public_demo" ? "Google Merchandise Store 공개 데이터, 한정선 아님" : "기본값"})`);
   }
   return lines;
 }
@@ -1602,7 +1601,7 @@ function paginateReport(doc, blocks) {
     const foot = doc.createElement("footer");
     foot.className = "kpi-rpt-pagefoot";
     foot.innerHTML = "<span></span><span class=\"kpi-rpt-no\"></span>";
-    foot.children[0].textContent = `작성 ${stamp()} · 시연·데모 데이터 포함`;
+    foot.children[0].textContent = `작성 ${stamp()}`;
     page.append(head, content, foot);
     pages.push(page);
     left = contentH;
@@ -1914,7 +1913,7 @@ function exportXlsx() {
 
   // GA4: 유입 채널 참여율 표 + 막대 + 전체 평균선
   if (hasGa4) {
-    section(sum, r, 1, 8, `GA4 유입 채널 참여율 · ${g.status === "public_demo" ? "공식 데모 데이터(한정선 아님)" : "시연 값"}`);
+    section(sum, r, 1, 8, `GA4 유입 채널 참여율 · ${g.status === "public_demo" ? "Google Merchandise Store 공개 데이터(한정선 아님)" : "기본값"}`);
     r += 1;
     const gt = table(sum, r, 1, ["채널", "세션", "참여율", "전체 평균", "주요 이벤트 비율", "수익(USD)"],
       g.channels.map((ch) => [ch.channel, ch.sessions, ch.engagement_rate_percent, g.engagement_rate_percent, ch.session_key_event_rate_percent, ch.revenue_usd]),
@@ -1997,7 +1996,7 @@ function exportXlsx() {
     vs.widths = [2, 20, 9, 10, 10, 42, 42, 18, 18, 12];
     r = 0;
     vs.put(r, 1, "고객 의견(VOC) 상세", S.title).merge(r, 1, r, 9).height(r, 28);
-    vs.put(r + 1, 1, `팜플렛 QR 창구(Zalo · 카카오톡 · WhatsApp) 1:1 문의 ${num(view.reviews.length - view.surveyComments.length)}건 + 설문 의견 ${num(view.surveyComments.length)}건 · 시연 데이터`, S.sub).merge(r + 1, 1, r + 1, 9);
+    vs.put(r + 1, 1, `팜플렛 QR 창구(Zalo · 카카오톡 · WhatsApp) 1:1 문의 ${num(view.reviews.length - view.surveyComments.length)}건 + 설문 의견 ${num(view.surveyComments.length)}건`, S.sub).merge(r + 1, 1, r + 1, 9);
     r += 3;
     section(vs, r, 1, 9, `창구별 요약 · ${view.vocAiChannels?.length ? "AI 요약(사람 검수 전)" : "AI 분석 전"}`);
     r += 1;
@@ -2082,9 +2081,9 @@ function exportXlsx() {
         ["세션 주요 이벤트 비율", g.session_key_event_rate_percent, null, "주요 이벤트가 1회 이상 발생한 세션 ÷ 전체 세션"],
         ["주요 이벤트", g.key_events, null, ""],
         ["평균 참여 시간(초)", g.avg_engagement_sec, null, ""],
-        ["수익(USD)", g.revenue_usd, null, "데모 매장 매출"],
-        ["매장 예약·길찾기 클릭률 (시연)", g.store_action_ctr_percent, null, `${num(g.store_action_clicks)}회 클릭 · 한정선 사이트 전용 이벤트라 시연 비율`],
-        ["팜플렛 QR 유입 (시연)", g.pamphlet_sessions, null, "utm_source=pamphlet 세션 · 시연 비율"],
+        ["수익(USD)", g.revenue_usd, null, "Google Merchandise Store 매출"],
+        ["매장 예약·길찾기 클릭률", g.store_action_ctr_percent, null, `${num(g.store_action_clicks)}회 클릭 · 한정선 사이트 전용 이벤트라 기본 비율`],
+        ["팜플렛 QR 유입", g.pamphlet_sessions, null, "utm_source=pamphlet 세션 · 기본 비율"],
       ], ["text", "dec2", "text", "text"]);
       [[0, "pct"], [1, "pct"], [2, "int"], [3, "sec"], [4, "usd"], [5, "pct"], [6, "int"]].forEach(([k, kind]) => {
         const cell = gs.cells.get(`${mt.first + k},2`);
@@ -2119,7 +2118,7 @@ function exportXlsx() {
       }
     }
     if (d.creators?.length) {
-      section(gs, r, 1, 9, "크리에이터별 클릭 · 전환 Top 5 (시연 · 인플루언서 탭 연동 전)");
+      section(gs, r, 1, 9, "크리에이터별 클릭 · 전환 Top 5 (인플루언서 탭 연동 전)");
       r += 1;
       const crt = table(gs, r, 1, ["크리에이터", "플랫폼", "링크 클릭", "전환", "전환율"],
         d.creators.map((cr) => [cr.creator, cr.platform, cr.clicks, cr.conversions, cr.cvr_percent]), ["text", "text", "int", "int", "pct"]);
@@ -2265,7 +2264,7 @@ async function loadVoc() {
     renderQr(data.qr);
     // AI 요약은 이 화면에서 [AI로 분석]을 눌렀을 때만 보입니다(그 전에는 요약 없이 안내만, 서버도 결과를 보관하지 않음).
     if (vocAiResult) showVocAi(vocReviews, vocAiResult);
-    else renderVoc(vocReviews, { text: "시연 분류", status: "demo", meta: "시연 문의·시연 분류" });
+    else renderVoc(vocReviews, { text: "기본 분류", status: "demo", meta: "문의 · 기본 분류" });
   } catch (err) {
     showError("voc-error", `VOC 데이터를 불러오지 못했습니다: ${err.message}`);
   }

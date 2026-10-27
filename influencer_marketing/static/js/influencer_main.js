@@ -429,7 +429,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
       box.innerHTML = `<div class="im-row" style="gap:6px"><select id="mLang" aria-label="메일 언어" style="width:auto">${[['vi', '베트남어'], ['en', '영어'], ['ko', '한국어(검토용)']].map(([k, n]) => `<option value="${k}" ${S.mail.lang === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
           <button type="button" class="im-btn is-primary is-sm" id="mCpB">본문 복사</button>
           ${(i.status || 'candidate') === 'candidate' ? '<button type="button" class="im-btn is-sm" id="mSent">제안 발송으로 표시</button>' : `<span class="im-small">${tag('send', '발송 ' + (fmtD((i.sentAt || '').slice(0, 10)) || ''))}</span>${i.status === 'sent' ? '<button type="button" class="im-btn is-sm is-ghost" id="mUnsend" title="잘못 눌렀을 때 후보로 되돌려요">발송 취소</button>' : ''}`}</div>
-        <p class="im-small im-muted" style="margin:6px 0 0">받는 사람: ${to.value ? esc(to.value) + (to.demo ? ' (시연용)' : '') : '이메일 없음 · 아래 기본 정보의 이메일 칸에 넣으세요'}</p>
+        <p class="im-small im-muted" style="margin:6px 0 0">받는 사람: ${to.value ? esc(to.value) : '이메일 없음 · 아래 기본 정보의 이메일 칸에 넣으세요'}</p>
         <details class="im-fold" style="margin-top:8px"><summary>미리보기 열기</summary><div class="im-mail" style="margin-top:6px"><div class="im-subj"><span id="mSubj">${esc(m.subj)}</span></div><pre id="mBody">${esc(m.body)}</pre></div></details>
         <div style="margin-top:8px">${trWidget('mail', S.mail.lang, S.mail.lang === 'ko' ? 'vi' : 'ko', '메일 번역')}</div>
         <details class="im-fold" style="margin-top:8px"><summary>보내는 사람 정보 ${s.company || s.sender ? `<span class="im-muted im-small">${esc([s.company, s.sender].filter(Boolean).join(' · '))}</span>` : ''}</summary>
@@ -548,7 +548,7 @@ ${contact}`.replace(/\n{3,}/g, '\n\n') };
     },
     rateState(v) {
       const d = S.settings.rateSavedAt, el = $('#xState', v); if (!el) return;
-      el.innerHTML = d ? `<span class="im-muted">입력일 ${esc(d)}</span>` : '<span style="color:var(--im-warn)">예시값</span>';
+      el.innerHTML = d ? `<span class="im-muted">입력일 ${esc(d)}</span>` : '';
     },
     update(v) {
       const L = infList().sort((a, b) => a.name.localeCompare(b.name)), qi = $('#qInf', v), cur = qi.value;
