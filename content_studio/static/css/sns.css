@@ -405,6 +405,9 @@
   box-shadow: var(--shadow);
 }
 /* 영상 편집 화면(초안 뒤, is-video-edit): 제목 왼쪽 · 비율·초·↶ ↷ 같은 줄 오른쪽 (제품 버튼은 숨김) */
+/* 포스터 수정 화면: 작업 칸을 창 아래까지 채워 아래 입력창이 맨 아래에 닿게 (--studio-main-min은 sns.js fitPosterView) */
+.studio-page .studio-work.is-poster-edit .studio-main { display: flex; flex-direction: column; min-height: var(--studio-main-min, auto); }
+.studio-page .studio-work.is-poster-edit .studio-canvas { flex: 1 0 auto; }
 .studio-page .studio-work.is-video-edit .studio-settings { flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .studio-page .studio-work.is-video-edit .studio-title { flex: 1 1 240px; width: auto; min-width: 0; text-align: left; }
 .studio-page .studio-work.is-video-edit .studio-options { margin-left: auto; justify-content: flex-end; }
