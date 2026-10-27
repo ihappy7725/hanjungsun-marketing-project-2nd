@@ -111,7 +111,7 @@
   --im-warn: var(--navy); --im-warn-soft: var(--orange);
   --im-bad: var(--navy); --im-bad-soft: var(--beige);
   --im-tt: var(--primary); --im-fb: var(--muted); --im-yt: var(--accent); --im-ig: var(--ink);
-  --im-mono: var(--font-mono); --im-r: var(--radius);
+  --im-mono: var(--font-body);  /* 인플루언서 숫자: 공통 규격대로 Pretendard(+ tabular-nums) */ --im-r: var(--radius);
 }
 
 /* ---------- 테마: 채도를 낮춘 박스 배경과 강조색 (계정 설정에서 선택, 기본은 :root의 사암) ---------- */

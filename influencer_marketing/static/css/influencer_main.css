@@ -21,7 +21,7 @@
 /* 머리글·탭 */
 .influencer-page .im-head{display:flex;align-items:center;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-4)}
 .influencer-page .im-head>div{flex:1;min-width:0}
-.influencer-page .im-head h1{font-family:var(--font-title);font-size:var(--fs-h1);font-weight:var(--title-weight)}
+.influencer-page .im-head h1{font-family:var(--font-title);font-size:var(--fs-display);font-weight:var(--title-weight)}  /* 공통 규격(마케팅 성과 기준): 페이지 제목 40px */
 .influencer-page .im-head p{margin:var(--space-1) 0 0;font-size:var(--fs-body)}
 .influencer-page .im-tabs{display:flex;gap:var(--space-1);overflow-x:auto;border-bottom:1px solid var(--im-line);margin-bottom:var(--space-6);scrollbar-width:none}
 .influencer-page .im-tabs::-webkit-scrollbar{display:none}
@@ -94,7 +94,7 @@
 .influencer-page .im-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-6)}
 @media (max-width:1160px){.influencer-page .im-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .influencer-page .im-kpi{background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-5)}
-.influencer-page .im-kpi b{display:block;font-size:var(--fs-h1);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
+.influencer-page .im-kpi b{display:block;font-family:var(--font-title);font-size:var(--fs-h1);font-weight:var(--title-weight);font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
 .influencer-page .im-kpi span{font-size:var(--fs-body);color:var(--im-muted)}
 .influencer-page .im-kpi em{font-style:normal;font-size:var(--fs-body);color:var(--im-faint);display:block}
 .influencer-page .im-pipe{display:flex;height:26px;border-radius:var(--radius);overflow:hidden;background:var(--im-sunk)}
@@ -114,9 +114,10 @@
 
 /* 표 */
 .influencer-page .im-tblwrap{overflow-x:auto;border:1px solid var(--im-line);border-radius:var(--im-r);background:var(--im-surface)}
-.influencer-page .im-tblwrap table{border-collapse:collapse;width:100%;font-size:var(--fs-body)}
-.influencer-page .im-tblwrap th,.influencer-page .im-tblwrap td{padding:var(--space-4) var(--space-4);text-align:left;border-bottom:1px solid var(--im-line);white-space:nowrap;vertical-align:middle}
-.influencer-page .im-tblwrap th{font-size:var(--fs-body);letter-spacing:var(--tracking);text-transform:uppercase;color:var(--im-muted);font-weight:600;background:var(--im-sunk)}
+/* 표: 공통 규격(마케팅 성과 기준) — 글자 15px · 칸 여백 12px · 머리줄 회색 보통 굵기 */
+.influencer-page .im-tblwrap table{border-collapse:collapse;width:100%;font-size:var(--fs-table)}
+.influencer-page .im-tblwrap th,.influencer-page .im-tblwrap td{padding:var(--space-5) var(--space-5);text-align:left;border-bottom:1px solid var(--im-line);white-space:nowrap;vertical-align:middle}
+.influencer-page .im-tblwrap th{font-size:var(--fs-table);color:var(--im-muted);font-weight:500;background:var(--im-sunk)}
 .influencer-page .im-tblwrap .r{text-align:right}
 .influencer-page .im-tblwrap tbody tr:last-child td{border-bottom:0}
 .influencer-page .im-tblwrap tr.is-click{cursor:pointer}
@@ -194,7 +195,9 @@
 .influencer-page .im-src a{color:inherit;text-decoration:underline}
 
 .influencer-page .im-panel { padding: var(--panel-padding); box-shadow: var(--shadow); }
-.influencer-page .im-btn { min-height: var(--control-height); padding: var(--space-4) var(--space-6); border-radius: var(--radius); }
+/* 버튼: 공통 규격(마케팅 성과 기준) — 일반 36px, 작은 버튼 28px */
+.influencer-page .im-btn { min-height: 36px; padding: 0 var(--space-6); border-radius: var(--radius); }
+.influencer-page .im-btn.is-sm { min-height: 28px; padding: 0 var(--space-4); }
 .influencer-page .im-panel h2 { font-size: var(--fs-panel-title); }
 @media (max-width: 650px) { .influencer-page .im-panel { padding: var(--space-6); } }
 
@@ -214,7 +217,7 @@
 .influencer-page .im-fstep+.im-fstep::before{content:"→";position:absolute;left:calc(var(--space-7) * -1);top:50%;transform:translate(-50%,-50%);color:var(--im-faint);font-size:var(--fs-body)}
 @media (max-width:900px){.influencer-page .im-funnel{grid-template-columns:repeat(2,1fr);column-gap:var(--space-5)}.influencer-page .im-fstep{min-width:128px}.influencer-page .im-fstep+.im-fstep::before{display:none}}
 .influencer-page .im-fstep span{font-size:var(--fs-body);color:var(--im-muted)}
-.influencer-page .im-fstep b{display:inline-block;font-size:var(--fs-h1);line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
+.influencer-page .im-fstep b{display:inline-block;font-family:var(--font-title);font-size:var(--fs-h1);line-height:1.2;font-weight:var(--title-weight);font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
 .influencer-page .im-fstep b small{font-size:var(--fs-body);font-weight:500;margin-left:var(--space-1);color:var(--im-muted)}
 .influencer-page .im-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6);margin-bottom:var(--space-6)}
 @media (max-width:1160px){.influencer-page .im-grid3{grid-template-columns:minmax(0,1fr)}}
@@ -286,7 +289,7 @@
 .influencer-page .im-ovbud .im-mini span,.influencer-page .im-ovbud .im-mini b{display:inline}
 .influencer-page #ovTodo .im-grow{min-width:0}
 .influencer-page .im-ovgrid .im-todo li{padding:var(--space-3) 0;align-items:center;gap:var(--space-4)}
-.influencer-page .im-ovgrid .im-todo .im-btn.is-sm{min-height:32px;padding-top:var(--space-1);padding-bottom:var(--space-1)}
+.influencer-page .im-ovgrid .im-todo .im-btn.is-sm{min-height:28px;padding-top:0;padding-bottom:0}
 .influencer-page #ovTodo .im-grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .influencer-page #ovTodo .im-grow .im-muted{display:none}  /* 할 일 안내 문장은 마우스를 올리면(title) */
 @media (max-width:1160px){.influencer-page .im-ovgrid{grid-template-columns:minmax(0,1fr)}}
