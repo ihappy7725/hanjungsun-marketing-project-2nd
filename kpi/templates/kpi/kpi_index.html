@@ -143,10 +143,14 @@
                 <label class="field" data-kpi="sim-media-name" hidden>매체 이름
                   <input type="text" name="mediaName" maxlength="40" placeholder="예: Google Ads">
                 </label>
-                <!-- KOL 협찬: 계정명은 입력 + 자동완성(인플루언서 탭 단가 목록). 고르면 매체·콘텐츠·예산을 채웁니다. -->
+                <!-- KOL 협찬: 계정명은 입력 + 검색 추천(인플루언서 탭 리스트 · 단가 · 크리에이터 목록). 1글자 이상 치면 맞는 이름 최대 8개.
+                     고르면 매체·콘텐츠·예산을 채웁니다. -->
                 <label class="field kpi-sim-kol">계정/인물명
-                  <input type="text" name="account" list="kpi-sim-accounts" maxlength="40" autocomplete="off" placeholder="예: @hanoi.eats" data-kpi="sim-account">
-                  <datalist id="kpi-sim-accounts" data-kpi="sim-accounts"></datalist>
+                  <span class="kpi-suggest-wrap">
+                    <input type="text" name="account" maxlength="40" autocomplete="off" placeholder="예: @hanoi.eats" data-kpi="sim-account"
+                           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="kpi-sim-accounts">
+                    <ul class="kpi-suggest" id="kpi-sim-accounts" role="listbox" data-kpi="sim-accounts" hidden></ul>
+                  </span>
                   <small class="kpi-sim-help" data-kpi="sim-quote-help"></small>
                 </label>
                 <!-- 콘텐츠 형태: 집행 매체에 맞는 형식만 표시. 계정·매체·형식이 인플루언서 탭 단가와 맞으면 집행 예산 자동 채움 -->

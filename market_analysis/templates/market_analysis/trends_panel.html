@@ -5,43 +5,41 @@
   <div id="notices" class="trend-notices" aria-live="polite"></div>
 
   <div id="dashboard" class="dashboard trends-dashboard" hidden>
-    <div id="category-picker" class="category-picker" role="group" aria-label="카테고리 선택"></div>
-
-    <section class="two-column trend-panels">
+    {# 인기 메뉴 순위(맨 아래에 선택 카테고리 관심도 한 줄) + 오른쪽 절반은 월별 검색 계절성 #}
+    <section class="two-column trend-panels season-ads">
       <article class="card" aria-labelledby="ranking-title">
-        <div class="section-head">
+        <div class="section-head ranking-head">
           <div><h2 id="ranking-title">카테고리별 인기 메뉴 순위</h2></div>
+          <div id="category-picker" class="category-picker" role="group" aria-label="카테고리 선택"></div>
         </div>
         <div id="ranking"></div>
+        <div id="category-trend" class="rank-trend"></div>
       </article>
 
-      <article class="card" aria-labelledby="category-trend-title">
-        <div class="section-head">
-          <div><h2 id="category-trend-title">카테고리 관심도</h2></div>
+      <article class="card seasonality-card" aria-labelledby="season-title">
+        <div class="section-head seasonality-head">
+          <h2 id="season-title">월별 검색 계절성</h2>
+          <div id="seasonality-tabs" class="season-tabs" role="group" aria-label="계절성 카테고리 선택"></div>
         </div>
-        <div id="category-trend"></div>
+        <div id="seasonality" class="seasonality-body"></div>
       </article>
     </section>
 
-    <section class="two-column trend-panels">
-      <article class="card" aria-labelledby="fruit-title">
-        <h2 id="fruit-title">베트남 과일 맛 검색 관심도</h2>
-        <div id="fruit-flavors"></div>
+    {# 과일·지역 순위는 한 카드(화면 절반)에 좌우로, 오른쪽 절반은 광고 트렌드 #}
+    <section class="two-column trend-panels season-ads">
+      <article class="card rank-pair-card" aria-label="과일 맛 · 지역별 검색 관심도">
+        <div class="rank-pair">
+          <div>
+            <h2 id="fruit-title">과일 맛 검색 관심도</h2>
+            <div id="fruit-flavors"></div>
+          </div>
+          <div>
+            <h2 id="region-title">지역별 관심도</h2>
+            <div id="regions"></div>
+          </div>
+        </div>
       </article>
-      <article class="card" aria-labelledby="region-title">
-        <h2 id="region-title">베트남 지역별 관심도</h2>
-        <div id="regions"></div>
-      </article>
-    </section>
 
-    <section class="trend-panels">
-      <article class="card" aria-labelledby="season-title">
-        <h2 id="season-title">월별 검색 계절성</h2>
-        <div id="seasonality"></div>
-      </article>
-    </section>
-
-    <section class="trend-panels">
       <article class="card" aria-labelledby="ads-title">
         <div class="section-head">
           <div><h2 id="ads-title">광고 트렌드</h2></div>
@@ -49,7 +47,5 @@
         <div id="ad-trends"></div>
       </article>
     </section>
-
-    <p class="source" id="source-line"></p>
   </div>
 </div></div>

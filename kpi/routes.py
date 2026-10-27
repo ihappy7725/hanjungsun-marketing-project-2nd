@@ -396,6 +396,38 @@ def _simulator_influencer_list():
     return out
 
 
+def _simulator_creator_list():
+    """인플루언서 탭 크리에이터 목록(get_creator_list) — 실제 계정 자료(제3자 추정 팔로워), 단가 없음.
+
+    계정 자동완성에 함께 보여 주고, 고르면 집행 매체를 그 플랫폼으로 맞춥니다. 실패하면 빈 목록(화면은 그대로 동작).
+    """
+    try:
+        from influencer_marketing.public import get_creator_list
+
+        rows = list(get_creator_list() or [])
+    except Exception:  # 주인 탭 오류로 내 화면이 멈추지 않게 (README 10장)
+        return []
+    out = []
+    for r in rows:
+        r = r or {}
+        name = str(r.get("name") or "").strip()
+        followers = r.get("followers")
+        if not name or not r.get("platform"):
+            continue
+        out.append({
+            "name": name,
+            "platform": r.get("platform") or "",
+            "followers": followers if isinstance(followers, int) else None,
+            "tier": r.get("tier") or "",
+            "segment": r.get("segment") or "",
+            "category": r.get("category") or "",
+            "follower_source": r.get("follower_source") or "",
+            "list_as_of": r.get("list_as_of") or "",
+            "is_demo": bool(r.get("is_demo")),
+        })
+    return out
+
+
 # ---------------------------------------------------------------------------
 # GA4 — 지금은 공식 데모 계정(Google Merchandise Store) 화면을 옮겨 적은 JSON을 읽습니다(데모 계정은 CSV 다운로드 불가).
 # 한정선 GA4 속성 권한이 생기면 _read_ga4_demo_json만 GA4 Data API 호출로 바꿉니다(같은 키 이름으로 돌려주면 됨).
@@ -798,6 +830,7 @@ def api_simulator():
         "roas_bep_percent": ROAS_BEP_PERCENT,  # 본전 매출 · 이익/손해 판정 기준
         "influencers": _simulator_influencers(),
         "influencer_list": _simulator_influencer_list(),
+        "creator_list": _simulator_creator_list(),
     })
 
 

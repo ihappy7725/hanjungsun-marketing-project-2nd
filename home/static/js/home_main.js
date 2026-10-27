@@ -52,6 +52,55 @@ export function ordered(tasks, today) {
   return [...tasks].sort((a, b) => group(a) - group(b) || (a.due_date || '9999').localeCompare(b.due_date || '9999') || a.title.localeCompare(b.title, 'ko'));
 }
 export function unfinished(t) { return !['done', 'cancelled'].includes(t.status); }
+export function calendarMonthSlots(height, weeks, width = 0) {
+  const limit = width > 0 && width < 560 ? 3 : DAY_SLOTS;
+  return Math.min(limit, Math.max(2, Math.floor((((height || 440) - 28) / weeks - 28) / 24)));
+}
+export function weekPointLayout(events, hourHeight = 32) {
+  // 종료 시각이 없는 마감 표시의 겹침만 나눕니다. 실제 소요 시간이 아닙니다.
+  const visualMinutes = 36 / hourHeight * 60;
+  const points = events.filter(e => validTime(e.time)).map(event => {
+    const minute = Number(event.time.slice(0, 2)) * 60 + Number(event.time.slice(3));
+    const displayStart = Math.max(0, Math.min(minute, 1440 - visualMinutes));
+    return { event, minute, displayStart, displayEnd: displayStart + visualMinutes };
+  }).sort((a, b) => a.displayStart - b.displayStart || a.event.id.localeCompare(b.event.id));
+  const output = []; let group = [], groupEnd = -1;
+  const flush = () => {
+    const lanes = [];
+    group.forEach(point => {
+      let lane = lanes.findIndex(end => end <= point.displayStart);
+      if (lane < 0) lane = lanes.length;
+      lanes[lane] = point.displayEnd; point.lane = lane;
+    });
+    output.push(...group.map(point => ({ ...point, columns: lanes.length })));
+    group = []; groupEnd = -1;
+  };
+  points.forEach(point => {
+    if (group.length && point.displayStart >= groupEnd) flush();
+    group.push(point); groupEnd = Math.max(groupEnd, point.displayEnd);
+  });
+  flush(); return output;
+}
+export function ganttTone(task, start, today) {
+  if (task.status === 'done' || task.due_date < today) return 'past';
+  if (task.status === 'blocked') return 'blocked';
+  if (dayDiff(task.due_date, today) <= 3) return 'urgent';
+  if (task.status === 'doing' || (start <= today && today <= task.due_date)) return 'active';
+  if (dayDiff(start, today) <= 3) return 'soon';
+  return 'upcoming';
+}
+export function ganttTaskRows(tasks) {
+  // 기존 비취소 업무의 자동 시작 기준을 유지합니다. 이 값은 저장하지 않습니다.
+  const dated = tasks.filter(t => t.status !== 'cancelled' && validDate(t.due_date)).sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const starts = new Map(dated.map((t, i) => [t.id, t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3))]));
+  return [...tasks].sort((a, b) => (validDate(a.due_date) ? a.due_date : '9999').localeCompare(validDate(b.due_date) ? b.due_date : '9999')).map(task => {
+    const due = validDate(task.due_date) ? task.due_date : '';
+    const candidate = task.start_date || starts.get(task.id) || '';
+    const start = validDate(candidate) ? candidate : '';
+    const invalid = Boolean((task.start_date && !validDate(task.start_date)) || (task.due_date && !due) || (start && due && start > due));
+    return { task, start, due, invalid, estimated: Boolean(start && !task.start_date), point: Boolean(due && !start && !invalid) };
+  });
+}
 export function replanTasks(tasks, target, edits) {
   return tasks.map(t => {
     const edit = edits.find(e => e.id === t.id);
@@ -70,42 +119,22 @@ export function cloneTasks(tasks, campaignId, target, oldTarget, makeId) {
 }
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // 첫 문장만 미리 보여 주며, 전체 내용은 카드의 펼침 영역에 그대로 남깁니다.
-const newsPreview = value => {
+const newsPreview = (value, limit = 80) => {
   const text = String(value ?? '').trim();
-  return text.match(/^[\s\S]*?[.!?](?=\s|$)/u)?.[0] || text;
+  const sentence = text.match(/^[\s\S]*?[.!?](?=\s|$)/u)?.[0] || text;
+  return sentence.length > limit ? sentence.slice(0, limit).trimEnd() + '…' : sentence;
 };
 const id = () => `vn_home_${crypto.randomUUID()}_${new Date().getUTCFullYear()}`;
 const kstToday = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const shortDate = value => value ? value.slice(5).replace('-', '/') : '날짜 없음';
 const empty = text => `<p class="home-empty">${esc(text)}</p>`;
-const badge = (text, warning = false) => `<span class="home-badge${warning ? ' warning' : ''}">${esc(text)}</span>`;
+const badge = (text, warning = false, state = '') => `<span class="home-badge${warning ? ' warning' : ''}${state ? ` is-${esc(state)}` : ''}">${esc(text)}</span>`;
 function safeUrl(value, fallback = '') {
   try { const url = new URL(value, location.origin); return ['https:', 'http:'].includes(url.protocol) ? url.href : fallback; } catch { return fallback; }
 }
 function tabLink(tab) { return Object.hasOwn(TABS, tab) ? `/${tab}/` : '/home/'; }
 
-function demoStore(today) {
-  const campaign = { id: id(), name: '스승의 날 선물 이벤트', target_date: addDays(today, 28), template: 'launch', status: 'active', product: '과일찹쌀떡 선물세트', audience: '다낭 선물 구매 고객', channel: 'Instagram · TikTok', event_id: 'demo_gift_day', review: '' };
-  const tasks = TEMPLATE.map(([key, offset, title, related_tab], i) => ({ id: id(), campaign_id: campaign.id, key, offset, title, related_tab, due_date: addDays(campaign.target_date, offset), start_date: '', fixed: false, status: i < 2 ? 'done' : i === 4 ? 'blocked' : 'todo', importance: 'normal', memo: '', completed_at: '' }));
-  const extras = [[-1, '소재 A 문구 확인'], [3, '게시물 링크 점검'], [3, '협업 피드백 정리'], [7, '선물 포장 사진 준비']];
-  extras.forEach(([days, title]) => tasks.push({ id: id(), campaign_id: campaign.id, key: '', offset: days - 28, title, related_tab: 'content_studio', due_date: addDays(today, days), start_date: '', fixed: false, status: 'todo', importance: 'normal', memo: '', completed_at: '' }));
-  return { version: 1, campaigns: [campaign], tasks, schedules: [], links: [], preferences: { selected: campaign.id, preset: '45' }, demo_anchor: today };
-}
 function blankStore() { return { version: 1, campaigns: [], tasks: [], schedules: [], links: [], preferences: { selected: '', preset: '45' } }; }
-export async function migrationRequest(url, payload, fetcher = fetch) {
-  let response;
-  try {
-    response = await fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin', cache: 'no-store', body: JSON.stringify(payload) });
-  } catch {
-    throw new Error('서버 응답을 확인하지 못했습니다. 저장 요청을 보낸 뒤라면 먼저 파일을 다시 검사해주세요. 같은 기록은 중복으로 추가되지 않습니다.');
-  }
-  let result;
-  try { result = await response.json(); }
-  catch { throw new Error('서버 응답을 읽지 못했습니다. 옮기기 성공 여부를 확인하려면 파일을 다시 검사해주세요.'); }
-  if (!response.ok) throw new Error(result.error || '서버에서 처리하지 못했습니다. 파일을 다시 검사해주세요.');
-  return result;
-}
 function validStore(s) {
   return s && s.version === 1 && Array.isArray(s.campaigns) && Array.isArray(s.tasks) && Array.isArray(s.schedules) && Array.isArray(s.links) && s.preferences &&
     s.campaigns.every(c => typeof c.id === 'string' && typeof c.name === 'string' && validDate(c.target_date)) &&
@@ -116,8 +145,7 @@ function validStore(s) {
 if (typeof document !== 'undefined') initialize();
 function setupPanelResize(root) {
   const side = root.querySelector('.home-side-panels');
-  const reset = root.querySelector('#reset-panel-sizes');
-  if (!side || !reset) return;
+  if (!side) return;
   const panels = [...side.children];
   // 브라우저의 크기 조절 손잡이는 inline 높이를 바꿉니다. 해당 행만 고정하고 나머지 공간을 나눕니다.
   const updateRows = () => {
@@ -130,42 +158,33 @@ function setupPanelResize(root) {
   };
   const observer = new MutationObserver(updateRows);
   panels.forEach(panel => observer.observe(panel, { attributes: true, attributeFilter: ['style'] }));
-  reset.onclick = () => {
-    root.querySelectorAll('.home-resizable').forEach(panel => {
-      panel.style.removeProperty('width');
-      panel.style.removeProperty('height');
-    });
-    updateRows();
-  };
 }
 async function initialize() {
   const root = document.querySelector('.home-page');
   if (!root) return;
   setupPanelResize(root);
   const $ = selector => root.querySelector(selector);
-  let today = kstToday(), selectedDate = today, cursor = today, scope = 'all', panel = 'calendar';
-  const TIMELINE_FROM = 7, TIMELINE_TO = 21, TIMEZONE_LABEL = 'KST';
-  let view = matchMedia('(max-width: 540px)').matches ? 'list' : 'month';
-  let mode = 'work', store = blankStore(), loadedRaw, locked = false, signals = null, requestNumber = 0, toastTimer;
+  let today = kstToday(), selectedDate = today, cursor = today, panel = 'month';
+  const TIMEZONE_LABEL = 'KST';
+  let weekScroll = { start: '', top: null, left: 0 };
+  let view = 'month';
+  let store = blankStore(), locked = false, signals = null, requestNumber = 0, toastTimer;
   let renderedNewsMarkup = null;
   let serverToken = null, serverBaseline = null, storageBusy = false;
   let taskCategoriesAvailable = false;
-  const categoriesEnabled = () => mode === 'demo' || taskCategoriesAvailable;
+  const categoriesEnabled = () => taskCategoriesAvailable;
   const taskCategoryText = task => categoriesEnabled() ? ` · 종류: ${esc(TASK_CATEGORIES[task.category || ''])}` : '';
   const preferencesKey = 'hjs-home-server-work-preferences-v1';
-  const key = () => `hjs-home-browser-v1-${mode}`;
   const showError = message => { $('#storage-error').hidden = !message; $('#storage-error').textContent = message; };
   function toast(message) { clearTimeout(toastTimer); $('#home-toast').textContent = message; $('#home-toast').hidden = false; toastTimer = setTimeout(() => { $('#home-toast').hidden = true; }, 2800); }
-  try {
-    const preference = localStorage.getItem('hjs-home-browser-mode');
-    mode = ['demo', 'work'].includes(preference) ? preference : 'work';
-  } catch { /* 저장소 접근 실패는 load에서 사용자에게 알립니다. */ }
   const workData = value => ({ version: 1, campaigns: value.campaigns, tasks: value.tasks, schedules: value.schedules, links: value.links });
   function storageControls(busy) {
     storageBusy = busy;
-    for (const selector of ['#data-mode', '#record-action', '#export-store', '#import-store', '#migrate-store', '#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign']) {
-      const control = $(selector); if (control) control.disabled = busy || (selector === '#record-action' && migrationBusy);
+    const readOnly = busy || locked || serverToken === null;
+    for (const selector of ['#new-campaign', '#clone-campaign', '#replan-campaign', '#delete-campaign', '#open-review', '#campaign-select']) {
+      const control = $(selector); if (control) control.disabled = readOnly || (selector !== '#new-campaign' && !selected());
     }
+    root.querySelectorAll('[data-check]').forEach(control => { control.disabled = readOnly; });
     root.setAttribute('aria-busy', String(busy));
   }
   async function workRequest(method, payload) {
@@ -187,63 +206,46 @@ async function initialize() {
   }
   async function load() {
     locked = true; showError(''); storageControls(true);
-    serverToken = null; serverBaseline = null; store = blankStore();
-    taskCategoriesAvailable = false;
+    serverToken = null; serverBaseline = null; store = blankStore(); taskCategoriesAvailable = false;
     try {
-      if (mode === 'work') {
-        let preferences = blankStore().preferences;
-        try {
-          const saved = localStorage.getItem(preferencesKey);
-          const previous = saved === null ? JSON.parse(localStorage.getItem('hjs-home-browser-v1-work') || 'null')?.preferences : JSON.parse(saved);
-          if (previous && typeof previous === 'object' && !Array.isArray(previous)) preferences = { ...preferences, ...previous };
-        } catch { /* 업무 원본은 서버에서만 읽습니다. 화면 설정을 못 읽어도 업무 조회는 계속합니다. */ }
-        const result = await workRequest('GET');
-        store = { ...result.data, preferences }; serverToken = result.token;
-        taskCategoriesAvailable = result.task_categories_enabled === true;
-        serverBaseline = JSON.stringify(workData(store));
-      } else {
-        loadedRaw = localStorage.getItem(key());
-        store = loadedRaw === null ? demoStore(today) : JSON.parse(loadedRaw);
-        if (loadedRaw === null) { localStorage.setItem(key(), JSON.stringify(store)); loadedRaw = localStorage.getItem(key()); }
-      }
+      let preferences = blankStore().preferences;
+      try {
+        const previous = JSON.parse(localStorage.getItem(preferencesKey) || 'null');
+        if (previous && typeof previous === 'object' && !Array.isArray(previous)) preferences = { ...preferences, ...previous };
+      } catch { /* Screen preferences are independent of server records. */ }
+      const result = await workRequest('GET');
+      store = { ...result.data, preferences }; serverToken = result.token;
+      taskCategoriesAvailable = result.task_categories_enabled === true;
+      serverBaseline = JSON.stringify(workData(store));
       if (!validStore(store)) throw new Error('invalid');
       locked = false;
     } catch (error) {
       locked = true; store = blankStore();
-      showError(mode === 'work' ? `서버 기록을 불러오지 못해 편집을 멈췄습니다. ${error.message}` : '예시 브라우저 기록을 읽지 못해 편집을 멈췄습니다. 저장소 설정을 확인해주세요.');
+      showError('서버 기록을 불러오지 못해 편집을 멈췄습니다. ' + error.message);
     } finally { storageControls(false); }
-    $('#data-mode').value = mode;
-    const notice = $('#storage-notice');
-    if (notice) notice.textContent = mode === 'work' ? '내 업무는 서버에 저장됩니다. 화면 선택·조회 기간만 이 브라우저에 보관합니다.' : '예시 데이터 (DEMO)는 이 브라우저에만 저장됩니다.';
   }
   async function save(next, deleteCampaignIds = []) {
     if (locked) { toast('저장소를 확인한 뒤 새로고침해주세요.'); return false; }
-    if (storageBusy || migrationBusy) { toast('저장이 끝난 뒤 다시 눌러주세요.'); return false; }
+    if (storageBusy) { toast('저장이 끝난 뒤 다시 눌러주세요.'); return false; }
     if (!validStore(next)) { showError('저장할 기록의 형식이 올바르지 않습니다. 기존 기록은 유지됩니다.'); return false; }
-    if (mode === 'work') {
-      const data = workData(next);
-      if (JSON.stringify(data) === serverBaseline && !deleteCampaignIds.length) {
-        store = next; rememberPreferences(next.preferences); return true;
-      }
-      storageControls(true);
-      try {
-        const result = await workRequest('POST', { token: serverToken, data, delete_campaign_ids: deleteCampaignIds });
-        store = { ...result.data, preferences: next.preferences }; serverToken = result.token;
-        taskCategoriesAvailable = result.task_categories_enabled === true;
-        serverBaseline = JSON.stringify(workData(store)); rememberPreferences(next.preferences); showError('');
-        return true;
-      } catch (error) {
-        locked = true; showError(`저장 성공 여부를 확인하지 못했습니다. ${error.message} 새로고침 전까지 편집을 멈춥니다.`);
-        return false;
-      } finally { storageControls(false); }
+    const data = workData(next);
+    if (JSON.stringify(data) === serverBaseline && !deleteCampaignIds.length) {
+      store = next; rememberPreferences(next.preferences); return true;
     }
+    storageControls(true);
     try {
-      if (localStorage.getItem(key()) !== loadedRaw) { locked = true; showError('다른 창에서 기록이 변경되었습니다. 덮어쓰지 않도록 저장을 멈췄습니다. 새로고침해주세요.'); return false; }
-      const serialized = JSON.stringify(next); localStorage.setItem(key(), serialized); loadedRaw = serialized; store = next; return true;
-    } catch { showError('저장하지 못했습니다. 저장 공간과 브라우저 설정을 확인해주세요. 기존 기록은 유지됩니다.'); return false; }
+      const result = await workRequest('POST', { token: serverToken, data, delete_campaign_ids: deleteCampaignIds });
+      store = { ...result.data, preferences: next.preferences }; serverToken = result.token;
+      taskCategoriesAvailable = result.task_categories_enabled === true;
+      serverBaseline = JSON.stringify(workData(store)); rememberPreferences(next.preferences); showError('');
+      return true;
+    } catch (error) {
+      locked = true; showError('저장 성공 여부를 확인하지 못했습니다. ' + error.message + ' 새로고침 전까지 편집을 멈춥니다.');
+      return false;
+    } finally { storageControls(false); }
   }
   const selected = () => store.campaigns.find(c => c.id === store.preferences.selected) || store.campaigns[0];
-  const inScope = () => store.tasks.filter(t => scope === 'all' || t.campaign_id === selected()?.id);
+  const inScope = () => store.tasks;
   const campaignName = campaignId => store.campaigns.find(c => c.id === campaignId)?.name || '이벤트 없음';
   function range() { return { start: $('#range-start').value, end: $('#range-end').value }; }
   function updateRange() {
@@ -252,46 +254,25 @@ async function initialize() {
     $('#range-start').value = preset === 'custom' ? store.preferences.range_start || today : today;
     $('#range-end').value = preset === 'custom' ? store.preferences.range_end || today : addDays(today, Number(preset));
   }
-  function demoSignals() {
-    const anchor = store.demo_anchor || today;
-    return {
-      events: { state: 'ok', items: [
-        { event_id: 'demo_gift_day', name: '선물 이벤트 기념일', date: addDays(anchor, 28), type: 'anniversary', region: '다낭', source_name: '가상 기념일 · 운영 일정 아님', is_demo: true },
-        { event_id: 'demo_fruit_season', name: '열대과일 시즌 기획', start_date: addDays(anchor, 7), end_date: addDays(anchor, 18), type: 'fruit_season', region: '다낭', source_name: '가상 시즌 · 실제 제철 정보 아님', is_demo: true },
-        { event_id: 'demo_local_holiday', name: '지역 행사 준비', date: addDays(anchor, 42), type: 'anniversary', region: '다낭', source_name: '가상 행사', is_demo: true },
-      ] },
-      collaborations: { state: 'ok', items: [
-        // 협업 예시는 오늘 기준으로 배치해 오래된 브라우저 예시에서도 시연할 수 있게 합니다.
-        { collaboration_id: 'demo_creator_a', influencer: '예시 크리에이터 A', main_platform: 'Instagram', status: 'confirmed', status_label: '계약 확정', shoot_date: addDays(today, 10), post_date: addDays(today, 17), requires_attention: true, next_action: '제품 전달 시간 확인', event_id: 'demo_gift_day', is_demo: true },
-        { collaboration_id: 'demo_creator_b', influencer: '예시 크리에이터 B', main_platform: 'TikTok', status: 'shot', status_label: '촬영 완료', shoot_date: addDays(today, -1), post_date: addDays(today, 3), next_action: '최종 영상과 게시 예약 확인', event_id: 'demo_gift_day', is_demo: true },
-        { collaboration_id: 'demo_creator_c', influencer: '예시 크리에이터 C', main_platform: 'YouTube', status: 'sent', status_label: '회신 대기', shoot_date: '', post_date: addDays(today, 5), requires_attention: true, next_action: '제안 회신 요청·촬영 가능일 확인', event_id: 'demo_gift_day', is_demo: true },
-      ] }, attention: { state: 'ok', items: [] },
-      news: { state: 'ok', items: [
-        ['선물 구매 고객을 위한 제품 소개', '선물 목적과 구매 상황을 나누어 고객 반응을 정리하는 가상 조사 자료입니다.', '선물세트 포장과 구성품을 보여주는 카드뉴스를 준비합니다.'],
-        ['과일 단면을 활용한 콘텐츠 방향', '제품 단면·크기·포장을 서로 다른 소재로 비교하는 가상 기획 자료입니다.', '과일 단면을 강조하는 영상의 첫 장면을 구상합니다.'],
-        ['고객 문의에서 확인할 구매 정보', '가격·보관·선물 포장 관련 질문을 분류한 가상 예시입니다.', '반복되는 질문을 제품 안내 콘텐츠에 반영합니다.'],
-      ].map(([title, summary, suggestion], i) => ({ news_id: `demo_news_${i}`, title, summary, suggestion, published_at: addDays(anchor, -i), source: 'DEMO · 예시 조사 자료', region: '다낭', is_demo: true })) },
-    };
-  }
   function localEvents() {
-    return (signals?.events.items || []).filter(e => (mode === 'demo' || e.is_demo !== true)).map(e => ({ ...e, start: e.start_date || e.date, end: e.end_date || e.start_date || e.date })).filter(e => validDate(e.start) && validDate(e.end) && e.end >= e.start);
+    return (signals?.events.items || []).filter(e => e.is_demo !== true).map(e => ({ ...e, start: e.start_date || e.date, end: e.end_date || e.start_date || e.date })).filter(e => validDate(e.start) && validDate(e.end) && e.end >= e.start);
   }
   function overlaps(t) { return t.due_date ? localEvents().filter(e => e.start <= t.due_date && e.end >= t.due_date) : []; }
   function creators() {
-    return (signals?.collaborations.items || []).filter(c => (mode === 'demo' || c.is_demo !== true) && c.status !== 'declined' && (scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id) || !c.event_id));
+    return (signals?.collaborations.items || []).filter(c => c.is_demo !== true && c.status !== 'declined');
   }
   function calendarEvents() {
     const events = inScope().filter(t => t.due_date && t.status !== 'cancelled').map(t => ({ date: t.due_date, end: t.due_date, title: t.title, kind: 'task', id: t.id, done: t.status === 'done', time: validTime(t.due_time) ? t.due_time : '' }));
     const locals = localEvents();
     locals.forEach(e => events.push({ date: e.start, end: e.end, title: e.name, kind: 'local', id: e.event_id, provisional: e.provisional === true }));
     // 현지 일정에서 만든 이벤트는 같은 날 같은 이름으로 두 줄이 됩니다. 현지 일정 쪽만 남기고 디데이 표시만 붙입니다.
-    store.campaigns.filter(c => scope === 'all' || c.id === selected()?.id).forEach(c => {
+    store.campaigns.forEach(c => {
       const anchor = locals.find(e => e.event_id && e.event_id === c.event_id && e.start <= c.target_date && e.end >= c.target_date);
       if (anchor) { const row = events.find(e => e.kind === 'local' && e.id === anchor.event_id); if (row) row.campaignId = c.id; return; }
       events.push({ date: c.target_date, end: c.target_date, title: c.name, kind: 'campaign', id: c.id });
     });
-    store.schedules.filter(s => validDate(s.date) && (scope === 'all' || s.campaign_id === selected()?.id)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
-    creators().filter(c => scope === 'all' || store.links.some(l => l.campaign_id === selected()?.id && l.collaboration_id === c.collaboration_id) || (selected()?.event_id && c.event_id === selected().event_id)).forEach(c => ['shoot_date', 'post_date'].forEach(field => {
+    store.schedules.filter(s => validDate(s.date)).forEach(s => events.push({ date: s.date, end: s.date, title: s.title || s.name, kind: 'schedule', id: s.id }));
+    creators().forEach(c => ['shoot_date', 'post_date'].forEach(field => {
       if (validDate(c[field])) events.push({ date: c[field], end: c[field], title: `${c.influencer} · ${field === 'post_date' ? '게시' : '촬영'}`, kind: 'creator', id: c.collaboration_id, link: c.link });
     }));
     return events;
@@ -312,12 +293,21 @@ async function initialize() {
     return `${esc(from)}${to !== from ? ` ~ ${esc(to)}` : ''}`;
   }
   function eventSummary(e) {
-    return `<p class="home-signal-meta">${eventPeriod(e)}${e.verified_at ? ` · 확인 ${esc(e.verified_at)}` : ''}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}<p class="home-signal-meta">${eventSources(e)}</p>`;
+    return `<p class="home-signal-meta">${eventPeriod(e)}</p>${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}${e.applies_to ? `<p>${esc(e.applies_to)}</p>` : ''}`;
   }
   function showLocalEvent(eventId) {
     const e = localEvents().find(item => item.event_id === eventId);
     if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
-    openDialog(e.name, `${e.is_demo ? '' : badge(e.provisional ? '미확정 · 정부 공문 전' : '출처 확인 자료', e.provisional === true)}<p>${esc(e.official_name || e.name)}</p>${eventSummary(e)}<p>${esc(e.description || '')}</p>${e.original_period ? `<p class="home-muted">원문 기간: ${esc(e.original_period)}</p>` : ''}${e.schedule_nature ? `<p class="home-muted">일정 성격: ${esc(e.schedule_nature)}</p>` : ''}${e.verification_notes ? `<p class="home-muted">검증 범위: ${esc(e.verification_notes)}</p>` : ''}<div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></div>`);
+    // 저장된 문장을 나눠 읽기 쉽게 표시합니다. 사실을 새로 요약하거나 검증하지 않습니다.
+    const points = text => String(text || '').split(/(?<=[.!?。])\s+|\r?\n+/).filter(s => s.trim()).map(s => `<li>${esc(s.trim())}</li>`).join('');
+    openDialog(e.name, `<div class="home-local-detail">
+      <div class="home-local-lead">${e.is_demo ? badge('예시 데이터 (DEMO)') : badge(e.provisional ? '미확정 · 정부 공문 전' : '출처 확인 자료', e.provisional === true)}${monthly(e) ? badge('월 단위 · 일 단위 미확인') : ''}<p class="home-local-original">${esc(e.official_name || e.name)}</p></div>
+      <dl class="home-local-facts"><div><dt>기간</dt><dd>${eventPeriod(e)}</dd></div>${e.region ? `<div><dt>지역</dt><dd>${esc(e.region)}</dd></div>` : ''}${e.applies_to ? `<div><dt>적용 대상</dt><dd>${esc(e.applies_to)}</dd></div>` : ''}${e.schedule_nature ? `<div><dt>일정 성격</dt><dd>${esc(e.schedule_nature)}</dd></div>` : ''}</dl>
+      ${e.description ? `<section><h3>일정 안내</h3><ul class="home-local-points">${points(e.description)}</ul></section>` : ''}
+      ${!e.is_demo ? `<section><h3>근거 자료</h3><div class="home-local-sources">${eventSources(e)}</div></section>` : ''}
+      ${e.original_period || e.verification_notes || e.verified_at ? `<details class="home-local-verification"><summary>원문 기간 · 확인 범위</summary>${e.original_period ? `<p><strong>원문 기간</strong> ${esc(e.original_period)}</p>` : ''}${e.verified_at ? `<p class="home-muted">자료 확인일: ${esc(e.verified_at)}</p>` : ''}${e.verification_notes ? `<ul class="home-local-points">${points(e.verification_notes)}</ul>` : ''}</details>` : ''}
+      <div class="home-form-actions"><button class="btn dark" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></div>
+    </div>`);
   }
   function eventAction(e) {
     if (e.kind === 'task') return `<button class="btn" data-task="${esc(e.id)}">열기</button>`;
@@ -326,41 +316,128 @@ async function initialize() {
     if (e.kind === 'campaign') return `<button class="btn" data-select="${esc(e.id)}">이벤트 보기</button>`;
     return '';
   }
+  function monthEventState(e) {
+    // 월간 표시만 꾸밉니다. 다른 보기에서 사용하는 일정 객체나 저장 상태는 바꾸지 않습니다.
+    if (e.kind === 'task') {
+      const task = store.tasks.find(t => t.id === e.id);
+      if (!task) return { label: '', tone: '' };
+      const late = unfinished(task) && task.due_date && task.due_date < today;
+      return { label: late ? `기한 초과 · ${TASK_STATES[task.status]}` : TASK_STATES[task.status],
+        short: late ? '지연' : task.status === 'done' ? '✓' : task.status === 'doing' ? '진행' : TASK_STATES[task.status],
+        tone: late ? 'overdue' : task.status };
+    }
+    if (e.kind === 'campaign') {
+      const c = store.campaigns.find(item => item.id === e.id);
+      return { label: c ? CAMPAIGN_STATES[c.status] || '' : '',
+        tone: c ? ({ preparing: 'todo', active: 'doing', done: 'done', blocked: 'blocked', cancelled: 'cancelled', archived: 'archived' }[c.status] || '') : '' };
+    }
+    if (e.kind === 'creator') return { label: creators().find(c => c.collaboration_id === e.id)?.status_label || '', tone: '' };
+    return { label: '', tone: '' };
+  }
+  function monthEventDescription(e, state = monthEventState(e)) {
+    return `${e.title}${state.label ? ` · ${state.label}` : ''}${e.provisional ? ' · 법정일 기준, 연휴 기간 미확정' : ''}${e.campaignId ? ' · 이벤트 기준일' : ''}`;
+  }
+  function showMonthDay(day) {
+    const rows = calendarEvents().filter(e => e.date <= day && e.end >= day)
+      .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+    selectedDate = day; renderCalendar(); renderTasks();
+    root.querySelector(`[data-month-more="${day}"]`)?.focus();
+    openDialog(`${day} · 전체 일정 ${rows.length}건`, rows.map(e => {
+      const state = monthEventState(e);
+      return `<div class="home-agenda-row"><div><strong>${esc(e.title)}</strong><p class="home-signal-meta">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}${state.label ? ` · ${esc(state.label)}` : ''}${e.provisional ? ' · 연휴 기간 미확정' : ''}</p></div><button class="btn" type="button" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" data-month-date="${e.date}" data-month-title="${esc(e.title)}">상세 보기</button></div>`;
+    }).join(''));
+  }
+  async function openMonthEvent(kind, eventId, date = '', title = '') {
+    const e = calendarEvents().find(item => item.kind === kind && item.id === eventId && (!date || item.date === date) && (!title || item.title === title));
+    if (!e) { toast('일정 정보를 찾지 못했습니다. 다시 조회해주세요.'); return; }
+    if (dialog.open) dialog.close();
+    if (kind === 'task') editTask(eventId);
+    else if (kind === 'local') showLocalEvent(eventId);
+    else if (kind === 'campaign') { await changeCampaign(eventId); if (selected()?.id === eventId) showPanel('campaign'); }
+    else openDialog(e.title, `<p>${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}</p>${monthEventState(e).label ? `<p>${esc(monthEventState(e).label)}</p>` : ''}${eventAction(e)}`);
+  }
+  function weekChip(e, variant, attributes = '') {
+    const state = monthEventState(e), label = state.label || ({ local: '현지 일정', campaign: '이벤트', schedule: '직접 일정', creator: '협업', task: '업무' }[e.kind]);
+    const description = `${monthEventDescription(e, state)} · ${e.date}${e.end !== e.date ? ` ~ ${e.end}` : ''}${e.time ? ` · ${e.time} 마감 · 종료 시각 미등록` : ' · 종일'}`;
+    const title = `<span class="home-week-chip-title">${esc(e.title)}</span>`;
+    const details = variant === 'timed'
+      ? `${title}<span class="home-week-chip-meta">${esc(e.time)} 마감 · ${esc(label)}</span>`
+      : `${state.label ? `<span class="home-week-chip-state" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}${title}`;
+    return `<button type="button" class="home-week-chip ${esc(e.kind)} is-${variant}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-week-kind="${esc(e.kind)}" data-week-id="${esc(e.id)}" data-week-date="${e.date}" data-week-title="${esc(e.title)}" title="${esc(description)}" aria-label="${esc(description)}" ${attributes}>${details}</button>`;
+  }
+  function updateWeekNow() {
+    const week = $('.home-week-view'); if (!week || view !== 'week') return;
+    const day = kstToday(), now = new Date();
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(now).map(p => [p.type, p.value]));
+    const minute = Number(parts.hour) * 60 + Number(parts.minute) + Number(parts.second) / 60;
+    week.querySelectorAll('[data-week-day]').forEach(column => {
+      const current = column.dataset.weekDay === day;
+      column.classList.toggle('is-today', current);
+      if (column.classList.contains('home-week-date')) {
+        if (current) column.setAttribute('aria-current', 'date'); else column.removeAttribute('aria-current');
+      }
+      const line = column.querySelector('.home-week-now');
+      if (line) {
+        line.hidden = !current; line.style.top = `${minute / 1440 * 100}%`;
+        line.setAttribute('aria-label', `현재 시각 ${parts.hour}:${parts.minute} KST`);
+        line.querySelector('span').textContent = `${parts.hour}:${parts.minute}`;
+      }
+    });
+  }
+  function renderWeek(events, start, end) {
+    const previous = $('.home-week-scroll');
+    if (previous) weekScroll = { start: previous.dataset.weekStart, top: previous.scrollTop, left: previous.scrollLeft };
+    const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+    const rows = events.filter(e => e.date <= end && e.end >= start);
+    const weekToday = kstToday();
+    const dateButton = (day, index) => `<button type="button" class="home-week-date${day === weekToday ? ' is-today' : ''}" data-date="${day}" data-week-day="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 날짜 선택"${day === weekToday ? ' aria-current="date"' : ''}><span>${['월', '화', '수', '목', '금', '토', '일'][index]}</span><strong>${Number(day.slice(8))}</strong></button>`;
+    const unavailable = [['events', '현지'], ['collaborations', '협업']].filter(([key]) => signals?.[key]?.state === 'error').map(([, label]) => label);
+    const notice = !signals ? '<p class="home-week-notice" role="status">현지·협업 일정을 불러오는 중입니다.</p>' : unavailable.length ? `<p class="home-week-notice" role="status">${unavailable.join('·')} 일정을 불러오지 못했습니다. 확인된 업무와 일정만 표시합니다.</p>` : '';
+    const allDay = rows.filter(e => !e.time), periods = periodSegments(allDay, start).filter(s => s.lane < 3);
+    const cells = days.map(day => {
+      const daily = allDay.filter(e => e.date <= day && e.end >= day);
+      const singles = daily.filter(e => !(e.kind === 'local' && e.date < e.end));
+      const hidden = daily.filter(e => e.kind === 'local' && e.date < e.end && !periods.some(s => s.event.id === e.id)).length;
+      const occupied = periods.filter(s => s.start <= day && s.end >= day).reduce((n, s) => Math.max(n, s.lane + 1), 0);
+      let shown = Math.min(singles.length, 4 - occupied);
+      if (singles.length + hidden > shown && shown > 0) shown--;
+      return { day, occupied, singles: singles.slice(0, shown), rest: singles.length - shown + hidden };
+    });
+    const allRows = Math.max(1, ...periods.map(s => s.lane + 1), ...cells.map(c => c.occupied + c.singles.length + Number(c.rest > 0)));
+    const available = $('#calendar-body').clientHeight || 480;
+    const hourHeight = Math.max(24, Math.floor((available - 56 - (allRows * 24 + 8)) / 12));
+    const allMarkup = `<div class="home-week-allday${allDay.length ? '' : ' is-empty'}"><div class="home-week-allday-grid" style="grid-template-rows:repeat(${allRows}, 24px)"><span class="home-week-all-label" style="grid-row:1 / -1">종일</span>${periods.map(s => weekChip(s.event, 'period', `style="grid-column:${s.column + 1} / span ${s.span};grid-row:${s.lane + 1}" data-period-start="${s.start}" data-period-end="${s.end}" data-continues-before="${s.continuesBefore}" data-continues-after="${s.continuesAfter}"`)).join('')}${cells.map((c, index) => c.singles.length || c.rest ? `<div class="home-week-all-cell" style="grid-column:${index + 2};grid-row:${c.occupied + 1} / -1">${c.singles.map(e => weekChip(e, 'all')).join('')}${c.rest ? `<button type="button" class="home-week-more" data-week-more="${c.day}" aria-label="${c.day}, 숨겨진 종일 일정 ${c.rest}건 · 전체 일정 보기">+${c.rest}개 더보기</button>` : ''}</div>` : '').join('')}</div></div>`;
+    const hours = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`);
+    const timeGrid = `<div class="home-week-time-grid"><div class="home-week-hours">${hours.map(label => `<div>${label}</div>`).join('')}</div>${days.map(day => {
+      const points = weekPointLayout(rows.filter(e => e.date <= day && e.end >= day && e.time), hourHeight);
+      return `<div class="home-week-time-day${day === weekToday ? ' is-today' : ''}" data-week-day="${day}">${hours.map(label => `<button type="button" class="home-week-slot" data-slot="${day} ${label}" aria-label="${day} ${label}, 날짜 선택"></button>`).join('')}${points.map(p => weekChip(p.event, 'timed', `style="top:${p.displayStart / 1440 * 100}%;left:calc(${p.lane / p.columns * 100}% + var(--space-1));width:calc(${100 / p.columns}% - var(--space-2));--week-point-offset:${(p.minute - p.displayStart) * hourHeight / 60}px"`)).join('')}<div class="home-week-now" hidden role="img"><span></span></div></div>`;
+    }).join('')}</div>`;
+    $('#calendar-body').innerHTML = `<div class="home-week-view is-timeline" style="--home-week-hour:${hourHeight}px">${notice}<div class="home-week-scroll" data-week-start="${start}"><div class="home-week-table"><div class="home-week-head"><span class="home-week-head-zone">${TIMEZONE_LABEL}</span>${days.map((day, index) => dateButton(day, index)).join('')}</div>${allMarkup}${timeGrid}</div></div></div>`;
+    const scroller = $('.home-week-scroll');
+    scroller.scrollTop = weekScroll.start === start && weekScroll.top !== null ? weekScroll.top : 8 * hourHeight;
+    scroller.scrollLeft = weekScroll.start === start ? weekScroll.left : 0;
+    updateWeekNow();
+  }
   function renderCalendar() {
     const events = calendarEvents(), at = date => events.filter(e => e.date <= date && e.end >= date);
-    root.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
-    let start, end;
+    let start, end, weekCount = 5;
     if (view === 'month') {
       const first = `${cursor.slice(0, 7)}-01`, weekday = (new Date(first).getUTCDay() + 6) % 7;
       start = addDays(first, -weekday); const nextMonth = new Date(first); nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
-      const weeks = Math.ceil((dayDiff(nextMonth.toISOString().slice(0, 10), first) + weekday) / 7); end = addDays(start, weeks * 7 - 1);
+      const weeks = Math.max(4, Math.ceil((dayDiff(nextMonth.toISOString().slice(0, 10), first) + weekday) / 7)); weekCount = weeks; end = addDays(start, weeks * 7 - 1);
     } else if (view === 'week') { start = addDays(cursor, -((new Date(cursor).getUTCDay() + 6) % 7)); end = addDays(start, 6); }
     else { start = `${cursor.slice(0, 7)}-01`; const next = new Date(start); next.setUTCMonth(next.getUTCMonth() + 1); end = addDays(next.toISOString().slice(0, 10), -1); }
-    $('#calendar-period').textContent = view === 'week' ? `${shortDate(start)} – ${shortDate(end)}` : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
+    $('#calendar-period').textContent = view === 'week'
+      ? `${start.slice(0, 4)}. ${shortDate(start).replace('/', '. ')} – ${start.slice(0, 4) === end.slice(0, 4) ? '' : `${end.slice(0, 4)}. `}${shortDate(end).replace('/', '. ')}`
+      : `${cursor.slice(0, 4)}. ${cursor.slice(5, 7)}`;
     if (view === 'week') {
-      // 구글 캘린더처럼 요일 7칸 x 시간대 행으로 그립니다. 시간이 없는 항목은 위쪽 종일 칸에 둡니다.
-      const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-      const header = days.map(day => `<button class="home-tl-head${day === today ? ' is-today' : ''}" data-date="${day}" aria-pressed="${day === selectedDate}"><span class="home-tl-weekday">${['월', '화', '수', '목', '금', '토', '일'][(new Date(day).getUTCDay() + 6) % 7]}</span><span class="home-tl-daynum">${Number(day.slice(8))}</span></button>`).join('');
-      const allDay = days.map(day => `<div class="home-tl-allday-cell">${at(day).filter(e => !e.time).map(e => `<button class="home-event ${e.kind}${e.done ? ' done' : ''}" data-open="${esc(e.kind)}:${esc(e.id)}">${esc(e.title)}</button>`).join('')}</div>`).join('');
-      let grid = '';
-      for (let hour = TIMELINE_FROM; hour <= TIMELINE_TO; hour++) {
-        const label = `${String(hour).padStart(2, '0')}:00`;
-        grid += `<div class="home-tl-hour">${label}</div>`;
-        grid += days.map(day => {
-          const slot = at(day).filter(e => e.time && Number(e.time.slice(0, 2)) === hour);
-          return `<button class="home-tl-cell${day === today ? ' is-today' : ''}" data-slot="${day} ${label}" aria-label="${day} ${label} 업무 추가">${slot.map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}" title="${esc(e.time)} ${esc(e.title)}">${esc(e.time)} ${esc(e.title)}</span>`).join('')}</button>`;
-        }).join('');
-      }
-      $('#calendar-body').innerHTML = `<div class="home-timeline"><div class="home-tl-corner">${TIMEZONE_LABEL}</div>${header}<div class="home-tl-corner home-tl-allday-label">종일</div>${allDay}<div class="home-tl-scroll"><div class="home-tl-grid">${grid}</div></div></div>`;
-      return;
+      renderWeek(events, start, end); return;
     }
-    if (view === 'list') {
-      const rows = events.filter(e => e.date <= end && e.end >= start).sort((a, b) => a.date.localeCompare(b.date));
-      $('#calendar-body').innerHTML = rows.length ? rows.map(e => `<div class="home-agenda-row"><div><span class="home-muted">${esc(e.date)}${e.end !== e.date ? ` ~ ${esc(e.end)}` : ''}</span><br>${esc(e.title)} ${e.done ? badge('완료') : ''}</div>${eventAction(e)}</div>`).join('') : empty('이달에 등록된 일정이 없습니다.');
-    } else {
-      let html = '<div class="home-month"><div class="home-weekdays">' + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('') + '</div>';
+    {
+      const monthSlots = calendarMonthSlots($('#calendar-body').clientHeight, weekCount, $('#calendar-body').clientWidth);
+      let html = `<div class="home-month" data-week-count="${weekCount}" data-slots="${monthSlots}" style="--home-week-count:${weekCount};--home-month-slots:${monthSlots}"><div class="home-weekdays">` + ['월', '화', '수', '목', '금', '토', '일'].map(d => `<div class="home-weekday">${d}</div>`).join('') + '</div>';
       for (let weekStart = start; weekStart <= end; weekStart = addDays(weekStart, 7)) {
-        const segments = periodSegments(events, weekStart);
+        const segments = periodSegments(events, weekStart).filter(segment => segment.lane < Math.max(1, monthSlots - 1));
         const laneCount = segments.reduce((n, segment) => Math.max(n, segment.lane + 1), 0);
         html += `<div class="home-week" style="--period-lanes:${laneCount};grid-template-rows:var(--home-day-head) ${laneCount ? `repeat(${laneCount}, calc(var(--home-chip-h) + 2px)) ` : ''}1fr">`;
         for (let column = 1; column <= 7; column++) {
@@ -369,26 +446,32 @@ async function initialize() {
           // 공휴일·축제 같은 현지 일정을 맨 위에 둡니다. 그날의 성격을 먼저 읽게 하기 위함입니다.
           const dayEvents = allDayEvents.filter(e => !(e.kind === 'local' && e.date < e.end))
             .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+          const hiddenPeriods = allDayEvents.filter(e => e.kind === 'local' && e.date < e.end && !segments.some(segment => segment.event.id === e.id)).length;
+          const occupiedLanes = segments.filter(segment => segment.start <= day && segment.end >= day)
+            .reduce((count, segment) => Math.max(count, segment.lane + 1), 0);
           // 하루에 보이는 것은 기간 막대까지 더해 DAY_SLOTS개까지입니다. 업무가 많아도 달력 높이가 변하지 않습니다.
-          const room = Math.max(0, DAY_SLOTS - segments.filter(s => s.start <= day && s.end >= day).length);
+          const room = Math.max(0, monthSlots - occupiedLanes);
           let shown = Math.min(dayEvents.length, room);
-          if (dayEvents.length > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
-          const rest = dayEvents.length - shown;
-          const chips = dayEvents.slice(0, shown).map(e => `<span class="home-event ${e.kind}${e.done ? ' done' : ''}${e.provisional ? ' is-provisional' : ''}" title="${esc(e.title)}${e.provisional ? ' · 법정일 기준, 연휴 기간 미확정' : ''}${e.campaignId ? ' · 이벤트 기준일' : ''}">${esc(e.title)}</span>`).join('') + (rest > 0 && room > 0 ? `<span class="home-more">+${rest}</span>` : '');
-          html += `<button class="home-day${day === today ? ' is-today' : ''}${view === 'month' && day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}" aria-label="${day}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
-          // 칩은 기간 막대보다 아래 행에 따로 배치해 겹치지 않게 합니다. 클릭은 아래 날짜 칸이 받습니다.
-          if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${laneCount + 2}">${chips}</span>`;
+          if (dayEvents.length + hiddenPeriods > shown && shown > 0) shown -= 1; // 더 보기 줄도 한 칸을 차지합니다
+          const rest = dayEvents.length - shown + hiddenPeriods;
+          const chips = dayEvents.slice(0, shown).map(e => {
+            const state = monthEventState(e), description = monthEventDescription(e, state);
+            return `<button type="button" class="home-event ${e.kind}${state.tone ? ` is-${state.tone}` : ''}${e.provisional ? ' is-provisional' : ''}" data-month-kind="${esc(e.kind)}" data-month-id="${esc(e.id)}" data-month-date="${e.date}" data-month-title="${esc(e.title)}" title="${esc(description)}" aria-label="${esc(description)}">${state.label ? `<span class="home-month-status" aria-hidden="true">${esc(state.short || state.label)}</span>` : ''}<span class="home-month-event-title">${esc(e.title)}</span></button>`;
+          }).join('') + (rest > 0 && room > 0 ? `<button type="button" class="home-more" data-month-more="${day}" aria-label="${day}, 숨겨진 일정 ${rest}건 · 전체 일정 보기">+${rest}개 더보기</button>` : '');
+          html += `<button class="home-day${day === today ? ' is-today' : ''}${day.slice(0, 7) !== cursor.slice(0, 7) ? ' home-outside' : ''}" style="grid-column:${column};grid-row:1 / -1" data-date="${day}" aria-pressed="${day === selectedDate}"${day === today ? ' aria-current="date"' : ''} aria-label="${day}${day === today ? ', 오늘' : ''}, 일정 ${allDayEvents.length}건"><span class="home-day-number">${Number(day.slice(8))}</span></button>`;
+          // 날짜 선택 버튼과 일정 버튼은 형제 요소로 배치해 중첩 버튼을 만들지 않습니다.
+          if (chips) html += `<span class="home-day-events" style="grid-column:${column};grid-row:${occupiedLanes + 2} / -1">${chips}</span>`;
         }
         html += segments.map(segment => {
           const e = segment.event;
-          return `<button class="home-period-bar${e.provisional ? ' is-provisional' : ''}${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}" style="grid-column:${segment.column} / span ${segment.span};grid-row:${segment.lane + 2}" data-local="${esc(e.id)}" data-period-start="${segment.start}" data-period-end="${segment.end}" aria-label="${esc(e.title)}, ${e.date}부터 ${e.end}까지${segment.continuesBefore ? ', 앞 주에서 이어짐' : ''}${segment.continuesAfter ? ', 다음 주에 이어짐' : ''}">${segment.continuesBefore ? '<span aria-hidden="true">← </span>' : ''}${esc(e.title)}${segment.continuesAfter ? '<span aria-hidden="true"> →</span>' : ''}</button>`;
+          return `<button type="button" class="home-period-bar${e.provisional ? ' is-provisional' : ''}${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}" style="grid-column:${segment.column} / span ${segment.span};grid-row:${segment.lane + 2}" data-local="${esc(e.id)}" data-period-start="${segment.start}" data-period-end="${segment.end}" title="${esc(monthEventDescription(e))} · ${e.date} ~ ${e.end}" aria-label="${esc(e.title)}, ${e.date}부터 ${e.end}까지${segment.continuesBefore ? ', 앞 주에서 이어짐' : ''}${segment.continuesAfter ? ', 다음 주에 이어짐' : ''}${e.provisional ? ', 연휴 기간 미확정' : ''}">${segment.continuesBefore ? '<span aria-hidden="true">← </span>' : ''}${esc(e.title)}${segment.continuesAfter ? '<span aria-hidden="true"> →</span>' : ''}</button>`;
         }).join('') + '</div>';
       }
       $('#calendar-body').innerHTML = html + '</div>';
     }
   }
   function renderTasks() {
-    // 진척도는 현재 선택한 이벤트의 업무만 기준으로 합니다. 표시 범위 선택은 아래 목록에만 적용합니다.
+    // 진척도는 선택 이벤트 기준이며, 오늘의 업무 목록은 전체 이벤트의 업무를 보여 줍니다.
     const campaign = selected(), campaignTasks = campaign ? store.tasks.filter(t => t.campaign_id === campaign.id) : [];
     const p = progress(campaignTasks);
     // 지연된 업무가 있을 때만 빨간 배지를 띄웁니다. 평소에는 조용하고 문제가 있을 때만 눈에 띄게 합니다.
@@ -401,7 +484,7 @@ async function initialize() {
       : empty('이벤트를 만들면 업무 진척이 표시됩니다.');
 
     const isToday = selectedDate === today;
-    $('#tasks-title').textContent = isToday ? '오늘의 해야 할 일' : `${selectedDate} 해야 할 일`;
+    $('#tasks-title').textContent = isToday ? '오늘의 업무' : `${selectedDate} 업무`;
     $('#today-reset').hidden = isToday;
     // 완료한 업무도 목록에 남겨 그날 무엇을 했는지 볼 수 있게 합니다. 취소 업무는 제외합니다.
     // 기준일에는 지난 미완료 업무도 함께 보여 놓치지 않게 합니다. 다른 날짜를 고르면 그날 업무만 봅니다.
@@ -409,8 +492,14 @@ async function initialize() {
       t.due_date === selectedDate || (isToday && unfinished(t) && t.due_date && t.due_date < today))), today);
     $('#task-list').innerHTML = rows.map(t => {
       const done = t.status === 'done', late = unfinished(t) && t.due_date && t.due_date < today;
-      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
+      return `<div class="home-task${done ? ' is-done' : ''}"><input type="checkbox" data-check="${esc(t.id)}" ${done ? 'checked' : ''} ${storageBusy || locked || serverToken === null ? 'disabled' : ''} aria-label="${esc(t.title)} 완료"><div><div class="home-task-top"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><span class="home-task-actions">${badge(done ? '완료' : late ? '기한 초과' : TASK_STATES[t.status], late && !done, late ? 'overdue' : t.status)}<button class="home-text-btn" data-move="${esc(t.id)}" aria-label="${esc(t.title)} 다른 날로 이월" title="다른 날로 이월">-&gt;</button></span></div><div class="home-task-meta">${t.due_date !== selectedDate ? `${esc(t.due_date)} 마감 · ` : ''}${esc(campaignName(t.campaign_id))}${taskCategoryText(t)}</div>${t.related_tab === 'kpi' && t.due_date && t.due_date <= today ? '<a class="home-muted" href="/kpi/">KPI 확인 ↗</a>' : ''}</div></div>`;
     }).join('') || empty(isToday ? '오늘 마감인 업무가 없습니다. 캘린더에서 다른 날짜를 선택할 수 있습니다.' : '이 날짜에 마감인 업무가 없습니다.');
+    const tomorrow = addDays(today, 1);
+    const upcoming = ordered(inScope().filter(t => t.due_date === tomorrow && unfinished(t)), today);
+    const preview = $('#tomorrow-tasks'); preview.hidden = !isToday;
+    preview.classList.toggle('is-prominent', rows.length === 0);
+    $('.home-today-card').classList.toggle('has-no-today', rows.length === 0);
+    preview.innerHTML = '<div class="home-tomorrow-head"><strong>내일의 업무</strong><span>' + upcoming.length + '건</span></div>' + (upcoming.length ? upcoming.slice(0, 3).map(t => '<button class="home-task-open" data-task="' + esc(t.id) + '">' + esc(t.title) + '</button>').join('') + (upcoming.length > 3 ? '<button class="home-text-btn" data-date="' + tomorrow + '">내일 전체 보기</button>' : '') : '<p class="home-muted">내일 마감인 미완료 업무가 없습니다.</p>');
     renderUndated();
   }
   // 마감일 없는 업무는 달력 어디에도 나오지 않아 잊히기 쉽습니다. 매일 보는 자리에 개수만 남겨 둡니다.
@@ -439,76 +528,115 @@ async function initialize() {
   }
   function renderCampaign() {
     const c = selected();
-    $('#campaign-select').innerHTML = store.campaigns.length ? store.campaigns.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)}</option>`).join('') : '<option value="">이벤트 없음</option>';
-    $('#campaign-title').textContent = c?.name || '이벤트를 준비해보세요';
-    $('#campaign-dday').hidden = !c; $('#campaign-dday').textContent = c ? dday(c.target_date, today) : '';
-    ['#clone-campaign', '#replan-campaign', '#campaign-select', '#delete-campaign'].forEach(sel => { $(sel).disabled = !c; });
+    const ongoing = store.campaigns.filter(item => !['done', 'cancelled', 'archived'].includes(item.status));
+    const previous = store.campaigns.filter(item => ['done', 'cancelled', 'archived'].includes(item.status));
+    const choices = items => items.map(item => `<option value="${esc(item.id)}" ${item.id === c?.id ? 'selected' : ''}>${esc(item.name)} · ${esc(CAMPAIGN_STATES[item.status] || item.status)}</option>`).join('');
+    $('#campaign-select').innerHTML = store.campaigns.length ? `${ongoing.length ? `<optgroup label="진행 중인 이벤트">${choices(ongoing)}</optgroup>` : ''}${previous.length ? `<optgroup label="지난 이벤트">${choices(previous)}</optgroup>` : ''}` : '<option value="">이벤트 없음</option>';
+    $('#planner-title').textContent = c?.name || '이벤트를 선택하세요';
+    $('#planner-title').title = c?.name || '';
+    storageControls(storageBusy);
     // 보고서는 선택한 이벤트가 있을 때만 엽니다. 새 창에서 인쇄용 화면을 보여 줍니다.
     const report = $('#open-report');
-    const canReport = Boolean(c) && mode === 'work';
+    const canReport = Boolean(c);
     report.href = canReport ? `/home/report/${encodeURIComponent(c.id)}` : '#';
     report.setAttribute('aria-disabled', String(!canReport));
     report.onclick = event => {
-      if (!canReport) { event.preventDefault(); toast('보고서는 서버에 저장된 ‘내 업무’ 이벤트에서 열 수 있습니다.'); }
+      if (!canReport) { event.preventDefault(); toast('이벤트를 선택한 뒤 보고서를 열어주세요.'); }
     };
     report.hidden = !c;
-    $('#retrospective').hidden = !c;
-    if (!c) { $('#campaign-summary').innerHTML = empty('이벤트 이름과 날짜를 입력해 준비 일정을 만드세요.'); $('#gantt').innerHTML = ''; return; }
-    $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><span class="home-campaign-date">${esc(c.target_date)}</span><span class="home-dday">${esc(dday(c.target_date, today))}</span>${[c.product, c.audience, c.channel].filter(Boolean).length ? `<span class="home-muted home-campaign-detail">${esc([c.product, c.audience, c.channel].filter(Boolean).join(' · '))}</span>` : ''}`;
+    $('#gantt-note').hidden = true;
+    if (!c) {
+      $('#campaign-summary').innerHTML = '';
+      $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>이벤트 준비를 시작하세요</strong><p>새 이벤트에서 이름과 기준일을 정하면 준비 업무를 만듭니다.</p></div>'; return;
+    }
+    $('#campaign-summary').innerHTML = `<span class="home-campaign-chip">${badge(CAMPAIGN_STATES[c.status] || c.status)}</span><time class="home-campaign-date" datetime="${esc(c.target_date)}">행사일 ${esc(c.target_date.replaceAll('-', '.'))}</time><span class="home-dday" title="한국 날짜 기준">${esc(dday(c.target_date, today))}</span>`;
     const tasks = store.tasks.filter(t => t.campaign_id === c.id);
-    const dated = [...tasks].filter(t => t.due_date && t.status !== 'cancelled').sort((a, b) => a.due_date.localeCompare(b.due_date));
-    if (dated.length) {
-      const starts = dated.map((t, i) => t.start_date || (i ? dated[i - 1].due_date : addDays(t.due_date, -3)));
-      const left = [addDays(dated[0].due_date, -3), ...starts].sort()[0], right = addDays(dated[dated.length - 1].due_date, 3), span = Math.max(1, dayDiff(right, left));
-      const position = date => Math.max(0, Math.min(100, dayDiff(date, left) / span * 100));
-      const todayLine = today >= left && today <= right ? `<span class="home-gantt-today" style="left:${position(today)}%" title="업무 기준일 ${today}"></span>` : '';
-      $('#gantt').innerHTML = `<div class="home-gantt"><div class="home-gantt-row"><span class="home-gantt-label">마케팅 업무</span><div class="home-gantt-axis">${[0, .5, 1].map(n => `<span>${shortDate(addDays(left, Math.round(span * n)))}</span>`).join('')}</div><span class="home-gantt-label">마감·상태</span></div>${dated.map((t, i) => `<div class="home-gantt-row"><button class="home-task-open" data-task="${esc(t.id)}">${esc(t.title)}</button><div class="home-gantt-track">${todayLine}<span class="home-gantt-bar ${t.status === 'done' ? 'done' : t.due_date < today ? 'late' : ''}" style="left:${position(starts[i])}%;width:${Math.max(.8, position(t.due_date) - position(starts[i]))}%" title="${esc(starts[i])} ~ ${esc(t.due_date)}"></span></div><span class="home-gantt-label">${shortDate(t.due_date)}<br>${TASK_STATES[t.status]}</span></div>`).join('')}</div>`;
-    } else $('#gantt').innerHTML = empty('날짜가 있는 업무를 등록하면 일정이 표시됩니다.');
-    $('#review-form [name="status"]').value = c.status;
-    $('#review-form [name="review"]').value = c.review || '';
+    if (!tasks.length) { $('#gantt').innerHTML = '<div class="home-dday-empty"><strong>등록된 준비 업무가 없습니다</strong><p>수정에서 준비 업무와 날짜를 확인해주세요.</p></div>'; return; }
+    const rows = ganttTaskRows(tasks);
+    const dates = rows.filter(r => !r.invalid).flatMap(r => [r.start, r.due].filter(Boolean)).sort();
+    let left = '', right = '', span = 0, axisWidth = 440, tickDays = 1, axis = '<span class="home-dday-axis-empty">날짜를 지정하면 기간이 표시됩니다</span>', todayPosition = null;
+    if (dates.length) {
+      const before = addDays(dates[0], -3), after = addDays(dates.at(-1), 3);
+      left = validDate(before) ? before : dates[0]; right = validDate(after) ? after : dates.at(-1); span = dayDiff(right, left) + 1;
+      axisWidth = Math.max(440, Math.min(2400, span * (span <= 120 ? 18 : 8)));
+      const maxTicks = Math.max(8, Math.floor(axisWidth / 38));
+      tickDays = span <= maxTicks ? 1 : span <= maxTicks * 7 ? 7 : span <= maxTicks * 14 ? 14 : Math.ceil(span / maxTicks);
+      const ticks = [];
+      for (let offset = 0; offset < span; offset += tickDays) {
+        const date = addDays(left, offset), count = Math.min(tickDays, span - offset);
+        ticks.push(`<time datetime="${date}" title="${date}" style="width:${count / span * 100}%">${tickDays === 1 ? Number(date.slice(8)) : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`}</time>`);
+      }
+      const months = [];
+      for (let offset = 0; offset < span;) {
+        const date = addDays(left, offset);
+        const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7));
+        const nextMonth = new Date(date); nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1, 1);
+        const count = Math.min(span - offset, dayDiff(nextMonth.toISOString(), date));
+        months.push(`<span title="${date} ~ ${addDays(date, count - 1)}" style="width:${count / span * 100}%">${year}. ${String(month).padStart(2, '0')}</span>`); offset += count;
+      }
+      if (today >= left && today <= right) todayPosition = (dayDiff(today, left) + .5) / span * 100;
+      axis = `<div class="home-dday-months">${months.join('')}</div><div class="home-dday-dates">${ticks.join('')}</div><div class="home-dday-today-band">${todayPosition === null ? '' : `<span style="left:${todayPosition}%" title="${today} · 한국 날짜 기준">오늘</span>`}</div>`;
+    }
+    const todayLine = todayPosition === null ? '' : `<span class="home-dday-today" style="left:${todayPosition}%" aria-hidden="true"></span>`;
+    const dateCell = (value, estimated = false) => value ? `<time datetime="${value}">${shortDate(value)}</time>${estimated ? '<sup title="실제 시작일 미입력 · 기존 자동 기준일">*</sup>' : ''}` : '<span class="home-dday-muted">미정</span>';
+    const content = rows.map(r => {
+      const t = r.task, late = unfinished(t) && r.due && r.due < today;
+      const tone = late ? 'overdue' : Object.hasOwn(TASK_STATES, t.status) ? t.status : 'unknown';
+      const status = `${late ? '지연 · ' : ''}${TASK_STATES[t.status] || '상태 확인'}`;
+      const description = `${t.title} · 시작 ${r.start || '미입력'}${r.estimated ? ' (기존 자동 기준일)' : ''} · 마감 ${r.due || '미정'} · ${status}${r.invalid ? ' · 날짜 확인 필요' : ''}${t.memo ? ` · 메모: ${t.memo}` : ''}`;
+      let bar = `<span class="home-dday-track-message">${r.invalid ? '날짜 확인 필요' : !r.due ? '마감일 미정' : '기간 미정'}</span>`;
+      if (span && r.due && !r.invalid) {
+        const barStart = r.start || r.due, position = dayDiff(barStart, left) / span * 100;
+        const width = r.point ? 0 : (dayDiff(r.due, barStart) + 1) / span * 100;
+        const center = r.point ? (dayDiff(r.due, left) + .5) / span * 100 : position + width / 2;
+        bar = `<span class="home-dday-bar is-${tone}${r.estimated ? ' is-estimated' : ''}${r.point ? ' is-point' : ''}" style="left:${r.point ? center : position}%;width:${r.point ? '6px' : `${width}%`}" aria-hidden="true"></span><button type="button" class="home-dday-bar-hit" data-task="${esc(t.id)}" title="${esc(description)}" aria-label="${esc(description)}" style="left:clamp(12px, ${center}%, calc(100% - 12px));width:max(24px, ${width}%)"></button>`;
+      }
+      return `<div class="home-dday-row" role="row" data-dday-task="${esc(t.id)}"><div class="home-dday-name" role="cell"><button type="button" data-task="${esc(t.id)}" title="${esc(description)}"><span>${esc(t.title)}</span><small>${r.due ? `${shortDate(r.due)} 마감` : '날짜 미정'} · ${esc(status)}</small></button></div><div class="home-dday-date" role="cell" title="${esc(r.start || '시작일 미입력')}${r.estimated ? ' · 기존 자동 기준일' : ''}">${dateCell(r.start, r.estimated)}</div><div class="home-dday-date" role="cell" title="${esc(r.due || '마감일 미정')}">${dateCell(r.due)}</div><div class="home-dday-state-cell" role="cell"><span class="home-dday-state is-${tone}">${esc(status)}</span></div><div class="home-dday-track" role="cell">${todayLine}${bar}</div></div>`;
+    }).join('');
+    const previousGrid = $('.home-dday-grid'), previousCampaign = previousGrid?.dataset.campaignId;
+    const scrollLeft = $('#gantt').scrollLeft, scrollTop = $('#gantt').scrollTop;
+    $('#gantt').innerHTML = `<div class="home-dday-grid" role="table" aria-label="이벤트 준비 업무와 일정" aria-rowcount="${rows.length + 1}" aria-colcount="5" data-campaign-id="${esc(c.id)}" data-range-start="${left}" data-range-end="${right}" style="--home-dday-axis-width:${axisWidth}px;--home-dday-grid-step:${span ? (span <= 120 ? 1 : tickDays) / span * 100 : 100}%"><div class="home-dday-row home-dday-table-head" role="row"><div class="home-dday-name" role="columnheader">마케팅 업무</div><div class="home-dday-date" role="columnheader">시작일</div><div class="home-dday-date" role="columnheader">마감일</div><div class="home-dday-state-cell" role="columnheader">상태</div><div class="home-dday-axis" role="columnheader">${axis}</div></div>${content}</div>`;
+    $('#gantt').querySelectorAll('.home-dday-row').forEach((row, index) => {
+      row.setAttribute('aria-rowindex', String(index + 1));
+      [...row.children].forEach((cell, column) => cell.setAttribute('aria-colindex', String(column + 1)));
+    });
+    $('#gantt').scrollLeft = previousCampaign === c.id ? scrollLeft : 0; $('#gantt').scrollTop = previousCampaign === c.id ? scrollTop : 0;
+    const notes = [];
+    if (rows.some(r => r.invalid)) notes.push('날짜가 맞지 않는 업무는 막대 대신 확인 안내를 표시합니다.');
+    $('#gantt-note').textContent = notes.join(' '); $('#gantt-note').hidden = !notes.length;
   }
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
-    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<br><button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
-    const attention = signals?.attention.items || [], attentionIds = new Set(attention.map(t => t.collaboration_id));
-    const scopedCreators = creators();
-    const rows = scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id) || (validDate(c.post_date) && c.post_date <= addDays(today, 7)) || (validDate(c.shoot_date) && c.shoot_date < today && c.status !== 'shot'))).sort((a, b) => Number(Boolean(b.requires_attention || attentionIds.has(b.collaboration_id))) - Number(Boolean(a.requires_attention || attentionIds.has(a.collaboration_id))) || (a.post_date || '9999').localeCompare(b.post_date || '9999')).slice(0, 3);
-    const collaborationSummary = signals?.collaborations.state === 'ok' ? `<div class="home-collab-summary">${mode === 'demo' ? badge('예시 데이터 (DEMO)') : ''}<span>촬영 예정 <strong>${scopedCreators.filter(c => !['shot', 'posted'].includes(c.status) && validDate(c.shoot_date) && c.shoot_date >= today).length}</strong></span><span>게시 예정 <strong>${scopedCreators.filter(c => c.status !== 'posted' && validDate(c.post_date) && c.post_date >= today).length}</strong></span><span>확인 필요 <strong>${scopedCreators.filter(c => c.status !== 'posted' && (c.requires_attention || attentionIds.has(c.collaboration_id))).length}</strong></span></div>` : '';
-    $('#collaboration-list').innerHTML = collaborationSummary + (rows.map(c => {
-      const task = attention.find(t => t.collaboration_id === c.collaboration_id), needs = c.requires_attention || task;
-      // 촬영일만 지났는데 게시일이 지난 것처럼 알리지 않습니다. 날짜가 없으면 경과로 보지 않습니다.
-      const postLate = validDate(c.post_date) && c.post_date < today;
-      const shootLate = validDate(c.shoot_date) && c.shoot_date < today && !['shot', 'posted'].includes(c.status);
-      const state = needs ? '확인 필요' : postLate ? '게시일 경과' : shootLate ? '촬영일 경과' : validDate(c.post_date) ? '게시 임박' : '일정 미정';
-      return `<article class="home-collaboration"><div class="home-task-top"><div><h3>${esc(c.influencer)}</h3><span class="home-signal-meta">${esc(c.main_platform || '채널 미정')} · ${esc(c.status_label || c.status || '상태 미제공')}</span></div>${badge(state, Boolean(needs) || postLate || shootLate)}</div><dl class="home-collab-dates"><div><dt>촬영</dt><dd>${esc(c.shoot_date || '미정')}</dd></div><div><dt>게시</dt><dd>${esc(c.post_date || '미정')}</dd></div></dl><p class="home-collab-action"><strong>다음 할 일</strong> ${esc(c.next_action || task?.detail || task?.title || '원본 탭에서 진행 내용을 확인해주세요.')}</p><a href="${esc(safeUrl(c.link || `/influencer_marketing/?collaboration_id=${encodeURIComponent(c.collaboration_id)}`))}">협업 확인 ↗</a></article>`;
-    }).join('') || empty(signalMessage('collaborations', '확인할 협업이 없거나 인플루언서 자료를 불러오지 못했습니다. 원본 탭에서 확인해주세요.')));
-    if (signals?.attention.state === 'error') $('#collaboration-list').insertAdjacentHTML('beforeend', '<p class="home-error">협업 할 일을 불러오지 못해 확인 필요 목록이 일부 누락될 수 있습니다.</p>');
-    const news = (signals?.news.items || []).filter(n => mode === 'demo' || (n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved')).sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
+    $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
+    // 요약 목록만 거릅니다. 달력의 촬영·게시 일정에 사용하는 원본 목록은 유지합니다.
+    const rows = creators().filter(c => ['sent', 'replied', 'negotiating', 'confirmed', 'shot'].includes(c.status));
+    $('#collaboration-list').innerHTML = rows.length
+      ? `<table class="home-collab-table"><caption class="home-sr-only">제안 발송부터 촬영 완료 단계의 인플루언서 협업</caption><thead><tr><th scope="col">이름</th><th scope="col">채널</th><th scope="col">진행현황</th></tr></thead><tbody>${rows.map(c => `<tr><td><a href="${esc(safeUrl(c.link || '/influencer_marketing/') || '/influencer_marketing/')}">${esc(c.influencer || '이름 미제공')}</a></td><td>${esc(c.main_platform || '채널 미제공')}</td><td>${badge(c.status_label || c.status)}</td></tr>`).join('')}</tbody></table>`
+      : empty(signalMessage('collaborations', '제안 발송 이후 진행 중인 협업이 없습니다.'));
+    const news = (signals?.news.items || []).filter(n => n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved').sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
     const newsMarkup = news.map(n => {
       // 등록된 출처·대조 내용·확인 범위를 표시합니다. 이 화면이 원문을 새로 검증하는 것은 아닙니다.
       const sources = Array.isArray(n.sources) ? n.sources : [];
       const link = safeUrl(n.url) || safeUrl(sources[0]?.url);
-      const evidence = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">출처 ↗</a>` : esc(n.source || '출처 미제공');
       const sourceDetails = sources.map(source => {
         const address = safeUrl(source.url);
         const label = source.role === 'primary' ? '원문' : source.role === 'independent_corrob' ? '교차 출처' : '참고 출처';
         return `<li><strong>${label} · ${esc(source.publisher)}</strong>${source.title ? `<span>${esc(source.title)}</span>` : ''}${source.supports ? `<p>${esc(source.supports)}</p>` : ''}${address ? `<a href="${esc(address)}" target="_blank" rel="noopener noreferrer">자료 열기 ↗</a>` : ''}</li>`;
       }).join('');
-      return `<article class="home-news-item home-resizable">
+      return `<article class="home-news-item">
+        <h3>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title)}</h3>
         <div class="home-signal-meta">${esc(n.region || '지역 미제공')} · 발행 ${esc(n.published_at || '미제공')}</div>
-        <h3>${esc(n.title)}</h3>
-        ${n.is_demo ? badge('예시 데이터 (DEMO)') : `<p class="home-news-brief">${esc(newsPreview(n.summary))}</p>`}
-        ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion))}</p><span class="home-news-caution">참여·제품 적용 여부는 별도 확인이 필요합니다.</span></div>` : ''}
+        <p class="home-news-brief">${esc(newsPreview(n.summary, 70))}</p>
+        ${n.suggestion ? `<div class="home-suggestion"><strong class="home-suggestion-label">적용 제안 · 운영 아이디어</strong><p>${esc(newsPreview(n.suggestion, 60))}</p></div>` : '<div class="home-suggestion" aria-hidden="true"></div>'}
         <details class="home-news-details"><summary>자세히 보기 · 출처와 확인 범위</summary>
-          ${n.is_demo ? '' : `<h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>`}
+          <h4>사실 요약 · 전체 내용</h4><p>${esc(n.summary)}</p>
           ${n.suggestion ? `<h4>적용 제안 · 전체 내용</h4><p>${esc(n.suggestion)}</p>` : ''}
           ${n.verified_at ? `<p class="home-signal-meta">담당자 확인 ${esc(n.verified_at)}</p>` : ''}
           ${sourceDetails ? `<h4>어디서 확인했나요?</h4><ul class="home-news-sources">${sourceDetails}</ul>` : ''}
           ${n.verification_notes ? `<h4>등록 당시 확인한 내용과 한계</h4><p>${esc(n.verification_notes)}</p>` : ''}
         </details>
-        <div class="home-news-links">${n.is_demo ? '' : evidence}${n.suggestion ? '<a href="/content_studio/?tab=cardnews">콘텐츠 스튜디오 ↗</a>' : ''}</div>
       </article>`;
     }).join('') || empty(signalMessage('news', '검증 후 등록한 뉴스·트렌드가 없습니다. 확인된 자료가 준비되면 표시합니다.'));
     // 업무 체크처럼 뉴스 내용이 바뀌지 않은 갱신에서는 사용자가 조절한 크기와 펼침 상태를 유지합니다.
@@ -523,7 +651,6 @@ async function initialize() {
   }
   async function refreshSignals() {
     const token = ++requestNumber;
-    if (mode === 'demo') { signals = demoSignals(); render(); return; }
     signals = null; render();
     const r = range(), start = [r.start, `${cursor.slice(0, 4)}-01-01`].sort()[0], end = [r.end, `${cursor.slice(0, 4)}-12-31`].sort().at(-1);
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 12000);
@@ -546,7 +673,7 @@ async function initialize() {
   function options(values, selectedValue) { return Object.entries(values).map(([value, label]) => `<option value="${esc(value)}" ${value === selectedValue ? 'selected' : ''}>${esc(label)}</option>`).join(''); }
   function editTask(taskId) {
     const t = store.tasks.find(item => item.id === taskId); if (!t) return;
-    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}> 이벤트 날짜가 바뀌어도 이 업무 날짜 유지</label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
+    openDialog('업무 수정', `<form id="task-form"><label class="home-field">업무명<input name="title" required maxlength="160" value="${esc(t.title)}"></label><div class="home-form-grid"><label class="home-field">시작일<input name="start_date" type="date" value="${esc(t.start_date)}"></label><label class="home-field">마감일<input name="due_date" type="date" value="${esc(t.due_date)}"></label><label class="home-field">시간 (비우면 종일)<input name="due_time" type="time" value="${esc(t.due_time)}"></label><label class="home-field">이벤트<select name="campaign_id">${store.campaigns.map(c => `<option value="${esc(c.id)}" ${c.id === t.campaign_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label><label class="home-field">상태<select name="status">${options(TASK_STATES, t.status)}</select></label><label class="home-field">중요도<select name="importance">${options({ normal: '보통', high: '높음' }, t.importance)}</select></label><label class="home-field">관련 탭<select name="related_tab">${options({ '': '없음', ...TABS }, t.related_tab)}</select></label></div><label class="home-check-field"><input type="checkbox" name="fixed" ${t.fixed ? 'checked' : ''}><span>이벤트 날짜가 바뀌어도 이 업무 날짜 유지</span></label><label class="home-field">메모<textarea name="memo" rows="3" maxlength="3000">${esc(t.memo)}</textarea></label><p id="task-error" class="home-error" hidden role="alert"></p><div class="home-form-actions"><a class="btn" href="${tabLink(t.related_tab)}">관련 탭 ↗</a><button class="btn dark" type="submit">저장</button></div></form>`);
     if (categoriesEnabled()) $('#task-form .home-form-grid').insertAdjacentHTML('beforeend', `<label class="home-field">업무 종류<select name="category">${options(TASK_CATEGORIES, t.category || '')}</select></label>`);
     $('#task-form').onsubmit = async event => {
       event.preventDefault(); const f = new FormData(event.currentTarget), title = f.get('title').trim(), start = f.get('start_date'), due = f.get('due_date');
@@ -564,7 +691,7 @@ async function initialize() {
     const initialTemplate = original?.template || (opportunity ? 'anniversary' : 'launch');
     const templateRows = type => TEMPLATE.filter((_, i) => type === 'launch' || i > 0)
       .map(([key, offset, title, related_tab]) => ({ key, offset, title, related_tab }));
-    let rows = original ? structuredClone(store.tasks.filter(t => t.campaign_id === original.id)) : templateRows(initialTemplate);
+    let rows = original ? structuredClone(store.tasks.filter(t => t.campaign_id === original.id && (kind !== 'clone' || t.status !== 'cancelled'))) : templateRows(initialTemplate);
     const target = original?.target_date || opportunity?.start || '';
     const initialName = original ? `${original.name}${kind === 'clone' ? ' 복사' : ''}` : opportunity?.name || '';
     openDialog(kind === 'create' ? '이벤트 기획' : kind === 'clone' ? '이벤트 복제' : '이벤트 수정', `<form id="plan-form">
@@ -636,7 +763,10 @@ async function initialize() {
       event.preventDefault();
       const f = new FormData(form), newTarget = f.get('target_date'), name = f.get('name').trim();
       if (!name || !validDate(newTarget) || rows.some(t => !t.title.trim())) { error('이벤트 이름과 날짜, 업무명을 확인하세요.'); return; }
-      if ([...form.querySelectorAll('[data-row-date]:not(:disabled)')].some(input => !validDate(input.value))) { error('업무 날짜를 확인하세요.'); return; }
+      if ([...form.querySelectorAll('[data-row-date]:not(:disabled)')].some(input => {
+        const row = rows[Number(input.dataset.rowDate)];
+        return !validDate(input.value) && !(input.value === '' && row.fixed && !row.due_date);
+      })) { error('업무 날짜를 확인하세요.'); return; }
       const projected = project();
       if (!projected) { error('업무 날짜를 계산할 수 없습니다. 이벤트 날짜를 확인하세요.'); return; }
       const button = $('#confirm-plan'); button.disabled = true;
@@ -660,12 +790,13 @@ async function initialize() {
     };
   }
   root.addEventListener('click', async event => {
+    const more = $('#campaign-more'); if (more.open && !more.contains(event.target)) more.open = false;
     const button = event.target.closest('button'); if (!button) return;
-    if (button.hasAttribute('data-cancel-delete')) { pendingImport = null; dialog.close(); }
-    if (button.hasAttribute('data-confirm-import') && pendingImport) {
-      const incoming = pendingImport; pendingImport = null;
-      if (await save(structuredClone(incoming))) { dialog.close(); render(); toast('기록을 가져왔습니다.'); }
-    }
+    if (button.dataset.weekMore) { showMonthDay(button.dataset.weekMore); dialogOrigin = root.querySelector(`[data-week-more="${button.dataset.weekMore}"]`) || dialogOrigin; return; }
+    if (button.dataset.weekKind) { await openMonthEvent(button.dataset.weekKind, button.dataset.weekId, button.dataset.weekDate, button.dataset.weekTitle); return; }
+    if (button.dataset.monthMore) { showMonthDay(button.dataset.monthMore); return; }
+    if (button.dataset.monthKind) { await openMonthEvent(button.dataset.monthKind, button.dataset.monthId, button.dataset.monthDate, button.dataset.monthTitle); return; }
+    if (button.hasAttribute('data-cancel-delete')) dialog.close();
     if (button.dataset.confirmDelete) {
       const next = structuredClone(store), target = button.dataset.confirmDelete;
       next.campaigns = next.campaigns.filter(c => c.id !== target);
@@ -679,10 +810,18 @@ async function initialize() {
       const next = structuredClone(store), task = next.tasks.find(item => item.id === button.dataset.today);
       if (task) { task.due_date = today; task.fixed = true; if (await save(next)) { render(); toast('오늘 마감으로 옮겼습니다.'); } }
     }
-    if (button.dataset.date) { selectedDate = button.dataset.date; renderCalendar(); renderTasks(); }
-    if (button.dataset.view) { view = button.dataset.view; renderCalendar(); }
+    if (button.dataset.date) {
+      const monthDate = Boolean(button.closest('.home-month'));
+      const weekDate = Boolean(button.closest('.home-week-view'));
+      selectedDate = button.dataset.date; renderCalendar(); renderTasks();
+      if (monthDate) root.querySelector(`.home-month [data-date="${selectedDate}"]`)?.focus();
+      if (weekDate) root.querySelector(`.home-week-date[data-date="${selectedDate}"]`)?.focus({ preventScroll: true });
+    }
     if (button.dataset.move) moveTask(button.dataset.move);
-    if (button.dataset.slot) { const [day] = button.dataset.slot.split(' '); selectedDate = day; renderCalendar(); renderTasks(); }
+    if (button.dataset.slot) {
+      const slot = button.dataset.slot, [day] = slot.split(' '); selectedDate = day; renderCalendar(); renderTasks();
+      root.querySelector(`.home-week-slot[data-slot="${slot}"]`)?.focus({ preventScroll: true });
+    }
     if (button.dataset.task) editTask(button.dataset.task);
     if (button.dataset.local) showLocalEvent(button.dataset.local);
     if (button.dataset.create) {
@@ -713,16 +852,23 @@ async function initialize() {
     render();
   });
   const PANEL_KEY = 'hjs-home-panel';
+  const panelTabs = [[$('#tab-calendar'), 'month'], [$('#tab-week'), 'week'], [$('#tab-campaign'), 'campaign']];
   function showPanel(name) {
+    if (!panelTabs.some(([, key]) => key === name)) return;
     panel = name;
-    $('#calendar-panel').hidden = name !== 'calendar';
-    $('#campaign-panel').hidden = name !== 'campaign';
-    // 탭은 지금 보고 있는 화면을 표시합니다. 다음에 들어올 때 같은 화면으로 엽니다.
-    $('#tab-calendar').setAttribute('aria-selected', String(name === 'calendar'));
-    $('#tab-campaign').setAttribute('aria-selected', String(name === 'campaign'));
-    $('#tab-calendar').tabIndex = name === 'calendar' ? 0 : -1;
-    $('#tab-campaign').tabIndex = name === 'campaign' ? 0 : -1;
-    try { localStorage.setItem(PANEL_KEY, name); } catch { /* 저장 못 해도 동작합니다 */ }
+    const calendar = name !== 'campaign';
+    if (calendar) view = name;
+    $('#calendar-panel').hidden = !calendar;
+    $('#campaign-panel').hidden = calendar;
+    $('#calendar-actions').hidden = !calendar;
+    $('#campaign-actions').hidden = calendar;
+    panelTabs.forEach(([tab, key]) => {
+      tab.setAttribute('aria-selected', String(key === name));
+      tab.tabIndex = key === name ? 0 : -1;
+    });
+    $('#calendar-panel').setAttribute('aria-labelledby', name === 'week' ? 'tab-week' : 'tab-calendar');
+    if (calendar) renderCalendar();
+    try { localStorage.setItem(PANEL_KEY, name); } catch { /* Screen preference only. */ }
   }
   function removeCampaign() {
     const c = selected();
@@ -730,157 +876,61 @@ async function initialize() {
     const count = store.tasks.filter(t => t.campaign_id === c.id).length;
     openDialog('이벤트 삭제', `<p>"${esc(c.name)}" 이벤트와 그 준비 업무 ${count}건을 지웁니다.</p><p class="home-muted">되돌릴 수 없습니다. 현지 일정 자료와 뉴스는 지워지지 않습니다.</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-delete="${esc(c.id)}" type="button">삭제</button></div>`);
   }
-  // 현재 모드에서 읽은 기록을 백업합니다. 내 업무는 서버에서 읽은 기록입니다.
-  function exportStore() {
-    if (locked || storageBusy) { toast('기록을 정상적으로 불러온 뒤 내보내기를 해주세요.'); return; }
-    try {
-      const payload = { app: 'hanjeongseon-home', format: 1, exported_at: new Date().toISOString(),
-        mode, counts: { campaigns: store.campaigns.length, tasks: store.tasks.length }, data: store };
-      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `home-backup-${mode}-${today}.json`;
-      document.body.appendChild(link); link.click(); link.remove();
-      URL.revokeObjectURL(url);
-      toast(`이벤트 ${store.campaigns.length}개, 업무 ${store.tasks.length}건을 파일로 내려받았습니다.`);
-    } catch { toast('내려받지 못했습니다. 브라우저 다운로드 설정을 확인해주세요.'); }
-  }
-  let pendingImport = null;
-  let migrationBusy = false;
-  let lastMigrationReceipt = null;
-  function migrationControls(busy) {
-    migrationBusy = busy;
-    $('#migrate-store').disabled = busy;
-    $('#data-mode').disabled = busy;
-    $('#record-action').disabled = busy || storageBusy;
-  }
-  function downloadMigrationReceipt() {
-    if (!lastMigrationReceipt) return;
-    try {
-      const url = URL.createObjectURL(new Blob([JSON.stringify(lastMigrationReceipt, null, 2)], { type: 'application/json' }));
-      const link = document.createElement('a');
-      link.href = url; link.download = `home-migration-result-${today}.json`;
-      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
-    } catch { toast('결과 파일을 내려받지 못했습니다. 이 창을 닫지 말고 다시 눌러주세요.'); }
-  }
-  async function readMigration(file) {
-    if (!file || migrationBusy || storageBusy) return;
-    if (mode !== 'work') { toast('내 업무로 바꾼 뒤 내 업무 백업 파일을 선택해주세요.'); return; }
-    migrationControls(true);
-    try {
-      if (file.size > 2 * 1024 * 1024) throw new Error('백업 파일은 2 MiB 이하만 선택할 수 있습니다.');
-      let backup;
-      try { backup = JSON.parse(await file.text()); }
-      catch { throw new Error('백업 파일을 읽지 못했습니다. HOME에서 내보낸 JSON 파일을 선택해주세요.'); }
-      if (backup?.mode !== 'work') throw new Error('예시 데이터 (DEMO)는 옮기지 않습니다. 내 업무 백업 파일을 선택해주세요.');
-      const preview = await migrationRequest(root.dataset.migrationPreviewUrl, backup);
-      const labels = { campaigns: '이벤트', tasks: '업무', schedules: '직접 일정', links: '협업 연결' };
-      const rows = Object.entries(labels).map(([kind, label]) => {
-        const counts = preview.counts[kind];
-        return `<div class="home-preview-row"><span>${label}</span><span>새 기록 ${esc(counts.new)} · 같은 기록 ${esc(counts.same)} · 충돌 ${esc(counts.conflict)}</span></div>`;
-      }).join('');
-      const totalNew = Object.values(preview.counts).reduce((sum, counts) => sum + counts.new, 0);
-      openDialog('서버로 옮기기 전 확인', `<p>선택한 백업: <strong>${esc(file.name)}</strong></p><p>백업 시각: ${esc(backup.exported_at)}. 이 파일을 만든 뒤 수정한 내용은 포함되지 않습니다.</p><div class="home-preview">${rows}</div><p>새 기록만 추가하고 같은 기록은 건너뜁니다. 브라우저 원본과 백업 파일은 그대로 남깁니다.</p><p class="home-muted">옮긴 뒤 서버 기록을 다시 불러옵니다. 이후 내 업무 편집은 서버에 저장됩니다.</p><p id="migration-error" class="home-error" role="alert" hidden></p><div class="home-form-actions"><button class="btn" id="migration-cancel" type="button">닫기</button>${preview.can_import && totalNew ? '<button class="btn dark" id="migration-confirm" type="button">확인한 새 기록 옮기기</button>' : ''}</div><p>${preview.can_import ? totalNew ? '검사 결과는 30분 동안 유효합니다.' : '옮길 새 기록이 없습니다. 이미 같은 기록이 저장되어 있습니다.' : '내용이 다른 기록이 있어 옮기기를 멈췄습니다. 기존 기록은 바꾸지 않았습니다.'}</p>`);
-      $('#migration-cancel').onclick = () => dialog.close();
-      const confirm = $('#migration-confirm');
-      if (confirm) confirm.onclick = async () => {
-        if (migrationBusy) return;
-        migrationControls(true); confirm.disabled = true;
-        try {
-          const result = await migrationRequest(root.dataset.migrationCommitUrl, { backup, token: preview.token, confirmed: true });
-          lastMigrationReceipt = result.receipt;
-          await load(); updateRange(); refreshSignals();
-          openDialog('서버로 옮기기 완료', `<p>${esc(result.notice)}</p><p>옮긴 결과 파일을 내려받아 원래 백업 파일과 함께 보관해주세요. 되돌리기가 필요할 때 어떤 기록을 추가했는지 확인할 수 있습니다.</p><p class="home-muted">파일 다운로드가 끝났는지는 브라우저 다운로드 목록에서 확인해주세요.</p><div class="home-form-actions"><button class="btn" id="migration-receipt" type="button">옮긴 결과 파일 받기</button><button class="btn" id="migration-done" type="button">닫기</button></div>`);
-          $('#migration-receipt').onclick = downloadMigrationReceipt;
-          $('#migration-done').onclick = () => dialog.close();
-          toast('서버로 옮겼습니다. 브라우저 원본은 그대로입니다.');
-        } catch (error) {
-          // 재시도 전 새 미리보기를 받도록 합니다. 실패했다고 단정해 재전송하지 않습니다.
-          const message = $('#migration-error');
-          if (message) { message.hidden = false; message.textContent = error.message; }
-          else toast(error.message);
-        } finally { migrationControls(false); }
-      };
-    } catch (error) { toast(error.message); }
-    finally { migrationControls(false); }
-  }
-  function startMigration() {
-    if (migrationBusy || storageBusy) return;
-    if (mode !== 'work') { toast('먼저 데이터 선택을 ‘내 업무’로 바꿔주세요. 예시 데이터 (DEMO)는 옮기지 않습니다.'); return; }
-    openDialog('내 업무 백업 파일 선택', '<p>먼저 상단 ‘내보내기’로 내 업무 백업 파일을 받아두세요. 그 파일을 선택하면 서버 기록과 비교합니다. 파일을 선택하는 것만으로 저장되지는 않습니다.</p><p>브라우저 원본은 그대로 두며, 내용을 덮어쓰지 않습니다.</p><div class="home-form-actions"><button class="btn" id="migration-choose" type="button">백업 파일 선택</button><button class="btn" id="migration-dismiss" type="button">닫기</button></div>');
-    $('#migration-choose').onclick = () => $('#migration-file').click();
-    $('#migration-dismiss').onclick = () => dialog.close();
-  }
-  async function readImport(file) {
-    if (!file) return;
-    if (mode === 'work') { await readMigration(file); return; }
-    try {
-      const payload = JSON.parse(await file.text());
-      // 다른 프로그램의 파일이나 손상된 파일을 덮어쓰지 않도록 형식을 먼저 확인합니다.
-      if (!payload || payload.app !== 'hanjeongseon-home' || !validStore(payload.data)) throw new Error('format');
-      // 예시 데이터를 실제 업무 기록 위에 덮어쓰지 않습니다.
-      if (payload.mode !== mode) throw new Error(payload.mode === 'demo' ? 'demo' : 'work');
-      pendingImport = payload.data;
-      const now = { campaigns: store.campaigns.length, tasks: store.tasks.length };
-      const next = { campaigns: payload.data.campaigns.length, tasks: payload.data.tasks.length };
-      openDialog('기록 가져오기', `<p>지금 기록을 <strong>파일 내용으로 완전히 바꿉니다.</strong></p><div class="home-preview"><div class="home-preview-row"><span>지금</span><span>이벤트 ${now.campaigns}개 · 업무 ${now.tasks}건</span></div><div class="home-preview-row"><span>파일</span><span>이벤트 ${next.campaigns}개 · 업무 ${next.tasks}건</span></div></div><p class="home-muted">되돌릴 수 없습니다. 지금 기록이 필요하면 먼저 내보내기를 해주세요.${payload.exported_at ? ` 이 파일은 ${esc(String(payload.exported_at).slice(0, 10))}에 내려받은 것입니다.` : ''}</p><div class="home-form-actions"><button class="btn" data-cancel-delete type="button">취소</button><button class="btn dark" data-confirm-import type="button">가져오기</button></div>`);
-    } catch (error) {
-      pendingImport = null;
-      const reason = { demo: '예시 데이터 파일은 내 업무로 가져올 수 없습니다.', work: '내 업무 파일은 예시 데이터로 가져올 수 없습니다.' };
-      toast(reason[error.message] || '이 파일은 HOME 기록 파일이 아니거나 손상되었습니다. 기존 기록은 그대로 둡니다.');
-    }
-  }
   async function changeCampaign(campaignId) { const next = structuredClone(store); next.preferences.selected = campaignId; if (await save(next)) render(); }
+  function openReview() {
+    const c = selected(); if (!c) return;
+    const outline = '[잘된 점]\n\n[문제와 원인]\n\n[다음 회차 개선]\n';
+    openDialog(c.name + ' · 회고 관리', '<form id="review-form"><label class="home-field">이벤트 상태<select name="status">' + Object.entries(CAMPAIGN_STATES).map(([key, label]) => '<option value="' + key + '"' + (key === c.status ? ' selected' : '') + '>' + label + '</option>').join('') + '</select></label><label class="home-field">회고와 다음 할 일<textarea name="review" rows="9" maxlength="5000">' + esc(c.review || outline) + '</textarea></label><div class="home-form-actions"><button class="btn dark" type="submit">회고 저장</button></div></form>');
+    $('#review-form').onsubmit = async event => {
+      event.preventDefault(); const f = new FormData(event.currentTarget), next = structuredClone(store);
+      const campaign = next.campaigns.find(item => item.id === c.id);
+      if (!campaign) return;
+      campaign.review = f.get('review'); campaign.status = f.get('status');
+      if (await save(next)) { dialog.close(); render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
+    };
+  }
+  $('#open-review').onclick = openReview;
   $('#campaign-select').onchange = event => changeCampaign(event.target.value);
-  $('#delete-campaign').onclick = removeCampaign;
-  $('#export-store').onclick = exportStore;
-  $('#import-store').onclick = () => mode === 'work' ? startMigration() : $('#import-file').click();
-  $('#import-file').onchange = event => { readImport(event.target.files[0]); event.target.value = ''; };
-  $('#migrate-store').onclick = startMigration;
-  $('#record-action').onchange = event => {
-    const action = event.currentTarget.value;
-    event.currentTarget.value = '';
-    if (!['export-store', 'import-store', 'migrate-store'].includes(action) || storageBusy || migrationBusy) return;
-    const button = $(`#${action}`);
-    if (!button.disabled) button.click();
-  };
-  $('#migration-file').onchange = event => { readMigration(event.target.files[0]); event.target.value = ''; };
-  $('#tab-campaign').onclick = () => showPanel('campaign');
-  $('#tab-calendar').onclick = () => showPanel('calendar');
+  $('#delete-campaign').onclick = () => { $('#campaign-more').open = false; removeCampaign(); };
+  $('#campaign-more').addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); $('#campaign-more').open = false; $('#campaign-more summary').focus(); }
+  });
+  panelTabs.forEach(([tab, name]) => { tab.onclick = () => showPanel(name); });
   $('.home-paneltabs').addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    const tabs = [$('#tab-calendar'), $('#tab-campaign')];
-    const current = tabs.indexOf(event.target);
+    const current = panelTabs.findIndex(([tab]) => tab === event.target);
     if (current < 0) return;
     event.preventDefault();
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-    showPanel(next === 0 ? 'calendar' : 'campaign');
-    tabs[next].focus();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? panelTabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + panelTabs.length) % panelTabs.length;
+    showPanel(panelTabs[next][1]); panelTabs[next][0].focus();
   });
   try {
     const saved = localStorage.getItem(PANEL_KEY);
-    if (saved === 'campaign' || saved === 'calendar') showPanel(saved);
-  } catch { /* 기본 화면을 그대로 씁니다 */ }
+    if (saved) showPanel(saved === 'calendar' ? 'month' : saved);
+  } catch { /* Default monthly view remains available. */ }
   $('#today-reset').onclick = () => { selectedDate = today; renderCalendar(); renderTasks(); };
-  $('#scope').onchange = event => { scope = event.target.value; render(); };
   $('#new-campaign').onclick = () => planner('create');
-  $('#clone-campaign').onclick = () => planner('clone');
+  $('#clone-campaign').onclick = () => { $('#campaign-more').open = false; planner('clone'); };
   $('#replan-campaign').onclick = () => planner('replan');
-  $('#data-mode').onchange = async event => {
-    if (storageBusy || migrationBusy) { event.target.value = mode; return; }
-    pendingImport = null;
-    if (dialog.open) dialog.close();
-    mode = event.target.value; await load(); updateRange();
-    try { localStorage.setItem('hjs-home-browser-mode', mode); } catch { /* load에 저장소 오류 안내가 있습니다. */ }
-    refreshSignals();
-  };
-  function changeDate(value) { if (!validDate(value)) return; today = value; selectedDate = value; cursor = value; updateRange(); refreshSignals(); }
   function tickClocks() {
     // 두 도시의 현재 시각을 함께 보여 줍니다. 업무 기준일은 한국 시간 기준입니다.
-    const fmt = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+    const now = new Date();
+    const fmt = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
+    const dateLabel = zone => new Intl.DateTimeFormat('ko-KR', { timeZone: zone, month: '2-digit', day: '2-digit', weekday: 'short' }).format(now);
     const kst = $('#clock-kst'), ict = $('#clock-ict');
     if (kst) kst.textContent = fmt('Asia/Seoul');
     if (ict) ict.textContent = fmt('Asia/Ho_Chi_Minh');
+    $('#clock-date-kst').textContent = dateLabel('Asia/Seoul');
+    $('#clock-date-ict').textContent = dateLabel('Asia/Ho_Chi_Minh');
+    ['#clock-date-kst', '#clock-date-ict'].forEach(sel => { $(sel).dateTime = now.toISOString(); });
+    const currentDay = kstToday();
+    if (currentDay !== today) {
+      const followingToday = selectedDate === today;
+      today = currentDay;
+      if (followingToday) selectedDate = today;
+      if (serverToken !== null) render();
+    }
+    updateWeekNow();
   }
   tickClocks();
   setInterval(tickClocks, 30000);
@@ -891,7 +941,14 @@ async function initialize() {
   }
   $('#calendar-prev').onclick = () => moveCalendar(-1);
   $('#calendar-next').onclick = () => moveCalendar(1);
-  $('#calendar-today').onclick = () => { cursor = today; selectedDate = today; refreshSignals(); };
+  if (typeof ResizeObserver !== 'undefined') {
+    const monthSizer = new ResizeObserver(() => {
+      const month = $('.home-month');
+      if ($('#calendar-panel').hidden || view !== 'month' || !month) return;
+      if (Number(month.dataset.slots) !== calendarMonthSlots($('#calendar-body').clientHeight, Number(month.dataset.weekCount), $('#calendar-body').clientWidth)) renderCalendar();
+    });
+    monthSizer.observe($('#calendar-body'));
+  }
   $('#range-preset').onchange = event => {
     $('#range-custom').open = event.target.value === 'custom';
     if (event.target.value !== 'custom') { $('#range-start').value = today; $('#range-end').value = addDays(today, Number(event.target.value)); }
@@ -905,13 +962,6 @@ async function initialize() {
     const next = structuredClone(store); Object.assign(next.preferences, { preset: $('#range-preset').value, range_start: r.start, range_end: r.end });
     if (await save(next)) refreshSignals();
   };
-  $('#review-form').onsubmit = async event => {
-    event.preventDefault(); const c = selected(); if (!c) return;
-    const next = structuredClone(store), campaign = next.campaigns.find(item => item.id === c.id), f = new FormData(event.currentTarget);
-    campaign.review = f.get('review'); campaign.status = f.get('status');
-    if (await save(next)) { render(); toast('회고와 이벤트 상태를 저장했습니다.'); }
-  };
-  addEventListener('storage', event => { if (mode === 'demo' && (event.key === key() || event.key === null)) { locked = true; showError('다른 창에서 예시 기록이 변경되었습니다. 새로고침 후 계속해주세요.'); } });
   // 현지 뉴스 검색. 결과는 검증하지 않은 외부 목록이라 요약 없이 제목·언론사·발행일·원문 링크만 보여 줍니다.
   const newsForm = $('#news-search-form');
   function newsError(message) {
@@ -924,7 +974,12 @@ async function initialize() {
   async function searchNews(params) {
     const token = ++searchNumber;
     newsError('');
-    $('#news-search-list').innerHTML = empty('검색 중입니다.');
+    const results = $('#news-search-list');
+    results.closest('.is-search').classList.remove('is-idle');
+    $('#news-search-hint').hidden = true;
+    results.setAttribute('aria-busy', 'true');
+    results.innerHTML = '<div class="home-news-loading" role="status"><span class="home-spinner" aria-hidden="true"></span><div><strong>뉴스를 불러오고 있습니다</strong><p>' + (translateOn ? '기사 검색과 제목 번역을 진행하고 있습니다.' : '관련 기사 목록을 확인하고 있습니다.') + '</p></div></div>';
+    $('#news-search-form button[type="submit"]').disabled = true;
     try {
       lastSearch = params;
       const query = { ...params };
@@ -938,7 +993,7 @@ async function initialize() {
         const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)} ↗</a>` : esc(n.title);
         const via = n.source_label && n.source_label !== n.publisher ? ` · ${esc(n.source_label)}` : '';
         const origin = n.translated ? `<p class="home-news-origin">원문: ${esc(n.title_original)}</p>` : '';
-        return `<article class="home-news-result">${title}${origin}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
+        return `<article class="home-news-result"><div class="home-news-result-title${n.translated ? ' is-translated' : ''}">${title}</div>${origin}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
       }).join('') || empty('검색 결과가 없습니다. 다른 검색어로 찾아봐주세요.');
       // 한 출처가 빠졌을 때 조용히 넘어가지 않고 어디가 빠졌는지 알립니다.
       if (Array.isArray(data.unavailable) && data.unavailable.length) {
@@ -952,6 +1007,11 @@ async function initialize() {
       if (token !== searchNumber) return;
       $('#news-search-list').innerHTML = '';
       newsError(error.message || '지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      if (token === searchNumber) {
+        results.setAttribute('aria-busy', 'false');
+        $('#news-search-form button[type="submit"]').disabled = false;
+      }
     }
   }
   function setupTranslate(data) {
@@ -983,7 +1043,6 @@ async function initialize() {
       if (button) searchNews({ preset: button.dataset.preset });
     };
     newsForm.onsubmit = event => { event.preventDefault(); searchNews({ q: $('#news-query').value }); };
-    $('#news-search-list').innerHTML = empty('검색 항목을 고르거나 검색어를 입력하면 현지 기사를 찾아봅니다.');
     (async () => {
       try {
         const response = await fetch(newsForm.dataset.presetsUrl);

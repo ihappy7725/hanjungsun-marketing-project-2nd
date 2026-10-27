@@ -22,3 +22,146 @@
 .market-analysis-page .ma-trends .ref-badge{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:5px;font-size:11px;background:var(--paper);color:var(--muted);white-space:nowrap}
 .market-analysis-page .ma-trends .trend-panels .card:has(> #category-trend){display:flex;flex-direction:column}.market-analysis-page .ma-trends #category-trend{flex:1;display:flex;flex-direction:column}.market-analysis-page .ma-trends #category-trend .spark-rows{flex:1}.market-analysis-page .ma-trends #category-trend .spark-rows li{flex:1;display:flex}.market-analysis-page .ma-trends #category-trend .spark-rows .spark-row{flex:1}
 .market-analysis-page .ma-trends .season-weekly{display:block;margin-top:4px;font-size:14px;color:var(--ink)}
+/* 카테고리별 인기 메뉴 순위: 표를 패널 너비에 맞춰 가로 스크롤 없이 검색 인기 수치가 바로 보이게 합니다 */
+.market-analysis-page .ma-trends #ranking .table-wrap{overflow-x:visible}
+.market-analysis-page .ma-trends #ranking .trend-table{min-width:0;table-layout:auto}
+.market-analysis-page .ma-trends #ranking .trend-table th:first-child,.market-analysis-page .ma-trends #ranking .trend-table td:first-child{padding-left:12px}
+.market-analysis-page .ma-trends #ranking .trend-table th:nth-child(2),.market-analysis-page .ma-trends #ranking .trend-table td:nth-child(2){padding-left:12px}
+.market-analysis-page .ma-trends #ranking .trend-table th.num{white-space:nowrap}
+.market-analysis-page .ma-trends #ranking .trend-table td.num{width:1%;padding-left:16px;font-size:15px;font-weight:700}
+/* 순위 표: 표 너비를 내용에 맞춰 상품명과 검색 인기 수치 사이 공백을 줄입니다 */
+.market-analysis-page .ma-trends #ranking .trend-table{width:auto;max-width:100%}
+.market-analysis-page .ma-trends #ranking .trend-table td:nth-child(2){padding-right:24px}
+.market-analysis-page .ma-trends #ranking .trend-table.related-ranking{width:min(100%,720px)}
+.market-analysis-page .ma-trends #ranking .trend-table.related-ranking th:nth-child(2),.market-analysis-page .ma-trends #ranking .trend-table.related-ranking td:nth-child(2){width:360px}
+/* 순위와 검색 인기 열: 제목과 숫자를 같은 중심선에 배치 */
+.market-analysis-page .ma-trends #ranking .trend-table th:first-child,
+.market-analysis-page .ma-trends #ranking .trend-table td:first-child{width:58px;padding-left:8px;padding-right:8px;text-align:center}
+.market-analysis-page .ma-trends #ranking .trend-table th.num,
+.market-analysis-page .ma-trends #ranking .trend-table td.num{padding-left:10px;padding-right:10px;text-align:center}
+/* 월별 검색 계절성: 그래프를 낮고 얇게 해 화면을 덜 차지하게 합니다 */
+.market-analysis-page .ma-trends .month-chart{height:130px;gap:8px}
+.market-analysis-page .ma-trends .month-fill{max-width:26px;border-radius:4px 4px 0 0}
+@media(max-width:650px){.market-analysis-page .ma-trends .month-chart{height:110px;gap:4px}.market-analysis-page .ma-trends .month-fill{max-width:18px}}
+/* 카테고리 선택 줄: 왼쪽 끝에서 조금 띄워 왼쪽에 두고 '카테고리' 이름표를 버튼 높이에 맞춰 세로 가운데 */
+.market-analysis-page .ma-trends .category-picker{justify-content:flex-start;align-items:center;gap:8px;padding:12px 16px 12px 28px}
+.market-analysis-page .ma-trends .category-picker .picker-label{display:inline-flex;align-items:center;height:36px;margin-right:8px;padding-right:16px;border-right:1px solid var(--line-strong);color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.02em;line-height:1}
+/* 카드·상자만 각진 모서리(버튼·태그·막대는 그대로) */
+.market-analysis-page .ma-trends .card,.market-analysis-page .ma-trends .trend-panels .card,.market-analysis-page .ma-trends .notice,
+.market-analysis-page .ma-trends .trends-page .notice,.market-analysis-page .ma-trends .season-callout,.market-analysis-page .ma-trends .insight-grid li,
+.market-analysis-page .ma-trends .ad-kpis,.market-analysis-page .ma-trends .exec-card,.market-analysis-page .ma-trends .channel-panel,
+.market-analysis-page .ma-trends .pattern-box,.market-analysis-page .ma-trends .season-timeline li,.market-analysis-page .ma-trends .empty-data-state{border-radius:0}
+/* 월별 검색 계절성 + 광고 트렌드를 양옆에 두고 그래프·카드를 작게 줄입니다 */
+.market-analysis-page .ma-trends .season-ads{align-items:stretch}
+.market-analysis-page .ma-trends .season-ads .card{min-width:0}
+.market-analysis-page .ma-trends .season-ads .season-tabs{gap:6px;margin-top:10px}
+.market-analysis-page .ma-trends .season-ads .season-tabs button{padding:6px 10px;font-size:12px}
+.market-analysis-page .ma-trends .season-ads .month-chart{height:80px;gap:4px;margin-top:12px}
+.market-analysis-page .ma-trends .season-ads .month-bar{gap:3px}
+.market-analysis-page .ma-trends .season-ads .month-fill{max-width:14px}
+.market-analysis-page .ma-trends .season-ads .month-value{font-size:10px;min-height:12px}
+.market-analysis-page .ma-trends .season-ads .month-bar small{font-size:11px}
+.market-analysis-page .ma-trends .season-ads .season-callout{margin-top:10px;padding:10px 12px;font-size:13px}
+.market-analysis-page .ma-trends .trend-panels:has(#seasonality){align-items:stretch}
+.market-analysis-page .ma-trends .seasonality-card{display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .seasonality-head{align-items:center;margin-bottom:0}
+.market-analysis-page .ma-trends .seasonality-head h2{white-space:nowrap}
+.market-analysis-page .ma-trends .seasonality-head .season-tabs{justify-content:flex-end;margin:0}
+.market-analysis-page .ma-trends .seasonality-body{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.market-analysis-page .ma-trends .seasonality-body .month-chart{flex:1;height:auto;min-height:190px;margin-top:24px;gap:8px}
+.market-analysis-page .ma-trends .seasonality-body .month-fill{max-width:22px}
+.market-analysis-page .ma-trends .seasonality-body .month-value{font-size:11px}
+.market-analysis-page .ma-trends .seasonality-body .month-bar small{font-size:12px}
+.market-analysis-page .ma-trends .seasonality-body .season-callout{margin-top:20px;padding:16px 18px;font-size:14px}
+.market-analysis-page .ma-trends .seasonality-body .fruit-calendar{margin-top:20px}
+@media(max-width:1100px){.market-analysis-page .ma-trends .seasonality-head{align-items:flex-start;flex-direction:column}.market-analysis-page .ma-trends .seasonality-head .season-tabs{justify-content:flex-start}.market-analysis-page .ma-trends .seasonality-body .month-chart{min-height:160px}}
+.market-analysis-page .ma-trends .season-ads .ad-h3{margin:8px 0 10px!important;font-size:14px!important}
+.market-analysis-page .ma-trends .season-ads .insight-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.market-analysis-page .ma-trends .season-ads .insight-grid li{gap:8px;padding:10px}
+.market-analysis-page .ma-trends .season-ads .insight-grid strong{font-size:13px}
+.market-analysis-page .ma-trends .season-ads .insight-grid p{margin:2px 0 0;font-size:12px;line-height:1.5}
+.market-analysis-page .ma-trends .season-ads .insight-no{width:20px;height:20px;font-size:11px}
+.market-analysis-page .ma-trends .card:has(> #ad-trends){display:flex;flex-direction:column}
+.market-analysis-page .ma-trends #ad-trends{flex:1;display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .ad-source-note{margin:auto 0 0;padding-top:12px;text-align:right;color:var(--muted);font-size:10px;line-height:1.5}
+.market-analysis-page .ma-trends .ad-source-note a{color:var(--muted);text-decoration:none}
+.market-analysis-page .ma-trends .ad-source-note a:hover{text-decoration:underline}
+@media(max-width:1100px){.market-analysis-page .ma-trends .season-ads .insight-grid{grid-template-columns:1fr}}
+/* 카테고리 선택 줄이 스크롤을 따라오지 않게 고정 해제 */
+.market-analysis-page .ma-trends .category-picker{position:static}
+/* 과일 맛 · 지역별 관심도를 한 카드(화면 절반)에 좌우로: 막대를 얇게, 숫자는 이름 옆에 */
+.market-analysis-page .ma-trends .rank-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.market-analysis-page .ma-trends .rank-pair > div{min-width:0}
+.market-analysis-page .ma-trends .rank-pair > div + div{padding-left:24px;border-left:1px solid var(--line)}
+.market-analysis-page .ma-trends .rank-pair h2{margin:0 0 4px;font-size:15px}
+.market-analysis-page .ma-trends .rank-pair .bar-rows{gap:10px;margin-top:8px}
+.market-analysis-page .ma-trends .rank-pair .bar-rows li{gap:3px 8px;font-size:13px}
+.market-analysis-page .ma-trends .rank-pair .bar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.market-analysis-page .ma-trends .rank-pair .bar-label small{font-size:10px;margin-left:4px}
+.market-analysis-page .ma-trends .rank-pair .bar-value{font-size:12px}
+.market-analysis-page .ma-trends .rank-pair .bar-track{height:5px}
+.market-analysis-page .ma-trends .rank-pair .list-foot{margin-top:8px}
+@media(max-width:650px){.market-analysis-page .ma-trends .rank-pair{grid-template-columns:1fr}.market-analysis-page .ma-trends .rank-pair > div + div{padding-left:0;border-left:0;padding-top:16px;border-top:1px solid var(--line)}}
+/* 합친 순위 카드: 옆 광고 트렌드 카드 높이만큼 목록을 위아래로 고르게 펼쳐 빈 공간을 채웁니다 */
+.market-analysis-page .ma-trends .rank-pair-card{display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .rank-pair{flex:1}
+.market-analysis-page .ma-trends .rank-pair > div{display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .rank-pair #fruit-flavors,.market-analysis-page .ma-trends .rank-pair #regions{flex:1;display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .rank-pair .list-body{flex:1;display:flex;flex-direction:column}
+.market-analysis-page .ma-trends .rank-pair .bar-rows{flex:1;justify-content:space-around;gap:14px;margin-top:14px}
+.market-analysis-page .ma-trends .rank-pair .bar-rows li{gap:6px 10px;font-size:14px}
+.market-analysis-page .ma-trends .rank-pair .bar-label small{font-size:11px}
+.market-analysis-page .ma-trends .rank-pair .bar-value{font-size:14px}
+.market-analysis-page .ma-trends .rank-pair .bar-track{height:8px}
+.market-analysis-page .ma-trends .rank-pair h2{font-size:16px}
+/* 합친 순위 카드: 구분선을 정확히 가운데에 두고 좌우 내용 폭을 같게 */
+.market-analysis-page .ma-trends .rank-pair{gap:0}
+.market-analysis-page .ma-trends .rank-pair > div:first-child{padding-right:24px}
+@media(max-width:650px){.market-analysis-page .ma-trends .rank-pair > div:first-child{padding-right:0}}
+/* 카테고리 버튼: '카테고리별 인기 메뉴 순위' 제목 옆에 작게 */
+.market-analysis-page .ma-trends .ranking-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.market-analysis-page .ma-trends .ranking-head .category-picker{position:static;justify-content:flex-end;gap:4px;margin:0;padding:0;background:none}
+.market-analysis-page .ma-trends .ranking-head .category-picker button{padding:4px 10px;font-size:12px;gap:4px}
+/* 인기 메뉴 순위 카드 맨 아래: 선택 카테고리 관심도 한 줄 */
+.market-analysis-page .ma-trends .rank-trend:empty{display:none}
+.market-analysis-page .ma-trends .rank-trend{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.market-analysis-page .ma-trends .rank-trend-row{display:grid;grid-template-columns:auto auto auto minmax(80px,1fr) auto;align-items:center;gap:10px;font-size:13px}
+.market-analysis-page .ma-trends .rank-trend-label{color:var(--muted);white-space:nowrap}
+.market-analysis-page .ma-trends .rank-trend-label strong{color:var(--ink)}
+.market-analysis-page .ma-trends .rank-trend-value{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.market-analysis-page .ma-trends .rank-trend-rate{font-size:12px;white-space:nowrap}
+.market-analysis-page .ma-trends .rank-trend-spark .sparkline{height:30px}
+.market-analysis-page .ma-trends .rank-trend-spark .sparkline path{stroke:var(--accent)}
+.market-analysis-page .ma-trends .rank-trend-row small{color:var(--muted);font-size:11px;white-space:nowrap}
+@media(max-width:650px){.market-analysis-page .ma-trends .rank-trend-row{grid-template-columns:auto auto 1fr}.market-analysis-page .ma-trends .rank-trend-spark{grid-column:1 / -1}}
+
+/* 넓은 데스크톱(브라우저 80% 포함): 네 개의 핵심 카드를 한 화면에 가깝게 표시 */
+@media(min-width:1400px){
+  .market-analysis-page .ma-trends .trends-dashboard{gap:12px}
+  .market-analysis-page .ma-trends .trend-panels{gap:12px}
+  .market-analysis-page .ma-trends .trend-panels:has(#seasonality){align-items:stretch}
+  .market-analysis-page .ma-trends .seasonality-card{align-self:stretch;height:100%}
+  .market-analysis-page .ma-trends .seasonality-body{flex:1;justify-content:space-between}
+  .market-analysis-page .ma-trends .trend-panels .card{padding:14px 16px}
+  .market-analysis-page .ma-trends .trend-panels .section-head{margin-bottom:8px}
+  .market-analysis-page .ma-trends #ranking .trend-table th,
+  .market-analysis-page .ma-trends #ranking .trend-table td{padding-top:7px;padding-bottom:7px}
+  .market-analysis-page .ma-trends #ranking .trend-table td small{line-height:1.25}
+  .market-analysis-page .ma-trends .rank-trend{margin-top:8px;padding-top:7px}
+  .market-analysis-page .ma-trends .rank-trend-spark .sparkline{height:24px}
+  .market-analysis-page .ma-trends .seasonality-head .season-tabs button{padding:5px 9px}
+  .market-analysis-page .ma-trends .seasonality-body .month-chart{flex:1;height:auto;min-height:145px;margin-top:10px;gap:6px}
+  .market-analysis-page .ma-trends .seasonality-body .season-callout{margin-top:9px;padding:10px 12px;font-size:13px}
+  .market-analysis-page .ma-trends .rank-pair{min-height:0}
+  .market-analysis-page .ma-trends .rank-pair .bar-rows{gap:7px;margin-top:8px;justify-content:space-between}
+  .market-analysis-page .ma-trends .rank-pair .bar-rows li{gap:3px 8px;font-size:13px}
+  .market-analysis-page .ma-trends .rank-pair .bar-label small{font-size:10px}
+  .market-analysis-page .ma-trends .rank-pair .bar-value{font-size:13px}
+  .market-analysis-page .ma-trends .rank-pair .bar-track{height:5px}
+  .market-analysis-page .ma-trends .rank-pair .list-foot{margin-top:5px}
+  .market-analysis-page .ma-trends .season-ads .ad-h3{margin:4px 0 7px!important}
+  .market-analysis-page .ma-trends .season-ads .insight-grid{gap:6px}
+  .market-analysis-page .ma-trends .season-ads .insight-grid li{gap:6px;padding:8px}
+  .market-analysis-page .ma-trends .season-ads .insight-grid p{margin-top:1px;line-height:1.35}
+  .market-analysis-page .ma-trends .ad-source-note{padding-top:6px;line-height:1.3}
+}

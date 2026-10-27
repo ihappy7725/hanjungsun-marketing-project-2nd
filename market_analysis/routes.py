@@ -9,6 +9,7 @@ API는 /market_analysis/api/... 아래에만 추가합니다. 다른 기능 데�
         fruit.csv                과일 5종 비교 시간별 관심도
         seasonality_<분류>.csv    5년 월별 관심도 (fruit 분류는 과일 5종 비교)
         geo_<주제>.csv            지역별 관심도
+    data/research_<날짜>/        경쟁 제품 재조사 결과(build_competitor_research.py). 있으면 가장 최근 폴더를 우선 사용
     data/competitors_<국가>.csv  경쟁 제품 수동 조사표 (머리줄 = COMPETITOR_COLUMNS, CSV UTF-8로 저장)
     data/country_<국가>.json     국가 기본 정보 (World Bank)
     data/content_guidelines_<국가>.json  금기·컬러·상징 (public.get_content_guidelines)
@@ -104,16 +105,18 @@ def api_insight():
     repository = TrendRepository()
     config = repository.get_keywords(country)
     trend = TrendService(repository).get_dashboard(country) or {}
-    guidelines = _load_culture(country)["guidelines"] or {}
+    culture = _load_culture(country)
+    guidelines = culture["guidelines"] or {}
     competitors = _load_competitors(country)
     # 의사결정 카드(맛 기회·가격 위치·채널 기회): 서버 계산, AI 없이 바로 표시
-    cards = build_cards(trend, competitors["items"],
+    cards = build_cards(trend, competitors.get("card_items", competitors["items"]),
                         (guidelines.get("culture_dashboard") or {}).get("ecommerce_facts"), competitors.get("as_of"))
     if request.method == "GET":
         return jsonify({**insight_service.options(config), "cards": cards})
     try:
         payload = insight_service.generate(request.get_json(silent=True), config, trend=trend, guidelines=guidelines,
-                                           competitors=competitors["items"], cards=cards)
+                                           competitors=competitors["items"], cards=cards, basic=culture.get("basic"),
+                                           competitor_meta=competitors)
     except insight_service.InsightError as error:
         return jsonify(error=str(error)), error.status
     return jsonify(payload)
@@ -126,7 +129,8 @@ def _country_arg():
 
 def build_dashboard(country):
     trend = _load_trend(country)
-    competitors = _load_competitors(country)
+    # 중량별 카드 계산용 묶음은 AI 인사이트 API에서만 쓰므로 화면 데이터에는 싣지 않습니다
+    competitors = {k: v for k, v in _load_competitors(country).items() if k != "card_items"}
     culture = _load_culture(country)
     return {
         "country": country,
@@ -303,6 +307,9 @@ def _parse_value(text):
 # ---------- 경쟁사 (수동 조사 CSV) ----------
 
 def _load_competitors(country):
+    research = _load_competitor_research(country)
+    if research is not None:
+        return research
     catalog = _load_competitor_catalog(country)
     if catalog is not None:
         return catalog
@@ -479,6 +486,258 @@ def _load_competitor_catalog(country):
             "channel_count": len({row.get("platform") for row in listing_rows if row.get("platform")}),
             "priced_product_count": sum(item["price_min_vnd"] is not None for item in items),
             "imaged_product_count": sum(bool(item["image_url"]) for item in items),
+        },
+    }
+
+
+# 재조사 결과(build_competitor_research.py)는 현재 베트남만 있습니다
+_RESEARCH_GLOB = {"VN": "research_*"}
+# 우선 검토 경쟁자: 조사 요약(competitor_research_summary.md 5장)의 판단을 화면에 그대로 옮깁니다
+_PRIORITY = [
+    ("CP051", "다낭 Vincom·호이안에 매장이 확인된 유일한 경쟁자. 낱개부터 18개입 선물상자까지 같은 개당 가격대"),
+    ("CP001", "슈퍼마켓·유아용품점·식품점에 가장 넓게 깔린 대만 포장 모찌. 소비자가 떠올리는 기준 가격"),
+    ("CP021", "일본산 상온 포장 모찌. '한국 정통 찹쌀떡'으로 차별화할 때의 비교 기준"),
+    ("CP048", "일본 선물상자 24개입. 추석·설 대량 선물 수요를 겨냥"),
+    ("CP037", "모찌 아이스크림 대표 제품. 냉동·과일 소 제품을 낼 때 직접 비교 대상"),
+    ("CP045", "베트남 현지 냉장 '찍어 먹는 모찌'. SNS 유행 형태를 소포장으로 빠르게 제품화"),
+]
+_SEGMENT_ORDER = ["매장·베이커리 모찌", "일본 포장 모찌", "대만 포장 모찌", "기타 포장 모찌", "냉장·냉동 모찌",
+                  "모찌 아이스크림", "선물세트", "대용량 크림 모찌(온라인)", "베트남 전통 찹쌀과자(인접)"]
+_KO_FLAVORS = {"딸기": "strawberry", "망고": "mango", "두리안": "durian", "코코넛": "coconut", "바나나": "banana",
+               "패션프루트": "passion fruit", "자몽": "pomelo", "잭프루트": "jackfruit", "람부탄": "rambutan", "용과": "dragon fruit"}
+# 의사결정 카드(decision_cards.CHANNEL_GROUPS)가 알아보는 판매처 이름으로 맞춥니다
+_CARD_PLATFORM = {"Sakuko Store": "Sakuko", "Farmers Market": "Farmers Market"}
+
+
+def _research_folder(country):
+    pattern = _RESEARCH_GLOB.get(country)
+    folders = sorted(path for path in _DATA_DIR.glob(pattern) if path.is_dir()) if pattern else []
+    return folders[-1] if folders else None
+
+
+def _csv_rows(path):
+    text = _read_text(path)
+    if not text:
+        return []
+    return [{(k or "").strip(): (v or "").strip() for k, v in row.items() if k} for row in csv.DictReader(io.StringIO(text))]
+
+
+def _research_segment(product):
+    kind, origin, pid = product.get("product_type", ""), product.get("origin_country", ""), product.get("product_id", "")
+    if "아이스크림" in kind:
+        return "모찌 아이스크림"
+    if pid in ("CP051", "CP052"):
+        return "매장·베이커리 모찌"
+    if "선물" in kind:
+        return "선물세트"
+    if product.get("competition_level") == "인접 경쟁":
+        return "베트남 전통 찹쌀과자(인접)"
+    if "대용량" in kind or pid.startswith("CS"):
+        return "대용량 크림 모찌(온라인)"
+    if "냉장" in kind or "냉동" in kind:
+        return "냉장·냉동 모찌"
+    if origin.startswith("대만"):
+        return "대만 포장 모찌"
+    if origin.startswith("일본"):
+        return "일본 포장 모찌"
+    return "기타 포장 모찌"
+
+
+def _research_flavors(product):
+    """의사결정 카드의 과일 이름(영어·베트남어) 표기로 바꿉니다."""
+    from .services.decision_cards import FLAVOR_ALIASES
+
+    text = f"{product.get('product_name_local', '')} {product.get('flavor_filling', '')}".lower()
+    found = {_KO_FLAVORS[ko] for ko in _KO_FLAVORS if ko in text}
+    for fruit, aliases in FLAVOR_ALIASES.items():
+        if any(re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", text) for alias in aliases[1:]):
+            found.add(aliases[0])
+    return ", ".join(sorted(found))
+
+
+def _spread(values):
+    values = [v for v in values if isinstance(v, (int, float))]
+    if not values:
+        return None
+    return {"min": min(values), "median": round(_median(values)), "max": max(values), "count": len(values)}
+
+
+def _median(values):
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    return ordered[middle] if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2
+
+
+def _load_competitor_research(country):
+    """재조사 결과 폴더를 경쟁사 탭 화면 데이터로 바꿉니다. 사진은 사용권 미확보로 넘기지 않습니다."""
+    folder = _research_folder(country)
+    if folder is None:
+        return None
+    products = _csv_rows(folder / "competitor_products.csv")
+    listing_rows = _csv_rows(folder / "competitor_listings.csv")
+    if not products or not listing_rows:
+        return None
+    marketing_rows = _csv_rows(folder / "competitor_marketing_evidence.csv")
+    review_rows = _csv_rows(folder / "competitor_review_queue.csv")
+    exclusion_rows = _csv_rows(folder / "competitor_exclusions.csv")
+    priority = dict(_PRIORITY)
+    rel = folder.relative_to(_DATA_DIR.parent.parent).as_posix()
+
+    grouped = {}
+    for row in listing_rows:
+        grouped.setdefault(row.get("product_id", ""), []).append({
+            "listing_id": row.get("listing_id", ""), "seller": row.get("seller", ""), "channel": row.get("sales_channel", ""),
+            "region": row.get("sales_region", ""), "sku": row.get("sku_option", ""), "option": row.get("option_name", ""),
+            "current_price_vnd": _number(row.get("current_price")), "regular_price_vnd": _number(row.get("regular_price")),
+            "price_per_100g": _number(row.get("price_per_100g")), "price_per_piece": _number(row.get("price_per_piece")),
+            "pack_count": _number(row.get("pack_count_used")), "net_weight_g": _number(row.get("net_weight_g_used")),
+            "price_condition": row.get("price_condition", ""), "shipping_fee": row.get("shipping_fee", ""),
+            "stock_status": row.get("stock_status", ""), "status_evidence": row.get("status_evidence", ""),
+            "source_url": row.get("product_url", ""), "checked_at": row.get("checked_at", ""), "notes": row.get("notes", ""),
+            "platform": next((v for k, v in _CARD_PLATFORM.items() if k == row.get("seller")),
+                             "TikTok Shop" if "TikTok" in row.get("seller", "") else row.get("seller", "")),
+        })
+    evidence_by_product = {}
+    for row in marketing_rows:
+        evidence_by_product.setdefault(row.get("product_id", ""), []).append(row)
+
+    items = []
+    for product in products:
+        pid = product.get("product_id", "")
+        listings = grouped.get(pid, [])
+        if not listings:
+            continue
+        prices = [l["current_price_vnd"] for l in listings if l["current_price_vnd"]]
+        per100 = [l["price_per_100g"] for l in listings if l["price_per_100g"]]
+        per_piece = [l["price_per_piece"] for l in listings if l["price_per_piece"]]
+        packs = {l["pack_count"] for l in listings if l["pack_count"]}
+        weights = {l["net_weight_g"] for l in listings if l["net_weight_g"]}
+        storage_text = product.get("storage", "")
+        evidence = evidence_by_product.get(pid, [])
+        items.append({
+            "product_id": pid, "brand": product.get("brand", ""), "product": product.get("product_name_local", ""),
+            "product_ko": product.get("product_name_ko", ""), "segment": _research_segment(product),
+            "competition_level": product.get("competition_level", ""), "reason": product.get("inclusion_reason", ""),
+            "product_type": product.get("product_type", ""), "flavor_ko": product.get("flavor_filling", ""),
+            "flavors": _research_flavors(product), "origin": product.get("origin_country", ""),
+            "maker": product.get("maker_importer", ""), "sku_options": product.get("sku_options", ""),
+            "storage_label": storage_text,
+            "storage": "frozen" if ("냉동" in storage_text or "냉장" in storage_text) else ("dry" if "상온" in storage_text else ""),
+            "pack_count": packs.pop() if len(packs) == 1 else None,
+            "net_weight_g": weights.pop() if len(weights) == 1 else None,
+            "price_vnd": min(prices) if prices else None, "price_min_vnd": min(prices) if prices else None,
+            "price_max_vnd": max(prices) if prices else None,
+            "price_per_100g_min": min(per100) if per100 else None, "price_per_100g_max": max(per100) if per100 else None,
+            "price_per_piece_min": min(per_piece) if per_piece else None, "price_per_piece_max": max(per_piece) if per_piece else None,
+            "seller_count": len({l["seller"] for l in listings}), "channel_count": len({l["seller"] for l in listings}),
+            "listing_count": len(listings), "channels": "; ".join(sorted({l["seller"] for l in listings})),
+            "surveyed_at": max(l["checked_at"] for l in listings)[:10],
+            "is_core": pid in priority, "takeaway": priority.get(pid, ""),
+            "key_message": evidence[0]["observation"] if evidence else "",
+            "classification_note": product.get("classification_note", ""),
+            "monthly_sales": None, "history": [], "listings": listings,
+            "marketing": [{k: row.get(k, "") for k in ("evidence_type", "observation", "interpretation", "unverified",
+                                                       "source_url", "posted_at", "seller")} for row in evidence],
+        })
+    items.sort(key=lambda i: (_SEGMENT_ORDER.index(i["segment"]), i["brand"].lower(), i["product"].lower()))
+    as_of = max((i["surveyed_at"] for i in items), default=None)
+
+    # 의사결정 카드는 '제품 하나 = 중량 하나'를 전제로 100g당 가격을 계산하므로 중량별로 나눕니다.
+    # 맛 개수가 부풀지 않도록 맛은 첫 묶음에만 둡니다.
+    card_items = []
+    for item in items:
+        by_weight = {}
+        for listing in item["listings"]:
+            by_weight.setdefault(listing["net_weight_g"], []).append(listing)
+        for index, (weight, rows) in enumerate(by_weight.items()):
+            card_items.append({**item, "net_weight_g": weight, "listings": rows, "flavors": item["flavors"] if index == 0 else ""})
+
+    segments = []
+    for name in _SEGMENT_ORDER:
+        members = [i for i in items if i["segment"] == name]
+        if not members:
+            continue
+        listings = [l for i in members for l in i["listings"]]
+        segments.append({"name": name, "product_count": len(members), "listing_count": len(listings),
+                         "per100": _spread([l["price_per_100g"] for l in listings]),
+                         "per_piece": _spread([l["price_per_piece"] for l in listings]),
+                         "price": _spread([l["current_price_vnd"] for l in listings])})
+
+    by_id = {i["product_id"]: i for i in items}
+    priority_cards = []
+    for pid, why in _PRIORITY:
+        item = by_id.get(pid)
+        if not item:
+            continue
+        family = [i for i in items if i["brand"] == item["brand"]]
+        listings = [l for i in family for l in i["listings"]]
+        priority_cards.append({
+            "product_id": pid, "brand": item["brand"], "product_ko": item["product_ko"], "segment": item["segment"], "why": why,
+            "product_count": len(family), "seller_count": len({l["seller"] for l in listings}),
+            "per100": _spread([l["price_per_100g"] for l in listings]), "per_piece": _spread([l["price_per_piece"] for l in listings]),
+            "price": _spread([l["current_price_vnd"] for l in listings]),
+        })
+
+    gifts = sorted(
+        ({"product_id": i["product_id"], "brand": i["brand"], "product_ko": i["product_ko"], "segment": i["segment"],
+          "seller": l["seller"], "option": l["option"] or l["sku"], "pack_count": l["pack_count"], "price": l["current_price_vnd"],
+          "per_piece": l["price_per_piece"], "source_url": l["source_url"]}
+         for i in items for l in i["listings"] if l["pack_count"] and l["pack_count"] >= 3),
+        key=lambda g: (g["pack_count"], g["price"] or 0))
+
+    spreads = []
+    for item in items:
+        by_sku = {}
+        for listing in item["listings"]:
+            if listing["current_price_vnd"] and listing["net_weight_g"]:
+                by_sku.setdefault(listing["net_weight_g"], []).append(listing)
+        for weight, rows in by_sku.items():
+            sellers = {l["seller"] for l in rows}
+            if len(sellers) < 2:
+                continue
+            low = min(rows, key=lambda l: l["current_price_vnd"])
+            high = max(rows, key=lambda l: l["current_price_vnd"])
+            spreads.append({"product_id": item["product_id"], "brand": item["brand"], "product_ko": item["product_ko"],
+                            "weight": weight, "low": low["current_price_vnd"], "low_seller": low["seller"],
+                            "high": high["current_price_vnd"], "high_seller": high["seller"], "seller_count": len(sellers),
+                            "gap_pct": round((high["current_price_vnd"] - low["current_price_vnd"]) / low["current_price_vnd"] * 100)})
+    spreads.sort(key=lambda s: -s["gap_pct"])
+
+    review_types = {}
+    for row in review_rows:
+        review_types[row.get("queue_type", "")] = review_types.get(row.get("queue_type", ""), 0) + 1
+    marketplace = sum(1 for row in review_rows if row.get("seller") in ("Shopee", "Lazada") and "검색어: " in row.get("reason", ""))
+    per100_all = [l["price_per_100g"] for i in items for l in i["listings"] if l["price_per_100g"]]
+    return {
+        "source": "research",
+        "file": f"{rel}/competitor_products.csv",
+        "listing_file": f"{rel}/competitor_listings.csv",
+        "summary_file": f"{rel}/competitor_research_summary.md",
+        "columns": COMPETITOR_COLUMNS,
+        "marketing_labels": COMPETITOR_MARKETING,
+        "as_of": as_of,
+        "items": items,
+        "card_items": card_items,
+        "segments": segments,
+        "priority": priority_cards,
+        "gifts": gifts,
+        "spreads": spreads,
+        "marketing": [{**row, "brand": row.get("brand", "")} for row in marketing_rows],
+        "summary": {
+            "product_count": len(items),
+            "direct_count": sum(i["competition_level"] == "직접 경쟁" for i in items),
+            "adjacent_count": len(items) - sum(i["competition_level"] == "직접 경쟁" for i in items),
+            "listing_count": len(listing_rows),
+            "seller_count": len({row.get("seller") for row in listing_rows}),
+            "channel_count": len({row.get("seller") for row in listing_rows}),
+            # '다낭 배송 여부 미확인' 같은 문구와 구분해, 매장 목록에 다낭이 있는 판매처만 셉니다
+            "danang_store_brands": sorted({i["brand"] for i in items for l in i["listings"]
+                                           if l["region"].startswith("매장:") and "다낭" in l["region"]}),
+            "per100_median": round(_median(per100_all)) if per100_all else None,
+            "priced_product_count": sum(i["price_min_vnd"] is not None for i in items),
+            "imaged_product_count": 0,
+            "review_total": len(review_rows), "review_types": review_types, "marketplace_candidates": marketplace,
+            "excluded_total": len(exclusion_rows),
         },
     }
 
