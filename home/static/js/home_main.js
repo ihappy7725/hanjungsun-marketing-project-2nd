@@ -606,14 +606,30 @@ async function initialize() {
     $('#gantt-note').textContent = notes.join(' '); $('#gantt-note').hidden = !notes.length;
   }
   function signalMessage(name, text) { return !signals ? '자료를 불러오는 중입니다.' : signals[name].state === 'error' ? '정보를 불러오지 못했습니다. 잠시 후 조회를 다시 시도해주세요.' : text; }
+  function renderCollaborationSummary() {
+    const box = $('#collaboration-list');
+    if (!signals) { box.innerHTML = empty('인플루언서 요약을 불러오는 중입니다.'); return; }
+    const summary = signals.collaboration_summary;
+    const stages = [['registered', '등록'], ['sent', '제안 보냄'], ['replied', '회신 받음'], ['confirmed', '확정']];
+    const count = value => Number.isInteger(value) && value >= 0;
+    if (summary?.state !== 'ok' || !summary.funnel || !validDate(summary.as_of)
+      || !stages.every(([key]) => count(summary.funnel[key])) || !count(summary.task_total)
+      || !Array.isArray(summary.tasks) || !summary.tasks.length
+      || !summary.tasks.every(t => t && typeof t.kind === 'string' && typeof t.label === 'string' && t.label.trim() && count(t.count))
+      || summary.tasks.reduce((sum, t) => sum + t.count, 0) !== summary.task_total) {
+      box.innerHTML = '<p class="home-error" role="alert">인플루언서 요약을 불러오지 못했습니다. 새로고침 후 다시 확인해주세요.</p>';
+      return;
+    }
+    // 진혁 공개 함수의 실제 자료 결과입니다. HOME에서 단계를 추정하거나 다시 집계하지 않습니다.
+    const tasks = summary.tasks.filter(t => t.count > 0);
+    box.innerHTML = `<dl class="home-collab-funnel" aria-label="실제 협업의 단계별 누적 인원, 단계 간 중복 포함">${stages.map(([key, label]) => `<div><dt>${label}</dt><dd><strong>${summary.funnel[key].toLocaleString('ko-KR')}</strong><span>명</span></dd></div>`).join('')}</dl>
+      <div class="home-collab-checks"><h3>확인할 일 <span>${summary.task_total.toLocaleString('ko-KR')}건</span></h3>${tasks.length ? `<ul>${tasks.map(t => `<li><span>${esc(t.label)}</span><strong>${t.count.toLocaleString('ko-KR')}건</strong></li>`).join('')}</ul>` : empty(summary.funnel.registered === 0 ? '등록된 실제 인플루언서가 없습니다.' : '지금 확인할 일이 없습니다.')}</div>
+      <p class="home-collab-caption">실제 자료 · 기준 ${esc(summary.as_of)}</p>`;
+  }
   function renderSignals() {
     const r = range(), opportunities = localEvents().filter(e => e.start >= r.start && e.start <= r.end).sort((a, b) => a.start.localeCompare(b.start));
     $('#opportunity-list').innerHTML = opportunities.map(e => `<article class="home-opportunity"><div class="home-signal-meta">${dday(e.start, today)} · ${esc({ holiday: '공휴일', anniversary: '기념일', regional_event: '지역행사', fruit_season: '과일 시즌' }[e.type] || '현지 일정')}${e.region ? ` · ${esc(e.region)}` : ''}</div><h3>${esc(e.name)}</h3>${eventSummary(e)}<button class="btn" data-local="${esc(e.event_id)}">일정 상세</button> <button class="btn" data-create="${esc(e.event_id)}">+ 이벤트 기획</button></article>`).join('') || empty(signalMessage('events', '조회 기간에 시작하는 HOME 등록 일정이 없습니다. 기간을 바꾸거나 검증된 일정 자료를 준비해주세요.'));
-    // 요약 목록만 거릅니다. 달력의 촬영·게시 일정에 사용하는 원본 목록은 유지합니다.
-    const rows = creators().filter(c => ['sent', 'replied', 'negotiating', 'confirmed', 'shot'].includes(c.status));
-    $('#collaboration-list').innerHTML = rows.length
-      ? `<table class="home-collab-table"><caption class="home-sr-only">제안 발송부터 촬영 완료 단계의 인플루언서 협업</caption><thead><tr><th scope="col">이름</th><th scope="col">채널</th><th scope="col">진행현황</th></tr></thead><tbody>${rows.map(c => `<tr><td><a href="${esc(safeUrl(c.link || '/influencer_marketing/') || '/influencer_marketing/')}">${esc(c.influencer || '이름 미제공')}</a></td><td>${esc(c.main_platform || '채널 미제공')}</td><td>${badge(c.status_label || c.status)}</td></tr>`).join('')}</tbody></table>`
-      : empty(signalMessage('collaborations', '제안 발송 이후 진행 중인 협업이 없습니다.'));
+    renderCollaborationSummary();
     const news = (signals?.news.items || []).filter(n => n.is_demo === false && n.verification_status === 'verified' && n.registration_status === 'approved').sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))).slice(0, 3);
     $('#news-list').style.setProperty('--home-news-columns', String(Math.max(1, news.length)));
     const newsMarkup = news.map(n => {
