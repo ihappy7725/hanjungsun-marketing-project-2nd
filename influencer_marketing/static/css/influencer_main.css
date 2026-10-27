@@ -209,10 +209,10 @@
 .influencer-page .im-fold>summary{font-weight:500;color:var(--im-muted)}
 /* 요약: 진행 단계 4칸 (Ver_023: 칸 사이 화살표, 오른쪽 위 % 없앰, 상자 폭은 칸의 90%·가운데 정렬) */
 /* 3차: 상자 폭은 글자에 맞게(최소 140px), 높이는 위아래 10%씩 줄임(안쪽 여백·숫자 줄 높이 축소) */
-.influencer-page .im-funnel{display:flex;flex-wrap:wrap;gap:var(--space-5) calc(var(--space-7) * 2);margin-bottom:var(--space-6)}
-.influencer-page .im-fstep{position:relative;flex:0 0 auto;min-width:140px;display:flex;align-items:baseline;gap:var(--space-4);background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-4) var(--space-6)}
+.influencer-page .im-funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-5) calc(var(--space-7) * 2);margin-bottom:var(--space-6)}  /* 아래 3칸과 같은 전체 폭, 네 칸 같은 폭 */
+.influencer-page .im-fstep{position:relative;min-width:140px;display:flex;align-items:baseline;justify-content:center;gap:var(--space-4);background:var(--im-surface);border:1px solid var(--im-line);border-radius:var(--im-r);padding:var(--space-4) var(--space-6)}
 .influencer-page .im-fstep+.im-fstep::before{content:"→";position:absolute;left:calc(var(--space-7) * -1);top:50%;transform:translate(-50%,-50%);color:var(--im-faint);font-size:var(--fs-body)}
-@media (max-width:900px){.influencer-page .im-funnel{column-gap:var(--space-5)}.influencer-page .im-fstep{min-width:128px}.influencer-page .im-fstep+.im-fstep::before{display:none}}
+@media (max-width:900px){.influencer-page .im-funnel{grid-template-columns:repeat(2,1fr);column-gap:var(--space-5)}.influencer-page .im-fstep{min-width:128px}.influencer-page .im-fstep+.im-fstep::before{display:none}}
 .influencer-page .im-fstep span{font-size:var(--fs-body);color:var(--im-muted)}
 .influencer-page .im-fstep b{display:inline-block;font-size:var(--fs-h1);line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:var(--tracking-tight)}
 .influencer-page .im-fstep b small{font-size:var(--fs-body);font-weight:500;margin-left:var(--space-1);color:var(--im-muted)}
@@ -263,6 +263,11 @@
 .influencer-page .im-filters{grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr)) auto}
 @media (max-width:1360px){.influencer-page .im-filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:640px){.influencer-page .im-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* 넓은 화면: 필터 칸 경계를 아래 표 열 경계와 맞춤 (JS LCOLS와 같은 비율). 검색=인플루언서, 분야=분야, 대표 플랫폼=플랫폼 4열, 규모=규모, 상태=상태 */
+.influencer-page .im-filters input[type=search]{min-height:44px;height:44px}  /* 검색칸을 드롭다운(44px)과 같은 높이로 */
+@media (min-width:1361px){.influencer-page .im-lfilters{grid-template-columns:24fr 12fr 8fr 8fr 8fr 8fr 11fr 10fr 11fr;column-gap:0;padding-left:1px}
+.influencer-page .im-lfilters>.im-field{padding-right:var(--space-4)}
+.influencer-page .im-lfilters>:nth-child(3){grid-column:3/7}.influencer-page .im-lfilters>:nth-child(4){grid-column:7}.influencer-page .im-lfilters>:nth-child(5){grid-column:8}}  /* 규모·상태는 대표 플랫폼 바로 옆에 붙임 */
 /* ---------- Ver_022 ---------- */
 /* 편집 창 접힘 제목(미리보기 열기·보내는 사람 정보)은 진하게 */
 .influencer-page .im-dsec .im-fold>summary{color:var(--im-ink);font-weight:600}
@@ -270,18 +275,25 @@
 .influencer-page .im-tr-swap{min-width:36px;justify-content:center}
 .influencer-page .im-tr-box{margin-top:var(--space-4);border:1px solid var(--im-line);border-radius:var(--radius);background:var(--im-surface);padding:var(--space-4)}
 .influencer-page .im-tr-box pre{margin:0 0 var(--space-3);white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:var(--fs-body);line-height:var(--line-height);max-height:260px;overflow:auto}
-/* Ver_023 4차: 요약 아래 3칸(예산 현황·오늘의 할 일·촬영일 확정)을 같은 크기 정사각형으로 */
-.influencer-page .im-ovgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6)}
-.influencer-page .im-ovgrid>.im-panel{aspect-ratio:1/1;overflow:auto}
+/* Ver_023: 요약 아래 — 예산 현황 가로 띠 + 오늘의 할 일·촬영일 확정 같은 높이 2칸 */
+.influencer-page .im-ovgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-6)}
+/* 예산 현황: 전체 폭 가로 띠 — 제목과 '견적 합계 $3,760 3건' 같은 한 줄 항목 3개 */
+.influencer-page .im-ovgrid>.im-ovbud{grid-column:1/-1;display:flex;align-items:center;gap:var(--space-7);flex-wrap:wrap}
+.influencer-page .im-ovbud h2{margin:0}
+.influencer-page .im-ovbud #ovBud{flex:1;display:flex;align-items:center;gap:var(--space-7);flex-wrap:wrap;min-width:0}
+.influencer-page .im-ovbud .im-mini{grid-template-columns:repeat(3,max-content);column-gap:calc(var(--space-7) * 2)}
+.influencer-page .im-ovbud .im-mini>div{display:flex;align-items:baseline;gap:var(--space-4);white-space:nowrap}
+.influencer-page .im-ovbud .im-mini span,.influencer-page .im-ovbud .im-mini b{display:inline}
 .influencer-page #ovTodo .im-grow{min-width:0}
 .influencer-page .im-ovgrid .im-todo li{padding:var(--space-3) 0;align-items:center;gap:var(--space-4)}
 .influencer-page .im-ovgrid .im-todo .im-btn.is-sm{min-height:32px;padding-top:var(--space-1);padding-bottom:var(--space-1)}
 .influencer-page #ovTodo .im-grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .influencer-page #ovTodo .im-grow .im-muted{display:none}  /* 할 일 안내 문장은 마우스를 올리면(title) */
-@media (max-width:1360px){.influencer-page .im-ovgrid>.im-panel{aspect-ratio:auto}}  /* 좁으면 정사각형 대신 세 칸 높이만 같게(칸 안 스크롤 없음) */
 @media (max-width:1160px){.influencer-page .im-ovgrid{grid-template-columns:minmax(0,1fr)}}
 /* 인플루언서 표: 열 폭 고정·머리글 대문자 해제·숫자는 본문 글꼴의 같은 폭 숫자 → 줄이 가지런하게 */
 .influencer-page .im-ltable{table-layout:fixed;min-width:820px}
 .influencer-page .im-ltable th{text-transform:none;letter-spacing:0}
 .influencer-page .im-ltable td,.influencer-page .im-ltable td>div{overflow:hidden;text-overflow:ellipsis}
 .influencer-page .im-ltable .im-num{font-family:inherit}
+/* [발굴] 결과 표: 팔로워·구독자 숫자를 오른쪽 끝에서 약 2cm(76px) 안쪽으로 */
+.influencer-page .im-dres th.r,.influencer-page .im-dres td.r{padding-right:calc(var(--space-4) + 76px)}

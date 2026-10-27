@@ -216,6 +216,9 @@ def _ref_manifest():
     out, seen = [], set()
     for it in items:
         fn = os.path.basename(str(it.get("file") or ""))
+        if it.get("hidden"):  # Ver_023: 화면 선택지에서 숨김(파일은 그대로 보관)
+            seen.add(fn)
+            continue
         if fn.lower().endswith(".csv") and fn not in seen:
             seen.add(fn)
             out.append({"file": fn, "label": str(it.get("label") or fn)[:60], "as_of": str(it.get("as_of") or "")[:10],
@@ -349,6 +352,9 @@ def _ref_search(provider, platform, f, include_excluded=False):
     pf_total = len(rows)
     if not include_excluded:
         rows = [r for r in rows if not str(r.get("ref_class") or "").startswith("D")]
+    # Ver_023 대시보드 사용 기준: 팔로워·구독자 수가 있고, 분야(타깃 그룹)가 대시보드의 5개 중 하나인 계정만.
+    # 수가 없거나 분야 밖인 계정은 CSV에는 남기고 화면 결과에서만 뺌. Nano(1천) 미만은 아래 공통 필터에서 뺌
+    rows = [r for r in rows if r.get("followers") is not None and r.get("segment") in SEGMENT_NAMES]
     hidden_excluded = pf_total - len(rows)
     return rows, {"ref": True, "label": src["label"], "as_of": src["as_of"], "kind": src["kind"], "total": total,
                   "platform_total": pf_total, "hidden_excluded": hidden_excluded}
