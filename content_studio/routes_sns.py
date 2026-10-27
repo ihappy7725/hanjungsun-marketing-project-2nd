@@ -421,16 +421,21 @@ def delete_chat(chat_id):
 
 
 # ---------- 첫 화면 ----------
-# 기본 포스터 작업
+# 기본 포스터·영상 작업
 WORKS_DIR = os.path.join(bp.static_folder, "images", "sns", "works")
 _works_lock = threading.Lock()
 
 
+def _empty_tabs():
+    return [kind for kind in TABS if not SnsChat.query.filter_by(kind=kind).first()]
+
+
 def _ensure_works():
-    if SnsChat.query.filter(SnsChat.kind.in_(TABS)).first():
+    if not _empty_tabs():
         return
     with _works_lock:
-        if SnsChat.query.filter(SnsChat.kind.in_(TABS)).first():
+        empty = _empty_tabs()
+        if not empty:
             return
         try:
             with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
@@ -441,6 +446,11 @@ def _ensure_works():
         os.makedirs(folder, exist_ok=True)
         try:
             for item in items:
+                if item.get("kind", "poster") not in empty:
+                    continue
+                if item.get("kind") == "video":
+                    _add_video_work(item, folder)
+                    continue
                 path = os.path.join(WORKS_DIR, os.path.basename(item["file"]))
                 ids = [value for value in item["product_id"].split(",") if get_product(value)]
                 if not os.path.isfile(path) or not ids or item["ratio"] not in DESIGN_RATIOS["poster"]:
@@ -464,6 +474,42 @@ def _ensure_works():
         except (KeyError, TypeError, OSError):
             current_app.logger.exception("첫 작업 채우기 실패")
             db.session.rollback()
+
+
+def _add_video_work(item, folder):
+    path = os.path.join(WORKS_DIR, os.path.basename(item["file"]))
+    products = [product for value in item["product_id"].split(",") if (product := get_product(value))]
+    images = [os.path.join(WORKS_DIR, os.path.basename(scene["image"])) for scene in item["scenes"]]
+    if not os.path.isfile(path) or not products or not all(map(os.path.isfile, images)):
+        return
+    doc = make_draft(item["title"], ratio=item["ratio"], duration=item["duration"], sound=item.get("sound", False),
+                     product=products[0]["name_ko"], products=[product["name_ko"] for product in products])
+    doc["scenes"] = [{"ko": scene["ko"], "en": scene["en"], "caption": "", "time": scene["time"]}
+                     for scene in item["scenes"]]
+    doc = refresh_prompts(normalize_scenes(doc))
+    if item.get("prompt") and item.get("prompt_ko"):
+        # 직접 고친 프롬프트로 넣습니다(한국어→영어 자동 변환을 거치지 않음).
+        doc["custom"] = doc["prompt"] = "\n".join(item["prompt"])
+        doc["custom_ko"] = doc["prompt_ko"] = "\n".join(item["prompt_ko"])
+    photos = [photo for product in products for photo in _product_photos(product)]
+    doc["image"], doc["ref_images"] = (photos[0] if photos else None), photos[1:]
+    doc["keyframes"] = []
+    for scene, image in zip(doc["scenes"], images):
+        name = f"{uuid.uuid4()}.jpg"
+        shutil.copyfile(image, os.path.join(folder, name))
+        doc["keyframes"].append({"request_id": str(uuid.uuid4()), "status": higgsfield.DONE, "scene": scene["en"],
+                                 "image_url": url_for("content_studio.design_image", name=name)})
+    video_folder = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio")
+    os.makedirs(video_folder, exist_ok=True)
+    name = f"{uuid.uuid4().hex}.mp4"
+    shutil.copyfile(path, os.path.join(video_folder, name))
+    doc["job"] = {"request_id": str(uuid.uuid4()), "status": higgsfield.DONE,
+                  "video_url": url_for("content_studio.ref_video", name=name)}
+    doc.update({"title": item["title"][:TITLE_LIMIT], "demo": False, "reviewed": True})
+    chat = SnsChat(kind="video", title=item["title"][:40], product_id=",".join(product["id"] for product in products))
+    chat.design = SnsDesign()
+    chat.design.push(doc)
+    db.session.add(chat)
 
 
 @bp.route("/api/gallery")
