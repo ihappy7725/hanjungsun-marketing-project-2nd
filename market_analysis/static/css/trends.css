@@ -178,5 +178,9 @@
 .market-analysis-page .ma-trends .ma-trend-expand{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid var(--line);background:var(--page-bg);color:var(--muted);cursor:pointer}
 .market-analysis-page .ma-trends .ma-trend-expand:hover{color:var(--ink);border-color:var(--line-strong)}
 .market-analysis-page .ma-trends .ma-trend-expand svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.market-analysis-page .ma-trends .trend-panels>.card.is-expanded{position:fixed;top:50%;left:calc(var(--sidebar-width,0px) + var(--page-padding,16px));right:var(--page-padding,16px);z-index:30;max-height:calc(100vh / var(--ui-zoom,1) - 40px);overflow-y:auto;transform:translateY(-50%);box-shadow:var(--shadow-overlay)}
-.market-analysis-page .ma-trends .ma-trend-backdrop{position:fixed;inset:0;z-index:29;background:var(--backdrop)}
+/* 확대: 4개 블록 모두 같은 폭(최대 1200px, 본문 가운데) · 높이는 내용만큼(화면보다 길면 블록 안 스크롤) */
+.market-analysis-page .ma-trends .trend-panels>.card.is-expanded{position:fixed;top:50%;left:calc(var(--sidebar-width,0px) + (100vw / var(--ui-zoom,1) - var(--sidebar-width,0px)) / 2);right:auto;width:min(1200px,calc(100vw / var(--ui-zoom,1) - var(--sidebar-width,0px) - 2 * var(--page-padding,16px)));height:auto;min-height:0;max-height:calc(100vh / var(--ui-zoom,1) - 80px);overflow-y:auto;transform:translate(-50%,-50%);z-index:36;box-shadow:var(--shadow-overlay)}
+.market-analysis-page .ma-trends .trend-panels>.card.is-expanded .month-chart{flex:none;height:320px;min-height:0}  /* 계절성 막대: 평소 약 210px → 확대 320px 고정 */
+.market-analysis-page .ma-trends .trend-panels>.card.is-expanded #ranking .trend-table,.market-analysis-page .ma-trends .trend-panels>.card.is-expanded #ranking .trend-table.related-ranking{width:100%}
+/* 확대 배경: 상단 탭 줄(z 30)보다 위, 사이드바(z 40)보다 아래 */
+.market-analysis-page .ma-trends .ma-trend-backdrop{position:fixed;inset:0;z-index:35;background:var(--backdrop)}

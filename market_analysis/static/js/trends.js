@@ -403,6 +403,7 @@ function setupTrendExpand() {
   backdrop.hidden = true;
   root.append(backdrop);
   const close = () => {
+    root.querySelectorAll(".trend-panels > .ma-trend-placeholder").forEach((ph) => ph.remove());
     root.querySelectorAll(".trend-panels > .card.is-expanded").forEach((c) => {
       c.classList.remove("is-expanded");
       c.querySelector(".ma-trend-expand")?.setAttribute("aria-label", "블록 확대");
@@ -420,6 +421,11 @@ function setupTrendExpand() {
       const open = !card.classList.contains("is-expanded");
       close();
       if (!open) return;
+      // 확대하는 동안 원래 자리를 같은 크기로 비워 두어 뒤쪽 블록이 밀려 움직이지 않게 합니다.
+      const ph = document.createElement("div");
+      ph.className = "ma-trend-placeholder";
+      ph.style.height = `${card.offsetHeight}px`;
+      card.before(ph);
       card.classList.add("is-expanded");
       btn.setAttribute("aria-label", "확대 닫기");
       backdrop.hidden = false;
