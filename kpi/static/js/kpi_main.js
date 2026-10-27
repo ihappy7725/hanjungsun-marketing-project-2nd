@@ -876,7 +876,7 @@ function showVocAi(demoReviews, ai) {
 // ---------- 집행 시뮬레이션 (화면에서만 계산, 저장하지 않음) ----------
 // 단일 입력 폼: 집행 유형(KOL 협찬 / 공식 매체 광고)에 따라 입력 칸·매체 목록·예상 ROAS 기본값이 바뀝니다.
 // 상태는 sim 하나에 모읍니다: 서버 데이터 · 집행 유형 · ROAS 직접 수정 여부 · 집행 예정 목록.
-const sim = { data: null, type: "kol", roasEdited: false, items: [], nextId: 1 };
+const sim = { data: null, type: "kol", roasEdited: false, items: [], nextId: 1, accountNames: [], suggestActive: -1 };
 const SIM_TYPE_LABEL = { kol: "KOL 협찬", paid: "공식 매체" };
 const CUSTOM = "__custom__";  // 매체 · 콘텐츠 형태 드롭다운의 '직접 입력'
 // KOL 콘텐츠 형태 기본 목록(매체별). 인플루언서 탭 단가에 있는 형식은 자동으로 더합니다.
@@ -1087,7 +1087,7 @@ function renderSimOptions() {
   // 계정 자동완성: 계정 이름만(보조 글씨 없음, 같은 이름은 한 번). 순서는 인플루언서 탭 리스트 → 단가 목록 → 크리에이터 목록
   const creators = d.creator_list || [];
   const names = [...new Set([...list.map((x) => x.influencer), ...inf.options.map((o) => o.influencer), ...creators.map((c) => c.name)])];
-  $("sim-accounts").replaceChildren(...names.map((name) => Object.assign(el("option"), { value: name })));
+  sim.accountNames = names;  // 계정 칸 검색 추천(accountSuggest)이 이 목록에서 찾습니다.
   syncSimUnit();
   setText(
     "sim-source",
@@ -1109,6 +1109,71 @@ function accountListEntry() {
   return (sim.data?.influencer_list || []).find((x) => x.influencer === name) || null;
 }
 
+
+// ---------- 계정 칸 검색 추천 ----------
+// 비교용 글자: 대소문자 · 베트남어 성조(ễ→e, đ→d) · @ · 띄어쓰기 · . _ - 를 무시합니다.
+// map[k] = 비교용 글자 k번째가 원래 이름의 몇 번째 글자인지(맞는 부분을 굵게 표시할 때 사용)
+function searchKey(text) {
+  let key = "";
+  const map = [];
+  for (let i = 0; i < text.length; i++) {
+    const k = text[i].replace(/[đĐ]/, "d").normalize("NFD").replace(/[̀-ͯ@\s._-]/g, "").toLowerCase();
+    for (const ch of k) { key += ch; map.push(i); }
+  }
+  return { key, map };
+}
+
+const SUGGEST_MAX = 8;
+// 순위: 이름 앞부분이 맞음(0) → 중간 단어 앞부분이 맞음(1) → 글자가 포함됨(2). 같은 순위는 원래 목록 순서.
+function accountSuggestions(query) {
+  const q = searchKey(query).key;
+  if (!q) return [];
+  return sim.accountNames.map((name, order) => {
+    const { key, map } = searchKey(name);
+    const pos = key.indexOf(q);
+    if (pos < 0) return null;
+    const wordStart = pos > 0 && /[\s@._-]/.test(name[map[pos] - 1] || "");
+    return { name, order, rank: pos === 0 ? 0 : wordStart ? 1 : 2, from: map[pos], to: map[pos + q.length - 1] + 1 };
+  }).filter(Boolean).sort((a, b) => a.rank - b.rank || a.order - b.order).slice(0, SUGGEST_MAX);
+}
+
+function closeAccountSuggest() {
+  $("sim-accounts").hidden = true;
+  $("sim-account").setAttribute("aria-expanded", "false");
+  $("sim-account").removeAttribute("aria-activedescendant");
+  sim.suggestActive = -1;
+}
+
+function renderAccountSuggest() {
+  const items = accountSuggestions($("sim-account").value);
+  sim.suggestActive = -1;
+  if (!items.length) return closeAccountSuggest();
+  $("sim-accounts").replaceChildren(...items.map((s, i) => {
+    const li = el("li", {}, [document.createTextNode(s.name.slice(0, s.from)), el("b", { text: s.name.slice(s.from, s.to) }), document.createTextNode(s.name.slice(s.to))]);
+    li.id = `kpi-sim-account-${i}`;
+    li.setAttribute("role", "option");
+    li.dataset.name = s.name;
+    return li;
+  }));
+  $("sim-accounts").hidden = false;
+  $("sim-account").setAttribute("aria-expanded", "true");
+}
+
+function moveAccountSuggest(step) {
+  const items = [...$("sim-accounts").children];
+  if ($("sim-accounts").hidden || !items.length) return;
+  sim.suggestActive = (sim.suggestActive + step + items.length) % items.length;
+  items.forEach((li, i) => li.classList.toggle("is-active", i === sim.suggestActive));
+  $("sim-account").setAttribute("aria-activedescendant", items[sim.suggestActive].id);
+}
+
+// 추천에서 고르면 칸에 넣고, 직접 입력할 때와 같은 연동(매체 · 단가 · 손익 미리보기)을 실행합니다.
+function chooseAccount(name) {
+  const input = $("sim-account");
+  input.value = name;
+  closeAccountSuggest();
+  input.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: { chosen: true } }));
+}
 
 // 크리에이터 목록에서 계정 찾기: 같은 이름이 여러 플랫폼에 있으면 지금 고른 매체를 먼저(없으면 팔로워 많은 쪽)
 function accountCreator() {
@@ -1260,6 +1325,7 @@ function addSimItem(form) {
   });
   // 다음 입력을 위해 대상·금액을 비우고 ROAS는 기본값으로 되돌립니다(유형·매체는 유지).
   f.account.value = "";
+  closeAccountSuggest();
   f.formatName.value = "";
   f.amount.value = "";
   if (custom) f.mediaName.value = "";
@@ -2327,6 +2393,7 @@ root.addEventListener("change", (event) => {
 root.addEventListener("input", (event) => {
   if (event.target.matches("[data-kpi-money]")) formatMoneyInput(event.target);
   if (event.target.matches('[data-kpi="sim-account"]')) {
+    if (!event.detail?.chosen) renderAccountSuggest();  // 추천에서 고른 직후에는 목록을 다시 열지 않음
     if (accountQuotes().length || accountListEntry()) applyQuote();  // 단가 · 탭 리스트가 우선
     else if (accountCreator()) applyCreator();
     else fillFormats();  // 탭에 없는 계정이면 매체 기본 형식만
@@ -2339,6 +2406,30 @@ root.addEventListener("submit", (event) => {
   if (!event.target.matches('[data-kpi="sim-form"]')) return;
   event.preventDefault();
   if (sim.data) addSimItem(event.target);
+});
+
+// 계정 칸 검색 추천: ↑↓ 이동 · Enter 고르기(양식 제출 막음) · Esc 닫기(확대 화면은 그대로) · 칸을 벗어나면 닫기
+root.addEventListener("keydown", (event) => {
+  if (!event.target.matches('[data-kpi="sim-account"]') || $("sim-accounts").hidden) return;
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    moveAccountSuggest(event.key === "ArrowDown" ? 1 : -1);
+  } else if (event.key === "Enter" && sim.suggestActive >= 0) {
+    event.preventDefault();
+    chooseAccount($("sim-accounts").children[sim.suggestActive].dataset.name);
+  } else if (event.key === "Escape") {
+    event.stopPropagation();
+    closeAccountSuggest();
+  }
+});
+root.addEventListener("mousedown", (event) => {
+  const li = event.target.closest('[data-kpi="sim-accounts"] li');
+  if (!li) return;
+  event.preventDefault();  // 칸의 포커스를 유지한 채 고름
+  chooseAccount(li.dataset.name);
+});
+root.addEventListener("focusout", (event) => {
+  if (event.target.matches('[data-kpi="sim-account"]')) closeAccountSuggest();
 });
 
 document.addEventListener("keydown", (event) => {

@@ -296,6 +296,25 @@
 }
 .kpi-page .kpi-sim-type { align-self: flex-start; }
 .kpi-page .kpi-sim-type button { height: 32px; padding: 0 var(--space-6); }
+/* 계정 칸 검색 추천: 칸 바로 아래에 겹쳐 뜨는 목록(최대 8개, 맞는 글자 굵게) */
+.kpi-page .kpi-suggest-wrap { position: relative; display: block; }
+.kpi-page .kpi-suggest {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  margin: 0;
+  padding: var(--space-1) 0;
+  border: 1px solid var(--line-strong);
+  background: var(--page-bg);
+  box-shadow: var(--shadow);
+  list-style: none;
+}
+.kpi-page .kpi-suggest li { padding: var(--space-2) var(--space-4); color: var(--ink); font-weight: 400; cursor: pointer; }
+.kpi-page .kpi-suggest li b { font-weight: 700; }
+.kpi-page .kpi-suggest li:hover,
+.kpi-page .kpi-suggest li.is-active { background: var(--paper); }
 .kpi-page .kpi-sim-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: var(--space-4) var(--space-5); }
 .kpi-page .kpi-sim-form .field input,
 .kpi-page .kpi-sim-form .field select { padding: var(--space-4); }
