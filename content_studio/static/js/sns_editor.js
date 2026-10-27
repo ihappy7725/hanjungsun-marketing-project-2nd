@@ -928,16 +928,26 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
     } catch { /* 확인하지 못하면 지금 화면을 그대로 둡니다. */ }
   }
 
+  // 최대 높이: .studio-page의 --studio-view-h(px, sns.js가 넣음)가 있으면 그 값, 없으면 창 높이의 70%
+  const studioPage = root.closest(".studio-page");
   function fit() {
-    if (!wrap.isConnected) return observer.disconnect();
+    if (!wrap.isConnected) {
+      observer.disconnect();
+      return pageWatch.disconnect();
+    }
     const width = view.clientWidth;
-    scale = Math.min(width / W, (window.innerHeight * MAX_VIEW) / H);
+    const viewH = parseFloat(studioPage ? getComputedStyle(studioPage).getPropertyValue("--studio-view-h") : "");
+    const maxH = viewH > 0 ? viewH : window.innerHeight * MAX_VIEW;
+    scale = Math.min(width / W, maxH / H);
     view.style.height = `${H * scale}px`;
     stage.style.left = `${(width - W * scale) / 2}px`;
     stage.style.transform = `scale(${scale})`;
   }
   const observer = new ResizeObserver(fit);
   observer.observe(view);
+  // 높이 값만 바뀌어도(입력창 접기·펼치기) 다시 맞춥니다.
+  const pageWatch = new MutationObserver(fit);
+  if (studioPage) pageWatch.observe(studioPage, { attributes: true, attributeFilter: ["style"] });
 
   // ---------- 장 (카드뉴스): 장 번호 · 이 장 복사해서 추가 · 이 장 삭제 ----------
   function renderPages() {
