@@ -61,78 +61,111 @@
 | 구분 | 시스템 아키텍처 다이어그램 |
 | --- | --- |
 | 목적 | 서비스의 전체 구조와 요청·데이터 처리 흐름 파악 |
-| 보여주는 대상 | 사용자 화면, Render 웹 서버, Flask Blueprint, 데이터베이스, 외부 API 연동 |
+| 보여주는 대상 | 사용자 화면, Render 웹 서버(Gunicorn), Flask Blueprint 5개 모듈, 데이터 저장소(DB · CSV/JSON · 로컬 파일), 외부 API · CLI 연동 |
 | 관점 | 런타임·인프라 구조를 중심으로 한 시스템 관점 |
 | 핵심 질문 | “사용자의 요청이 어떤 구성요소를 거쳐 처리되고 어디에 저장되는가?” |
 
-아래 다이어그램은 현재 저장소의 `app.py`, `render.yaml`, 각 Blueprint와 외부 API 호출 코드를 기준으로 작성했습니다. GitHub README에서 Mermaid 코드가 자동으로 다이어그램으로 표시되므로 별도 이미지 파일을 관리하지 않아도 됩니다.
+아래 다이어그램은 현재 저장소의 `app.py`, `render.yaml`, 각 Blueprint와 외부 서비스 호출 코드를 기준으로 작성했습니다. GitHub README에서 Mermaid 코드가 자동으로 다이어그램으로 표시됩니다.
 
 ```mermaid
 flowchart LR
-    USER["사용자 브라우저<br/>HTML · CSS · JavaScript"]
-    GITHUB["GitHub 저장소<br/>프로젝트 코드 · render.yaml"]
+    browser["사용자 브라우저
+    HTML · CSS · JavaScript"]
 
-    subgraph RENDER["Render 무료 Web Service"]
-        GUNICORN["Gunicorn<br/>WSGI 서버"]
-        FLASK["Flask app:create_app<br/>라우팅 · 입력 검증 · 응답"]
-        CORE["platform_core<br/>공통 레이아웃 · 디자인 · DB 확장"]
+    subgraph server["배포 대상: Render Web Service · Gunicorn worker 1개"]
+        app["Flask 애플리케이션
+        app.py · Jinja2 · 공통 레이아웃"]
 
-        subgraph MODULES["기능별 Flask Blueprint"]
-            HOME["HOME"]
-            MARKET["현지 시장 분석"]
-            STUDIO["콘텐츠 스튜디오"]
-            KPI["KPI"]
-            INFLUENCER["인플루언서 마케팅"]
-        end
+        home["HOME
+        업무 · 캠페인 · 일정"]
+        market["현지 시장 분석
+        트렌드 · 경쟁사 · AI 인사이트"]
+        studio["콘텐츠 스튜디오
+        포스터 · 카드뉴스 · 영상"]
+        influencer["인플루언서 마케팅
+        후보 발굴 · 협업 · 견적"]
+        kpi["KPI
+        성과 · 예산 · VOC"]
 
-        LOCALFILE["Render 인스턴스 로컬 파일<br/>uploads · exports · AI 모델 캐시<br/>재배포 시 영구 보존되지 않음"]
+        orm["Flask-SQLAlchemy"]
+        hfCli["Higgsfield CLI
+        서버 설치 · 로그인 필요"]
     end
 
-    DB[(Supabase PostgreSQL<br/>DATABASE_URL)]
-    SQLITE[(로컬 SQLite<br/>DATABASE_URL이 없을 때)]
-
-    subgraph EXTERNAL["서버에서 호출하는 외부 서비스"]
-        OPENAI["OpenAI API<br/>문구 · 이미지 · 인사이트 · VOC"]
-        TRENDS["SerpApi / Google Trends<br/>검색 트렌드 수집"]
-        HOLIDAY["Calendarific / Nager.Date<br/>베트남 공휴일"]
-        CREATOR["YouTube · Phyllo<br/>Modash · HypeAuditor"]
-        DATAAPI["ECOS · DeepL<br/>환율 · 번역"]
+    subgraph storage["데이터 저장"]
+        postgres[("PostgreSQL
+        DATABASE_URL 설정 시")]
+        sqlite[("로컬 SQLite
+        DATABASE_URL 미설정 시")]
+        dataFiles["기능별 CSV · JSON
+        시장 조사 · 트렌드 · 일정
+        KPI 자료 · GA4 공개 데모"]
+        mediaFiles["서버 로컬 파일
+        업로드 · 생성 이미지 · 결과물"]
     end
 
-    GITHUB -->|배포| GUNICORN
-    USER <-->|HTTPS 요청 · 응답| GUNICORN
-    GUNICORN --> FLASK
-    FLASK --> CORE
-    FLASK --> HOME
-    FLASK --> MARKET
-    FLASK --> STUDIO
-    FLASK --> KPI
-    FLASK --> INFLUENCER
+    subgraph external["외부 서비스"]
+        openai["OpenAI
+        대화 · 인사이트 · VOC · 이미지"]
+        news["Google News · VnExpress RSS
+        DeepL 번역"]
+        discovery["YouTube · Phyllo
+        Modash · HypeAuditor"]
+        exchange["한국은행 ECOS
+        실패 시 open.er-api.com"]
+        figma["Figma API · 플러그인
+        디자인 전달 · 이미지 가져오기"]
+        higgsfield["Higgsfield
+        이미지 · 영상 생성"]
+        research["SerpApi · Calendarific
+        트렌드 · 공휴일 자료"]
+    end
 
-    CORE -->|SQLAlchemy| DB
-    CORE -.->|로컬 개발 대체| SQLITE
-    FLASK --> LOCALFILE
+    collect["자료 수집 명령
+    수동 실행 · 파일 갱신"]
 
-    MARKET --> TRENDS
-    MARKET --> HOLIDAY
-    MARKET --> OPENAI
-    STUDIO --> OPENAI
-    KPI --> OPENAI
-    KPI --> DATAAPI
-    HOME --> DATAAPI
-    INFLUENCER --> CREATOR
+    browser <-->|"HTTP 요청 · HTML / JSON 응답"| app
+    app --> home
+    app --> market
+    app --> studio
+    app --> influencer
+    app --> kpi
+
+    home --> orm
+    studio --> orm
+    influencer --> orm
+    orm -->|"설정됨"| postgres
+    orm -->|"미설정"| sqlite
+
+    home -->|"일정 · 뉴스 읽기"| dataFiles
+    market -->|"조사 · 트렌드 읽기"| dataFiles
+    kpi -->|"CSV · 데모 JSON 읽기"| dataFiles
+    studio -->|"저장 · 제공"| mediaFiles
+
+    home -->|"public.py로 협업 조회"| influencer
+    kpi -->|"public.py로 단가 · 후보 조회"| influencer
+
+    market -.-> openai
+    studio -.-> openai
+    kpi -.-> openai
+    home -.-> news
+    influencer -.-> discovery
+    kpi -.-> exchange
+    studio -.-> figma
+    studio --> hfCli
+    hfCli -.-> higgsfield
+
+    collect -.-> research
+    collect -->|"수집 결과 저장"| dataFiles
 ```
 
 #### 요청과 데이터 처리 흐름
 
-1. 사용자가 브라우저에서 화면이나 기능을 요청합니다.
-2. Render의 Gunicorn이 요청을 받아 Flask 앱 팩토리 `app:create_app`으로 전달합니다.
-3. Flask가 URL에 맞는 기능별 Blueprint로 요청을 보냅니다.
-4. 변경 데이터는 SQLAlchemy를 통해 운영 환경의 Supabase PostgreSQL에 저장됩니다. `DATABASE_URL`이 없는 로컬 환경에서는 SQLite를 사용합니다.
-5. API 키가 필요한 작업은 브라우저가 아니라 Flask 서버에서 외부 서비스로 요청합니다.
-6. 업로드·내보내기·AI 모델 캐시는 현재 Render 인스턴스의 로컬 경로를 사용하므로 영구 파일 보관 대상으로 간주하지 않습니다.
-
-> 현재 코드에서 확인된 운영 DB 연결은 Supabase PostgreSQL입니다. Supabase Storage의 `uploads`·`results` 버킷은 생성되어 있어도 애플리케이션 업로드 코드와의 연결이 확인되기 전까지 아키텍처의 영구 저장소로 표시하지 않습니다.
+1. 사용자가 브라우저에서 HTTP 요청을 보내면 Render Web Service(Gunicorn worker 1개)에서 실행되는 Flask 애플리케이션(`app.py`)이 HTML 또는 JSON으로 응답합니다.
+2. Flask는 URL 경로에 따라 **HOME · 현지 시장 분석 · 콘텐츠 스튜디오 · 인플루언서 마케팅 · KPI** 5개 Blueprint 모듈로 요청을 라우팅하며, 탭 간 데이터 참조는 `public.py` 공개 함수를 통해서만 이루어집니다.
+3. 변경 데이터(업무·캠페인·콘텐츠·협업 등)는 `Flask-SQLAlchemy`를 통해 `DATABASE_URL` 설정 시 **PostgreSQL**에, 미설정 시 **로컬 SQLite**에 저장됩니다.
+4. 시장 조사·트렌드·일정·KPI 자료는 각 기능 폴더의 **CSV · JSON 파일**에서 읽으며, 수동 자료 수집 명령(`SerpApi` · `Calendarific`)을 통해 갱신됩니다.
+5. AI 생성·번역·환율·크리에이터 발굴·디자인/영상 생성 등 외부 연동(`OpenAI`, `Google News · VnExpress RSS / DeepL`, `YouTube · Phyllo / Modash · HypeAuditor`, `한국은행 ECOS`, `Figma API`, `Higgsfield CLI`)은 모두 서버 측에서 처리합니다.
 
 ## 3. 기능 범위
 
