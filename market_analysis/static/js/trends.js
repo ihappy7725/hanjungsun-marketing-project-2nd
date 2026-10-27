@@ -47,8 +47,6 @@ function render() {
   renderSeasonality();
   renderRegions();
   renderAds();
-  $("source-line").textContent =
-    `출처: ${dashboard.source.search} · ${dashboard.source.ads} · 마지막 확인 ${day(dashboard.checked_at)}`;
 }
 
 function renderNotices() {
@@ -64,8 +62,7 @@ function renderNotices() {
 }
 
 function renderPicker() {
-  $("category-picker").innerHTML = `<span class="picker-label">카테고리 선택 · 상품 순위에 적용</span>`
-    + dashboard.categories.map((category) => `
+  $("category-picker").innerHTML = dashboard.categories.map((category) => `
     <button type="button" data-id="${esc(category.id)}" aria-pressed="${category.id === selectedId}">${esc(category.label)}</button>`).join("");
   $("category-picker").querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => selectCategory(button.dataset.id));
@@ -89,7 +86,7 @@ function renderSelected() {
   renderRanking(category);
 }
 
-const RANK_LIMIT = 5;
+const RANK_LIMIT = 4;
 
 function rankBadges(row) {
   return [row.is_new ? `<span class="rate-new">신규</span>` : "",
@@ -107,7 +104,7 @@ function renderRanking(category) {
     $("ranking").innerHTML = emptyState(`${category.label} 상품 검색어 데이터가 아직 없습니다.`);
     return;
   }
-  // 최근 12주 평균 관심도가 높은 순으로 1~5위를 매깁니다. 관심도 5 미만(또는 데이터 부족)은 순위에는 넣되
+  // 최근 12주 평균 관심도가 높은 순으로 1~4위를 매깁니다. 관심도 5 미만(또는 데이터 부족)은 순위에는 넣되
   // "검색 적음" 배지를 달고, 값이 작아 흔들리는 전년 대비는 표시하지 않습니다(서버 rank = 관심도 5 이상 순위).
   const top = category.ranking.filter((row) => row.recent_average !== null)
     .sort((a, b) => b.recent_average - a.recent_average).slice(0, RANK_LIMIT);
@@ -117,9 +114,9 @@ function renderRanking(category) {
   }
   const lowLabel = (row) => (row.recent_average < 5 ? "검색 적음" : "데이터 부족");
   $("ranking").innerHTML = `
-    <div class="table-wrap"><table class="trend-table">
+    <div class="table-wrap"><table class="trend-table ${related ? "related-ranking" : ""}">
       <caption class="visually-hidden">${esc(category.label)} 상품 관심도 상위 ${RANK_LIMIT}개</caption>
-      <thead><tr><th scope="col" class="nowrap">순위</th><th scope="col">상품명 · 검색어</th><th scope="col" class="num">${related ? "최근 3개월<br>연관 검색 인기" : "최근 12주<br>평균 관심도"}</th>
+      <thead><tr><th scope="col" class="nowrap">순위</th><th scope="col">상품명 · 검색어</th><th scope="col" class="num">${related ? "최근 3개월 연관 검색 인기" :"최근 12주<br>평균 관심도"}</th>
         ${related ? "" : `<th scope="col" class="num">전년 동기<br>대비</th>`}</tr></thead>
       <tbody>${top.map((row, index) => `
         <tr>
@@ -147,30 +144,22 @@ function sparkline(series) {
   return `<svg class="sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"></path></svg>`;
 }
 
+// 인기 메뉴 순위 카드 맨 아래: 지금 고른 카테고리의 최근 52주 관심도 한 줄
 function renderCategoryTrend() {
-  const categories = dashboard.categories;
-  if (!categories.some((category) => category.series.length)) {
-    $("category-trend").innerHTML = emptyState("대표 검색어 관심도 데이터가 아직 없습니다.");
+  const category = selectedCategory();
+  if (!category || !category.series.length) {
+    $("category-trend").innerHTML = "";
     return;
   }
   $("category-trend").innerHTML = `
-    <ul class="spark-rows">${categories.map((category) => {
-      const lastYear = category.series.slice(-52);
-      return `
-      <li><button type="button" class="spark-row ${category.id === selectedId ? "selected" : ""}" data-id="${esc(category.id)}"
-          aria-pressed="${category.id === selectedId}"
-          title="최근 12주 평균 ${num(category.recent_average)} · 1년 전 같은 12주 평균 ${num(category.year_ago_average)} · 최근 4주 vs 직전 4주 ${rate(category.short_change_rate)}">
-        <span class="spark-label"><strong>${esc(category.label)}</strong></span>
-        ${sparkline(lastYear)}
-        <span class="spark-value">${num(category.recent_average)}</span>
-        <span class="spark-rate">${category.data_status === "insufficient" ? badge("insufficient")
-          : `<span class="${rateClass(category.short_change_rate)}">4주 ${rate(category.short_change_rate)}</span>`}</span>
-      </button></li>`;
-    }).join("")}
-    </ul>`;
-  $("category-trend").querySelectorAll(".spark-row").forEach((button) => {
-    button.addEventListener("click", () => selectCategory(button.dataset.id));
-  });
+    <div class="rank-trend-row" title="최근 12주 평균 ${num(category.recent_average)} · 1년 전 같은 12주 평균 ${num(category.year_ago_average)} · 최근 4주 vs 직전 4주 ${rate(category.short_change_rate)}">
+      <span class="rank-trend-label"><strong>${esc(category.label)}</strong> 관심도</span>
+      <span class="rank-trend-value">${num(category.recent_average)}</span>
+      <span class="rank-trend-rate">${category.data_status === "insufficient" ? badge("insufficient")
+        : `<span class="${rateClass(category.short_change_rate)}">4주 ${rate(category.short_change_rate)}</span>`}</span>
+      <span class="rank-trend-spark">${sparkline(category.series.slice(-52))}</span>
+      <small>최근 52주</small>
+    </div>`;
 }
 
 // value = 막대 길이, display = 오른쪽에 보일 문구(기본은 value 숫자)
@@ -189,16 +178,10 @@ const LIST_LIMIT = 5;
 const expanded = { "fruit-flavors": false, regions: false };
 const visibleRows = (id, rows) => (expanded[id] ? rows : rows.slice(0, LIST_LIMIT));
 
-// 목록은 LIST_LIMIT개까지 보여 주고 나머지는 더보기로 펼칩니다. 버튼·설명은 카드 하단(.list-foot)에 붙습니다.
+// 목록은 LIST_LIMIT(5)위까지만 보여 줍니다(더보기 없음). 설명은 카드 하단(.list-foot)에 붙습니다.
 function renderExpandable(id, total, list, note, rerender, head = "") {
-  const hidden = total - LIST_LIMIT;
   $(id).innerHTML = `${head}<div class="list-body">${list}</div>
-    <div class="list-foot">${hidden > 0
-      ? `<button type="button" class="more-toggle" aria-expanded="${expanded[id]}">${expanded[id] ? "접기" : `더보기 (${hidden}개)`}</button>` : ""}${note}</div>`;
-  $(id).querySelector(".more-toggle")?.addEventListener("click", () => {
-    expanded[id] = !expanded[id];
-    rerender();
-  });
+    <div class="list-foot">${note}</div>`;
 }
 
 function renderFruit() {
@@ -227,13 +210,12 @@ function renderSeasonality() {
   }
   if (!tabs.some((tab) => tab.id === seasonTabId)) seasonTabId = tabs[0].id;
   const tab = tabs.find((item) => item.id === seasonTabId);
+  $("seasonality-tabs").innerHTML = tabs.map((item) => `
+    <button type="button" data-id="${esc(item.id)}" aria-pressed="${item.id === tab.id}">${esc(item.label)}</button>`).join("");
   $("seasonality").innerHTML = `
-    <div class="season-tabs" role="group" aria-label="계절성 주제">${tabs.map((item) => `
-      <button type="button" data-id="${esc(item.id)}" aria-pressed="${item.id === tab.id}">${esc(item.label)}</button>`).join("")}
-    </div>
     ${tab.data_status === "insufficient" ? `<p class="inline-warn">${badge("insufficient")} 12개월 미만이거나 비어 있는 달이 있습니다.</p>` : ""}
     ${tab.type === "fruits" ? fruitCalendar(tab) : monthBars(tab)}`;
-  $("seasonality").querySelectorAll(".season-tabs button[data-id]").forEach((button) => {
+  $("seasonality-tabs").querySelectorAll("button[data-id]").forEach((button) => {
     button.addEventListener("click", () => { seasonTabId = button.dataset.id; renderSeasonality(); });
   });
   $("seasonality").querySelectorAll(".fruit-picker button").forEach((button) => {
@@ -297,8 +279,8 @@ function renderRegions() {
     label: (row) => row.name,
     sub: (row) => (row.name !== row.location ? row.location : ""),
     value: (row) => row.interest,
-    // 종합 = 카테고리 등수 평균. 이전 형식 수집본(avg_rank 없음)은 지수를 그대로 보여 줍니다.
-    display: (row) => (row.avg_rank != null ? `평균 ${num(row.avg_rank)}위` : num(row.interest)),
+    // 화면에는 막대 길이와 같은 종합 점수(0~100)를 보여 줍니다. 평균 등수(avg_rank)는 API 응답에 남아 있습니다.
+    display: (row) => `${Math.round(row.interest ?? 0)}점`,
     extra: (row) => (row.data_status === "insufficient" ? badge(row.data_status) : ""),
   }), "", renderRegions);
 }
@@ -314,7 +296,19 @@ function renderAds() {
   }
   const research = ads.research;
   $("ad-trends").innerHTML = (research ? adResearch(research) : "")
-    + (ads.summary ? renderCaseSummary(ads) : "");
+    + (ads.summary ? renderCaseSummary(ads) : "")
+    + (research ? adSourceNote(research) : "");
+}
+
+function adSourceNote(research) {
+  const sources = [
+    ["TikTok Creative Center", research.tiktok?.source_url],
+    ["Meta 광고 라이브러리", research.meta?.source_url],
+  ].filter(([, url]) => url);
+  if (!sources.length) return "";
+  const links = sources.map(([label, url]) =>
+    `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`).join(" · ");
+  return `<p class="ad-source-note">출처: ${links} · 확인 ${day(research.checked_at)}</p>`;
 }
 
 // 표본 수(건수)는 화면에 표시하지 않고 막대 길이로 상대 비중만 보여 줍니다. 표본이 늘면 다시 표시합니다.
@@ -331,10 +325,8 @@ function adResearch(r) {
     <h3 class="ad-h3">베트남 광고에서 반복되는 트렌드 <small>여러 자료에서 반복 확인된 신호</small></h3>
     <ol class="insight-grid">${r.insights.map((item, i) => `
       <li><span class="insight-no">${i + 1}</span><div><strong>${esc(item.title)}</strong><p>${esc(item.body)}</p></div></li>`).join("")}
-    </ol>
-
-    <h3 class="ad-h3">주제별 광고 트렌드 <small>TikTok·Meta 공개 광고 종합 · 확인일 ${day(r.checked_at)}</small></h3>
-    ${themeCards(r)}`;
+    </ol>`;
+  // '주제별 광고 트렌드'(themeCards)는 화면에서 뺐습니다. 데이터(r.themes)는 API에 그대로 있습니다.
 }
 
 // TikTok·Meta 공개 광고 자료를 주제별로 묶어 보여 줍니다. 관찰한 사실만 정리하고 해석·제안은 AI 인사이트 탭에 맡깁니다.

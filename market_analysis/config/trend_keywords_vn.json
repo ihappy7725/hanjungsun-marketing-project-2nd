@@ -87,8 +87,8 @@
   "seasonality_themes": [
     {"id": "mochi-demand", "label": "찹쌀떡·모찌 수요", "query": ["bánh mochi", "mochi"]},
     {"id": "gift-season", "label": "선물 시즌", "query": ["hộp quà", "set quà", "giỏ quà"]},
-    {"id": "danang-travel", "label": "다낭 관광 (베트남 국내)", "query": ["du lịch đà nẵng"]},
-    {"id": "danang-travel-kr", "label": "다낭 여행 (한국인)", "query": ["다낭 여행", "다낭"], "geo": "KR", "hl": "ko", "tz": -540}
+    {"id": "danang-travel", "label": "다낭 여행(베트남 내국인)", "query": ["du lịch đà nẵng"]},
+    {"id": "danang-travel-kr", "label": "다낭 여행(한국인)", "query": ["다낭 여행", "다낭"], "geo": "KR", "hl": "ko", "tz": -540}
   ],
   "query_labels": {
     "\"bánh dày\"": "반자이(베트남 찹쌀떡)",
