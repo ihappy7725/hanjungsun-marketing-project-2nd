@@ -98,7 +98,7 @@
   --space-10: 40px;
   --space-11: 48px;
   --space-12: 64px;
-  --page-padding: clamp(16px, 3vw, 48px);
+  --page-padding: 16px;  /* 본문 좌우 여백: 사이드바 옆 ~ 화면 오른쪽 끝까지 넓게 (전체 탭 공통) */
   --panel-padding: 24px;
   --control-height: 44px;
   --radius: 0;
@@ -186,7 +186,7 @@ a { color: inherit; text-underline-offset: 4px; }
 /* 로고: 韓貞仙 + 붓 밑줄(이미지) 아래 영문 HAN JEONG SUN(글자). 펼침·접힘 같은 로고, 접히면 폭만 줄어듭니다. */
 .brand { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); color: var(--sidebar-brand); text-decoration: none; }
 .brand img { display: block; height: auto; image-rendering: -webkit-optimize-contrast; }
-.brand-logo { width: 148px; max-width: 100%; }
+.brand-logo { width: 130px; max-width: 100%; }
 .brand-en { color: var(--muted); font-family: var(--font-body); font-size: 11px; font-weight: 400; letter-spacing: .32em; line-height: 1; white-space: nowrap; margin-right: -.32em; }
 .sidebar-toggle { position: absolute; top: calc(-1 * var(--space-5)); right: calc(-1 * var(--space-4)); display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: var(--space-2); border: 0; background: transparent; color: var(--muted); }
 .sidebar-toggle svg { width: 20px; height: 20px; }
@@ -235,7 +235,7 @@ a { color: inherit; text-underline-offset: 4px; }
 
 /* ---------- 페이지 머리 ---------- */
 .pagehead { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); margin-bottom: var(--space-8); }
-.pagehead h1 { margin: var(--space-2) 0; font-family: var(--font-title); font-size: var(--fs-h1); font-weight: var(--title-weight); letter-spacing: var(--tracking-tight); }
+.pagehead h1 { margin: var(--space-2) 0; font-family: var(--font-title); font-size: var(--fs-display);  /* 마케팅 성과 기준 40px */ font-weight: var(--title-weight); letter-spacing: var(--tracking-tight); }
 .pagehead p { margin: var(--space-1) 0; color: var(--muted); font-size: var(--fs-body); }
 .eyebrow { margin: 0; color: var(--muted); font-size: var(--fs-min); font-weight: 600; letter-spacing: var(--tracking); text-transform: uppercase; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
