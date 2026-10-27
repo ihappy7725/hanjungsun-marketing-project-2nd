@@ -1133,9 +1133,15 @@ def api_discovery_register():
     records = d.get("records") or []
     if not isinstance(records, list) or not records:
         return _error("등록할 후보를 골라 주세요")
+    created, skipped, errors = register_records(records[:200], str(d.get("eventId") or ""))
+    return jsonify({"created": created, "skipped": skipped, "errors": errors, "influencers": store.list_influencers()})
+
+
+def register_records(records, event_id=""):
+    """[발굴] 후보 등록 본체. 배포 서버 첫 화면 예시(__init__.py)도 같은 규칙으로 등록합니다."""
     keys = disc.existing_keys(store.list_influencers())
     created, skipped, errors = [], [], []
-    for raw in records[:200]:
+    for raw in records:
         try:
             rec = _record_from_input(raw)
         except InputError as e:
@@ -1155,7 +1161,7 @@ def api_discovery_register():
                 "category": rec["category"] if rec["category"] in CATEGORIES else next((x["category"] for x in disc.SEGMENTS if x["name"] == rec["segment"]), ""),
                 "pf": {rec["platform"]: disc.to_channel(rec)}, "metricsDate": rec["collected_on"], "metricsSource": src_name,
                 "notes": (("[주소 직접 확인 필요] " if need_url else "") + "발굴: " + (rec["provider"] or disc.SOURCE_TYPES[rec["source_type"]]["label"]) + (" · " + rec["notes"] if rec["notes"] else ""))[:500],
-                "eventId": str(d.get("eventId") or "")}
+                "eventId": event_id}
         try:
             clean = clean_influencer(data)
             clean["example"] = rec["source_type"] == "demo"  # 샌드박스·시연 값은 시연 데이터로 표시
@@ -1165,7 +1171,7 @@ def api_discovery_register():
             created.append({"id": saved["id"], "name": saved["name"], "account_key": rec["account_key"]})
         except InputError as e:
             errors.append({"name": rec["name"], "error": str(e)})
-    return jsonify({"created": created, "skipped": skipped, "errors": errors, "influencers": store.list_influencers()})
+    return created, skipped, errors
 
 
 @bp.get("/api/influencers/<influencer_id>/snapshots")
