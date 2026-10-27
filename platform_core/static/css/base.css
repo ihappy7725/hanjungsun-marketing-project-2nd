@@ -10,7 +10,7 @@
   --orange: #dcb294;
   --font-title: "ChosunIlboMyungjo", "Playfair Display", Georgia, "Batang", serif;
   --title-weight: 700;
-  --sidebar-expanded: 264px;
+  --sidebar-expanded: 226px;
   --sidebar-collapsed: 80px;
   /* 사이드바는 테마의 박스 색과 같은 밝은 톤을 따르고, 선택한 메뉴는 흰 바탕에 왼쪽 강조선을 둡니다. */
   --sidebar-bg: var(--white);
@@ -134,6 +134,12 @@
 }
 
 /* ---------- 기본 ---------- */
+/* 화면 배율 기본값 80%: 브라우저 80% 배율과 같은 모습을 모든 탭 화면에 기본으로 적용합니다(값은 --ui-zoom 하나로 조정).
+   - 사이드바가 있는 대시보드 화면에만, 화면 표시에만 적용합니다. 보고서·인쇄 창(PDF)은 배율 없이 원래 크기(A4) 그대로.
+   - CSS zoom 안에서는 화면 높이(vh)도 함께 줄어들므로, 화면을 꽉 채워야 하는 사이드바·본문 높이는 아래에서 ÷ zoom으로 보정합니다.
+   - 마우스 좌표(clientX)와 요소 크기(offsetWidth)를 섞어 계산하는 코드는 zoom만큼 보정이 필요합니다(예: KPI 차트, 카드뉴스 편집기). */
+:root { --ui-zoom: 1; }
+@media screen { html:has(> body > .app) { --ui-zoom: 0.8; zoom: var(--ui-zoom); } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body {
@@ -154,7 +160,7 @@ a { color: inherit; text-underline-offset: 4px; }
 :lang(vi), .text-vi { font-family: var(--font-vi); }
 
 /* ---------- 접이식 사이드바 · 본문 ---------- */
-.app { --sidebar-width: var(--sidebar-expanded); min-height: 100vh; padding-left: var(--sidebar-width); }
+.app { --sidebar-width: var(--sidebar-expanded); min-height: calc(100vh / var(--ui-zoom)); padding-left: var(--sidebar-width); }
 .app[data-sidebar="collapsed"] { --sidebar-width: var(--sidebar-collapsed); }
 .app > main { min-width: 0; width: 100%; }
 /* 수묵화 테마 배경(traditional Asian ink wash painting style): 모서리마다 한정선 요소를 옅게 두고, 가운데 작업 영역은 비웁니다. 클릭을 막지 않습니다. */
@@ -167,30 +173,36 @@ a { color: inherit; text-underline-offset: 4px; }
   mix-blend-mode: multiply;
   opacity: var(--ink-wash-opacity);
 }
-.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; height: 100dvh; padding: var(--space-8) var(--space-6); overflow-y: auto; background: var(--sidebar-bg); color: var(--sidebar-text); border-right: 1px solid var(--sidebar-line); }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; flex-direction: column; width: var(--sidebar-width); height: calc(100vh / var(--ui-zoom)); height: calc(100dvh / var(--ui-zoom)); padding: var(--space-8) var(--space-6); overflow-y: auto; background: var(--sidebar-bg); color: var(--sidebar-text); border-right: 1px solid var(--sidebar-line); }
 /* 로고는 가운데 두고(펼침: 가로형, 접힘: 세로형), 접기 버튼(‹)은 오른쪽 위 모서리에 둡니다. */
-.sidebar-brand-row { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-bottom: var(--space-10); padding-top: var(--space-4); }
-.brand { display: block; color: var(--sidebar-brand); text-decoration: none; }
+.sidebar-brand-row { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-bottom: 0; padding-top: 32px; }  /* 위쪽 32px: 접기 버튼(‹)이 로고와 겹치지 않는 자리 */
+/* 로고: 韓貞仙 + 붓 밑줄(이미지) 아래 영문 HAN JEONG SUN(글자). 펼침·접힘 같은 로고, 접히면 폭만 줄어듭니다. */
+.brand { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); color: var(--sidebar-brand); text-decoration: none; }
 .brand img { display: block; height: auto; image-rendering: -webkit-optimize-contrast; }
-.brand-logo-wide { width: 196px; }
-.brand-logo-stack { display: none !important; width: 52px; }
+.brand-logo { width: 148px; max-width: 100%; }
+.brand-en { color: var(--muted); font-family: var(--font-body); font-size: 11px; font-weight: 400; letter-spacing: .32em; line-height: 1; white-space: nowrap; margin-right: -.32em; }
 .sidebar-toggle { position: absolute; top: calc(-1 * var(--space-5)); right: calc(-1 * var(--space-4)); display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: var(--space-2); border: 0; background: transparent; color: var(--muted); }
 .sidebar-toggle svg { width: 20px; height: 20px; }
 .sidebar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .sidebar-toggle:hover { background: var(--sidebar-hover); }
 .sidebar :focus-visible { outline-color: var(--accent); outline-offset: 2px; }
-.sidebar .nav { display: grid; gap: var(--space-4); }
+/* 세로 배치: 로고 ↔ 메뉴 ↔ 시장 선택 ↔ 계정 사이 남는 공간을 세 칸으로 똑같이 나눕니다(auto 여백 3개).
+   → 메뉴는 로고와 시장 선택의 가운데. 화면이 낮으면 간격만 줄어듭니다. */
+.sidebar .nav { display: grid; gap: var(--space-5); margin-block: auto; }
 .sidebar .nav a { display: flex; align-items: center; gap: var(--space-5); min-height: 50px; padding: var(--space-5); border: 0; border-left: 3px solid transparent; border-radius: var(--radius); font-size: var(--fs-nav); color: var(--sidebar-text); text-decoration: none; }
 .sidebar .nav a:hover { background: var(--sidebar-hover); }
 .sidebar .nav a.active { border-left-color: var(--accent); background: var(--sidebar-active-bg); color: var(--sidebar-active-ink); font-weight: 700; }
 .sidebar .nav a svg { color: var(--muted); }
 .sidebar .nav a.active svg { color: var(--accent); }
 .nav-label { overflow-wrap: anywhere; }
-/* 국가 표시: 국기 + Vietnam Market. 버튼 모양 없이 글자처럼 보이고, 누르면 '추후 지원' 안내창이 뜹니다. */
-.sidebar-market { display: flex; align-items: center; gap: var(--space-4); width: 100%; margin: var(--space-9) 0; padding: var(--space-6) var(--space-2) 0; border: 0; border-top: 1px solid var(--sidebar-line); background: none; color: var(--sidebar-text); font-size: var(--fs-table); font-weight: 600; letter-spacing: var(--tracking); text-align: left; }
-.sidebar-market:hover { filter: none; color: var(--accent); }
-.sidebar .market-flag { width: 28px; height: 19px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
-.sidebar-account { display: flex; align-items: center; flex: none; gap: var(--space-5); margin-top: auto; padding-top: var(--space-8); border-top: 1px solid var(--sidebar-line); }
+/* 시장 선택(메뉴 아래, 계정과의 사이에 auto 여백): 테두리 있는 선택 상자 —
+   국기 + 시장 이름은 상자 정중앙, 좌우 여백을 같게 두고 ▾는 오른쪽 여백 안. 누르면 '추후 지원' 안내창. */
+.sidebar-market { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-3); flex: none; width: 100%; min-height: 48px; margin: var(--space-8) 0; margin-top: 0; margin-bottom: auto; padding: var(--space-3) 16px; border: 1px solid var(--sidebar-line); border-radius: var(--radius); background: var(--control-bg); color: var(--sidebar-text); font-size: var(--fs-body); font-weight: 600; letter-spacing: 0; text-align: center; }
+.sidebar-market:hover { filter: none; border-color: var(--accent); color: var(--accent); }
+.sidebar .market-flag { width: 30px; height: 20px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
+.sidebar .market-caret { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 12px; height: 8px; fill: currentColor; stroke: none; color: var(--muted); }
+.sidebar-market:hover .market-caret { color: var(--accent); }
+.sidebar-account { display: flex; align-items: center; flex: none; gap: var(--space-5); margin-top: 0; padding-top: var(--space-8); border-top: 1px solid var(--sidebar-line); }
 .account-avatar { display: grid; place-items: center; width: var(--control-height); height: var(--control-height); flex: none; background: var(--control-bg); color: var(--sidebar-icon); border-radius: 50%; }
 .account-name { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
 .account-settings { display: grid; place-items: center; flex: none; width: var(--control-height); height: var(--control-height); padding: var(--space-4); border: 1px solid var(--sidebar-line); border-radius: var(--radius); background: transparent; color: var(--sidebar-icon); }
@@ -198,11 +210,13 @@ a { color: inherit; text-underline-offset: 4px; }
 .account-settings svg { width: 22px; height: 22px; }
 .account-settings:hover svg { transform: rotate(45deg); transition: transform .3s; }
 .app[data-sidebar="collapsed"] .sidebar { padding: var(--space-8) var(--space-5); }
-.app[data-sidebar="collapsed"] .sidebar-brand-row { flex-direction: column; gap: var(--space-6); margin-bottom: var(--space-8); }
+.app[data-sidebar="collapsed"] .sidebar-brand-row { flex-direction: column; gap: var(--space-6); margin-bottom: 0; padding-top: var(--space-4); }
 .app[data-sidebar="collapsed"] .sidebar-toggle { position: static; }
-.app[data-sidebar="collapsed"] .brand-logo-wide, .app[data-sidebar="collapsed"] .nav-label, .app[data-sidebar="collapsed"] .market-label, .app[data-sidebar="collapsed"] .account-name { display: none; }
-.app[data-sidebar="collapsed"] .brand-logo-stack { display: block !important; }
-.app[data-sidebar="collapsed"] .sidebar-market { justify-content: center; padding-left: 0; padding-right: 0; }
+.app[data-sidebar="collapsed"] .nav-label, .app[data-sidebar="collapsed"] .market-label, .app[data-sidebar="collapsed"] .market-caret, .app[data-sidebar="collapsed"] .account-name { display: none; }
+.app[data-sidebar="collapsed"] .brand-logo { width: 56px; }
+.app[data-sidebar="collapsed"] .brand { gap: var(--space-2); }
+.app[data-sidebar="collapsed"] .brand-en { font-size: 5px; letter-spacing: .2em; margin-right: -.2em; }
+.app[data-sidebar="collapsed"] .sidebar-market { min-height: 44px; padding: 0; }
 .app[data-sidebar="collapsed"] .sidebar .nav a { justify-content: center; padding: var(--space-5) 0; }
 .app[data-sidebar="collapsed"] .sidebar-toggle svg { transform: rotate(180deg); }
 .app[data-sidebar="collapsed"] .sidebar-account { flex-direction: column; justify-content: center; }
