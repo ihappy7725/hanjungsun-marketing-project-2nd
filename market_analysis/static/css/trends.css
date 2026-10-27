@@ -84,7 +84,7 @@
 .market-analysis-page .ma-trends .season-ads .insight-grid li{gap:5px;padding:10px 12px}
 .market-analysis-page .ma-trends .season-ads .insight-grid strong{font-size:13px}
 .market-analysis-page .ma-trends .season-ads .insight-grid p{margin:0;font-size:12px;line-height:1.5}
-.market-analysis-page .ma-trends .season-ads .insight-no{width:20px;height:20px;font-size:11px}
+.market-analysis-page .ma-trends .season-ads .insight-no{display:grid;width:20px;height:20px;padding:0;place-items:center;font-family:var(--font-body);font-size:11px;font-variant-numeric:tabular-nums;line-height:1}
 .market-analysis-page .ma-trends .card:has(> #ad-trends){display:flex;flex-direction:column}
 .market-analysis-page .ma-trends #ad-trends{flex:1;display:flex;flex-direction:column}
 .market-analysis-page .ma-trends .ad-source-note{margin:auto 0 0;padding-top:12px;text-align:right;color:var(--muted);font-size:10px;line-height:1.5}
