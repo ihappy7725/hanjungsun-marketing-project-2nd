@@ -546,7 +546,7 @@
 .home-page .home-calendar-widget #calendar-body:has(> .home-month) { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .home-page .home-calendar-widget .home-month { --home-chip-h: calc(var(--space-7) + var(--space-1)); --home-day-head: calc(var(--space-7) + var(--space-4)); --home-month-weekdays-h: calc(var(--space-7) + var(--space-4)); min-width: 420px; min-height: calc(var(--home-month-weekdays-h) + var(--home-week-count) * (var(--home-day-head) + var(--home-month-slots) * (var(--home-chip-h) + var(--space-1)))); grid-template-rows: var(--home-month-weekdays-h) repeat(var(--home-week-count), minmax(0, 1fr)); gap: 0; }
 .home-page .home-calendar-widget .home-month .home-weekdays { align-items: center; background: var(--white); box-shadow: inset 0 -1px var(--line-soft); }
-.home-page .home-calendar-widget .home-month .home-weekday { padding: var(--space-2) var(--space-3); font-size: calc(var(--fs-table) * .9); font-weight: 500; }
+.home-page .home-calendar-widget .home-month .home-weekday { padding: var(--space-1) var(--space-3); font-size: var(--fs-table); font-weight: var(--title-weight); line-height: var(--line-height-heading); }
 .home-page .home-calendar-widget .home-month .home-week { gap: 0; }
 .home-page .home-calendar-widget .home-month .home-day { align-items: flex-start; padding: var(--space-1) var(--space-2); background: var(--page-bg); color: var(--ink); box-shadow: inset -1px 0 var(--line-soft), inset 0 -1px var(--line-soft); transition: background-color 160ms ease; }
 .home-page .home-calendar-widget .home-month .home-day:hover { background: color-mix(in srgb, var(--teal) 3%, var(--page-bg)); filter: none; }
