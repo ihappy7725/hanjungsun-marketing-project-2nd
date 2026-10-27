@@ -295,7 +295,7 @@ function geoBody() {
     ${sourceLine({ source: data.trend.source, asOf: geo.as_of, asOfLabel: "파일 저장일", region: `베트남 성·도시별 (${geo.data.region})` })}`;
 }
 
-// ---------- 2. 경쟁사 분석 ----------
+// ---------- 2. 경쟁제품 분석 ----------
 
 // 원산지 표기(판매처마다 영어·한글·괄호 설명이 섞임)를 국가명 한글로 묶습니다. 상세 창에는 원래 표기를 그대로 보여 줍니다
 const ORIGIN_KO = { japan: "일본", taiwan: "대만", vietnam: "베트남", indonesia: "인도네시아", korea: "한국", china: "중국", thailand: "태국" };
@@ -341,11 +341,11 @@ function priceBar(spread, scale) {
     <i class="ma-pbar-range" style="left:${left}%;width:${width}%"></i><i class="ma-pbar-mid" style="left:${mid}%"></i></div>`;
 }
 
-// 경쟁사 탭: 전체 목록 · 마케팅 · 주요 경쟁자
-const COMPETITOR_TABS = [["list", "전체 목록"], ["marketing", "마케팅"], ["rivals", "주요 경쟁자"]];
+// 경쟁제품 탭: 전체 목록 · 마케팅 · 주요 경쟁제품
+const COMPETITOR_TABS = [["list", "전체 목록"], ["marketing", "마케팅"], ["rivals", "주요 경쟁제품"]];
 
 function competitorRivals(c) {
-  return `<section class="ma-rival-basis" aria-label="주요 경쟁자 선정 기준">
+  return `<section class="ma-rival-basis" aria-label="주요 경쟁제품 선정 기준">
     <strong>선정 기준</strong>
     <span>제품 형태 유사성</span>
     <span>베트남 판매 확인</span>
