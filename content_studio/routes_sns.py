@@ -426,28 +426,27 @@ WORKS_DIR = os.path.join(bp.static_folder, "images", "sns", "works")
 _works_lock = threading.Lock()
 
 
-def _empty_tabs():
-    return [kind for kind in TABS if not SnsChat.query.filter_by(kind=kind).first()]
+def _missing_works():
+    try:
+        with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
+            items = json.load(source)
+    except (OSError, ValueError):
+        return []
+    have = set(db.session.query(SnsChat.kind, SnsChat.title).filter(SnsChat.kind.in_(TABS)).all())
+    return [item for item in items if (item.get("kind", "poster"), str(item.get("title", ""))[:40]) not in have]
 
 
 def _ensure_works():
-    if not _empty_tabs():
+    if not _missing_works():
         return
     with _works_lock:
-        empty = _empty_tabs()
-        if not empty:
-            return
-        try:
-            with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
-                items = json.load(source)
-        except (OSError, ValueError):
+        items = _missing_works()
+        if not items:
             return
         folder = _design_image_folder()
         os.makedirs(folder, exist_ok=True)
         try:
             for item in items:
-                if item.get("kind", "poster") not in empty:
-                    continue
                 if item.get("kind") == "video":
                     _add_video_work(item, folder)
                     continue

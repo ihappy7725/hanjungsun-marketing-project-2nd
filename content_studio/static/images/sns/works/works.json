@@ -165,5 +165,67 @@
       "",
       "금지: 글자·문자·자막·로고·워터마크 없음, 일그러진 얼굴·손이나 남는 손가락 없음, 제품 뒤틀림·변형 없음, 현대적인 물건 없음, 어수선한 배경 없음."
     ]
+  },
+  {
+    "kind": "video",
+    "file": "video_all_vietnam.mp4",
+    "title": "베트남 명소 배경 전제품 다이내믹 홍보 영상",
+    "product_id": "mango_yogurt,honey_red_dragonfruit,mangosteen_yogurt,durian",
+    "ratio": "9:16",
+    "duration": 15,
+    "sound": true,
+    "scenes": [
+      {"time": "0-3s", "image": "video_all_vietnam_cut1.jpg",
+       "ko": "바나힐 골든 브릿지 위를 하얀 찹쌀떡이 가루를 흩날리며 굴러감",
+       "en": "a white chapssal-tteok rolls dynamically along the Golden Bridge at Ba Na Hills, scattering rice flour"},
+      {"time": "3-10s", "image": "video_all_vietnam_cut2.jpg",
+       "ko": "핑크 테이블 접시에 찹쌀떡이 떨어지는 장면과 호이안 구시가지 하늘을 나는 찹쌀떡이 빠르게 교차",
+       "en": "rice cakes dropping onto a plate on a pink table, intercut with rice cakes flying through the lantern-lit streets of Hoi An Ancient Town"},
+      {"time": "10-15s", "image": "video_all_vietnam_cut3.jpg",
+       "ko": "해변으로 빠르게 전환, 4가지 맛 포장 제품이 나란히 놓인 마무리 컷",
+       "en": "a quick transition to the beach, where four colorfully wrapped flavors of rice cakes sit side by side, final shot"}
+    ],
+    "prompt": [
+      "continuous smooth movement, no hard cuts, stable camera, keep the product shape consistent.",
+      "'Sweet Journey Across Vietnam' — Hanjungsun full lineup promotional video, 15 seconds, vertical 9:16, photorealistic.",
+      "",
+      "Style: dynamic travel-commercial look, vivid saturated colors, playful magical realism with flying rice cakes.",
+      "Editing: fast energetic pacing linked by quick whip-pan transitions, building to one clean product finale.",
+      "Product: four flavors of Hanjungsun chapssal-tteok (mango yogurt, honey red dragon fruit, mangosteen yogurt, durian) — round, soft white rice cakes with a light rice-flour dusting, each wrapped in tissue paper in its flavor color.",
+      "Setting: famous Vietnamese landmarks — the Golden Bridge at Ba Na Hills, Hoi An Ancient Town and a sunny beach. Mood: exciting, joyful, delicious.",
+      "",
+      "Shots:",
+      "0-3s — low tracking shot; a white chapssal-tteok rolls dynamically along the Golden Bridge at Ba Na Hills, scattering rice flour. SFX: a light whoosh and soft rolling taps.",
+      "3-10s — fast whip-pan transitions; rice cakes dropping onto a plate on a pink table, intercut with rice cakes flying through the lantern-lit streets of Hoi An Ancient Town. SFX: soft bouncy plops.",
+      "10-15s — a quick transition to the beach; four colorfully wrapped flavors of rice cakes sit side by side, final shot. SFX: gentle ocean waves.",
+      "",
+      "Camera: energetic tracking and whip-pan moves, steady framing on each landmark, a slow settle on the final product shot.",
+      "Lighting and color: bright natural daylight, warm golden highlights, vivid pink, orange, purple and green accents.",
+      "Continuity: the rice cakes keep the same shape, color, size and wrapping throughout; transitions flow quickly and smoothly from one location to the next.",
+      "Sound: upbeat energetic travel pop background music, plus the sound effects noted per shot, no vocals, no lyrics, no familiar melodies.",
+      "",
+      "Avoid: no text, no letters, no subtitles, no logos, no watermarks, no people's distorted faces or hands, no warping or morphing of the product, no artificial CGI look, no cluttered background."
+    ],
+    "prompt_ko": [
+      "연속적이고 부드러운 움직임, 하드 컷 없음, 안정된 카메라, 제품 모양 일정하게 유지.",
+      "'베트남 달콤한 여행' — 한정선 전 제품 홍보 영상, 15초, 세로 9:16, 실사.",
+      "",
+      "스타일: 역동적인 여행 광고 느낌, 선명하고 진한 색감, 찹쌀떡이 하늘을 나는 유쾌한 마법 같은 연출.",
+      "편집: 빠르고 에너지 있는 흐름, 빠른 휩팬 전환으로 잇고 마지막 제품 컷으로 정리.",
+      "제품: 한정선 찹쌀떡 4가지 맛(망고 요거트, 꿀 레드용과, 망고스틴 요거트, 두리안) — 고운 쌀가루를 묻힌 둥글고 말랑한 하얀 찹쌀떡, 맛별 색 포장지에 하나씩 쌈.",
+      "배경: 베트남 명소 — 바나힐 골든 브릿지, 호이안 구시가지, 햇살 좋은 해변. 분위기: 신나고 즐겁고 맛있게.",
+      "",
+      "컷 구성:",
+      "0-3s — 낮은 트래킹 샷, 바나힐 골든 브릿지 위를 하얀 찹쌀떡이 쌀가루를 흩날리며 역동적으로 굴러감. 효과음: 가벼운 휙 소리와 통통 구르는 소리.",
+      "3-10s — 빠른 휩팬 전환, 핑크 테이블 위 접시에 찹쌀떡이 떨어지는 장면과 풍등이 걸린 호이안 구시가지 거리를 나는 찹쌀떡이 교차. 효과음: 말랑하게 톡 떨어지는 소리.",
+      "10-15s — 해변으로 빠르게 전환, 맛별 색 포장지에 싼 4가지 맛 찹쌀떡이 나란히 놓인 마무리 컷. 효과음: 잔잔한 파도 소리.",
+      "",
+      "카메라: 역동적인 트래킹과 휩팬, 명소마다 안정된 구도, 마지막 제품 컷에서 천천히 멈춤.",
+      "조명·색감: 밝은 자연광, 따뜻한 황금빛 하이라이트, 선명한 핑크·주황·보라·초록 포인트.",
+      "연속성: 찹쌀떡의 모양·색·크기·포장은 끝까지 같게, 장소 사이 전환은 빠르고 매끄럽게.",
+      "소리: 신나는 여행 팝 배경음악, 컷마다 적은 효과음, 보컬·가사·익숙한 멜로디 없음.",
+      "",
+      "금지: 글자·문자·자막·로고·워터마크 없음, 일그러진 얼굴·손 없음, 제품 뒤틀림·변형 없음, 인위적인 CG 느낌 없음, 어수선한 배경 없음."
+    ]
   }
 ]
