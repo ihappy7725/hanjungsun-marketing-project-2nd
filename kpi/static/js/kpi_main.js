@@ -1084,31 +1084,10 @@ function renderSimOptions() {
   const d = sim.data;
   const inf = d.influencers;
   const list = d.influencer_list || [];
-  // 계정 자동완성: 인플루언서 탭 리스트(단가가 없어도 표시) + 단가 목록. 보조 글씨는 대표 매체 · 팔로워 · 상태 · 단가
-  const names = [...new Set([...list.map((x) => x.influencer), ...inf.options.map((o) => o.influencer)])];
-  $("sim-accounts").replaceChildren(...names.map((name) => {
-    const entry = list.find((x) => x.influencer === name);
-    const quotes = inf.options.filter((o) => o.influencer === name);
-    const parts = entry ? [entry.platform, entry.followers != null ? `팔로워 ${followersText(entry.followers)}` : "", entry.status_label] : [];
-    parts.push(quotes.length
-      ? quotes.map((o) => `${o.platform} ${o.content_format} ${o.price_type_label} ${krwMan(toKrw(o.amount_vnd, "VND"))}`).join(" / ")
-      : "단가 미등록");
-    // 시연 데이터(시연 후보 · 인플루언서 탭 시연 인물)는 보조 글씨 끝에 '시연'을 붙여 실제 데이터와 구분합니다.
-    if (entry?.is_demo || quotes.some((o) => o.is_demo)) parts.push("시연");
-    const opt = el("option");
-    opt.value = name;
-    opt.label = parts.filter(Boolean).join(" · ");
-    return opt;
-  }));
-  // 인플루언서 탭 크리에이터 목록(get_creator_list, 실제 계정 자료 · 단가 없음): 같은 이름이 여러 플랫폼이면 플랫폼마다 한 줄
+  // 계정 자동완성: 계정 이름만(보조 글씨 없음, 같은 이름은 한 번). 순서는 인플루언서 탭 리스트 → 단가 목록 → 크리에이터 목록
   const creators = d.creator_list || [];
-  $("sim-accounts").append(...creators.map((c) => {
-    const opt = el("option");
-    opt.value = c.name;
-    opt.label = [c.platform, c.followers != null ? `팔로워 ${followersText(c.followers)}` : "", c.tier, c.category, c.is_demo ? "시연" : "실제 자료"]
-      .filter(Boolean).join(" · ");
-    return opt;
-  }));
+  const names = [...new Set([...list.map((x) => x.influencer), ...inf.options.map((o) => o.influencer), ...creators.map((c) => c.name)])];
+  $("sim-accounts").replaceChildren(...names.map((name) => Object.assign(el("option"), { value: name })));
   syncSimUnit();
   setText(
     "sim-source",
@@ -1130,7 +1109,6 @@ function accountListEntry() {
   return (sim.data?.influencer_list || []).find((x) => x.influencer === name) || null;
 }
 
-const followersText = (n) => (n >= 10000 ? `${(n / 10000).toFixed(1).replace(/\.0$/, "")}만` : num(n));
 
 // 크리에이터 목록에서 계정 찾기: 같은 이름이 여러 플랫폼에 있으면 지금 고른 매체를 먼저(없으면 팔로워 많은 쪽)
 function accountCreator() {
@@ -1139,14 +1117,12 @@ function accountCreator() {
   return found.find((c) => c.platform === simForm().elements.media.value) || found[0] || null;
 }
 
-// 크리에이터 목록 계정(단가 없음): 집행 매체를 그 플랫폼으로 맞추고, 예산은 직접 입력하도록 안내
+// 크리에이터 목록 계정(단가 없음): 집행 매체를 그 플랫폼으로 맞춤(예산은 직접 입력)
 function applyCreator() {
   const f = simForm().elements;
   const c = accountCreator();
   if (SIM_MEDIA.kol.some((m) => m.value === c.platform)) f.media.value = c.platform;
   onMediaChange();
-  const info = [c.followers != null ? `팔로워 ${followersText(c.followers)}` : "", c.tier].filter(Boolean).join(" · ");
-  setText("sim-quote-help", `크리에이터 목록(실제 자료${c.list_as_of ? ` ${c.list_as_of}` : ""}) · ${info} · 단가 없음 — 예산 직접 입력`);
 }
 
 function applyQuote() {
@@ -1157,8 +1133,7 @@ function applyQuote() {
     // 리스트에는 있지만 단가가 없는 인플루언서: 대표 매체만 맞추고 예산은 직접 입력
     if (entry && SIM_MEDIA.kol.some((m) => m.value === entry.platform)) f.media.value = entry.platform;
     onMediaChange();
-    const info = entry ? [entry.platform, entry.followers != null ? `팔로워 ${followersText(entry.followers)}` : "", entry.status_label].filter(Boolean).join(" · ") : "";
-    return setText("sim-quote-help", entry ? `인플루언서 탭 리스트: ${info} · 단가 미등록 — 집행 예산을 직접 입력해 주세요.` : "");
+    return;
   }
   const q = quotes.find((o) => o.platform === f.media.value) || quotes[0];
   if (SIM_MEDIA.kol.some((m) => m.value === q.platform)) f.media.value = q.platform;
@@ -1172,13 +1147,9 @@ function syncQuote() {
   const f = simForm().elements;
   if (sim.type !== "kol") return;
   const q = accountQuotes().find((o) => o.platform === f.media.value && o.content_format === f.format.value);
-  if (!q) {
-    if (!accountQuotes().length && accountListEntry()) return;  // 리스트만 있는 계정: applyQuote의 '단가 미등록' 안내 유지
-    return setText("sim-quote-help", accountQuotes().length ? "이 매체·형식의 단가는 인플루언서 탭에 없습니다. 집행 예산을 직접 입력해 주세요." : "");
-  }
+  if (!q) return;  // 이 매체·형식의 단가가 없으면 예산은 직접 입력
   if (f.unit.value === "USD" && !usdRate()) return;
   f.amount.value = (f.unit.value === "VND" ? q.amount_vnd : fromKrw(toKrw(q.amount_vnd, "VND"), f.unit.value)).toLocaleString("en-US");
-  setText("sim-quote-help", `인플루언서 탭 ${q.price_type_label} ${num(q.amount_vnd)} VND (약 ${krwMan(toKrw(q.amount_vnd, "VND"))}) 불러옴`);
 }
 
 function renderSim() {
@@ -1292,7 +1263,6 @@ function addSimItem(form) {
   f.formatName.value = "";
   f.amount.value = "";
   if (custom) f.mediaName.value = "";
-  setText("sim-quote-help", "");
   sim.roasEdited = false;
   onMediaChange();  // 계정을 비웠으니 형식 목록 · ROAS 기본값을 다시 맞춥니다.
   renderSim();
@@ -2359,7 +2329,7 @@ root.addEventListener("input", (event) => {
   if (event.target.matches('[data-kpi="sim-account"]')) {
     if (accountQuotes().length || accountListEntry()) applyQuote();  // 단가 · 탭 리스트가 우선
     else if (accountCreator()) applyCreator();
-    else { fillFormats(); setText("sim-quote-help", ""); }  // 탭에 없는 계정이면 매체 기본 형식만
+    else fillFormats();  // 탭에 없는 계정이면 매체 기본 형식만
   }
   if (event.target.matches('[data-kpi="sim-roas"]')) sim.roasEdited = event.target.value.trim() !== "";
   if (event.target.closest('[data-kpi="sim-form"]')) updateSimPreview();
