@@ -3,21 +3,23 @@ services:
     name: hanjeongseon
     runtime: python
     branch: premain
-    # 이미지 배경 제거 모델까지 실행하려면 2GB 메모리를 권장합니다.
-    plan: 1c-2g
+    # 무료 인스턴스: 장시간 미사용 시 절전되며 로컬 파일은 영구 보존되지 않습니다.
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: flask --app app:create_app init-db && gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     healthCheckPath: /healthz
     autoDeployTrigger: "off"
-    disk:
-      name: hanjeongseon-data
-      mountPath: /opt/render/project/src/instance
-      sizeGB: 5
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
       - key: U2NET_HOME
         value: /opt/render/project/src/instance/models
       - key: PUBLIC_BASE_URL

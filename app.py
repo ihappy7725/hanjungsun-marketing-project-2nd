@@ -18,13 +18,19 @@ def create_app():
     os.makedirs(app.instance_path, exist_ok=True)
 
     secret_key = os.environ.get("SECRET_KEY", "").strip()
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    # 일부 제공사가 예전 postgres:// 형식을 주므로 SQLAlchemy용 이름으로 맞춥니다.
+    if database_url.startswith("postgres://"):
+        database_url = "postgresql://" + database_url[len("postgres://"):]
+    database_uri = database_url or "sqlite:///" + os.path.join(app.instance_path, "dashboard.sqlite3")
     if os.environ.get("RENDER") and (not secret_key or secret_key == "dev"):
         raise RuntimeError("Render 운영 환경에는 안전한 SECRET_KEY가 필요합니다.")
 
     # .env 읽는 방식(python-dotenv 사용 여부)은 README 8장 확정 항목입니다. 확정 전에는 OS 환경변수만 읽습니다.
     app.config.from_mapping(
         SECRET_KEY=secret_key or "dev",
-        SQLALCHEMY_DATABASE_URI="sqlite:///" + os.path.join(app.instance_path, "dashboard.sqlite3"),
+        SQLALCHEMY_DATABASE_URI=database_uri,
+        SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True, "pool_recycle": 300} if database_url else {},
         UPLOAD_ROOT=os.path.join(app.instance_path, "uploads"),  # uploads/<모듈명>/
         EXPORT_ROOT=os.path.join(app.instance_path, "exports"),  # exports/<모듈명>/
         # 참고 영상은 50MB까지 허용하므로 multipart 여유분을 포함해 전역 상한을 둡니다.
@@ -69,6 +75,7 @@ def create_app():
 @click.command("init-db")
 @with_appcontext
 def init_db_command():
-    """모든 모듈의 테이블을 만듭니다. 테이블 구조가 바뀌면 instance/dashboard.sqlite3를 지우고 다시 실행합니다."""
+    """현재 DATABASE_URL(없으면 로컬 SQLite)에 모든 모듈의 테이블을 만듭니다."""
     db.create_all()
-    click.echo("DB 초기화 완료: instance/dashboard.sqlite3")
+    target = "DATABASE_URL의 PostgreSQL" if os.environ.get("DATABASE_URL", "").strip() else "instance/dashboard.sqlite3"
+    click.echo(f"DB 초기화 완료: {target}")
