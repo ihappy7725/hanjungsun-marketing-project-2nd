@@ -172,8 +172,9 @@ a { color: inherit; text-underline-offset: 4px; }
 .sidebar-brand-row { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-bottom: var(--space-10); padding-top: var(--space-4); }
 .brand { display: block; color: var(--sidebar-brand); text-decoration: none; }
 .brand img { display: block; height: auto; image-rendering: -webkit-optimize-contrast; }
-.brand-logo-wide { width: 196px; }
-.brand-logo-stack { display: none !important; width: 52px; }
+.brand-logo-wide { width: 216px; max-width: 100%; }
+/* 접힘: 매화 그림 없이 글자 로고(韓貞仙 · HAN JEONG SEON)만 접힌 폭을 꽉 채웁니다. */
+.brand-logo-stack { display: none !important; width: 56px; max-width: 100%; }
 .sidebar-toggle { position: absolute; top: calc(-1 * var(--space-5)); right: calc(-1 * var(--space-4)); display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: var(--space-2); border: 0; background: transparent; color: var(--muted); }
 .sidebar-toggle svg { width: 20px; height: 20px; }
 .sidebar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -186,10 +187,12 @@ a { color: inherit; text-underline-offset: 4px; }
 .sidebar .nav a svg { color: var(--muted); }
 .sidebar .nav a.active svg { color: var(--accent); }
 .nav-label { overflow-wrap: anywhere; }
-/* 국가 표시: 국기 + Vietnam Market. 버튼 모양 없이 글자처럼 보이고, 누르면 '추후 지원' 안내창이 뜹니다. */
-.sidebar-market { display: flex; align-items: center; gap: var(--space-4); width: 100%; margin: var(--space-9) 0; padding: var(--space-6) var(--space-2) 0; border: 0; border-top: 1px solid var(--sidebar-line); background: none; color: var(--sidebar-text); font-size: var(--fs-table); font-weight: 600; letter-spacing: var(--tracking); text-align: left; }
+/* 국가 표시: 드롭다운 모양 — 국기 + 시장 이름은 가운데, ▾는 오른쪽 끝. 누르면 '추후 지원' 안내창이 뜹니다. */
+.sidebar-market { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); width: 100%; margin: var(--space-9) 0; padding: var(--space-6) var(--space-8) 0; border: 0; border-top: 1px solid var(--sidebar-line); background: none; color: var(--sidebar-text); font-size: var(--fs-nav); font-weight: 600; letter-spacing: var(--tracking); text-align: center; }
 .sidebar-market:hover { filter: none; color: var(--accent); }
-.sidebar .market-flag { width: 28px; height: 19px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
+.sidebar .market-flag { width: 32px; height: 21px; stroke: none; box-shadow: 0 0 0 1px var(--line); }
+.sidebar .market-caret { position: absolute; right: var(--space-2); top: calc(50% + var(--space-6) / 2); transform: translateY(-50%); width: 12px; height: 8px; fill: currentColor; stroke: none; color: var(--muted); }
+.sidebar-market:hover .market-caret { color: var(--accent); }
 .sidebar-account { display: flex; align-items: center; flex: none; gap: var(--space-5); margin-top: auto; padding-top: var(--space-8); border-top: 1px solid var(--sidebar-line); }
 .account-avatar { display: grid; place-items: center; width: var(--control-height); height: var(--control-height); flex: none; background: var(--control-bg); color: var(--sidebar-icon); border-radius: 50%; }
 .account-name { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
@@ -200,7 +203,7 @@ a { color: inherit; text-underline-offset: 4px; }
 .app[data-sidebar="collapsed"] .sidebar { padding: var(--space-8) var(--space-5); }
 .app[data-sidebar="collapsed"] .sidebar-brand-row { flex-direction: column; gap: var(--space-6); margin-bottom: var(--space-8); }
 .app[data-sidebar="collapsed"] .sidebar-toggle { position: static; }
-.app[data-sidebar="collapsed"] .brand-logo-wide, .app[data-sidebar="collapsed"] .nav-label, .app[data-sidebar="collapsed"] .market-label, .app[data-sidebar="collapsed"] .account-name { display: none; }
+.app[data-sidebar="collapsed"] .brand-logo-wide, .app[data-sidebar="collapsed"] .nav-label, .app[data-sidebar="collapsed"] .market-label, .app[data-sidebar="collapsed"] .market-caret, .app[data-sidebar="collapsed"] .account-name { display: none; }
 .app[data-sidebar="collapsed"] .brand-logo-stack { display: block !important; }
 .app[data-sidebar="collapsed"] .sidebar-market { justify-content: center; padding-left: 0; padding-right: 0; }
 .app[data-sidebar="collapsed"] .sidebar .nav a { justify-content: center; padding: var(--space-5) 0; }
