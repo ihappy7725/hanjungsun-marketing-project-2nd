@@ -56,6 +56,84 @@
 
 **Flask를 쓴다는 사실만으로 Git 충돌이 없어지지는 않습니다.** 5장의 파일별 수정 권한과 10장의 Git 규칙까지 지키는 것이 핵심입니다.
 
+### 2.1 시스템 아키텍처 다이어그램
+
+| 구분 | 시스템 아키텍처 다이어그램 |
+| --- | --- |
+| 목적 | 서비스의 전체 구조와 요청·데이터 처리 흐름 파악 |
+| 보여주는 대상 | 사용자 화면, Render 웹 서버, Flask Blueprint, 데이터베이스, 외부 API 연동 |
+| 관점 | 런타임·인프라 구조를 중심으로 한 시스템 관점 |
+| 핵심 질문 | “사용자의 요청이 어떤 구성요소를 거쳐 처리되고 어디에 저장되는가?” |
+
+아래 다이어그램은 현재 저장소의 `app.py`, `render.yaml`, 각 Blueprint와 외부 API 호출 코드를 기준으로 작성했습니다. GitHub README에서 Mermaid 코드가 자동으로 다이어그램으로 표시되므로 별도 이미지 파일을 관리하지 않아도 됩니다.
+
+```mermaid
+flowchart LR
+    USER["사용자 브라우저<br/>HTML · CSS · JavaScript"]
+    GITHUB["GitHub 저장소<br/>프로젝트 코드 · render.yaml"]
+
+    subgraph RENDER["Render 무료 Web Service"]
+        GUNICORN["Gunicorn<br/>WSGI 서버"]
+        FLASK["Flask app:create_app<br/>라우팅 · 입력 검증 · 응답"]
+        CORE["platform_core<br/>공통 레이아웃 · 디자인 · DB 확장"]
+
+        subgraph MODULES["기능별 Flask Blueprint"]
+            HOME["HOME"]
+            MARKET["현지 시장 분석"]
+            STUDIO["콘텐츠 스튜디오"]
+            KPI["KPI"]
+            INFLUENCER["인플루언서 마케팅"]
+        end
+
+        LOCALFILE["Render 인스턴스 로컬 파일<br/>uploads · exports · AI 모델 캐시<br/>재배포 시 영구 보존되지 않음"]
+    end
+
+    DB[(Supabase PostgreSQL<br/>DATABASE_URL)]
+    SQLITE[(로컬 SQLite<br/>DATABASE_URL이 없을 때)]
+
+    subgraph EXTERNAL["서버에서 호출하는 외부 서비스"]
+        OPENAI["OpenAI API<br/>문구 · 이미지 · 인사이트 · VOC"]
+        TRENDS["SerpApi / Google Trends<br/>검색 트렌드 수집"]
+        HOLIDAY["Calendarific / Nager.Date<br/>베트남 공휴일"]
+        CREATOR["YouTube · Phyllo<br/>Modash · HypeAuditor"]
+        DATAAPI["ECOS · DeepL<br/>환율 · 번역"]
+    end
+
+    GITHUB -->|배포| GUNICORN
+    USER <-->|HTTPS 요청 · 응답| GUNICORN
+    GUNICORN --> FLASK
+    FLASK --> CORE
+    FLASK --> HOME
+    FLASK --> MARKET
+    FLASK --> STUDIO
+    FLASK --> KPI
+    FLASK --> INFLUENCER
+
+    CORE -->|SQLAlchemy| DB
+    CORE -.->|로컬 개발 대체| SQLITE
+    FLASK --> LOCALFILE
+
+    MARKET --> TRENDS
+    MARKET --> HOLIDAY
+    MARKET --> OPENAI
+    STUDIO --> OPENAI
+    KPI --> OPENAI
+    KPI --> DATAAPI
+    HOME --> DATAAPI
+    INFLUENCER --> CREATOR
+```
+
+#### 요청과 데이터 처리 흐름
+
+1. 사용자가 브라우저에서 화면이나 기능을 요청합니다.
+2. Render의 Gunicorn이 요청을 받아 Flask 앱 팩토리 `app:create_app`으로 전달합니다.
+3. Flask가 URL에 맞는 기능별 Blueprint로 요청을 보냅니다.
+4. 변경 데이터는 SQLAlchemy를 통해 운영 환경의 Supabase PostgreSQL에 저장됩니다. `DATABASE_URL`이 없는 로컬 환경에서는 SQLite를 사용합니다.
+5. API 키가 필요한 작업은 브라우저가 아니라 Flask 서버에서 외부 서비스로 요청합니다.
+6. 업로드·내보내기·AI 모델 캐시는 현재 Render 인스턴스의 로컬 경로를 사용하므로 영구 파일 보관 대상으로 간주하지 않습니다.
+
+> 현재 코드에서 확인된 운영 DB 연결은 Supabase PostgreSQL입니다. Supabase Storage의 `uploads`·`results` 버킷은 생성되어 있어도 애플리케이션 업로드 코드와의 연결이 확인되기 전까지 아키텍처의 영구 저장소로 표시하지 않습니다.
+
 ## 3. 기능 범위
 
 모든 항목의 현재 상태는 **설계 예정**입니다(콘텐츠 스튜디오·HOME 일부는 시연 화면이 있음). 세부 내용은 각 탭 README를 따릅니다.
