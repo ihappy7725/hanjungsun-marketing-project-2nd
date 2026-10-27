@@ -552,10 +552,11 @@ function renderWork() {
   showCommand(Boolean(doc) && commandCollapsed);
   // 포스터·카드뉴스 초안 화면: 비율·↶ ↷는 희주 편집기 오른쪽 고정 칸으로 옮겨 가므로 위 툴바 줄을 통째로 숨깁니다.
   page.querySelector(".studio-toolbar").hidden = DESIGN_KINDS.includes(kind) && Boolean(doc);
+  $("work-screen").classList.toggle("is-poster-edit", kind === "poster" && Boolean(doc));
   // 시안 3개를 보는 중에는 버튼을 눌러도 가운데 칸을 다시 그리지 않습니다(다시 [보내기]를 누르면 새 조건으로 다시 만듦).
-  if (!doc && work.choosing) return;
   if (!doc) {
-    $("canvas").replaceChildren();
+    if (!work.choosing) $("canvas").replaceChildren();
+    fitPosterView();
     return;
   }
   if (kind === "video") {
@@ -571,6 +572,38 @@ function renderWork() {
       canRedo: work.canRedo && !work.busy,
     });
   }
+  fitPosterView();
+}
+
+// 포스터 수정 화면: 아래 입력창이 창 맨 아래에 닿도록 작업 칸 최소 높이(--studio-main-min)와,
+// 포스터 칸(희주 .studio-editor-view)이 입력창 바로 위까지 쓸 높이(--studio-view-h)를 px로 넣습니다.
+// 희주 편집기가 --studio-view-h를 포스터 칸 높이·오른쪽 칸 최대 높이로 씁니다. 포스터 수정 화면이 아니면 지워 원래(창 높이 70%)대로.
+const POSTER_VIEW_MIN = 320;
+
+function fitPosterView() {
+  const main = page.querySelector(".studio-main");
+  const view = $("work-screen").classList.contains("is-poster-edit") && page.querySelector(".studio-editor-view");
+  if (!view) {
+    page.style.removeProperty("--studio-view-h");
+    page.style.removeProperty("--studio-main-min");
+    return;
+  }
+  // 화면 위치·창 높이는 화면 배율(base.css --ui-zoom, 기본 80%)이 곱해진 값이라 ÷ zoom으로 CSS 크기로 바꿉니다.
+  const zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+  const top = (node) => (node.getBoundingClientRect().top + window.scrollY) / zoom;  // 맨 위로 스크롤한 기준
+  let after = 0;  // 작업 칸 아래 페이지 여백(감싼 칸들의 아래 여백 합)
+  for (let node = main; node && node !== document.body; node = node.parentElement) {
+    const style = getComputedStyle(node);
+    after += parseFloat(style.marginBottom) || 0;
+    if (node !== main) after += (parseFloat(style.paddingBottom) || 0) + (parseFloat(style.borderBottomWidth) || 0);
+  }
+  const screen = window.innerHeight / zoom - after;
+  page.style.setProperty("--studio-main-min", `${Math.floor(screen - top(main))}px`);
+  const command = page.querySelector(".studio-command");
+  const below = (view.parentElement.getBoundingClientRect().bottom - view.getBoundingClientRect().bottom) / zoom;  // 포스터 칸 아래 다른 줄
+  const gap = parseFloat(getComputedStyle(command).marginTop) || 0;
+  const height = screen - top(view) - below - gap - command.offsetHeight;
+  page.style.setProperty("--studio-view-h", `${Math.max(POSTER_VIEW_MIN, Math.floor(height))}px`);
 }
 
 async function saveDesign(doc) {
@@ -703,7 +736,8 @@ async function redrawPoster(text) {
   }
 }
 
-async function send(text, extra = {}) {
+// quietAsk: 메인 추천 카드에서 넘어온 요청. 제품을 물어보면 안내 없이 요청 글만 입력창에 넣어 둡니다.
+async function send(text, extra = {}, { quietAsk = false } = {}) {
   text = text.trim();
   if (!text || work.busy) return;
   work.busy = true;
@@ -717,7 +751,8 @@ async function send(text, extra = {}) {
     // 제품을 못 찾으면(위 버튼도 안 고르고 문장에도 제품 이름이 없음) 고르기 버튼 없이 한 줄만 알리고,
     // 쓴 글은 입력창에 되돌려 둡니다(위 제품 버튼을 고르고 바로 다시 보내면 되게).
     if (data.ask === "product") {
-      feedback("ask", "제품을 먼저 골라 주세요");
+      if (quietAsk) feedback("", "");
+      else feedback("ask", "제품을 먼저 골라 주세요");
       $("chat-input").value = text;
       fitInput();
       return;
@@ -1041,6 +1076,9 @@ if (page) {
   const startWidth = new ResizeObserver(fitStartWidth);
   startWidth.observe(page.querySelector(".studio-options"));
   startWidth.observe($("style-row"));
+  // 창 높이, 아래 입력창 접기·펼치기·줄 수가 바뀌면 포스터 칸 높이를 다시 맞춥니다.
+  window.addEventListener("resize", fitPosterView);
+  new ResizeObserver(fitPosterView).observe(page.querySelector(".studio-command"));
 
   const params = new URL(location.href).searchParams;
   const chatId = Number(params.get("chat"));
@@ -1054,6 +1092,6 @@ if (page) {
     renderWork();
   } else if (start && WORK_KINDS.includes(kind)) {
     startNew();
-    send(start.text, { event: start.event, ...(start.product_id && { product_ids: [start.product_id] }) });
+    send(start.text, { event: start.event, ...(start.product_id && { product_ids: [start.product_id] }) }, { quietAsk: true });
   } else loadGallery();
 }
