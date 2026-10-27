@@ -426,17 +426,62 @@ WORKS_DIR = os.path.join(bp.static_folder, "images", "sns", "works")
 _works_lock = threading.Lock()
 
 
-def _missing_works():
+def _work_items():
     try:
         with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
-            items = json.load(source)
+            return json.load(source)
     except (OSError, ValueError):
         return []
+
+
+def _work_key(item):
+    return item.get("kind", "poster"), str(item.get("title", ""))[:40]
+
+
+def _missing_works():
     have = set(db.session.query(SnsChat.kind, SnsChat.title).filter(SnsChat.kind.in_(TABS)).all())
-    return [item for item in items if (item.get("kind", "poster"), str(item.get("title", ""))[:40]) not in have]
+    return [item for item in _work_items() if _work_key(item) not in have]
+
+
+def _restore_works():
+    """서버가 다시 켜져 instance/uploads가 비면, 이미 있는 기본 작업의 첫 버전이 가리키는 파일을 원본에서 같은 이름으로 다시 복사합니다."""
+    try:
+        for item in _work_items():
+            kind, title = _work_key(item)
+            chat = SnsChat.query.filter_by(kind=kind, title=title).first()
+            if chat is None or chat.design is None or not chat.design.versions:
+                continue
+            first = chat.design.versions[0]
+            if kind == "video":
+                cuts = {cut.get("scene"): cut.get("image_url") for cut in first.get("keyframes") or []}
+                pairs = [(item["file"], (first.get("job") or {}).get("video_url")),
+                         *((scene["image"], cuts.get(scene["en"])) for scene in item["scenes"])]
+            else:
+                elements = (first.get("pages") or [{}])[0].get("elements") or []
+                art = next((element for element in elements if element.get("role") == ARTWORK_ROLE), {})
+                pairs = [(item["file"], art.get("src"))]
+            for source, url in pairs:
+                _restore_work_file(os.path.join(WORKS_DIR, os.path.basename(source)), url)
+    except (KeyError, TypeError, AttributeError, OSError):
+        current_app.logger.exception("기본 작업 파일 복구 실패")
+
+
+def _restore_work_file(source, url):
+    name = str(url or "").rsplit("/", 1)[-1]
+    if DESIGN_IMAGE_NAME.match(name) and url == url_for("content_studio.design_image", name=name):
+        folder = _design_image_folder()
+    elif REF_VIDEO_NAME.match(name) and url == url_for("content_studio.ref_video", name=name):
+        folder = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio")
+    else:
+        return
+    path = os.path.join(folder, name)
+    if not os.path.isfile(path) and os.path.isfile(source):
+        os.makedirs(folder, exist_ok=True)
+        shutil.copyfile(source, path)
 
 
 def _ensure_works():
+    _restore_works()
     if not _missing_works():
         return
     with _works_lock:
