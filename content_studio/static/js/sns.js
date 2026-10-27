@@ -628,6 +628,81 @@ function startChoices(text) {
   });
 }
 
+// ---------- 그림 시안 포스터 말로 고치기 (아래 입력창, 2026-10-27 유진 결정) ----------
+// 견적(무료) → 크레딧 확인 팝업 → 지금 그림을 바탕으로 요청한 곳만 다시 그림 → 다 되면 그림 주소를 바꾼 새 버전으로 저장(↶로 되돌림).
+const REDRAW_POLL_MS = 4000;
+const REDRAW_FAILED = ["failed", "nsfw", "canceled", "cancelled"];
+
+function confirmRedraw(quote) {
+  return new Promise((resolve) => {
+    const count = (value) => Number(value || 0).toLocaleString("ko-KR");
+    const dialog = el("dialog");
+    const lines = el("ul");
+    lines.append(
+      el("li", "", `이번에 쓰일 크레딧: ${count(quote.credits)}`),
+      el("li", "", `계정 남은 크레딧: ${count(quote.balance)} → 실행 후 약 ${count(quote.balance - quote.credits)}`),
+      el("li", "", `오늘 대시보드 사용: ${count(quote.today_used)} / ${count(quote.daily_limit)}`),
+    );
+    const run = el("button", "btn dark", "다시 그리기");
+    const cancel = el("button", "btn", "취소");
+    run.type = cancel.type = "button";
+    run.disabled = !quote.allowed;
+    const buttons = el("div", "actions");
+    buttons.append(run, cancel);
+    dialog.append(el("h2", "", "포스터 다시 그리기"), el("p", "studio-hint", `${quote.model} · 1장`), lines);
+    if (!quote.allowed) dialog.append(el("p", "badge dday", quote.reason));
+    dialog.append(buttons);
+    const close = (answer) => { dialog.close(); dialog.remove(); resolve(answer); };
+    run.addEventListener("click", () => close(true));
+    cancel.addEventListener("click", () => close(false));
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
+    page.append(dialog);
+    dialog.showModal();
+  });
+}
+
+async function waitDesignImage(requestId) {
+  for (;;) {
+    const { jobs } = await api(`/design-images/status?ids=${encodeURIComponent(requestId)}`);
+    const job = jobs[requestId] || {};
+    if (job.url) return job.url;
+    if (REDRAW_FAILED.includes(job.status)) throw new Error("그림을 다시 그리지 못했어요. 다시 시도해 주세요.");
+    await new Promise((done) => setTimeout(done, REDRAW_POLL_MS));
+  }
+}
+
+async function redrawPoster(text) {
+  text = text.trim();
+  if (!text || work.busy) return;
+  const chatId = work.chatId;
+  try {
+    const { quote } = await api(`/chats/${chatId}/redraw/quote`, { method: "POST", body: { text } });
+    if (!(await confirmRedraw(quote))) return;
+    work.busy = true;
+    feedback("info", "다시 그리는 중…");
+    const data = await api(`/chats/${chatId}/redraw`, { method: "POST", body: { text, credits: quote.credits } });
+    const job = data.jobs?.[0];
+    if (!job) throw new Error(data.warning || "다시 그리기를 요청하지 못했어요.");
+    const url = await waitDesignImage(job.request_id);
+    if (work.chatId !== chatId) return;  // 기다리는 사이 다른 작업으로 옮겼으면 저장하지 않음
+    const next = structuredClone(work.doc);
+    const first = next.pages[0];
+    const art = first.elements.find((item) => item.role === "artwork");
+    if (art) art.src = url;
+    first.prompt = data.prompts?.[0] || first.prompt;
+    next.demo = false;
+    await saveDesign(next);  // 새 버전 (↶ 되돌리기 가능)
+    $("chat-input").value = "";
+    fitInput();
+    feedback("", "");
+  } catch (error) {
+    feedback("warn", error.message);
+  } finally {
+    work.busy = false;
+    renderWork();
+  }
+}
+
 async function send(text, extra = {}) {
   text = text.trim();
   if (!text || work.busy) return;
@@ -899,6 +974,8 @@ function bindWork() {
     const input = $("chat-input");
     // 포스터·카드뉴스 초안 전: 시안 3개. 다시 보낼 수 있게 입력 글은 남겨 둡니다.
     if (DESIGN_KINDS.includes(kind) && !work.doc) return startChoices(input.value);
+    // 그림 시안 포스터: 말로 고치기 = 다시 그리기 (입력 글은 저장이 끝날 때까지 남겨 둠)
+    if (kind === "poster" && work.doc?.mode === "image") return redrawPoster(input.value);
     send(input.value);
     input.value = "";
     fitInput();

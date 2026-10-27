@@ -7,6 +7,7 @@ import copy
 import json
 import os
 import re
+import shutil
 import threading
 import time
 import urllib.error
@@ -21,7 +22,8 @@ from platform_core.extensions import db
 from . import bp
 from . import higgsfield
 from .designs import (ARTWORK_ROLE, DESIGN_RATIOS, DESIGN_REVISE_HINT, IMAGE_MODE, MAX_PAGES, MIN_PAGES,
-                      apply_design_ai, design_ai_messages, make_cardnews, make_poster, revise_design)
+                      STYLES as DESIGN_STYLES, apply_design_ai, design_ai_messages, make_cardnews, make_poster,
+                      revise_design)
 from .models_sns import KINDS, SnsChat, SnsCreditLog, SnsDesign, SnsMessage
 from .products import COMMON_IMAGES, PRODUCTS, get_product
 from .videos import (PRODUCT_EN, TITLE_LIMIT, ai_messages, apply_ai, apply_translation, make_draft, normalize_scenes,
@@ -419,9 +421,101 @@ def delete_chat(chat_id):
 
 
 # ---------- 첫 화면 ----------
+# 기본 포스터·영상 작업
+WORKS_DIR = os.path.join(bp.static_folder, "images", "sns", "works")
+_works_lock = threading.Lock()
+
+
+def _empty_tabs():
+    return [kind for kind in TABS if not SnsChat.query.filter_by(kind=kind).first()]
+
+
+def _ensure_works():
+    if not _empty_tabs():
+        return
+    with _works_lock:
+        empty = _empty_tabs()
+        if not empty:
+            return
+        try:
+            with open(os.path.join(WORKS_DIR, "works.json"), encoding="utf-8") as source:
+                items = json.load(source)
+        except (OSError, ValueError):
+            return
+        folder = _design_image_folder()
+        os.makedirs(folder, exist_ok=True)
+        try:
+            for item in items:
+                if item.get("kind", "poster") not in empty:
+                    continue
+                if item.get("kind") == "video":
+                    _add_video_work(item, folder)
+                    continue
+                path = os.path.join(WORKS_DIR, os.path.basename(item["file"]))
+                ids = [value for value in item["product_id"].split(",") if get_product(value)]
+                if not os.path.isfile(path) or not ids or item["ratio"] not in DESIGN_RATIOS["poster"]:
+                    continue
+                name = f"{uuid.uuid4()}.png"
+                shutil.copyfile(path, os.path.join(folder, name))
+                style = item.get("style") if item.get("style") in DESIGN_STYLES else None
+                doc = {"kind": "poster", "ratio": item["ratio"], "demo": False, "mode": IMAGE_MODE, "style": style,
+                       "assistant": {"name": item["name"], "prompt": item["concept_ko"],
+                                     "notice": f"AI 그림 시안 · {DESIGN_STYLES.get(style, 'AI 추천')} · "
+                                               "그림 속 글자와 제품 정보는 꼭 확인해 주세요."},
+                       "pages": [{"bg": "#ffffff", "layout": "image", "prompt": item["prompt"], "texts": item["texts"],
+                                  "elements": [{"id": "p1-artwork", "role": ARTWORK_ROLE, "type": "image", "x": 0, "y": 0,
+                                                "w": 100, "h": 100, "z": 0, "radius": 0,
+                                                "src": url_for("content_studio.design_image", name=name)}]}]}
+                chat = SnsChat(kind="poster", title=item["title"][:40], product_id=",".join(ids))
+                chat.design = SnsDesign()
+                chat.design.push(doc)
+                db.session.add(chat)
+            db.session.commit()
+        except (KeyError, TypeError, OSError):
+            current_app.logger.exception("첫 작업 채우기 실패")
+            db.session.rollback()
+
+
+def _add_video_work(item, folder):
+    path = os.path.join(WORKS_DIR, os.path.basename(item["file"]))
+    products = [product for value in item["product_id"].split(",") if (product := get_product(value))]
+    images = [os.path.join(WORKS_DIR, os.path.basename(scene["image"])) for scene in item["scenes"]]
+    if not os.path.isfile(path) or not products or not all(map(os.path.isfile, images)):
+        return
+    doc = make_draft(item["title"], ratio=item["ratio"], duration=item["duration"], sound=item.get("sound", False),
+                     product=products[0]["name_ko"], products=[product["name_ko"] for product in products])
+    doc["scenes"] = [{"ko": scene["ko"], "en": scene["en"], "caption": "", "time": scene["time"]}
+                     for scene in item["scenes"]]
+    doc = refresh_prompts(normalize_scenes(doc))
+    if item.get("prompt") and item.get("prompt_ko"):
+        # 직접 고친 프롬프트로 넣습니다(한국어→영어 자동 변환을 거치지 않음).
+        doc["custom"] = doc["prompt"] = "\n".join(item["prompt"])
+        doc["custom_ko"] = doc["prompt_ko"] = "\n".join(item["prompt_ko"])
+    photos = [photo for product in products for photo in _product_photos(product)]
+    doc["image"], doc["ref_images"] = (photos[0] if photos else None), photos[1:]
+    doc["keyframes"] = []
+    for scene, image in zip(doc["scenes"], images):
+        name = f"{uuid.uuid4()}.jpg"
+        shutil.copyfile(image, os.path.join(folder, name))
+        doc["keyframes"].append({"request_id": str(uuid.uuid4()), "status": higgsfield.DONE, "scene": scene["en"],
+                                 "image_url": url_for("content_studio.design_image", name=name)})
+    video_folder = os.path.join(current_app.config["UPLOAD_ROOT"], "content_studio")
+    os.makedirs(video_folder, exist_ok=True)
+    name = f"{uuid.uuid4().hex}.mp4"
+    shutil.copyfile(path, os.path.join(video_folder, name))
+    doc["job"] = {"request_id": str(uuid.uuid4()), "status": higgsfield.DONE,
+                  "video_url": url_for("content_studio.ref_video", name=name)}
+    doc.update({"title": item["title"][:TITLE_LIMIT], "demo": False, "reviewed": True})
+    chat = SnsChat(kind="video", title=item["title"][:40], product_id=",".join(product["id"] for product in products))
+    chat.design = SnsDesign()
+    chat.design.push(doc)
+    db.session.add(chat)
+
+
 @bp.route("/api/gallery")
 def gallery():
     """작업 목록(최신순). kind를 주면 그 탭만, 비우면 세 탭 모두(메인 탭)."""
+    _ensure_works()
     kind = request.args.get("kind")
     if kind and kind not in KINDS:
         return _error("탭 종류(kind)가 올바르지 않습니다.")
@@ -1319,6 +1413,89 @@ def reratio(chat_id):
     if response is not None and not flat:
         return response
     return _design_jobs_reply(flat, flat, response, quote)
+
+
+# ---------- 그림 시안 포스터 말로 고치기 (2026-10-27 유진 결정) ----------
+# 편집 화면 아래 입력창의 요청("제목 더 크게" 등)을 받아, 지금 그림을 바탕으로 요청한 곳만 고쳐 다시 그립니다(장당 크레딧).
+# 문서는 바꾸지 않고 작업 ID와 새 프롬프트만 돌려줍니다. 다 되면 화면(sns.js)이 그림 주소를 바꾼 새 버전을 PUT으로 저장합니다.
+REDRAW_TEXT_MAX = 300
+REDRAW_PROMPT = ("Edit the attached poster (photo 1) following only this request, written in Korean: \"{request}\". "
+                 "Keep everything else the same: composition, product, colors and every piece of Vietnamese text exactly "
+                 "as it is, unless the request changes it. Never render the Korean request itself; any text in the image "
+                 "stays Vietnamese.")
+
+
+def _redraw_target(chat, body):
+    """(비율, 요청 글, 원래 장면 프롬프트, 지금 그림 경로, 제품 목록). 틀리면 ValueError(화면에 보여 줄 글)."""
+    doc = chat.design.doc if chat.design else None
+    if chat.kind != "poster" or not doc or doc.get("mode") != IMAGE_MODE:
+        raise ValueError("그림 시안 포스터만 말로 고쳐 다시 그릴 수 있습니다.")
+    text = " ".join(str(body.get("text") or "").split())
+    if not text:
+        raise ValueError("고칠 점을 입력해 주세요.")
+    if len(text) > REDRAW_TEXT_MAX:
+        raise ValueError(f"고칠 점은 {REDRAW_TEXT_MAX}자 이내로 적어 주세요.")
+    if doc.get("ratio") not in higgsfield.IMAGE_RATIOS:
+        raise ValueError("이 작업의 비율로는 다시 그릴 수 없습니다.")
+    page = (doc.get("pages") or [{}])[0]
+    art = next((item for item in page.get("elements") or []
+                if isinstance(item, dict) and item.get("role") == ARTWORK_ROLE), None)
+    path = _design_image_path((art or {}).get("src"))
+    if not path:
+        raise ValueError("지금 그림 파일을 찾을 수 없습니다.")
+    products = [item for item in PRODUCTS if item["id"] in str(chat.product_id or "").split(",")]
+    return doc["ratio"], text, str(page.get("prompt") or "").strip(), path, products
+
+
+def _redraw_photos(path, products):
+    return [(path, "the current poster to edit"), *_design_photos(products)]
+
+
+@bp.route("/api/chats/<int:chat_id>/redraw/quote", methods=["POST"])
+def redraw_quote(chat_id):
+    """무료. body: {text}"""
+    chat = _get_chat(chat_id)
+    if chat is None:
+        return _error("작업을 찾을 수 없습니다.", 404)
+    try:
+        ratio, _, _, path, products = _redraw_target(chat, request.get_json(silent=True) or {})
+        return jsonify({"ok": True, "quote": _design_quote(ratio, _redraw_photos(path, products), 1, proposals=1)})
+    except ValueError as error:
+        return _error(str(error))
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+
+
+@bp.route("/api/chats/<int:chat_id>/redraw", methods=["POST"])
+def redraw(chat_id):
+    """크레딧이 나갑니다. body: {text, credits(화면에서 확인한 비용)}
+    응답: jobs [{request_id, status} 또는 None], prompts [다음에 이어 쓸 프롬프트(원래 장면 + 고친 요청)]."""
+    chat = _get_chat(chat_id)
+    if chat is None:
+        return _error("작업을 찾을 수 없습니다.", 404)
+    body = request.get_json(silent=True) or {}
+    try:
+        ratio, text, base, path, products = _redraw_target(chat, body)
+        photos = _redraw_photos(path, products)
+        quote = _design_quote(ratio, photos, 1, proposals=1)
+        confirmed = body.get("credits")
+        if confirmed is None or float(confirmed) != quote["credits"]:
+            return jsonify({"ok": False, "error": "비용이 바뀌었습니다. 다시 확인해 주세요.", "quote": quote}), 409
+        if not quote["allowed"]:
+            return jsonify({"ok": False, "error": quote["reason"], "quote": quote}), 409
+    except (TypeError, ValueError) as error:
+        return _error(str(error) or "요청 값이 올바르지 않습니다.")
+    except higgsfield.HiggsfieldError as error:
+        return _hf_error(error)
+    request_text = text.replace('"', "'")
+    prompt = REDRAW_PROMPT.format(request=request_text) + (f" Original scene: {base}" if base else "")
+    args = [higgsfield.design_image_args(higgsfield.poster_scene_prompt(prompt), ratio, photos, edit=True)]
+    flat, response = _send_design_jobs(args, chat.id, quote)
+    if response is not None and not flat:
+        return response
+    # 다음 고치기·비율 다시 그리기에 쓸 프롬프트: 원래 장면 + 이번에 고친 요청 (그림에 그리지 않게 표시)
+    next_prompt = (base + " " if base else "") + f"(Edited by request, do not render this note: \"{request_text}\")"
+    return _design_jobs_reply(flat, flat, response, quote, prompts=[next_prompt])
 
 
 def _design_image_folder():
