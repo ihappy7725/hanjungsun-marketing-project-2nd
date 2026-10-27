@@ -134,6 +134,12 @@
 }
 
 /* ---------- 기본 ---------- */
+/* 화면 배율 기본값 80%: 브라우저 80% 배율과 같은 모습을 모든 탭 화면에 기본으로 적용합니다(값은 --ui-zoom 하나로 조정).
+   - 사이드바가 있는 대시보드 화면에만, 화면 표시에만 적용합니다. 보고서·인쇄 창(PDF)은 배율 없이 원래 크기(A4) 그대로.
+   - CSS zoom 안에서는 화면 높이(vh)도 함께 줄어들므로, 화면을 꽉 채워야 하는 사이드바·본문 높이는 아래에서 ÷ zoom으로 보정합니다.
+   - 마우스 좌표(clientX)와 요소 크기(offsetWidth)를 섞어 계산하는 코드는 zoom만큼 보정이 필요합니다(예: KPI 차트, 카드뉴스 편집기). */
+:root { --ui-zoom: 1; }
+@media screen { html:has(> body > .app) { --ui-zoom: 0.8; zoom: var(--ui-zoom); } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body {
@@ -154,7 +160,7 @@ a { color: inherit; text-underline-offset: 4px; }
 :lang(vi), .text-vi { font-family: var(--font-vi); }
 
 /* ---------- 접이식 사이드바 · 본문 ---------- */
-.app { --sidebar-width: var(--sidebar-expanded); min-height: 100vh; padding-left: var(--sidebar-width); }
+.app { --sidebar-width: var(--sidebar-expanded); min-height: calc(100vh / var(--ui-zoom)); padding-left: var(--sidebar-width); }
 .app[data-sidebar="collapsed"] { --sidebar-width: var(--sidebar-collapsed); }
 .app > main { min-width: 0; width: 100%; }
 /* 수묵화 테마 배경(traditional Asian ink wash painting style): 모서리마다 한정선 요소를 옅게 두고, 가운데 작업 영역은 비웁니다. 클릭을 막지 않습니다. */
@@ -167,9 +173,9 @@ a { color: inherit; text-underline-offset: 4px; }
   mix-blend-mode: multiply;
   opacity: var(--ink-wash-opacity);
 }
-.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; height: 100dvh; padding: var(--space-8) var(--space-6); overflow-y: auto; background: var(--sidebar-bg); color: var(--sidebar-text); border-right: 1px solid var(--sidebar-line); }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; flex-direction: column; width: var(--sidebar-width); height: calc(100vh / var(--ui-zoom)); height: calc(100dvh / var(--ui-zoom)); padding: var(--space-8) var(--space-6); overflow-y: auto; background: var(--sidebar-bg); color: var(--sidebar-text); border-right: 1px solid var(--sidebar-line); }
 /* 로고는 가운데 두고(펼침: 가로형, 접힘: 세로형), 접기 버튼(‹)은 오른쪽 위 모서리에 둡니다. */
-.sidebar-brand-row { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-bottom: 0; padding-top: var(--space-4); }
+.sidebar-brand-row { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-bottom: 0; padding-top: 32px; }  /* 위쪽 32px: 접기 버튼(‹)이 로고와 겹치지 않는 자리 */
 /* 로고: 韓貞仙 + 붓 밑줄(이미지) 아래 영문 HAN JEONG SUN(글자). 펼침·접힘 같은 로고, 접히면 폭만 줄어듭니다. */
 .brand { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); color: var(--sidebar-brand); text-decoration: none; }
 .brand img { display: block; height: auto; image-rendering: -webkit-optimize-contrast; }
@@ -204,7 +210,7 @@ a { color: inherit; text-underline-offset: 4px; }
 .account-settings svg { width: 22px; height: 22px; }
 .account-settings:hover svg { transform: rotate(45deg); transition: transform .3s; }
 .app[data-sidebar="collapsed"] .sidebar { padding: var(--space-8) var(--space-5); }
-.app[data-sidebar="collapsed"] .sidebar-brand-row { flex-direction: column; gap: var(--space-6); margin-bottom: 0; }
+.app[data-sidebar="collapsed"] .sidebar-brand-row { flex-direction: column; gap: var(--space-6); margin-bottom: 0; padding-top: var(--space-4); }
 .app[data-sidebar="collapsed"] .sidebar-toggle { position: static; }
 .app[data-sidebar="collapsed"] .nav-label, .app[data-sidebar="collapsed"] .market-label, .app[data-sidebar="collapsed"] .market-caret, .app[data-sidebar="collapsed"] .account-name { display: none; }
 .app[data-sidebar="collapsed"] .brand-logo { width: 56px; }

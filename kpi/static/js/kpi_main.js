@@ -48,6 +48,24 @@ const SENTIMENT_LABEL = { Positive: "만족", Neutral: "보통", Negative: "불�
 const PLATFORM_LABEL = { Zalo_OA: "Zalo", KakaoTalk: "카카오톡", WhatsApp: "WhatsApp" };
 const STATUS_CLASS = { live: "is-live", fallback: "is-fallback", public_demo: "is-public", demo: "is-demo", warn: "is-warn" };
 
+// ---------- 차트 마우스 좌표 보정 ----------
+// 공통 화면 배율(base.css --ui-zoom, CSS zoom)이 걸리면 Chart.js가 읽는 마우스 위치(화면 px)와 차트 크기(CSS px)가 어긋나
+// 툴팁이 다른 막대에 뜹니다. 마우스 위치를 차트 CSS 좌표로 다시 계산해 넘깁니다(배율이 없으면 값이 그대로).
+window.Chart?.register({
+  id: "kpiZoomPointer",
+  beforeEvent(chart, args) {
+    const e = args.event;
+    const native = e.native;
+    if (!native || native.clientX === undefined) return;
+    const rect = chart.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    e.x = (native.clientX - rect.left) * (chart.width / rect.width);
+    e.y = (native.clientY - rect.top) * (chart.height / rect.height);
+    const a = chart.chartArea;
+    args.inChartArea = Boolean(a) && e.x >= a.left && e.x <= a.right && e.y >= a.top && e.y <= a.bottom;
+  },
+});
+
 // ---------- 디자인 변수 ----------
 // .kpi-page에서 읽어야 KPI 안에서만 정의한 변수(--kpi-pink)까지 함께 읽힙니다.
 const cssVar = (name) => getComputedStyle(root).getPropertyValue(name).trim();
@@ -1354,10 +1372,15 @@ root.append(tip);
 function showTip(btn) {
   tip.textContent = btn.dataset.tip;
   tip.hidden = false;
-  const r = btn.getBoundingClientRect();
-  const left = Math.min(Math.max(8, r.left - 8), window.innerWidth - tip.offsetWidth - 8);
+  // 화면 좌표(배율 적용)를 CSS 좌표로 바꿔 계산합니다. 공통 화면 배율(--ui-zoom)이 없으면 z = 1.
+  const z = root.getBoundingClientRect().width / root.offsetWidth || 1;
+  const b = btn.getBoundingClientRect();
+  const r = { left: b.left / z, top: b.top / z, bottom: b.bottom / z };
+  const vw = window.innerWidth / z;
+  const vh = window.innerHeight / z;
+  const left = Math.min(Math.max(8, r.left - 8), vw - tip.offsetWidth - 8);
   const below = r.bottom + 6;
-  const top = below + tip.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - tip.offsetHeight - 6) : below;
+  const top = below + tip.offsetHeight > vh - 8 ? Math.max(8, r.top - tip.offsetHeight - 6) : below;
   tip.style.left = `${left}px`;
   tip.style.top = `${top}px`;
 }
@@ -2173,7 +2196,7 @@ function syncBlockHeight() {
   const budget = board.querySelector('[data-kpi-panel="budget"]');
   if (!budget || budget.classList.contains("is-expanded")) return;
   board.classList.remove("is-synced");
-  board.style.setProperty("--kpi-block-h", `${Math.ceil(budget.getBoundingClientRect().height)}px`);
+  board.style.setProperty("--kpi-block-h", `${Math.ceil(budget.offsetHeight)}px`);  // CSS 높이(화면 배율 적용 전)
   board.classList.add("is-synced");
   resizeCharts();
 }

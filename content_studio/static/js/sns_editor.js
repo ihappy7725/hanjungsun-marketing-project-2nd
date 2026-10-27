@@ -1527,8 +1527,10 @@ export function renderDesign(root, doc, { onSave, onUndo, onRedo, canUndo = fals
 
   stage.addEventListener("pointermove", (event) => {
     if (!action) return;
-    const dx = (event.clientX - action.sx) / scale / W * 100;
-    const dy = (event.clientY - action.sy) / scale / H * 100;
+    // 공통 화면 배율(base.css --ui-zoom)이 걸리면 마우스 이동량(화면 px)과 편집 화면 크기(CSS px)가 달라서 보정합니다.
+    const zoom = view.getBoundingClientRect().width / view.offsetWidth || 1;  // stage는 scale 변형이 있어 변형 없는 view로 잼
+    const dx = (event.clientX - action.sx) / zoom / scale / W * 100;
+    const dy = (event.clientY - action.sy) / zoom / scale / H * 100;
     if (!action.moved && Math.hypot(event.clientX - action.sx, event.clientY - action.sy) < 3) return;
     action.moved = true;
     const { item, start } = action;
