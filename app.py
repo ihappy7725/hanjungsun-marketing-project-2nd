@@ -4,6 +4,7 @@
 기능 모듈은 이 파일을 import하지 않습니다. DB 객체는 platform_core.extensions에서 가져옵니다.
 """
 import os
+import tempfile
 
 import click
 from flask import Flask, jsonify, redirect, url_for
@@ -14,8 +15,12 @@ from platform_core.extensions import db
 
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
-    os.makedirs(app.instance_path, exist_ok=True)
+    on_vercel = os.environ.get("VERCEL") == "1"
+    app_options = {"instance_relative_config": True}
+    if on_vercel:
+        # Vercel의 쓰기 가능한 임시 공간입니다. 영구 저장소로 사용하지 않습니다.
+        app_options["instance_path"] = os.path.join(tempfile.gettempdir(), "hanjeongseon")
+    app = Flask(__name__, **app_options)
 
     secret_key = os.environ.get("SECRET_KEY", "").strip()
     database_url = os.environ.get("DATABASE_URL", "").strip()
@@ -23,8 +28,15 @@ def create_app():
     if database_url.startswith("postgres://"):
         database_url = "postgresql://" + database_url[len("postgres://"):]
     database_uri = database_url or "sqlite:///" + os.path.join(app.instance_path, "dashboard.sqlite3")
-    if os.environ.get("RENDER") and (not secret_key or secret_key == "dev"):
-        raise RuntimeError("Render 운영 환경에는 안전한 SECRET_KEY가 필요합니다.")
+    if (os.environ.get("RENDER") or on_vercel) and (not secret_key or secret_key == "dev"):
+        raise RuntimeError("운영 환경에는 안전한 SECRET_KEY가 필요합니다.")
+    if on_vercel and not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        raise RuntimeError("Vercel 운영 환경에는 외부 PostgreSQL DATABASE_URL이 필요합니다.")
+    if on_vercel and database_url.startswith("postgresql://"):
+        # requirements.txt에 설치된 psycopg 3 드라이버를 명시합니다.
+        database_url = "postgresql+psycopg://" + database_url[len("postgresql://"):]
+        database_uri = database_url
+    os.makedirs(app.instance_path, exist_ok=True)
 
     # .env 읽는 방식(python-dotenv 사용 여부)은 README 8장 확정 항목입니다. 확정 전에는 OS 환경변수만 읽습니다.
     app.config.from_mapping(
@@ -79,3 +91,8 @@ def init_db_command():
     db.create_all()
     target = "DATABASE_URL의 PostgreSQL" if os.environ.get("DATABASE_URL", "").strip() else "instance/dashboard.sqlite3"
     click.echo(f"DB 초기화 완료: {target}")
+
+
+# Vercel은 모듈의 app 인스턴스를 불러옵니다. 로컬·Render는 기존 팩토리를 사용합니다.
+if os.environ.get("VERCEL") == "1":
+    app = create_app()

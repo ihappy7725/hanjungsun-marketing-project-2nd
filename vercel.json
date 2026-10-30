@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "flask",
+  "installCommand": "pip install -r requirements.txt",
+  "functions": {
+    "app.py": {
+      "maxDuration": 120,
+      "excludeFiles": "{.env,.env.*,**/.env,**/.env.*,.venv/**,venv/**,instance/**,.git/**,.claude/**,.codex/**,.agents/**}"
+    }
+  }
+}
