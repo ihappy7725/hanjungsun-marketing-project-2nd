@@ -89,41 +89,8 @@ def _remove_background(img, alpha_matting):
 # ---------- 배경 제거 (README 5-5) ----------
 @bp.route("/media/api/remove-bg", methods=["POST"])
 def remove_bg():
-    alpha_matting = request.form.get("alpha_matting") in ("1", "true", "on")
-    folder = _upload_dir()
-    upload = request.files.get("image")
-
-    if upload:
-        img, message = _open_image(upload.stream)
-        if message:
-            return _error(message)
-        file_id = uuid.uuid4().hex
-        # 원본은 방향만 바로잡아 PNG로 보관합니다. 다듬기만 바꿔 다시 처리할 때 씁니다.
-        ImageOps.exif_transpose(img).save(os.path.join(folder, f"{file_id}_src.png"), "PNG")
-    else:
-        file_id = request.form.get("file_id", "")
-        src = os.path.join(folder, f"{file_id}_src.png")
-        if not FILE_ID_RE.match(file_id) or not os.path.exists(src):
-            return _error("사진을 먼저 골라 주세요.")
-        img = Image.open(src)
-
-    try:
-        result = _remove_background(img, alpha_matting)
-    except ImportError:
-        current_app.logger.exception("rembg를 불러오지 못했습니다.")
-        return _error("배경 제거 기능이 아직 설치되지 않았습니다. (pip install -r requirements.txt)", 500)
-    except Exception:  # noqa: BLE001  모델 처리 실패는 종류와 관계없이 같은 안내를 보여줍니다.
-        current_app.logger.exception("배경 제거 실패")
-        return _error("배경을 제거하지 못했습니다. 다른 사진으로 다시 시도해 주세요.", 500)
-
-    result.save(os.path.join(_export_dir(), f"{file_id}_nobg.png"), "PNG")  # 결과는 exports에 둡니다. (README 5-6)
-    return jsonify({
-        "ok": True,
-        "file_id": file_id,
-        "result_url": f"{bp.url_prefix}/media/remove-bg/result/{file_id}.png",
-        "width": result.width,
-        "height": result.height,
-    })
+    # 개인 Vercel 배포에서는 모델·추론 패키지를 설치하지 않습니다.
+    return _error("개인 배포에서는 배경 제거 기능을 지원하지 않습니다.", 501)
 
 
 @bp.route("/media/remove-bg/result/<file_id>.png")
