@@ -20,7 +20,7 @@ from platform_core.extensions import db
 from . import bp
 from .holiday_feed import provisional
 from .models import TASK_CATEGORIES, HomeCampaign, HomeCampaignCollaborationLink, HomeSchedule, HomeTask
-from .news_search import SearchError, classify_article, preset_labels, search
+from .news_search import SearchError, classify_article, prepare_articles, preset_labels, search
 from .translate import TARGETS, available, translate_titles
 
 _EVENTS_PATH = Path(__file__).parent / "data" / "events.json"
@@ -653,7 +653,11 @@ def news_search():
         # 예외 내용에는 외부 응답이 들어갈 수 있어 응답에 내보내지 않습니다.
         return jsonify(error="지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.", items=[]), 502
     # 번역 전 원본으로 분류합니다. 분류 실패도 기사와 출처를 숨기지 않습니다.
-    items = [{**item, "impact": classify_article(item)} for item in items]
+    items = [{**item, "impact": classify_article(item)} for item in prepare_articles(items)]
+    # 본문 전문은 분류용 메모리에서만 사용하고 공개 API에는 수집 상태와 출처만 보냅니다.
+    for item in items:
+        item.pop("analysis_text", None)
+        item.pop("content_summary", None)
     # 제목만 번역합니다. 번역된 제목인지 원문인지 화면에서 구분할 수 있게 함께 담습니다.
     translated, failed_translation = translate_titles([item["title"] for item in items],
                                                       request.args.get("target", "").strip())
@@ -661,6 +665,8 @@ def news_search():
         item["title_original"] = item["title"]
         item["title"] = title
         item["translated"] = title != item["title_original"]
-    return jsonify(items=items, unavailable=failed, translation_failed=failed_translation,
+    response = jsonify(items=items, unavailable=failed, translation_failed=failed_translation,
                    limit=12, period={"start": request.args.get("start", ""), "end": request.args.get("end", "")},
                    notice="검증하지 않은 검색 결과입니다. 원문을 열어 직접 확인해주세요.")
+    response.headers["Cache-Control"] = "no-store"
+    return response

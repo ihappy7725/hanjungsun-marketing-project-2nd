@@ -7,7 +7,6 @@ python -B -m home.news_import --help
 출처 내용의 진실성은 사람이 확인합니다. 본문을 받아 왔다는 사실이 사실 확인이 아닙니다.
 """
 import argparse
-from html.parser import HTMLParser
 from pathlib import Path
 import re
 from urllib.error import HTTPError, URLError
@@ -16,33 +15,12 @@ from urllib.request import Request, urlopen
 
 from .event_import import ReviewError, _atomic_write, _confirm, _no_secrets, _print, _snapshot, _token
 from .routes import _validate_news_row
+from .news_content import ArticleText as _Article
 
 NEWS_PATH = Path(__file__).parent / "data" / "news.json"
-_SKIP_TAGS = {"script", "style", "noscript", "template", "svg"}
 _MAX_BYTES = 3_000_000
 _MAX_TEXT = 20_000
 _TIMEOUT = 15
-
-
-class _Article(HTMLParser):
-    """기사 화면에서 사람이 읽는 글자만 모읍니다. 태그·스크립트는 버립니다."""
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts = []
-        self._skip = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag in _SKIP_TAGS:
-            self._skip += 1
-
-    def handle_endtag(self, tag):
-        if tag in _SKIP_TAGS and self._skip:
-            self._skip -= 1
-
-    def handle_data(self, data):
-        if not self._skip and data.strip():
-            self.parts.append(data.strip())
 
 
 def _news_document():

@@ -26,6 +26,9 @@ RISK = "Vietnam food import ban affects a range of packaged dessert products shi
 
 class NewsImpactTest(unittest.TestCase):
     def setUp(self):
+        native = patch.object(news, "_native", return_value=([], []))
+        native.start()
+        self.addCleanup(native.stop)
         app = Flask(__name__)
         app.register_blueprint(bp)
         app.config["TESTING"] = True

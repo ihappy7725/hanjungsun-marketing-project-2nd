@@ -6,15 +6,20 @@ API 키를 쓰지 않으므로 .env를 읽지 않습니다.
 검색 결과는 검증된 자료가 아니므로 화면에서 미검증임을 반드시 표시합니다.
 """
 import re
+import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from functools import lru_cache
 from html import unescape
+from http.client import HTTPException
 from email.utils import parsedate_to_datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
+
+from .news_content import article_content, normalize_text as _normalize, resolve_google_urls, tls_context, usable_summary
 
 # 한국어 라벨, 현지어 검색어, 영문 매체에서 찾을 낱말을 함께 둡니다.
 # 현지어 검색어에는 따옴표·제외어·기간 제한을 넣어 관련 없는 기사를 줄입니다.
@@ -36,7 +41,7 @@ PRESETS = (
      '("quà tặng Tết" OR "giỏ quà Tết" OR "sức mua Tết") when:120d',
      ("tet gift", "gift set", "gift basket", "year-end shopping")),
     ("trend", "식품 소비 트렌드",
-     '("xu hướng tiêu dùng" OR "thị trường thực phẩm" OR "người tiêu dùng Việt") when:60d',
+     '("xu hướng tiêu dùng" OR "thị trường thực phẩm" OR "người tiêu dùng Việt") ("thực phẩm" OR "bánh" OR "đồ uống" OR "đồ ngọt") when:60d',
      ("consumer spending", "retail sales", "food market", "consumer trend")),
 )
 _GOOGLE = "https://news.google.com/rss/search"
@@ -46,6 +51,10 @@ _VNEXPRESS = (
     ("https://e.vnexpress.net/rss/news.rss", "VnExpress 영문 · 종합"),
 )
 # 직접 입력 검색어는 일반 문자·공백과 최소한의 기호만 받습니다. 베트남어 성조 문자는 \w에 포함됩니다.
+_NATIVE_FEEDS = (
+    ("https://tuoitre.vn/rss/kinh-doanh.rss", "Tuổi Trẻ"),
+    ("https://thanhnien.vn/rss/kinh-te.rss", "Thanh Niên"),
+)
 _QUERY = re.compile(r"[^\W_]+(?:[\w \-·,.()&']*[^\W_])?", re.UNICODE)
 _MAX_BYTES = 800_000
 _MAX_ITEMS = 12
@@ -94,14 +103,14 @@ def _published(value):
 def _feed(address):
     """RSS를 1회 받아 항목 목록으로 돌려줍니다. 실패는 호출한 쪽에서 알립니다."""
     try:
-        with urlopen(Request(address, headers={"Accept": "application/rss+xml"}), timeout=_TIMEOUT) as response:
+        with urlopen(Request(address, headers={"Accept": "application/rss+xml"}), timeout=_TIMEOUT, context=tls_context()) as response:
             if urlsplit(response.geturl()).scheme != "https":
                 raise SourceUnavailable("뉴스 주소가 안전하지 않아 중단했습니다.")
             body = response.read(_MAX_BYTES + 1)
     except HTTPError as error:
         error.close()
         raise SourceUnavailable("뉴스 제공처가 요청을 거절했습니다. 잠시 후 다시 시도해주세요.") from None
-    except (URLError, TimeoutError, OSError):
+    except (URLError, HTTPException, TimeoutError, OSError):
         raise SourceUnavailable("뉴스 제공처에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.") from None
     if len(body) > _MAX_BYTES:
         raise SourceUnavailable("응답이 너무 커서 읽지 않았습니다. 검색어를 좁혀주세요.")
@@ -112,7 +121,7 @@ def _feed(address):
 
 
 def _item(node, source_label, strip_publisher=True):
-    title = (node.findtext("title") or "").strip()
+    title = unescape(node.findtext("title") or "").strip()
     link = (node.findtext("link") or "").strip()
     if not title or not _safe_url(link):
         return None
@@ -131,7 +140,10 @@ def _item(node, source_label, strip_publisher=True):
     return {"title": title, "publisher": publisher or source_label, "source_label": source_label,
             "published_at": _published(node.findtext("pubDate")), "url": link,
             "verification_status": "unverified", "is_demo": False,
-            "description": description}
+            "description": description,
+            "description_kind": "link_metadata" if strip_publisher else "publisher_summary",
+            "publisher_url": node.find("source").get("url", "") if node.find("source") is not None else "",
+            "content_summary": _plain_text(node.findtext("{http://purl.org/rss/1.0/modules/content/}encoded") or "")}
 
 
 def _google(query):
@@ -145,23 +157,102 @@ def _google(query):
 
 
 def _vnexpress(terms):
-    """영문 매체에서 해당 주제의 낱말이 들어간 기사만 고릅니다. 전체 기사를 그대로 섞지 않습니다."""
+    """영문 매체에서 주제에 맞는 기사만 읽고 출처별 실패를 구분합니다."""
     needles = tuple(term.casefold() for term in terms)
-    rows = []
+    rows, failed, succeeded = [], [], False
     for address, label in _VNEXPRESS:
-        for node in _feed(address):
+        try:
+            nodes = _feed(address)
+            succeeded = True
+        except SourceUnavailable:
+            failed.append(label)
+            continue
+        for node in nodes:
             item = _item(node, label, strip_publisher=False)
             if not item:
                 continue
             haystack = (item["title"] + " " + (node.findtext("description") or "")).casefold()
             if any(needle in haystack for needle in needles):
                 rows.append(item)
-    return rows
+    if not succeeded:
+        raise SourceUnavailable("영문 RSS를 불러오지 못했습니다.")
+    return rows, failed
+
+
+@lru_cache(maxsize=16)
+def _cached_native_feed(address, bucket):
+    return _feed(address)
+
+
+def _native(preset):
+    """실제 요약을 제공하는 발행사 RSS. 각 출처의 실패를 별도로 반환합니다."""
+    def read(feed):
+        address, label = feed
+        try:
+            rows = []
+            for node in _cached_native_feed(address, int(time.monotonic() // 300)):
+                item = _item(node, label, strip_publisher=False)
+                if not item:
+                    continue
+                text = _words(item["title"] + " " + item["description"])
+                if not _has(text, _TOPICS["food"]):
+                    continue
+                topic = {
+                    "food_rules": _TOPICS["compliance"], "trade": ("import", "export", "customs", "nhập khẩu", "xuất khẩu", "hải quan", "통관"),
+                    "retail": _TOPICS["retail"], "danang": ("Đà Nẵng", "Da Nang"), "gift": _TOPICS["gifting"],
+                }.get(preset)
+                if topic and not _has(text, topic):
+                    continue
+                item["publisher_url"] = "https://" + urlsplit(address).netloc
+                rows.append(item)
+            return rows, []
+        except SourceUnavailable:
+            return [], [label]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outputs = list(pool.map(read, _NATIVE_FEEDS))
+    return [item for rows, _ in outputs for item in rows], [label for _, failed in outputs for label in failed]
+
+
+def _summary(item):
+    for key in ("analysis_text", "content_summary", "description"):
+        if key == "description" and item.get("description_kind") == "link_metadata":
+            continue
+        text = str(item.get(key) or "")
+        if usable_summary(text, item.get("title", ""), item.get("publisher", "")):
+            return text[:7000]
+    return ""
+
+
+def prepare_articles(items):
+    """수집과 분류를 분리합니다. 원본 상태를 유지한 복사본에 분석 자료만 추가합니다."""
+    unresolved = [item.get("url", "") for item in items if not _summary(item) and urlsplit(item.get("url", "")).hostname == "news.google.com"]
+    resolved = resolve_google_urls(unresolved)
+    def prepare(item):
+        row = dict(item)
+        text = _summary(row)
+        source = row.get("analysis_source", "publisher_rss")
+        analysis_url = row.get("analysis_url") or row.get("url", "")
+        state = "ready"
+        if not text:
+            original_url = row.get("url", "")
+            content = article_content(resolved.get(original_url, original_url))
+            if original_url in unresolved and original_url not in resolved:
+                content = {"state": "unavailable", "text": "", "source": "none", "url": ""}
+            text = _plain_text(content["text"], limit=7000)
+            source, state, analysis_url = content["source"], content["state"], content["url"]
+            if not usable_summary(text, row.get("title", ""), row.get("publisher", "")):
+                text = ""
+                state = "unavailable" if state == "unavailable" else "insufficient"
+        row["analysis_text"] = text
+        row["analysis"] = {"state": state, "source": source if text else "none", "url": analysis_url if text else "", "characters": len(text)}
+        return row
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        return list(pool.map(prepare, items))
 
 
 def _merge(groups, start=None, end=None):
     """기간 안의 고유 기사 최대 12건. 별도 언론사의 동명 보도는 보존합니다."""
-    seen_urls, seen_titles, rows = set(), set(), []
+    seen_urls, seen_titles, rows = {}, {}, []
     for group in groups:
         for item in group:
             published = item.get("published_at", "")
@@ -170,13 +261,19 @@ def _merge(groups, start=None, end=None):
             url = urlsplit(item["url"])
             query = [(k, v) for k, v in parse_qsl(url.query) if not k.lower().startswith("utm_") and k.lower() not in {"fbclid", "gclid"}]
             url_key = urlunsplit((url.scheme.lower(), url.netloc.lower().removeprefix("www."), url.path.rstrip("/"), urlencode(sorted(query)), ""))
-            title_key = (_normalize(item["title"]), _normalize(item["publisher"]), published)
-            if url_key in seen_urls or title_key in seen_titles:
+            publisher = urlsplit(item.get("publisher_url") or "").netloc.lower().removeprefix("www.") or _normalize(item["publisher"])
+            title_key = (_words(item["title"]), publisher, published)
+            duplicate = seen_urls.get(url_key) or seen_titles.get(title_key)
+            if duplicate is not None:
+                text = _summary(item)
+                if text and not _summary(duplicate):
+                    duplicate.update(analysis_text=text, analysis_source="publisher_rss", analysis_url=item["url"])
                 continue
-            seen_urls.add(url_key)
-            seen_titles.add(title_key)
-            rows.append(item)
-    rows.sort(key=lambda item: item["published_at"], reverse=True)
+            row = dict(item)
+            seen_urls[url_key] = row
+            seen_titles[title_key] = row
+            rows.append(row)
+    rows.sort(key=lambda item: (item["published_at"], bool(_summary(item))), reverse=True)
     return rows[:_MAX_ITEMS]
 
 
@@ -198,21 +295,44 @@ def search(query=None, preset=None, start=None, end=None):
     if preset:
         _, label, vi_query, terms = _preset(preset)
         groups = []
-        try:
-            groups.append(_google(dated_query(vi_query)))
-        except SourceUnavailable:
-            failed.append("구글 뉴스")
-        try:
-            groups.append(_vnexpress(terms))
-        except SourceUnavailable:
-            failed.append("VnExpress 영문")
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            google = pool.submit(_google, dated_query(vi_query))
+            english = pool.submit(_vnexpress, terms)
+            native = pool.submit(_native, preset)
+            for job, source in ((google, "구글 뉴스"), (english, "VnExpress 영문")):
+                try:
+                    received = job.result()
+                    if source == "VnExpress 영문" and isinstance(received, tuple):
+                        rows, partial = received
+                        failed.extend(partial)
+                        groups.append(rows)
+                    else:
+                        groups.append(received)
+                except SourceUnavailable:
+                    failed.append(source)
+            rows, missing = native.result()
+            failed.extend(missing)
+            if rows or not missing:
+                groups.append(rows)
         if not groups:
             raise SourceUnavailable("뉴스 제공처 모두에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.")
         return _merge(groups, start, end), failed
     text = " ".join(str(query or "").split())
     if not 2 <= len(text) <= 60 or not _QUERY.fullmatch(text):
         raise SearchError("검색어는 2~60자의 일반 문자로 입력해주세요.")
-    return _merge([_google(dated_query(text))], start, end), failed
+    groups = []
+    try:
+        groups.append(_google(dated_query(text)))
+    except SourceUnavailable:
+        failed.append("구글 뉴스")
+    native, missing = _native("trend")
+    words = [_normalize(word) for word in text.split()]
+    matching = [item for item in native if all(word in _normalize(item["title"] + " " + item["description"]) for word in words)]
+    if matching:
+        groups.append(matching)
+    if not groups:
+        raise SourceUnavailable("뉴스 제공처에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.")
+    return _merge(groups, start, end), failed
 
 
 def _period(start, end):
@@ -233,29 +353,37 @@ def _period(start, end):
     return values
 
 
-def _plain_text(value):
+def _plain_text(value, limit=4000):
     # RSS HTML을 실행하거나 원문을 추가 요청하지 않습니다.
-    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]*>", " ", value))).strip()[:4000]
+    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]*>", " ", value))).strip()[:limit]
 
 
-def _normalize(value):
-    text = unicodedata.normalize("NFKD", str(value).casefold()).replace("đ", "d")
-    return re.sub(r"[^\w]+", " ", "".join(c for c in text if not unicodedata.combining(c))).strip()
+def _words(value):
+    # 의미 검사에서는 베트남어 성조를 유지합니다. giá tăng(가격 상승)과 gia tăng(증가)은 다릅니다.
+    return re.sub(r"[^\w]+", " ", unicodedata.normalize("NFC", str(value).casefold())).strip()
 
 
 def _has(text, phrases):
-    return any(re.search(r"(?<!\w)" + re.escape(_normalize(p)) + r"(?!\w)", text) for p in phrases)
+    text = _words(text)
+    for phrase in phrases:
+        needle = re.escape(_words(phrase))
+        ending = r"(?:의|은|는|이|가|에|에서|으로|와|과|을|를|도|로)?" if re.search(r"[가-힣]", phrase) else ""
+        if re.search(r"(?<!\w)" + needle + ending + r"(?!\w)", text):
+            return True
+    return False
 
 
 _TOPICS = {
-    "food": ("food", "dessert", "mochi", "confectionery", "thực phẩm", "bánh", "식품", "디저트"),
-    "retail": ("retail", "distribution", "supermarket", "delivery", "bán lẻ", "phân phối", "유통", "배달"),
-    "gifting": ("tet", "gift", "quà", "tết", "선물", "명절"),
-    "compliance": ("regulation", "label", "customs", "tariff", "recall", "import ban", "quy định", "ghi nhãn", "hải quan", "thu hồi", "cấm nhập khẩu", "규제", "표시", "통관", "회수", "수입 금지"),
+    "food": ("food", "dessert", "mochi", "confectionery", "thực phẩm", "bánh", "đồ uống", "bánh kẹo", "kẹo ngọt", "nông sản", "trái cây", "sữa", "kẹo", "sữa tươi", "sữa bột", "thị trường sữa", "rice", "fruit", "beverage", "bakery", "식품", "디저트", "과일", "음료"),
+    "retail": ("retail", "distribution", "supermarket", "delivery", "siêu thị", "bán lẻ", "phân phối", "유통", "배달"),
+    "gifting": ("tet", "gift", "quà tặng", "quà Tết", "tết", "선물", "명절"),
+    "compliance": ("regulation", "label", "customs", "tariff", "recall", "import ban", "quy định", "ghi nhãn", "hải quan", "thu hồi sản phẩm", "thu hồi thực phẩm", "thu hồi lô hàng", "cấm nhập khẩu", "규제", "표시", "통관", "회수", "수입 금지"),
     "demand": ("demand", "consumer", "tourism", "nhu cầu", "tiêu dùng", "du lịch", "수요", "소비", "관광"),
 }
 _REASONS = {
-    "insufficient": "제목 또는 짧은 설명만 있어 진출 영향을 판단하기 어렵습니다.",
+    "insufficient": "분류에 필요한 실제 기사 요약이나 본문을 확보하지 못했습니다.",
+    "fetch_failed": "기사 내용을 불러오지 못해 판단을 보류합니다. 원문을 직접 확인해주세요.",
+    "no_signal": "관련 주제이지만 한정선 진출에 대한 영향 방향을 판단할 단서가 부족합니다.",
     "scope": "베트남 식품 및 디저트 시장과 적용 대상의 관련성을 확인해야 합니다.",
     "unclear": "가정, 부정 또는 적용 대상이 불명확한 표현이 있어 원문 확인이 필요합니다.",
     "mixed": "긍정과 부담 단서가 함께 있어 한 방향으로 판단하기 어렵습니다.",
@@ -268,13 +396,13 @@ _REASONS = {
 
 _OPPORTUNITY_SIGNALS = (
     "demand grows", "demand rises", "rising demand", "retail expansion", "distribution expands",
-    "nhu cầu tăng", "mở rộng phân phối", "수요 증가", "유통 확대",
+    "nhu cầu tăng", "mở rộng phân phối", "mở rộng thị trường", "mở rộng sản xuất", "mở rộng danh mục", "gia tăng giá trị", "phát triển sản phẩm", "mở ra cơ hội", "cơ hội mới", "tăng sức mua", "sức mua tăng", "tiêu thụ tăng", "tăng trưởng", "demand increases", "sales grow", "retail sales rise", "growing demand", "수요 증가", "유통 확대",
 )
 _RISK_SIGNALS = (
-    "import ban", "recall", "supply disruption", "cấm nhập khẩu", "thu hồi", "gián đoạn cung ứng",
-    "수입 금지", "회수", "공급 중단",
+    "import ban", "food recall", "product recall", "recall notice", "recalled food", "supply disruption", "cấm nhập khẩu", "thu hồi sản phẩm", "thu hồi thực phẩm", "thu hồi lô hàng", "thu hồi bánh", "thu hồi sữa", "gián đoạn cung ứng",
+    "수입 금지", "회수", "공급 중단", "đình chỉ sản xuất", "đình chỉ kinh doanh", "đình chỉ lưu hành", "ngộ độc thực phẩm", "hàng giả",
 )
-_CAUTION_SIGNALS = _TOPICS["compliance"] + ("cost increase", "higher costs", "chi phí tăng", "비용 증가")
+_CAUTION_SIGNALS = _TOPICS["compliance"] + ("cost increase", "higher costs", "chi phí tăng", "giá tăng", "tăng giá bán", "tăng giá nguyên liệu", "tăng giá thực phẩm", "비용 증가")
 _UNCERTAIN_SIGNALS = (
     "may", "might", "could", "proposal", "proposed", "unclear", "not", "no", "denied", "draft",
     "dự thảo", "có thể", "chưa", "không", "đề xuất", "검토", "미정", "가능성", "lifted", "revoked",
@@ -282,46 +410,61 @@ _UNCERTAIN_SIGNALS = (
 )
 
 
+_GEOGRAPHY = ("Vietnam", "Việt Nam", "Vietnamese", "Việt", "người Việt", "người tiêu dùng Việt", "hàng Việt", "thị trường Việt", "Đà Nẵng", "Da Nang", "Hà Nội", "Hanoi", "HCMC", "TP HCM", "Ho Chi Minh", "베트남", "다낭", "하노이", "호찌민")
+_FOREIGN = ("France", "Singapore", "Thailand", "China", "United States", "Japan", "Malaysia", "Pháp", "Trung Quốc", "Thái Lan", "Mỹ", "Hoa Kỳ", "Nhật Bản")
+_RULE_VERSION = "rules-v2-content"
+
+
 @lru_cache(maxsize=1000)
 def _classify_cached(version, title, description, publisher, published, url):
-    """규칙 기반 검토 단서. 사실 검증이나 규제 적용 판정이 아닙니다."""
-    text = _normalize(title + " " + description)
-    evidence = _normalize(description)
+    """제목의 문맥과 실제 요약/본문을 함께 평가합니다. 규제 적용 판정은 하지 않습니다."""
+    text = _words(title + " " + description)
     topics = tuple(key for key, terms in _TOPICS.items() if _has(text, terms))
-    if not publisher or not published or len(evidence) < 80 or evidence == _normalize(title):
+    if not publisher or not published or not usable_summary(description, title, publisher):
         return "hold", "insufficient", topics
-    geography = ("Vietnam", "Việt Nam", "Vietnamese", "Đà Nẵng", "Da Nang", "베트남", "다낭")
-    if not _has(evidence, geography) or "food" not in topics or not _has(evidence, _TOPICS["food"]):
+    if not _has(text, _GEOGRAPHY) or "food" not in topics:
         return "hold", "scope", topics
-    uncertain = _has(evidence, _UNCERTAIN_SIGNALS) or bool(re.search(r"않|아니|불확실", evidence))
-    positive = _has(evidence, _OPPORTUNITY_SIGNALS)
-    risk = _has(evidence, _RISK_SIGNALS)
-    caution = _has(evidence, _CAUTION_SIGNALS)
-    if positive and (risk or caution):
+    if not _has(_words(description), _TOPICS["food"]) and _has(_words(description), (
+            "hotel", "hotels", "tourism", "tours", "cosmetics", "semiconductor", "gold", "steel", "real estate",
+            "khách sạn", "mỹ phẩm", "bất động sản", "thép", "관광", "호텔", "화장품", "부동산")):
+        return "hold", "scope", topics
+    signals = {"opportunity": _OPPORTUNITY_SIGNALS, "risk": _RISK_SIGNALS, "caution": _CAUTION_SIGNALS}
+    matches = set()
+    uncertain = _has(_words(description), ("not confirmed", "unconfirmed", "chưa xác nhận", "미확인", "확인되지"))
+    foreign_signal = False
+    for part in re.split(r"(?<=[.!?])\s+|[;\n]", description):
+        evidence = _words(part)
+        if not evidence:
+            continue
+        # 다른 나라를 명시한 문장에 베트남 제목의 문맥을 전파하지 않습니다.
+        if _has(evidence, _FOREIGN) and not _has(evidence, _GEOGRAPHY):
+            foreign_signal |= any(_has(evidence, phrases) for phrases in signals.values())
+            continue
+        if not _has(evidence, _TOPICS["food"]) and not _has(_words(title), _TOPICS["food"]):
+            continue
+        found = {key for key, phrases in signals.items() if _has(evidence, phrases)}
+        if found:
+            matches.update(found)
+            uncertain |= _has(evidence, _UNCERTAIN_SIGNALS) or bool(re.search(r"않|아니|불확실", evidence))
+    if "opportunity" in matches and matches & {"risk", "caution"}:
         return "hold", "mixed", topics
     if uncertain:
         return "hold", "unclear", topics
-    # 서로 다른 시장이나 업종을 다룬 문장을 섞어 적용 대상을 추정하지 않습니다.
-    scoped = " ".join(_normalize(part) for part in re.split(r"[.!?;\n]|\b(?:while|whereas)\b", description, flags=re.I)
-                      if _has(_normalize(part), geography) and _has(_normalize(part), _TOPICS["food"]))
-    for present, signals in ((risk, _RISK_SIGNALS), (caution, _CAUTION_SIGNALS), (positive, _OPPORTUNITY_SIGNALS)):
-        if present and not _has(scoped, signals):
-            return "hold", "scope", topics
-    if risk:
-        return "risk", "risk", topics
-    if caution:
-        return "caution", "caution", topics
-    if positive:
-        return "opportunity", "opportunity", topics
-    return "hold", "scope", topics
+    for key in ("risk", "caution", "opportunity"):
+        if key in matches:
+            return key, key, topics
+    return "hold", "scope" if foreign_signal else "no_signal", topics
 
 
 def classify_article(item):
     """영향 메타데이터만 반환합니다. 원본·출처·확인·등록 상태를 변경하지 않습니다."""
     try:
-        category, reason, topics = _classify_cached("rules-v1", *(str(item.get(key) or "") for key in
-            ("title", "description", "publisher", "published_at", "url")))
+        text = _summary(item)
+        category, reason, topics = _classify_cached(_RULE_VERSION, str(item.get("title") or ""), text,
+            str(item.get("publisher") or ""), str(item.get("published_at") or ""), str(item.get("url") or ""))
+        if reason == "insufficient" and item.get("analysis", {}).get("state") == "unavailable":
+            reason = "fetch_failed"
     except Exception:
         category, reason, topics = "hold", "failed", ()
     return {"category": category, "reason_code": reason, "reason": _REASONS[reason],
-            "topics": list(topics), "method": "rules", "version": "rules-v1"}
+            "topics": list(topics), "method": "rules", "version": _RULE_VERSION}

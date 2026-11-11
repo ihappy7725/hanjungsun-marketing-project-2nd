@@ -987,13 +987,13 @@ async function initialize() {
       idle: '뉴스를 검색하면 영향별 건수가 표시됩니다.', loading: '뉴스를 불러오고 있습니다', loadingDetail: '기사 검색과 영향 단서 분류를 진행하고 있습니다.', error: '뉴스 검색에 실패했습니다. 잠시 후 다시 시도해주세요.',
       empty: '검색 결과가 없습니다. 검색어나 기간을 바꿔주세요.', noCategory: '이 분류에 해당하는 기사가 없습니다. 같은 분류를 다시 누르면 전체 기사로 돌아갑니다.',
       articleCount: '{n}건', showing: '{label}: {shown}/{total}건',
-      demo: 'DEMO / 예시 데이터', rules: '규칙 기반 분류', ai: '분류 제안', unverified: '미검증 탐색 기사', original: '원문', open: '원문 보기 ↗', publisher: '언론사 미표기', dateUnknown: '게시일 미표기', topicsLabel: '관련 주제', noTopic: '관련 주제 미확인',
+      demo: 'DEMO / 예시 데이터', rules: '규칙 기반 분류', ai: '분류 제안', unverified: '미검증 탐색 기사', original: '원문', open: '원문 보기 ↗', publisher: '언론사 미표기', dateUnknown: '게시일 미표기', evidence: '분류 근거', evidenceSources: { publisher_rss: '발행사 RSS 요약', article_body: '기사 본문', publisher_summary: '발행사 요약' }, topicsLabel: '관련 주제', noTopic: '관련 주제 미확인',
       partial: '일부 출처를 불러오지 못했습니다. 확보된 기사만 집계합니다.', translationFailed: '번역하지 못한 제목은 원문으로 표시합니다.', presetsFailed: '검색 항목을 불러오지 못했습니다. 직접 검색을 이용해주세요.',
       translate: '자동 번역', translateTitle: '기사 제목을 한국어로 번역합니다', invalidQuery: '검색어는 2~60자의 일반 문자로 입력해주세요.', invalidDates: '시작일과 종료일을 확인해주세요.',
       food_rules: '식품 규제와 표시', trade: '수출입과 통관', retail: '현지 유통과 판매 채널', danang: '다낭 지역 동향', gift: '선물세트와 명절 소비', trend: '식품 소비 트렌드',
       topics: { food: '식품과 디저트', retail: '유통과 배달', gifting: '선물과 명절', compliance: '규제와 통관', demand: '소비 수요' },
       reasons: {
-        insufficient: '제목 또는 짧은 설명만 있어 진출 영향을 판단하기 어렵습니다.', scope: '베트남 식품 및 디저트 시장과 적용 대상의 관련성을 확인해야 합니다.',
+        insufficient: '분류에 필요한 실제 기사 요약이나 본문을 확보하지 못했습니다.', fetch_failed: '기사 내용을 불러오지 못해 판단을 보류합니다. 원문을 직접 확인해주세요.', no_signal: '관련 주제이지만 한정선 진출에 대한 영향 방향을 판단할 단서가 부족합니다.', scope: '베트남 식품 및 디저트 시장과 적용 대상의 관련성을 확인해야 합니다.',
         unclear: '가정, 부정 또는 적용 대상이 불명확한 표현이 있어 원문 확인이 필요합니다.', mixed: '긍정과 부담 단서가 함께 있어 한 방향으로 판단하기 어렵습니다.',
         opportunity: '수요 또는 유통 확대 단서가 있어 Hanjungsun의 판매 기회 검토에 참고할 수 있습니다. 사업 효과는 미확정입니다.',
         caution: '규제, 표시 또는 비용 단서가 있어 진출 준비 조건을 검토해야 합니다. 실제 적용은 미확정입니다.',
@@ -1006,13 +1006,13 @@ async function initialize() {
       idle: 'Search news to see article counts by impact.', loading: 'Loading news', loadingDetail: 'Searching articles and classifying impact signals.', error: 'News search failed. Please try again later.',
       empty: 'No results. Try another search term or date range.', noCategory: 'No articles in this category. Select the same category again to show all articles.',
       articleCount: '{n} articles', showing: '{label}: {shown}/{total} articles',
-      demo: 'DEMO / Example data', rules: 'Rule-based classification', ai: 'Suggested classification', unverified: 'Unverified exploratory article', original: 'Original', open: 'Read original ↗', publisher: 'Publisher unavailable', dateUnknown: 'Publication date unavailable', topicsLabel: 'Related topics', noTopic: 'Topic undetermined',
+      demo: 'DEMO / Example data', rules: 'Rule-based classification', ai: 'Suggested classification', unverified: 'Unverified exploratory article', original: 'Original', open: 'Read original ↗', publisher: 'Publisher unavailable', dateUnknown: 'Publication date unavailable', evidence: 'Classification evidence', evidenceSources: { publisher_rss: 'Publisher RSS summary', article_body: 'Article body', publisher_summary: 'Publisher summary' }, topicsLabel: 'Related topics', noTopic: 'Topic undetermined',
       partial: 'Some sources are unavailable. Only retrieved articles are counted.', translationFailed: 'Headlines that could not be translated are shown in their original language.', presetsFailed: 'Topics could not be loaded. You can still search directly.',
       translate: 'Auto-translate', translateTitle: 'Translate headlines into English', invalidQuery: 'Enter 2–60 characters using letters and ordinary punctuation.', invalidDates: 'Check the start and end dates.',
       food_rules: 'Food rules and labeling', trade: 'Trade and customs', retail: 'Retail and distribution', danang: 'Da Nang updates', gift: 'Gifts and holiday spending', trend: 'Food consumption trends',
       topics: { food: 'Food and desserts', retail: 'Retail and delivery', gifting: 'Gifts and holidays', compliance: 'Rules and customs', demand: 'Consumer demand' },
       reasons: {
-        insufficient: 'Only a headline or a short description is available; the impact on market entry is undetermined.', scope: 'Relevance to the Vietnamese food and dessert market and the affected businesses needs review.',
+        insufficient: 'An actual article summary or body could not be obtained for classification.', fetch_failed: 'Article content could not be loaded. Please check the original.', no_signal: 'The topic is relevant, but evidence does not establish a direction of impact on Hanjungsun market entry.', scope: 'Relevance to the Vietnamese food and dessert market and the affected businesses needs review.',
         unclear: 'Conditional, negative or ambiguous wording requires checking the original.', mixed: 'Positive signals and potential burdens coexist; a single direction cannot be determined.',
         opportunity: 'Demand or distribution expansion signals may inform sales opportunities for Hanjungsun. Business effects remain unconfirmed.',
         caution: 'Rules, labeling or cost signals warrant reviewing entry requirements. Actual applicability remains unconfirmed.',
@@ -1025,13 +1025,13 @@ async function initialize() {
       idle: 'Tìm tin tức để xem số bài theo tác động.', loading: 'Đang tải tin tức', loadingDetail: 'Đang tìm bài viết và phân loại tín hiệu tác động.', error: 'Không thể tìm tin tức. Vui lòng thử lại sau.',
       empty: 'Không có kết quả. Hãy đổi từ khóa hoặc thời gian.', noCategory: 'Không có bài trong nhóm này. Chọn lại nhóm này để xem tất cả bài viết.',
       articleCount: '{n} bài', showing: '{label}: {shown}/{total} bài',
-      demo: 'DEMO / Dữ liệu minh họa', rules: 'Phân loại theo quy tắc', ai: 'Đề xuất phân loại', unverified: 'Bài tham khảo chưa xác minh', original: 'Bản gốc', open: 'Đọc bản gốc ↗', publisher: 'Chưa có tên nguồn', dateUnknown: 'Chưa có ngày đăng', topicsLabel: 'Chủ đề liên quan', noTopic: 'Chưa xác định chủ đề',
+      demo: 'DEMO / Dữ liệu minh họa', rules: 'Phân loại theo quy tắc', ai: 'Đề xuất phân loại', unverified: 'Bài tham khảo chưa xác minh', original: 'Bản gốc', open: 'Đọc bản gốc ↗', publisher: 'Chưa có tên nguồn', dateUnknown: 'Chưa có ngày đăng', evidence: 'Cơ sở phân loại', evidenceSources: { publisher_rss: 'Tóm tắt RSS từ báo', article_body: 'Nội dung bài viết', publisher_summary: 'Tóm tắt từ báo' }, topicsLabel: 'Chủ đề liên quan', noTopic: 'Chưa xác định chủ đề',
       partial: 'Một số nguồn không khả dụng. Chỉ tính các bài đã tải được.', translationFailed: 'Tiêu đề chưa dịch được sẽ hiển thị bằng ngôn ngữ gốc.', presetsFailed: 'Không tải được chủ đề. Bạn vẫn có thể nhập từ khóa.',
       translate: 'Dịch tự động', translateTitle: 'Dịch tiêu đề bài viết', invalidQuery: 'Nhập từ 2 đến 60 ký tự thông thường.', invalidDates: 'Vui lòng kiểm tra ngày bắt đầu và kết thúc.',
       food_rules: 'Quy định và nhãn thực phẩm', trade: 'Xuất nhập khẩu và hải quan', retail: 'Bán lẻ và phân phối', danang: 'Tin Đà Nẵng', gift: 'Quà tặng và tiêu dùng dịp lễ', trend: 'Xu hướng tiêu dùng thực phẩm',
       topics: { food: 'Thực phẩm và tráng miệng', retail: 'Bán lẻ và giao hàng', gifting: 'Quà tặng và dịp lễ', compliance: 'Quy định và hải quan', demand: 'Nhu cầu tiêu dùng' },
       reasons: {
-        insufficient: 'Chỉ có tiêu đề hoặc mô tả ngắn nên chưa thể xác định tác động đến việc gia nhập thị trường.', scope: 'Cần kiểm tra mức độ liên quan đến thị trường thực phẩm và món tráng miệng Việt Nam và đối tượng chịu tác động.',
+        insufficient: 'Chưa lấy được tóm tắt hoặc nội dung bài viết để phân loại.', fetch_failed: 'Không tải được nội dung bài nên chưa thể đánh giá. Vui lòng kiểm tra bản gốc.', no_signal: 'Chủ đề có liên quan nhưng chưa có đủ dấu hiệu xác định chiều tác động đến Hanjungsun.', scope: 'Cần kiểm tra mức độ liên quan đến thị trường thực phẩm và món tráng miệng Việt Nam và đối tượng chịu tác động.',
         unclear: 'Cách diễn đạt giả định, phủ định hoặc chưa rõ đối tượng cần được kiểm tra trong bản gốc.', mixed: 'Có cả tín hiệu tích cực và gánh nặng nên chưa thể xác định một chiều tác động.',
         opportunity: 'Tín hiệu tăng nhu cầu hoặc mở rộng phân phối có thể hỗ trợ xem xét cơ hội bán hàng của Hanjungsun. Hiệu quả kinh doanh chưa được xác nhận.',
         caution: 'Tín hiệu về quy định, nhãn hoặc chi phí cần được xem xét khi chuẩn bị gia nhập thị trường. Việc áp dụng thực tế chưa được xác nhận.',
@@ -1077,8 +1077,11 @@ async function initialize() {
       const url = safeUrl(n.url), impact = n.impact;
       const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title);
       const origin = n.translated ? `<p class="home-news-origin">${esc(nt.original)}: ${esc(n.title_original)}</p>` : '';
+      const evidenceUrl = n.analysis?.state === 'ready' ? safeUrl(n.analysis.url) : '';
+      const evidenceLabel = nt.evidenceSources[n.analysis?.source] || '';
+      const evidence = evidenceUrl && evidenceLabel ? ` / <a href="${esc(evidenceUrl)}" target="_blank" rel="noopener noreferrer" title="${esc(nt.evidence)}">${esc(evidenceLabel)} ↗</a>` : '';
       const topics = impact.topics.map(key => nt.topics[key]).filter(Boolean).join(', ') || nt.noTopic;
-      return `<article class="home-news-result" data-impact="${impact.category}"><div class="home-impact-meta"><span class="home-impact-badge">${impactIcon(impact.category)}${esc(nt[impact.category])}</span><span>${esc(impact.method === 'ai' ? nt.ai : nt.rules)}</span><span>${esc(nt.unverified)}</span>${n.is_demo ? `<strong>${esc(nt.demo)}</strong>` : ''}</div><div class="home-news-result-title${n.translated ? ' is-translated' : ''}">${title}</div>${origin}<p class="home-impact-reason">${esc(nt.reasons[impact.reason_code] || nt.reasons.failed)}</p><p class="home-news-help">${esc(nt.topicsLabel)}: ${esc(topics)}</p><p class="home-signal-meta">${esc(n.publisher || nt.publisher)} / ${esc(n.published_at || nt.dateUnknown)}${n.source_label && n.source_label !== n.publisher ? ` / ${esc(n.source_label)}` : ''}</p>${url ? `<a class="home-news-original-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(nt.open)}</a>` : ''}</article>`;
+      return `<article class="home-news-result" data-impact="${impact.category}"><div class="home-impact-meta"><span class="home-impact-badge">${impactIcon(impact.category)}${esc(nt[impact.category])}</span><span>${esc(impact.method === 'ai' ? nt.ai : nt.rules)}</span><span>${esc(nt.unverified)}</span>${n.is_demo ? `<strong>${esc(nt.demo)}</strong>` : ''}</div><div class="home-news-result-title${n.translated ? ' is-translated' : ''}">${title}</div>${origin}<p class="home-impact-reason">${esc(nt.reasons[impact.reason_code] || nt.reasons.failed)}</p><p class="home-news-help">${esc(nt.topicsLabel)}: ${esc(topics)}</p><p class="home-signal-meta">${esc(n.publisher || nt.publisher)} / ${esc(n.published_at || nt.dateUnknown)}${n.source_label && n.source_label !== n.publisher ? ` / ${esc(n.source_label)}` : ''}${evidence}</p>${url ? `<a class="home-news-original-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(nt.open)}</a>` : ''}</article>`;
     }).join('') || empty(newsItems.length ? nt.noCategory : nt.empty);
   }
   async function searchNews(params) {
