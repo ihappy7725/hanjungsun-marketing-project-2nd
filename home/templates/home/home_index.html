@@ -46,22 +46,33 @@
         </div>
       </section>
       <section class="home-card home-news home-resizable" aria-labelledby="news-title">
-        <div class="home-panel-head"><div><h2 id="news-title">현지 뉴스</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend">현지 시장 분석 ↗</a></div>
+        <div class="home-panel-head"><div><h2 id="news-title" data-news-text="newsTitle">현지 뉴스</h2></div><a href="{{ url_for('market_analysis.index') }}?country=VN&amp;tab=trend" data-news-text="marketLink">현지 시장 분석 ↗</a></div>
         <form id="news-search-form" class="home-news-search" role="search" data-presets-url="{{ url_for('home.news_presets') }}" data-search-url="{{ url_for('home.news_search') }}">
           <div class="home-news-toolbar">
             <div id="news-presets" class="home-news-presets"></div>
             <button class="btn" id="news-translate" type="button" aria-pressed="false" hidden>자동 번역</button>
           </div>
           <div class="home-news-query">
-            <label class="home-muted" for="news-query">직접 검색</label>
+            <label class="home-muted" for="news-query" data-news-text="queryLabel">직접 검색</label>
             <input id="news-query" name="q" type="search" maxlength="60" autocomplete="off" placeholder="예: quà tặng Tết">
-            <button class="btn" type="submit">검색</button>
+            <button class="btn" type="submit" data-news-text="search">검색</button>
+          </div>
+          <div class="home-news-period">
+            <label class="home-field"><span data-news-text="start">게시 시작일</span><input type="date" id="news-start" name="start" min="1900-01-02" max="9999-12-30"></label>
+            <label class="home-field"><span data-news-text="end">게시 종료일</span><input type="date" id="news-end" name="end" min="1900-01-02" max="9999-12-30"></label>
           </div>
           <p id="news-search-error" class="home-error" hidden role="alert"></p>
         </form>
         <div class="home-news-block is-search is-idle home-resizable">
-          <div class="home-search-heading"><h3 class="home-news-heading">검색 결과</h3><p id="news-search-hint" class="home-news-help">검색 항목을 고르거나 검색어를 입력하면 현지 기사를 찾아봅니다.</p></div>
-          <div id="news-search-list" class="home-news-results"></div>
+          <div class="home-search-heading"><h3 class="home-news-heading" data-news-text="explore">탐색용 뉴스</h3></div>
+          <p class="home-news-help" data-news-text="scopeNote">Hanjungsun의 베트남 식품 및 디저트 시장 진출을 위한 검토 단서입니다. 영향 분류는 사실 확인이나 규제 적용 판정이 아닙니다.</p>
+          <div id="news-impact-cards" class="home-impact-cards" role="group"></div>
+          <div class="home-impact-heading"><strong id="news-distribution-label" data-news-text="distribution">기사 수 분포</strong><button class="btn" id="news-impact-all" type="button" aria-pressed="true" disabled data-news-text="all">전체 보기</button></div>
+          <div id="news-impact-bar" class="home-impact-bar" role="group" aria-labelledby="news-distribution-label"></div>
+          <p class="home-news-help" data-news-text="countNote">현재 검색 및 기간 조건에서 확보한 고유 기사 최대 12건입니다. 기사 수는 시장 중요도나 위험의 크기를 뜻하지 않습니다. 기간 지정 시 게시일 미표기 기사는 제외합니다.</p>
+          <p id="news-search-hint" class="home-news-help" data-news-text="idle">검색 항목을 고르거나 검색어를 입력해주세요.</p>
+          <p id="news-impact-status" class="home-news-help" role="status" aria-live="polite" aria-atomic="true"></p>
+          <div id="news-search-list" class="home-news-results" aria-busy="false"></div>
         </div>
         <div class="home-news-block is-verified">
           <h3 class="home-news-heading">확인된 규제·공지</h3>
