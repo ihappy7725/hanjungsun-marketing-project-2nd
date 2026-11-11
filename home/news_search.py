@@ -123,7 +123,9 @@ def _item(node, source_label, strip_publisher=True):
             title = title[: -len(publisher) - 3].strip()
         elif not publisher and " - " in title:
             title, publisher = (part.strip() for part in title.rsplit(" - ", 1))
-    description = _plain_text(node.findtext("description") or "")
+    description_html = node.findtext("description") or ""
+    # 연결된 제목 목록은 본문 근거가 아닙니다. 이미지 링크 밖의 RSS 설명만 남깁니다.
+    description = _plain_text(re.sub(r"<a\b[^>]*>.*?</a\s*>", " ", description_html, flags=re.I | re.S))
     # Google RSS의 설명은 연결된 제목 목록인 경우가 많습니다. 제목 자체를 근거로 재사용하지 않습니다.
     description = description.replace(title, "").strip()
     return {"title": title, "publisher": publisher or source_label, "source_label": source_label,
@@ -168,7 +170,7 @@ def _merge(groups, start=None, end=None):
             url = urlsplit(item["url"])
             query = [(k, v) for k, v in parse_qsl(url.query) if not k.lower().startswith("utm_") and k.lower() not in {"fbclid", "gclid"}]
             url_key = urlunsplit((url.scheme.lower(), url.netloc.lower().removeprefix("www."), url.path.rstrip("/"), urlencode(sorted(query)), ""))
-            title_key = (_normalize(item["title"]), _normalize(item["publisher"]))
+            title_key = (_normalize(item["title"]), _normalize(item["publisher"]), published)
             if url_key in seen_urls or title_key in seen_titles:
                 continue
             seen_urls.add(url_key)
@@ -264,6 +266,22 @@ _REASONS = {
 }
 
 
+_OPPORTUNITY_SIGNALS = (
+    "demand grows", "demand rises", "rising demand", "retail expansion", "distribution expands",
+    "nhu cầu tăng", "mở rộng phân phối", "수요 증가", "유통 확대",
+)
+_RISK_SIGNALS = (
+    "import ban", "recall", "supply disruption", "cấm nhập khẩu", "thu hồi", "gián đoạn cung ứng",
+    "수입 금지", "회수", "공급 중단",
+)
+_CAUTION_SIGNALS = _TOPICS["compliance"] + ("cost increase", "higher costs", "chi phí tăng", "비용 증가")
+_UNCERTAIN_SIGNALS = (
+    "may", "might", "could", "proposal", "proposed", "unclear", "not", "no", "denied", "draft",
+    "dự thảo", "có thể", "chưa", "không", "đề xuất", "검토", "미정", "가능성", "lifted", "revoked",
+    "abolished", "removed", "exemption", "cancelled", "dỡ bỏ", "bãi bỏ", "hủy bỏ", "miễn", "해제", "철회", "폐지",
+)
+
+
 @lru_cache(maxsize=1000)
 def _classify_cached(version, title, description, publisher, published, url):
     """규칙 기반 검토 단서. 사실 검증이나 규제 적용 판정이 아닙니다."""
@@ -272,16 +290,23 @@ def _classify_cached(version, title, description, publisher, published, url):
     topics = tuple(key for key, terms in _TOPICS.items() if _has(text, terms))
     if not publisher or not published or len(evidence) < 80 or evidence == _normalize(title):
         return "hold", "insufficient", topics
-    if not _has(evidence, ("Vietnam", "Việt Nam", "Vietnamese", "Đà Nẵng", "Da Nang", "베트남", "다낭")) or "food" not in topics or not _has(evidence, _TOPICS["food"]):
+    geography = ("Vietnam", "Việt Nam", "Vietnamese", "Đà Nẵng", "Da Nang", "베트남", "다낭")
+    if not _has(evidence, geography) or "food" not in topics or not _has(evidence, _TOPICS["food"]):
         return "hold", "scope", topics
-    uncertain = _has(evidence, ("may", "might", "could", "proposal", "proposed", "unclear", "not", "no", "denied", "draft", "dự thảo", "có thể", "chưa", "không", "đề xuất", "검토", "미정", "않", "아니", "가능성"))
-    positive = _has(evidence, ("demand grows", "demand rises", "rising demand", "retail expansion", "distribution expands", "nhu cầu tăng", "mở rộng phân phối", "수요 증가", "유통 확대"))
-    risk = _has(evidence, ("import ban", "recall", "supply disruption", "cấm nhập khẩu", "thu hồi", "gián đoạn cung ứng", "수입 금지", "회수", "공급 중단"))
-    caution = _has(evidence, _TOPICS["compliance"]) or _has(evidence, ("cost increase", "higher costs", "chi phí tăng", "비용 증가"))
+    uncertain = _has(evidence, _UNCERTAIN_SIGNALS) or bool(re.search(r"않|아니|불확실", evidence))
+    positive = _has(evidence, _OPPORTUNITY_SIGNALS)
+    risk = _has(evidence, _RISK_SIGNALS)
+    caution = _has(evidence, _CAUTION_SIGNALS)
     if positive and (risk or caution):
         return "hold", "mixed", topics
     if uncertain:
         return "hold", "unclear", topics
+    # 서로 다른 시장이나 업종을 다룬 문장을 섞어 적용 대상을 추정하지 않습니다.
+    scoped = " ".join(_normalize(part) for part in re.split(r"[.!?;\n]|\b(?:while|whereas)\b", description, flags=re.I)
+                      if _has(_normalize(part), geography) and _has(_normalize(part), _TOPICS["food"]))
+    for present, signals in ((risk, _RISK_SIGNALS), (caution, _CAUTION_SIGNALS), (positive, _OPPORTUNITY_SIGNALS)):
+        if present and not _has(scoped, signals):
+            return "hold", "scope", topics
     if risk:
         return "risk", "risk", topics
     if caution:

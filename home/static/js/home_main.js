@@ -978,97 +978,220 @@ async function initialize() {
     const next = structuredClone(store); Object.assign(next.preferences, { preset: $('#range-preset').value, range_start: r.start, range_end: r.end });
     if (await save(next)) refreshSignals();
   };
-  // 현지 뉴스 검색. 결과는 검증하지 않은 외부 목록이라 요약 없이 제목·언론사·발행일·원문 링크만 보여 줍니다.
+  // 탐색 뉴스 영향은 확인 상태와 독립적입니다. 원본 확인 자료는 기존 렌더러가 계속 처리합니다.
   const newsForm = $('#news-search-form');
+  const NEWS_TEXT = {
+    ko: {
+      newsTitle: '현지 뉴스', marketLink: '현지 시장 분석 ↗', queryLabel: '직접 검색', search: '검색', start: '게시 시작일', end: '게시 종료일', explore: '탐색용 뉴스',
+      opportunity: '기회', caution: '주의', risk: '위험', hold: '판단 보류', all: '전체 보기', distribution: '기사 수 분포',
+      scopeNote: 'Hanjungsun의 베트남 식품 및 디저트 시장 진출을 위한 검토 단서입니다. 영향 분류는 사실 확인이나 규제 적용 판정이 아닙니다.',
+      countNote: '현재 검색 및 기간 조건에서 확보한 고유 기사 최대 12건입니다. 기사 수는 시장 중요도나 위험의 크기를 뜻하지 않습니다. 기간 지정 시 게시일 미표기 기사는 제외합니다.',
+      idle: '검색 항목을 고르거나 검색어를 입력해주세요.', loading: '뉴스를 불러오고 있습니다', loadingDetail: '기사 검색과 영향 단서 분류를 진행하고 있습니다.', error: '뉴스 검색에 실패했습니다. 잠시 후 다시 시도해주세요.',
+      empty: '검색 결과가 없습니다. 검색어나 기간을 바꿔주세요.', noCategory: '이 분류에 해당하는 기사가 없습니다. 전체 보기를 선택할 수 있습니다.',
+      articleCount: '{n}건', showing: '{label}: {shown}건 표시 / 확보한 고유 기사 {total}건',
+      demo: 'DEMO / 예시 데이터', rules: '규칙 기반 분류', ai: '분류 제안', unverified: '미검증 탐색 기사', original: '원문', open: '원문 보기 ↗', publisher: '언론사 미표기', dateUnknown: '게시일 미표기', topicsLabel: '관련 주제', noTopic: '관련 주제 미확인',
+      partial: '일부 출처를 불러오지 못했습니다. 확보된 기사만 집계합니다.', translationFailed: '번역하지 못한 제목은 원문으로 표시합니다.', presetsFailed: '검색 항목을 불러오지 못했습니다. 직접 검색을 이용해주세요.',
+      translate: '자동 번역', translateTitle: '기사 제목을 한국어로 번역합니다', invalidQuery: '검색어는 2~60자의 일반 문자로 입력해주세요.', invalidDates: '시작일과 종료일을 확인해주세요.',
+      food_rules: '식품 규제와 표시', trade: '수출입과 통관', retail: '현지 유통과 판매 채널', danang: '다낭 지역 동향', gift: '선물세트와 명절 소비', trend: '식품 소비 트렌드',
+      topics: { food: '식품과 디저트', retail: '유통과 배달', gifting: '선물과 명절', compliance: '규제와 통관', demand: '소비 수요' },
+      reasons: {
+        insufficient: '제목 또는 짧은 설명만 있어 진출 영향을 판단하기 어렵습니다.', scope: '베트남 식품 및 디저트 시장과 적용 대상의 관련성을 확인해야 합니다.',
+        unclear: '가정, 부정 또는 적용 대상이 불명확한 표현이 있어 원문 확인이 필요합니다.', mixed: '긍정과 부담 단서가 함께 있어 한 방향으로 판단하기 어렵습니다.',
+        opportunity: '수요 또는 유통 확대 단서가 있어 Hanjungsun의 판매 기회 검토에 참고할 수 있습니다. 사업 효과는 미확정입니다.',
+        caution: '규제, 표시 또는 비용 단서가 있어 진출 준비 조건을 검토해야 합니다. 실제 적용은 미확정입니다.',
+        risk: '수입 금지, 회수 또는 공급 중단 단서가 있어 식품 진출 영향 확인이 필요합니다. Hanjungsun에 대한 적용은 미확정입니다.', failed: '분류 처리에 실패했습니다. 원문을 직접 확인해주세요.'
+      }
+    },
+    en: {
+      newsTitle: 'Local news', marketLink: 'Market analysis ↗', queryLabel: 'Search news', search: 'Search', start: 'Published from', end: 'Published through', explore: 'Exploratory news',
+      opportunity: 'Opportunity', caution: 'Caution', risk: 'Risk', hold: 'Undetermined', all: 'View all', distribution: 'Article count distribution',
+      scopeNote: 'Signals to review for Hanjungsun entering the Vietnamese food and dessert market. Impact classification does not verify facts or determine regulatory applicability.',
+      countNote: 'Up to 12 unique articles retrieved for the current search and dates. Counts do not measure market importance or risk severity. Articles without publication dates are excluded when dates are set.',
+      idle: 'Choose a topic or enter a search term.', loading: 'Loading news', loadingDetail: 'Searching articles and classifying impact signals.', error: 'News search failed. Please try again later.',
+      empty: 'No results. Try another search term or date range.', noCategory: 'No articles in this category. You can return to View all.',
+      articleCount: '{n} articles', showing: '{label}: showing {shown} / {total} unique articles retrieved',
+      demo: 'DEMO / Example data', rules: 'Rule-based classification', ai: 'Suggested classification', unverified: 'Unverified exploratory article', original: 'Original', open: 'Read original ↗', publisher: 'Publisher unavailable', dateUnknown: 'Publication date unavailable', topicsLabel: 'Related topics', noTopic: 'Topic undetermined',
+      partial: 'Some sources are unavailable. Only retrieved articles are counted.', translationFailed: 'Headlines that could not be translated are shown in their original language.', presetsFailed: 'Topics could not be loaded. You can still search directly.',
+      translate: 'Auto-translate', translateTitle: 'Translate headlines into English', invalidQuery: 'Enter 2–60 characters using letters and ordinary punctuation.', invalidDates: 'Check the start and end dates.',
+      food_rules: 'Food rules and labeling', trade: 'Trade and customs', retail: 'Retail and distribution', danang: 'Da Nang updates', gift: 'Gifts and holiday spending', trend: 'Food consumption trends',
+      topics: { food: 'Food and desserts', retail: 'Retail and delivery', gifting: 'Gifts and holidays', compliance: 'Rules and customs', demand: 'Consumer demand' },
+      reasons: {
+        insufficient: 'Only a headline or a short description is available; the impact on market entry is undetermined.', scope: 'Relevance to the Vietnamese food and dessert market and the affected businesses needs review.',
+        unclear: 'Conditional, negative or ambiguous wording requires checking the original.', mixed: 'Positive signals and potential burdens coexist; a single direction cannot be determined.',
+        opportunity: 'Demand or distribution expansion signals may inform sales opportunities for Hanjungsun. Business effects remain unconfirmed.',
+        caution: 'Rules, labeling or cost signals warrant reviewing entry requirements. Actual applicability remains unconfirmed.',
+        risk: 'Import ban, recall or supply disruption signals warrant checking food market entry implications. Applicability to Hanjungsun remains unconfirmed.', failed: 'Classification failed. Please check the original article.'
+      }
+    },
+    vi: {
+      newsTitle: 'Tin tức địa phương', marketLink: 'Phân tích thị trường ↗', queryLabel: 'Tìm tin tức', search: 'Tìm kiếm', start: 'Đăng từ ngày', end: 'Đăng đến ngày', explore: 'Tin tức tham khảo',
+      opportunity: 'Cơ hội', caution: 'Lưu ý', risk: 'Rủi ro', hold: 'Chưa xác định', all: 'Xem tất cả', distribution: 'Phân bố số bài viết',
+      scopeNote: 'Tín hiệu tham khảo cho Hanjungsun gia nhập thị trường thực phẩm và món tráng miệng Việt Nam. Phân loại tác động không xác minh sự thật hoặc kết luận việc áp dụng quy định.',
+      countNote: 'Tối đa 12 bài viết duy nhất thu được theo từ khóa và thời gian hiện tại. Số bài không thể hiện tầm quan trọng thị trường hay mức độ rủi ro. Khi chọn thời gian, bài không có ngày đăng sẽ bị loại.',
+      idle: 'Chọn chủ đề hoặc nhập từ khóa.', loading: 'Đang tải tin tức', loadingDetail: 'Đang tìm bài viết và phân loại tín hiệu tác động.', error: 'Không thể tìm tin tức. Vui lòng thử lại sau.',
+      empty: 'Không có kết quả. Hãy đổi từ khóa hoặc thời gian.', noCategory: 'Không có bài trong nhóm này. Bạn có thể chọn Xem tất cả.',
+      articleCount: '{n} bài', showing: '{label}: hiển thị {shown} / {total} bài viết duy nhất thu được',
+      demo: 'DEMO / Dữ liệu minh họa', rules: 'Phân loại theo quy tắc', ai: 'Đề xuất phân loại', unverified: 'Bài tham khảo chưa xác minh', original: 'Bản gốc', open: 'Đọc bản gốc ↗', publisher: 'Chưa có tên nguồn', dateUnknown: 'Chưa có ngày đăng', topicsLabel: 'Chủ đề liên quan', noTopic: 'Chưa xác định chủ đề',
+      partial: 'Một số nguồn không khả dụng. Chỉ tính các bài đã tải được.', translationFailed: 'Tiêu đề chưa dịch được sẽ hiển thị bằng ngôn ngữ gốc.', presetsFailed: 'Không tải được chủ đề. Bạn vẫn có thể nhập từ khóa.',
+      translate: 'Dịch tự động', translateTitle: 'Dịch tiêu đề bài viết', invalidQuery: 'Nhập từ 2 đến 60 ký tự thông thường.', invalidDates: 'Vui lòng kiểm tra ngày bắt đầu và kết thúc.',
+      food_rules: 'Quy định và nhãn thực phẩm', trade: 'Xuất nhập khẩu và hải quan', retail: 'Bán lẻ và phân phối', danang: 'Tin Đà Nẵng', gift: 'Quà tặng và tiêu dùng dịp lễ', trend: 'Xu hướng tiêu dùng thực phẩm',
+      topics: { food: 'Thực phẩm và tráng miệng', retail: 'Bán lẻ và giao hàng', gifting: 'Quà tặng và dịp lễ', compliance: 'Quy định và hải quan', demand: 'Nhu cầu tiêu dùng' },
+      reasons: {
+        insufficient: 'Chỉ có tiêu đề hoặc mô tả ngắn nên chưa thể xác định tác động đến việc gia nhập thị trường.', scope: 'Cần kiểm tra mức độ liên quan đến thị trường thực phẩm và món tráng miệng Việt Nam và đối tượng chịu tác động.',
+        unclear: 'Cách diễn đạt giả định, phủ định hoặc chưa rõ đối tượng cần được kiểm tra trong bản gốc.', mixed: 'Có cả tín hiệu tích cực và gánh nặng nên chưa thể xác định một chiều tác động.',
+        opportunity: 'Tín hiệu tăng nhu cầu hoặc mở rộng phân phối có thể hỗ trợ xem xét cơ hội bán hàng của Hanjungsun. Hiệu quả kinh doanh chưa được xác nhận.',
+        caution: 'Tín hiệu về quy định, nhãn hoặc chi phí cần được xem xét khi chuẩn bị gia nhập thị trường. Việc áp dụng thực tế chưa được xác nhận.',
+        risk: 'Tín hiệu cấm nhập khẩu, thu hồi hoặc gián đoạn cung ứng cần được xem xét. Chưa xác nhận việc áp dụng với Hanjungsun.', failed: 'Phân loại thất bại. Vui lòng kiểm tra bài gốc.'
+      }
+    }
+  };
+  const nt = NEWS_TEXT[document.documentElement.dataset.uiLang] || NEWS_TEXT.ko;
+  const fmt = (text, values) => text.replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''));
+  const impactKeys = ['opportunity', 'caution', 'risk', 'hold'];
+  const impactPaths = { opportunity: 'M4 17l6-6 4 4 6-9M14 6h6v6', caution: 'M12 3L2 21h20L12 3zM12 9v5M12 17v1', risk: 'M8 3h8l5 5v8l-5 5H8l-5-5V8zM12 7v6M12 16v1', hold: 'M9 8a3 3 0 0 1 6 0c0 2-3 2-3 5M12 16v1' };
+  const impactIcon = key => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${impactPaths[key]}"/></svg>`;
+  let searchNumber = 0, lastSearch = null, translateOn = false, translateTarget = '';
+  let newsItems = [], impactFilter = 'all', newsState = 'idle';
+  const TRANSLATE_KEY = 'hjs-home-news-translate';
   function newsError(message) {
     const box = $('#news-search-error');
     box.textContent = message || '';
     box.hidden = !message;
   }
-  let searchNumber = 0, lastSearch = null, translateOn = false, translateTarget = '';
-  const TRANSLATE_KEY = 'hjs-home-news-translate';
+  function renderImpactSummary() {
+    const ready = newsState === 'ready';
+    const counts = Object.fromEntries(impactKeys.map(key => [key, newsItems.filter(n => n.impact.category === key).length]));
+    // 카드는 최초 생성 이후 유지해 선택 시 키보드 포커스가 사라지지 않게 합니다.
+    if (!$('#news-impact-cards').children.length) {
+      $('#news-impact-cards').innerHTML = impactKeys.map(key => `<button type="button" class="home-impact-card" data-impact="${key}" aria-pressed="false" aria-controls="news-search-list">${impactIcon(key)}<span>${esc(nt[key])}</span><strong data-impact-count></strong></button>`).join('');
+    }
+    for (const button of $('#news-impact-cards').children) {
+      const key = button.dataset.impact;
+      button.disabled = !ready;
+      button.setAttribute('aria-pressed', String(impactFilter === key));
+      button.querySelector('[data-impact-count]').textContent = ready ? fmt(nt.articleCount, { n: counts[key] }) : '—';
+    }
+    const bar = $('#news-impact-bar');
+    if (!bar.children.length) {
+      bar.innerHTML = impactKeys.map(key => `<button type="button" data-impact="${key}" aria-controls="news-search-list"></button>`).join('');
+    }
+    for (const button of bar.children) {
+      const key = button.dataset.impact;
+      button.hidden = !ready || !counts[key];
+      button.disabled = !ready || !counts[key];
+      button.style.flexBasis = `${newsItems.length ? counts[key] / newsItems.length * 100 : 0}%`;
+      const label = `${nt[key]}: ${fmt(nt.articleCount, { n: counts[key] })}`;
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.setAttribute('aria-pressed', String(impactFilter === key));
+      button.textContent = String(counts[key]);
+    }
+    bar.dataset.state = newsState;
+    $('#news-impact-all').disabled = !ready;
+    $('#news-impact-all').setAttribute('aria-pressed', String(impactFilter === 'all'));
+    $('#news-impact-status').textContent = ready ? fmt(nt.showing, { label: nt[impactFilter], shown: impactFilter === 'all' ? newsItems.length : counts[impactFilter], total: newsItems.length }) : newsState === 'idle' ? '' : nt[newsState];
+  }
+  function renderExploratoryNews() {
+    renderImpactSummary();
+    const shown = newsItems.filter(n => impactFilter === 'all' || n.impact.category === impactFilter);
+    $('#news-search-list').innerHTML = shown.map(n => {
+      const url = safeUrl(n.url), impact = n.impact;
+      const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title);
+      const origin = n.translated ? `<p class="home-news-origin">${esc(nt.original)}: ${esc(n.title_original)}</p>` : '';
+      const topics = impact.topics.map(key => nt.topics[key]).filter(Boolean).join(', ') || nt.noTopic;
+      return `<article class="home-news-result" data-impact="${impact.category}"><div class="home-impact-meta"><span class="home-impact-badge">${impactIcon(impact.category)}${esc(nt[impact.category])}</span><span>${esc(impact.method === 'ai' ? nt.ai : nt.rules)}</span><span>${esc(nt.unverified)}</span>${n.is_demo ? `<strong>${esc(nt.demo)}</strong>` : ''}</div><div class="home-news-result-title${n.translated ? ' is-translated' : ''}">${title}</div>${origin}<p class="home-impact-reason">${esc(nt.reasons[impact.reason_code] || nt.reasons.failed)}</p><p class="home-news-help">${esc(nt.topicsLabel)}: ${esc(topics)}</p><p class="home-signal-meta">${esc(n.publisher || nt.publisher)} / ${esc(n.published_at || nt.dateUnknown)}${n.source_label && n.source_label !== n.publisher ? ` / ${esc(n.source_label)}` : ''}</p>${url ? `<a class="home-news-original-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(nt.open)}</a>` : ''}</article>`;
+    }).join('') || empty(newsItems.length ? nt.noCategory : nt.empty);
+  }
   async function searchNews(params) {
+    const start = $('#news-start').value, end = $('#news-end').value;
+    if (!newsForm.reportValidity() || (start && end && start > end)) { newsError(nt.invalidDates); return; }
+    if (!params.preset && !/^[\p{L}\p{N}][\p{L}\p{N}_ \-·,.()&']*[\p{L}\p{N}]$/u.test(String(params.q || '').trim())) { newsError(nt.invalidQuery); return; }
     const token = ++searchNumber;
+    lastSearch = params;
+    $('#news-presets').querySelectorAll('[data-preset]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.preset === params.preset)));
     newsError('');
+    newsItems = []; impactFilter = 'all'; newsState = 'loading';
+    renderImpactSummary();
     const results = $('#news-search-list');
     results.closest('.is-search').classList.remove('is-idle');
     $('#news-search-hint').hidden = true;
     results.setAttribute('aria-busy', 'true');
-    results.innerHTML = '<div class="home-news-loading" role="status"><span class="home-spinner" aria-hidden="true"></span><div><strong>뉴스를 불러오고 있습니다</strong><p>' + (translateOn ? '기사 검색과 제목 번역을 진행하고 있습니다.' : '관련 기사 목록을 확인하고 있습니다.') + '</p></div></div>';
-    $('#news-search-form button[type="submit"]').disabled = true;
+    results.innerHTML = `<div class="home-news-loading" role="status"><span class="home-spinner" aria-hidden="true"></span><div><strong>${esc(nt.loading)}</strong><p>${esc(nt.loadingDetail)}</p></div></div>`;
+    newsForm.querySelector('button[type="submit"]').disabled = true;
     try {
-      lastSearch = params;
-      const query = { ...params };
+      const query = { ...params, start, end };
       if (translateOn && translateTarget) query.target = translateTarget;
       const response = await fetch(`${newsForm.dataset.searchUrl}?${new URLSearchParams(query)}`);
       const data = await response.json().catch(() => ({}));
       if (token !== searchNumber) return;
-      if (!response.ok || !Array.isArray(data.items)) throw new Error(data.error || '');
-      $('#news-search-list').innerHTML = data.items.map(n => {
-        const url = safeUrl(n.url);
-        const title = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)} ↗</a>` : esc(n.title);
-        const via = n.source_label && n.source_label !== n.publisher ? ` · ${esc(n.source_label)}` : '';
-        const origin = n.translated ? `<p class="home-news-origin">원문: ${esc(n.title_original)}</p>` : '';
-        return `<article class="home-news-result"><div class="home-news-result-title${n.translated ? ' is-translated' : ''}">${title}</div>${origin}<p class="home-signal-meta">${esc(n.publisher || '언론사 미표기')}${n.published_at ? ` · ${esc(n.published_at)}` : ''}${via}</p></article>`;
-      }).join('') || empty('검색 결과가 없습니다. 다른 검색어로 찾아봐주세요.');
-      // 한 출처가 빠졌을 때 조용히 넘어가지 않고 어디가 빠졌는지 알립니다.
-      if (Array.isArray(data.unavailable) && data.unavailable.length) {
-        newsError(`${data.unavailable.join(' · ')} 출처를 불러오지 못했습니다. 아래 결과에는 빠져 있습니다.`);
-      } else if (data.translation_failed) {
-        // 번역하지 못했을 때 번역된 것처럼 보이지 않도록 원문임을 알립니다.
-        newsError('지금은 번역하지 못해 원문 제목을 그대로 보여줍니다.');
-      }
-    } catch (error) {
-      // 불러오지 못한 경우 빈 목록을 결과처럼 보여 주지 않고 실패를 그대로 알립니다.
+      if (!response.ok || !Array.isArray(data.items)) throw new Error('search');
+      newsItems = data.items.map(item => {
+        const impact = item.impact;
+        // 이전 API나 잘못된 분류 값에도 기사와 원문은 유지합니다.
+        const valid = impact && impactKeys.includes(impact.category) && typeof nt.reasons[impact.reason_code] === 'string';
+        return { ...item, impact: valid ? { ...impact, topics: Array.isArray(impact.topics) ? impact.topics : [] } : { category: 'hold', reason_code: 'failed', topics: [], method: 'rules' } };
+      });
+      newsState = 'ready';
+      renderExploratoryNews();
+      const warnings = [];
+      if (Array.isArray(data.unavailable) && data.unavailable.length) warnings.push(`${nt.partial} (${data.unavailable.join(', ')})`);
+      if (data.translation_failed) warnings.push(nt.translationFailed);
+      newsError(warnings.join(' '));
+    } catch {
       if (token !== searchNumber) return;
-      $('#news-search-list').innerHTML = '';
-      newsError(error.message || '지금은 뉴스 검색을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
+      newsState = 'error'; newsItems = []; renderImpactSummary();
+      results.innerHTML = '';
+      newsError(nt.error);
     } finally {
       if (token === searchNumber) {
         results.setAttribute('aria-busy', 'false');
-        $('#news-search-form button[type="submit"]').disabled = false;
+        newsForm.querySelector('button[type="submit"]').disabled = false;
       }
     }
   }
   function setupTranslate(data) {
-    // 키가 없는 환경에서는 버튼을 숨기고 원문만 보여 줍니다.
     const button = $('#news-translate'), uiLang = document.documentElement.dataset.uiLang || 'ko';
     const targets = Array.isArray(data.targets) ? data.targets : [];
     translateTarget = targets.includes(uiLang) ? uiLang : '';
     if (!data.translation || !translateTarget) { button.hidden = true; translateOn = false; return; }
     let saved = null;
-    try { saved = localStorage.getItem(TRANSLATE_KEY); } catch { saved = null; }
-    // 한국어·영어 화면은 번역을 켜 둡니다. 베트남어 화면은 원문을 그대로 봅니다.
+    try { saved = localStorage.getItem(TRANSLATE_KEY); } catch { /* 현재 화면 기본값 사용 */ }
     translateOn = saved === null ? true : saved === 'on';
-    button.hidden = false;
-    button.textContent = translateTarget === 'ko' ? '자동 번역' : 'Auto-translate';
-
-    button.title = translateTarget === 'ko' ? '기사 제목을 한국어로 번역합니다' : 'Translate headlines into English';
+    button.hidden = false; button.textContent = nt.translate; button.title = nt.translateTitle;
     button.setAttribute('aria-pressed', String(translateOn));
     button.onclick = () => {
       translateOn = !translateOn;
       button.setAttribute('aria-pressed', String(translateOn));
-      try { localStorage.setItem(TRANSLATE_KEY, translateOn ? 'on' : 'off'); } catch { /* 저장 못 해도 동작합니다 */ }
+      try { localStorage.setItem(TRANSLATE_KEY, translateOn ? 'on' : 'off'); } catch { /* 선택은 현재 화면에 적용 */ }
       if (lastSearch) searchNews(lastSearch);
     };
   }
-  // 뉴스 검색 화면이 없으면 이 기능만 건너뜁니다. 한 기능의 실패가 달력·업무까지 멈추지 않게 합니다.
   if (newsForm) {
+    document.querySelectorAll('[data-news-text]').forEach(node => { node.textContent = nt[node.dataset.newsText]; });
+    $('#news-impact-cards').setAttribute('aria-label', nt.explore);
+    renderImpactSummary();
+    const selectImpact = event => {
+      const button = event.target.closest('[data-impact]');
+      if (!button || button.disabled || newsState !== 'ready') return;
+      impactFilter = button.dataset.impact; renderExploratoryNews();
+    };
+    $('#news-impact-cards').onclick = selectImpact;
+    $('#news-impact-bar').onclick = selectImpact;
+    $('#news-impact-all').onclick = () => { impactFilter = 'all'; renderExploratoryNews(); };
     $('#news-presets').onclick = event => {
       const button = event.target.closest('[data-preset]');
       if (button) searchNews({ preset: button.dataset.preset });
     };
-    newsForm.onsubmit = event => { event.preventDefault(); searchNews({ q: $('#news-query').value }); };
+    newsForm.onsubmit = event => { event.preventDefault(); searchNews({ q: $('#news-query').value.trim() }); };
+    for (const node of [$('#news-start'), $('#news-end')]) node.onchange = () => { if (lastSearch) searchNews(lastSearch); };
     (async () => {
       try {
         const response = await fetch(newsForm.dataset.presetsUrl);
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !Array.isArray(data.items)) throw new Error('');
-        $('#news-presets').innerHTML = data.items.map(p => `<button type="button" class="btn" data-preset="${esc(p.key)}">${esc(p.label)}</button>`).join('');
+        if (!response.ok || !Array.isArray(data.items)) throw new Error('presets');
+        $('#news-presets').innerHTML = data.items.map(p => `<button type="button" class="btn" data-preset="${esc(p.key)}" aria-pressed="false">${esc(nt[p.key] || p.label)}</button>`).join('');
         setupTranslate(data);
-      } catch {
-        newsError('검색 항목을 불러오지 못했습니다. 직접 검색은 그대로 쓸 수 있습니다.');
-      }
+      } catch { newsError(nt.presetsFailed); }
     })();
   }
   await load(); updateRange(); refreshSignals();
