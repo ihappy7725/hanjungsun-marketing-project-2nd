@@ -9,7 +9,7 @@
   {# 저장된 테마를 첫 화면 그리기 전에 적용합니다. 값이 없거나 저장소를 못 쓰면 사암 테마를 유지합니다. #}
   <script>try { const theme = localStorage.getItem('hjs-theme'); if (theme) document.documentElement.dataset.theme = theme; } catch { /* 기본 테마 유지 */ }</script>
   <link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/fonts.css') }}">
-  <link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('platform_core.static', filename='css/base.css', v='news-compact-20261111') }}">
   {% block head %}{% endblock %}
 </head>
 <body>

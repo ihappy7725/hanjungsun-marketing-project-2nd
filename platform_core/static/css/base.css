@@ -46,6 +46,7 @@
   /* 뉴스 영향 분류. 글자색과 연한 배경을 분리해 색 외의 라벨도 함께 사용합니다. */
   --impact-opportunity: #287247;
   --impact-caution: #9a7000;
+  --impact-caution-fill: #ebc340;
   --impact-risk: #b73936;
   --impact-hold: #697078;
   --impact-opportunity-soft: #e8f3eb;

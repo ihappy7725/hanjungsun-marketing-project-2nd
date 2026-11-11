@@ -982,13 +982,11 @@ async function initialize() {
   const newsForm = $('#news-search-form');
   const NEWS_TEXT = {
     ko: {
-      newsTitle: '현지 뉴스', marketLink: '현지 시장 분석 ↗', queryLabel: '직접 검색', search: '검색', start: '게시 시작일', end: '게시 종료일', explore: '탐색용 뉴스',
-      opportunity: '기회', caution: '주의', risk: '위험', hold: '판단 보류', all: '전체 보기', distribution: '기사 수 분포',
-      scopeNote: 'Hanjungsun의 베트남 식품 및 디저트 시장 진출을 위한 검토 단서입니다. 영향 분류는 사실 확인이나 규제 적용 판정이 아닙니다.',
-      countNote: '현재 검색 및 기간 조건에서 확보한 고유 기사 최대 12건입니다. 기사 수는 시장 중요도나 위험의 크기를 뜻하지 않습니다. 기간 지정 시 게시일 미표기 기사는 제외합니다.',
-      idle: '검색 항목을 고르거나 검색어를 입력해주세요.', loading: '뉴스를 불러오고 있습니다', loadingDetail: '기사 검색과 영향 단서 분류를 진행하고 있습니다.', error: '뉴스 검색에 실패했습니다. 잠시 후 다시 시도해주세요.',
+      newsTitle: '현지 뉴스', marketLink: '현지 시장 분석 ↗', queryLabel: '직접 검색', search: '검색', start: '게시 시작일', end: '게시 종료일', period: '게시 기간',
+      opportunity: '기회', caution: '주의', risk: '위험', hold: '판단 보류', all: '전체 보기', distribution: '뉴스 영향 요약',
+      idle: '뉴스를 검색하면 영향별 건수가 표시됩니다.', loadingShort: '뉴스 집계 중', emptyBar: '집계할 기사 없음', errorBar: '뉴스 조회 실패 / 전체 보기로 재시도', loading: '뉴스를 불러오고 있습니다', loadingDetail: '기사 검색과 영향 단서 분류를 진행하고 있습니다.', error: '뉴스 검색에 실패했습니다. 잠시 후 다시 시도해주세요.',
       empty: '검색 결과가 없습니다. 검색어나 기간을 바꿔주세요.', noCategory: '이 분류에 해당하는 기사가 없습니다. 전체 보기를 선택할 수 있습니다.',
-      articleCount: '{n}건', showing: '{label}: {shown}건 표시 / 확보한 고유 기사 {total}건',
+      articleCount: '{n}건', showing: '{label}: {shown}/{total}건',
       demo: 'DEMO / 예시 데이터', rules: '규칙 기반 분류', ai: '분류 제안', unverified: '미검증 탐색 기사', original: '원문', open: '원문 보기 ↗', publisher: '언론사 미표기', dateUnknown: '게시일 미표기', topicsLabel: '관련 주제', noTopic: '관련 주제 미확인',
       partial: '일부 출처를 불러오지 못했습니다. 확보된 기사만 집계합니다.', translationFailed: '번역하지 못한 제목은 원문으로 표시합니다.', presetsFailed: '검색 항목을 불러오지 못했습니다. 직접 검색을 이용해주세요.',
       translate: '자동 번역', translateTitle: '기사 제목을 한국어로 번역합니다', invalidQuery: '검색어는 2~60자의 일반 문자로 입력해주세요.', invalidDates: '시작일과 종료일을 확인해주세요.',
@@ -1003,13 +1001,11 @@ async function initialize() {
       }
     },
     en: {
-      newsTitle: 'Local news', marketLink: 'Market analysis ↗', queryLabel: 'Search news', search: 'Search', start: 'Published from', end: 'Published through', explore: 'Exploratory news',
-      opportunity: 'Opportunity', caution: 'Caution', risk: 'Risk', hold: 'Undetermined', all: 'View all', distribution: 'Article count distribution',
-      scopeNote: 'Signals to review for Hanjungsun entering the Vietnamese food and dessert market. Impact classification does not verify facts or determine regulatory applicability.',
-      countNote: 'Up to 12 unique articles retrieved for the current search and dates. Counts do not measure market importance or risk severity. Articles without publication dates are excluded when dates are set.',
-      idle: 'Choose a topic or enter a search term.', loading: 'Loading news', loadingDetail: 'Searching articles and classifying impact signals.', error: 'News search failed. Please try again later.',
+      newsTitle: 'Local news', marketLink: 'Market analysis ↗', queryLabel: 'Search news', search: 'Search', start: 'Published from', end: 'Published through', period: 'Published',
+      opportunity: 'Opportunity', caution: 'Caution', risk: 'Risk', hold: 'Undetermined', all: 'View all', distribution: 'News impact summary',
+      idle: 'Search news to see article counts by impact.', loadingShort: 'Counting articles', emptyBar: 'No articles to count', errorBar: 'News unavailable / View all to retry', loading: 'Loading news', loadingDetail: 'Searching articles and classifying impact signals.', error: 'News search failed. Please try again later.',
       empty: 'No results. Try another search term or date range.', noCategory: 'No articles in this category. You can return to View all.',
-      articleCount: '{n} articles', showing: '{label}: showing {shown} / {total} unique articles retrieved',
+      articleCount: '{n} articles', showing: '{label}: {shown}/{total} articles',
       demo: 'DEMO / Example data', rules: 'Rule-based classification', ai: 'Suggested classification', unverified: 'Unverified exploratory article', original: 'Original', open: 'Read original ↗', publisher: 'Publisher unavailable', dateUnknown: 'Publication date unavailable', topicsLabel: 'Related topics', noTopic: 'Topic undetermined',
       partial: 'Some sources are unavailable. Only retrieved articles are counted.', translationFailed: 'Headlines that could not be translated are shown in their original language.', presetsFailed: 'Topics could not be loaded. You can still search directly.',
       translate: 'Auto-translate', translateTitle: 'Translate headlines into English', invalidQuery: 'Enter 2–60 characters using letters and ordinary punctuation.', invalidDates: 'Check the start and end dates.',
@@ -1024,13 +1020,11 @@ async function initialize() {
       }
     },
     vi: {
-      newsTitle: 'Tin tức địa phương', marketLink: 'Phân tích thị trường ↗', queryLabel: 'Tìm tin tức', search: 'Tìm kiếm', start: 'Đăng từ ngày', end: 'Đăng đến ngày', explore: 'Tin tức tham khảo',
-      opportunity: 'Cơ hội', caution: 'Lưu ý', risk: 'Rủi ro', hold: 'Chưa xác định', all: 'Xem tất cả', distribution: 'Phân bố số bài viết',
-      scopeNote: 'Tín hiệu tham khảo cho Hanjungsun gia nhập thị trường thực phẩm và món tráng miệng Việt Nam. Phân loại tác động không xác minh sự thật hoặc kết luận việc áp dụng quy định.',
-      countNote: 'Tối đa 12 bài viết duy nhất thu được theo từ khóa và thời gian hiện tại. Số bài không thể hiện tầm quan trọng thị trường hay mức độ rủi ro. Khi chọn thời gian, bài không có ngày đăng sẽ bị loại.',
-      idle: 'Chọn chủ đề hoặc nhập từ khóa.', loading: 'Đang tải tin tức', loadingDetail: 'Đang tìm bài viết và phân loại tín hiệu tác động.', error: 'Không thể tìm tin tức. Vui lòng thử lại sau.',
+      newsTitle: 'Tin tức địa phương', marketLink: 'Phân tích thị trường ↗', queryLabel: 'Tìm tin tức', search: 'Tìm kiếm', start: 'Đăng từ ngày', end: 'Đăng đến ngày', period: 'Ngày đăng',
+      opportunity: 'Cơ hội', caution: 'Lưu ý', risk: 'Rủi ro', hold: 'Chưa xác định', all: 'Xem tất cả', distribution: 'Tóm tắt tác động tin tức',
+      idle: 'Tìm tin tức để xem số bài theo tác động.', loadingShort: 'Đang đếm bài viết', emptyBar: 'Chưa có bài để đếm', errorBar: 'Không tải được tin / Xem tất cả để thử lại', loading: 'Đang tải tin tức', loadingDetail: 'Đang tìm bài viết và phân loại tín hiệu tác động.', error: 'Không thể tìm tin tức. Vui lòng thử lại sau.',
       empty: 'Không có kết quả. Hãy đổi từ khóa hoặc thời gian.', noCategory: 'Không có bài trong nhóm này. Bạn có thể chọn Xem tất cả.',
-      articleCount: '{n} bài', showing: '{label}: hiển thị {shown} / {total} bài viết duy nhất thu được',
+      articleCount: '{n} bài', showing: '{label}: {shown}/{total} bài',
       demo: 'DEMO / Dữ liệu minh họa', rules: 'Phân loại theo quy tắc', ai: 'Đề xuất phân loại', unverified: 'Bài tham khảo chưa xác minh', original: 'Bản gốc', open: 'Đọc bản gốc ↗', publisher: 'Chưa có tên nguồn', dateUnknown: 'Chưa có ngày đăng', topicsLabel: 'Chủ đề liên quan', noTopic: 'Chưa xác định chủ đề',
       partial: 'Một số nguồn không khả dụng. Chỉ tính các bài đã tải được.', translationFailed: 'Tiêu đề chưa dịch được sẽ hiển thị bằng ngôn ngữ gốc.', presetsFailed: 'Không tải được chủ đề. Bạn vẫn có thể nhập từ khóa.',
       translate: 'Dịch tự động', translateTitle: 'Dịch tiêu đề bài viết', invalidQuery: 'Nhập từ 2 đến 60 ký tự thông thường.', invalidDates: 'Vui lòng kiểm tra ngày bắt đầu và kết thúc.',
@@ -1052,6 +1046,7 @@ async function initialize() {
   const impactIcon = key => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${impactPaths[key]}"/></svg>`;
   let searchNumber = 0, lastSearch = null, translateOn = false, translateTarget = '';
   let newsItems = [], impactFilter = 'all', newsState = 'idle';
+  let defaultNewsPreset = 'trend';
   const TRANSLATE_KEY = 'hjs-home-news-translate';
   function newsError(message) {
     const box = $('#news-search-error');
@@ -1073,9 +1068,9 @@ async function initialize() {
     }
     const bar = $('#news-impact-bar');
     if (!bar.children.length) {
-      bar.innerHTML = impactKeys.map(key => `<button type="button" data-impact="${key}" aria-controls="news-search-list"></button>`).join('');
+      bar.innerHTML = impactKeys.map(key => `<button type="button" data-impact="${key}" aria-controls="news-search-list"></button>`).join('') + '<span class="home-impact-empty"></span>';
     }
-    for (const button of bar.children) {
+    for (const button of bar.querySelectorAll('button[data-impact]')) {
       const key = button.dataset.impact;
       button.hidden = !ready || !counts[key];
       button.disabled = !ready || !counts[key];
@@ -1084,10 +1079,14 @@ async function initialize() {
       button.setAttribute('aria-label', label);
       button.title = label;
       button.setAttribute('aria-pressed', String(impactFilter === key));
-      button.textContent = String(counts[key]);
+      button.innerHTML = `<span class="home-impact-segment-label">${esc(nt[key])}</span><strong>${counts[key]}</strong>`;
     }
+    const placeholder = bar.querySelector('.home-impact-empty');
+    placeholder.hidden = ready && newsItems.length > 0;
+    placeholder.textContent = ready ? nt.emptyBar : newsState === 'loading' ? nt.loadingShort : newsState === 'error' ? nt.errorBar : nt.idle;
     bar.dataset.state = newsState;
-    $('#news-impact-all').disabled = !ready;
+    $('#news-impact-all').setAttribute('aria-busy', String(newsState === 'loading'));
+    $('#news-impact-all').textContent = newsState === 'loading' ? nt.loadingShort : nt.all;
     $('#news-impact-all').setAttribute('aria-pressed', String(impactFilter === 'all'));
     $('#news-impact-status').textContent = ready ? fmt(nt.showing, { label: nt[impactFilter], shown: impactFilter === 'all' ? newsItems.length : counts[impactFilter], total: newsItems.length }) : newsState === 'idle' ? '' : nt[newsState];
   }
@@ -1114,7 +1113,6 @@ async function initialize() {
     renderImpactSummary();
     const results = $('#news-search-list');
     results.closest('.is-search').classList.remove('is-idle');
-    $('#news-search-hint').hidden = true;
     results.setAttribute('aria-busy', 'true');
     results.innerHTML = `<div class="home-news-loading" role="status"><span class="home-spinner" aria-hidden="true"></span><div><strong>${esc(nt.loading)}</strong><p>${esc(nt.loadingDetail)}</p></div></div>`;
     newsForm.querySelector('button[type="submit"]').disabled = true;
@@ -1168,7 +1166,6 @@ async function initialize() {
   }
   if (newsForm) {
     document.querySelectorAll('[data-news-text]').forEach(node => { node.textContent = nt[node.dataset.newsText]; });
-    $('#news-impact-cards').setAttribute('aria-label', nt.explore);
     renderImpactSummary();
     const selectImpact = event => {
       const button = event.target.closest('[data-impact]');
@@ -1177,7 +1174,11 @@ async function initialize() {
     };
     $('#news-impact-cards').onclick = selectImpact;
     $('#news-impact-bar').onclick = selectImpact;
-    $('#news-impact-all').onclick = () => { impactFilter = 'all'; renderExploratoryNews(); };
+    $('#news-impact-all').onclick = () => {
+      impactFilter = 'all';
+      if (newsState === 'ready') renderExploratoryNews();
+      else if (newsState !== 'loading') searchNews(lastSearch || { preset: defaultNewsPreset });
+    };
     $('#news-presets').onclick = event => {
       const button = event.target.closest('[data-preset]');
       if (button) searchNews({ preset: button.dataset.preset });
@@ -1191,6 +1192,9 @@ async function initialize() {
         if (!response.ok || !Array.isArray(data.items)) throw new Error('presets');
         $('#news-presets').innerHTML = data.items.map(p => `<button type="button" class="btn" data-preset="${esc(p.key)}" aria-pressed="false">${esc(nt[p.key] || p.label)}</button>`).join('');
         setupTranslate(data);
+        defaultNewsPreset = data.items.find(p => p.key === 'trend')?.key || data.items[0]?.key || defaultNewsPreset;
+        // 첫 진입에도 실제 기사 기준 막대를 표시합니다. 사용자가 먼저 시작한 검색은 덮어쓰지 않습니다.
+        if (!lastSearch) searchNews({ preset: defaultNewsPreset });
       } catch { newsError(nt.presetsFailed); }
     })();
   }
