@@ -3,7 +3,7 @@
 {% block title %}HOME{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('home.static', filename='css/home_main.css', v='news-compact-20261111') }}">
+<link rel="stylesheet" href="{{ url_for('home.static', filename='css/home_main.css', v='news-cards-20261111-3') }}">
 {% endblock %}
 
 {% block content %}
@@ -66,9 +66,7 @@
           <p id="news-search-error" class="home-error" hidden role="alert"></p>
         </form>
         <div class="home-news-block is-search is-idle home-resizable">
-          <div class="home-impact-heading"><strong id="news-distribution-label" data-news-text="distribution">뉴스 영향 요약</strong><button class="btn" id="news-impact-all" type="button" aria-pressed="true" data-news-text="all">전체 보기</button></div>
-          <div id="news-impact-cards" class="home-impact-cards" role="group" aria-labelledby="news-distribution-label"></div>
-          <div id="news-impact-bar" class="home-impact-bar" role="group" aria-labelledby="news-distribution-label"></div>
+          <div id="news-impact-cards" class="home-impact-cards" role="group" aria-label="뉴스 영향별 필터"></div>
           <p id="news-impact-status" class="home-news-help" role="status" aria-live="polite" aria-atomic="true"></p>
           <div id="news-search-list" class="home-news-results" aria-busy="false"></div>
         </div>
@@ -118,5 +116,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{{ url_for('home.static', filename='js/home_main.js', v='news-compact-20261111') }}"></script>
+<script type="module" src="{{ url_for('home.static', filename='js/home_main.js', v='news-cards-20261111-3') }}"></script>
 {% endblock %}
